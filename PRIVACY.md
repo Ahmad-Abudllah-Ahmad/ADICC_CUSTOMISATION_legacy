@@ -15,7 +15,7 @@ Brazilian Lei Geral de Proteção de Dados (LGPD).
 > infrastructure, **you become the data controller** for your users, and
 > DDC has no access to any data. This document is then a template you may
 > adapt for your own users. The operator-specific clauses below apply only
-> to the instance at `https://openconstructionerp.com` operated by DDC.
+> to the instance at `https://adicc-uae.com` operated by DDC.
 
 ---
 

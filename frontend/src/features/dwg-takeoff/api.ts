@@ -100,6 +100,8 @@ export interface DxfEntity {
   text?: string;
   /** Text height */
   height?: number;
+  /** MTEXT attachment point 1–9 (1=top-left). Absent for baseline TEXT. */
+  attachment_point?: number;
   /** DXF text style name (the STYLE table entry the TEXT/MTEXT references). */
   style?: string;
   /** Resolved SHX font file for the text style (e.g. "romans.shx"); may be
@@ -349,7 +351,8 @@ export async function fetchEntities(
     const layers = visibleLayers.map((l) => encodeURIComponent(l)).join(',');
     url += `?layers=${layers}`;
   }
-  return apiGet<DxfEntity[]>(url);
+  // Large ODA parses can exceed the default 45s client budget.
+  return apiGet<DxfEntity[]>(url, { longRunning: true });
 }
 
 export async function fetchThumbnail(drawingId: string): Promise<string> {
@@ -367,6 +370,7 @@ export async function updateDrawingScale(
   return apiPatch<DwgDrawing>(
     `/v1/dwg_takeoff/drawings/${drawingId}/scale/`,
     payload,
+    { longRunning: true },
   );
 }
 

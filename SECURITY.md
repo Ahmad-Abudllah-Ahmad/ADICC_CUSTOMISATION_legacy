@@ -11,7 +11,7 @@ Public disclosure before a fix is available puts users at risk.
 ### How to Report
 
 1. **GitHub Security Advisories** (preferred):
-   [Create a new advisory](https://github.com/datadrivenconstruction/OpenConstructionERP/security/advisories/new)
+   [Create a new advisory](https://adicc-uae.com/security/advisories/new)
 
 2. **Email:** `info@datadrivenconstruction.io`
 
@@ -57,7 +57,7 @@ keep the latest stable plus the previous minor for six months.
 - Frontend web application (`frontend/`)
 - Desktop client (`desktop/`)
 - Official Docker images published by DataDrivenConstruction and
-  the DDC-operated instance at `https://openconstructionerp.com`
+  the DDC-operated instance at `https://adicc-uae.com`
 - CLI tools distributed with the project
 - Build and release automation that produces signed artefacts
   (`.github/workflows/release*.yml`, `signatures/`)

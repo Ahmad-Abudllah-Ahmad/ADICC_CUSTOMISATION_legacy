@@ -59,7 +59,7 @@ import {
   Palette,
   Footprints,
 } from 'lucide-react';
-import { Badge, EmptyState, Breadcrumb, ConfirmDialog, ModuleHelpButton, ModuleGuideButton, DismissibleInfo, IntroRichText } from '@/shared/ui';
+import { Badge, EmptyState, Breadcrumb, ConfirmDialog, ModuleHelpButton, ModuleGuideButton, DismissibleInfo, IntroRichText, ErrorBoundary } from '@/shared/ui';
 import { bimGuide } from './bimGuide';
 import { useConfirm } from '@/shared/hooks/useConfirm';
 import { useDisplayQuantity } from '@/shared/hooks/useDisplayQuantity';
@@ -4035,6 +4035,38 @@ export function BIMPage() {
           />
         ) : activeModelId ? (
           <>
+          {/* Keep the BIM page shell alive if the WebGL/Three.js viewer
+              throws (e.g. null shader-precision on some Mac GPUs). Without
+              this local boundary the page-level ErrorBoundary replaces the
+              whole /bim route with "Something went wrong". */}
+          <ErrorBoundary
+            fallback={
+              <div
+                data-testid="bim-viewer-crash-fallback"
+                className="flex h-full items-center justify-center p-6"
+              >
+                <div className="max-w-sm text-center space-y-3">
+                  <Cuboid size={40} className="text-content-quaternary mx-auto" />
+                  <h3 className="text-sm font-semibold text-content-primary">
+                    {t('bim.viewer_crash_title', { defaultValue: '3D viewer could not start' })}
+                  </h3>
+                  <p className="text-xs text-content-tertiary leading-relaxed">
+                    {t('bim.viewer_crash_body', {
+                      defaultValue:
+                        'The 3D engine failed to initialise in this browser. Try reloading the page, enable hardware acceleration, or open the model on another device. Element lists and quantities remain available from other panels.',
+                    })}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => window.location.reload()}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-oe-blue px-3 py-1.5 text-xs font-semibold text-white hover:bg-oe-blue-dark"
+                  >
+                    {t('error.try_again', { defaultValue: 'Try again' })}
+                  </button>
+                </div>
+              </div>
+            }
+          >
           <BIMViewer
             modelId={activeModelId}
             projectId={projectId}
@@ -4086,6 +4118,7 @@ export function BIMPage() {
             smartViewEvalResult={smartViewEvalStates}
             className="h-full"
           />
+          </ErrorBoundary>
 
           {/* Lazy-load info bar - shown when viewing a group subset */}
           {activeGroupId && !fullModelRequested && (

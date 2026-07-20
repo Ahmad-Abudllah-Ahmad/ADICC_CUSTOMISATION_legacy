@@ -131,7 +131,7 @@ GH_REPOS = [
     ),
     (
         "OpenConstructionERP",
-        "https://github.com/datadrivenconstruction/OpenConstructionERP",
+        "https://adicc-uae.com",
         "This product, in source. AGPL-3.0 platform with BOQ, takeoff, validation, 18+ modules and 21 languages baked in.",
         ["AGPL-3.0", "this repo"],
     ),

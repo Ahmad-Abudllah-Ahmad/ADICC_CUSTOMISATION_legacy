@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Artem Boiko / DataDrivenConstruction
 /**
  * DemoBanner — persistent warning banner shown only on the public hosted
- * demo (https://openconstructionerp.com), driven by the backend's
+ * demo, driven by the backend's
  * `OE_DEMO_MODE=true` env var. Tells visitors:
  *
  *   1. This is a demo. Do not upload real data or confidential documents.
@@ -77,31 +77,22 @@ export function DemoBanner() {
         </code>
         <span className="flex items-center gap-2.5">
           <span className="opacity-80">{t('demo_banner.strip_or_download')}</span>
-          <a
-            href="https://openconstructionerp.com/download"
-            target="_blank"
-            rel="noopener noreferrer"
+          <span
             className="inline-flex items-center gap-1 underline underline-offset-2 hover:text-amber-900 dark:hover:text-amber-50"
           >
             <Download size={12} className="shrink-0" />
             Windows
-          </a>
-          <a
-            href="https://openconstructionerp.com/download"
-            target="_blank"
-            rel="noopener noreferrer"
+          </span>
+          <span
             className="underline underline-offset-2 hover:text-amber-900 dark:hover:text-amber-50"
           >
             macOS
-          </a>
-          <a
-            href="https://openconstructionerp.com/download"
-            target="_blank"
-            rel="noopener noreferrer"
+          </span>
+          <span
             className="underline underline-offset-2 hover:text-amber-900 dark:hover:text-amber-50"
           >
             Linux
-          </a>
+          </span>
         </span>
         <button
           type="button"
@@ -218,15 +209,12 @@ export function DemoBanner() {
 
             {/* Footer */}
             <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-border-light">
-              <a
-                href="https://github.com/datadrivenconstruction/OpenConstructionERP"
-                target="_blank"
-                rel="noopener noreferrer"
+              <span
                 className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-content-secondary hover:text-content-primary border border-border-light rounded-lg hover:bg-surface-secondary transition-colors"
               >
                 <ExternalLink size={13} />
                 GitHub
-              </a>
+              </span>
               <a
                 href="https://pypi.org/project/openconstructionerp/"
                 target="_blank"

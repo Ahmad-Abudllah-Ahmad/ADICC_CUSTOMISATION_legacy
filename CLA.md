@@ -168,7 +168,7 @@ Enforcement is handled by the CLA Assistant integration
 
 **Project Owner:** Artem Boiko / DataDrivenConstruction.io
 **Project:** OpenConstructionERP
-(<https://github.com/datadrivenconstruction/OpenConstructionERP>)
+(<https://adicc-uae.com>)
 **Contact:** `info@datadrivenconstruction.io`
 
 **If you are contributing on behalf of a company**, please

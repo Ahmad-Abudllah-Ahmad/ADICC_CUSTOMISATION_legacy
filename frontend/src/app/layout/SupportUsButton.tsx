@@ -26,7 +26,7 @@ import {
 import clsx from 'clsx';
 import { copyToClipboard } from '@/shared/lib/browser';
 
-const REPO_URL = 'https://github.com/datadrivenconstruction/OpenConstructionERP';
+const REPO_URL = 'https://adicc-uae.com';
 const PAYPAL_DONATE_URL = 'https://www.paypal.com/donate/?hosted_button_id=DWBCLNLY2VWAA';
 const GITHUB_SPONSORS_URL = 'https://github.com/sponsors/datadrivenconstruction';
 const CASE_STUDY_EMAIL = 'info@datadrivenconstruction.io';

@@ -1416,7 +1416,7 @@ export default function App() {
       {/* DDC-CWICR-OE */}
       <span aria-hidden="true" style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }}>
         {'\u200B\u200C\u200D\u200B\u200C\u200D\u200B'}
-        DataDrivenConstruction·CWICR·OpenConstructionERP·2026
+        ADICC ERP·2026
       </span>
     </Suspense>
   );

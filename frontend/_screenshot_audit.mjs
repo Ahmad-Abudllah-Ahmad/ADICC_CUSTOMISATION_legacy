@@ -66,27 +66,27 @@ async function shot(page, selector, name) {
   const page = await ctx.newPage();
 
   // Home — practice-atlas card stack at the bottom
-  await loadAndScroll(page, 'https://openconstructionerp.com/');
+  await loadAndScroll(page, 'https://adicc-uae.com');
   await shot(page, '.pa-section', 'home.practice-atlas');
 
   // Services — timeline block + qchecklist + repo banner
-  await loadAndScroll(page, 'https://openconstructionerp.com/services.html');
+  await loadAndScroll(page, 'https://adicc-uae.com');
   await shot(page, '.timeline', 'services.timeline');
   await shot(page, '.qchecklist', 'services.qchecklist');
   await shot(page, '.repo-banner', 'services.repo-banner');
 
   // Industries — fit-table + practice-fit + ask-block in one sector
-  await loadAndScroll(page, 'https://openconstructionerp.com/industries.html');
+  await loadAndScroll(page, 'https://adicc-uae.com');
   await shot(page, '#commercial', 'industries.commercial-sector');
   await shot(page, '#heavy', 'industries.heavy-sector');
 
   // Standards — code examples grid + decision table
-  await loadAndScroll(page, 'https://openconstructionerp.com/standards.html');
+  await loadAndScroll(page, 'https://adicc-uae.com');
   await shot(page, '#examples', 'standards.examples');
   await shot(page, '#decision', 'standards.decision');
 
   // Maturity — band ladder + bench-note (recently rewritten)
-  await loadAndScroll(page, 'https://openconstructionerp.com/maturity.html');
+  await loadAndScroll(page, 'https://adicc-uae.com');
   await shot(page, '.bench-note', 'maturity.bench-note');
 
   await ctx.close();
@@ -97,15 +97,15 @@ async function shot(page, selector, name) {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const page = await ctx.newPage();
 
-  await loadAndScroll(page, 'https://openconstructionerp.com/industries.html');
+  await loadAndScroll(page, 'https://adicc-uae.com');
   await shot(page, '.ask-block', 'mobile.industries.ask-block');
   await shot(page, '.cta-band', 'mobile.industries.cta-band');
 
-  await loadAndScroll(page, 'https://openconstructionerp.com/services.html');
+  await loadAndScroll(page, 'https://adicc-uae.com');
   await shot(page, '.timeline', 'mobile.services.timeline');
   await shot(page, '.qchecklist', 'mobile.services.qchecklist');
 
-  await loadAndScroll(page, 'https://openconstructionerp.com/standards.html');
+  await loadAndScroll(page, 'https://adicc-uae.com');
   await shot(page, '#examples', 'mobile.standards.examples');
 
   await ctx.close();

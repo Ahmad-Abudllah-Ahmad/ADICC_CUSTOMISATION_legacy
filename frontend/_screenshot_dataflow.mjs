@@ -16,7 +16,7 @@ const browser = await chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 const page = await ctx.newPage();
 
-await page.goto('https://openconstructionerp.com/#dataflow', { waitUntil: 'networkidle' });
+await page.goto('https://adicc-uae.com', { waitUntil: 'networkidle' });
 await page.addStyleTag({ content: FORCE });
 await page.evaluate(async () => {
   const step = window.innerHeight * 0.85;

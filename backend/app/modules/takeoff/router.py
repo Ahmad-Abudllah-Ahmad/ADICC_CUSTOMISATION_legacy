@@ -175,7 +175,18 @@ async def list_converters(verify: bool = False) -> dict[str, Any]:
 
     # Phase 1: cheap file-stat lookup for every converter (synchronous,
     # bounded by ~4 disk reads - sub-millisecond on a warm cache).
-    paths: list[Path | None] = [find_converter(m["id"]) for m in _CONVERTER_META]
+    # For DWG, also accept ODA / LibreDWG on macOS when DDC is absent.
+    paths: list[Path | None] = []
+    for m in _CONVERTER_META:
+        path = find_converter(m["id"])
+        if path is None and m["id"] == "dwg":
+            try:
+                from app.modules.dwg_takeoff import mac_dwg
+
+                path = mac_dwg.any_mac_dwg_backend()
+            except Exception:  # noqa: BLE001
+                path = None
+        paths.append(path)
 
     # Phase 2: when ``verify=true``, run ALL installed-converter smoke
     # tests CONCURRENTLY with ``asyncio.gather`` so the wall-clock cost
@@ -260,6 +271,24 @@ async def verify_converter(converter_id: str) -> dict[str, Any]:
         )
 
     path = find_converter(converter_id)
+    if path is None and converter_id == "dwg":
+        try:
+            from app.modules.dwg_takeoff import mac_dwg
+
+            backend = mac_dwg.any_mac_dwg_backend()
+        except Exception:  # noqa: BLE001
+            backend = None
+        if backend is not None:
+            health = await asyncio.to_thread(smoke_test_converter, converter_id, True)
+            return {
+                "converter_id": converter_id,
+                "installed": True,
+                "path": str(backend),
+                "health": health["status"],
+                "health_message": health["message"],
+                "suggested_actions": health["suggested_actions"],
+            }
+
     if path is None:
         return {
             "converter_id": converter_id,
@@ -1463,6 +1492,49 @@ async def install_converter(
     # macOS / other: no native DDC build and nothing to download - answer
     # synchronously rather than spinning up a background task.
     platform = sys.platform
+    if converter_id == "dwg" and platform == "darwin":
+        try:
+            from app.modules.dwg_takeoff import mac_dwg
+
+            backend = mac_dwg.any_mac_dwg_backend()
+        except Exception:  # noqa: BLE001
+            backend = None
+            mac_dwg = None  # type: ignore[assignment]
+        if backend is not None:
+            return {
+                "converter_id": converter_id,
+                "installed": True,
+                "platform": platform,
+                "platform_unsupported": False,
+                "path": str(backend),
+                "message": (
+                    f"DWG reader ready on macOS via {backend.name}. "
+                    "Re-upload your drawing to convert it."
+                ),
+            }
+        download_url = (
+            mac_dwg.oda_download_url()
+            if mac_dwg is not None
+            else "https://www.opendesign.com/guestfiles/oda_file_converter"
+        )
+        return {
+            "converter_id": converter_id,
+            "installed": False,
+            "platform": platform,
+            "platform_unsupported": True,
+            "download_url": download_url,
+            "instructions": (
+                f"1) Download ODA File Converter (Apple Silicon) from {download_url} "
+                "and install into /Applications.\n"
+                "2) Or run: brew install libredwg\n"
+                "3) Click Re-check / re-upload your .dwg."
+            ),
+            "message": (
+                "macOS has no DDC DwgExporter auto-installer. Install ODA File "
+                "Converter (recommended) or LibreDWG, then re-upload the DWG. "
+                "DXF uploads work without a converter."
+            ),
+        }
     if platform != "win32" and not platform.startswith("linux"):
         return {
             "converter_id": converter_id,
@@ -1764,7 +1836,6 @@ async def _install_converter_impl(converter_id: str, force: bool, app: Any) -> d
                 ),
             }
 
-        # macOS / other - no native DDC build available.
         return {
             "converter_id": converter_id,
             "installed": False,
@@ -4963,14 +5034,13 @@ async def recognize_document(
     ),
     service: TakeoffService = Depends(_get_service),
 ) -> RecognizeResponse:
-    """Detect candidate measurements from a page's vector layer (offline).
+    """Detect candidate measurements from a page (vision rooms when AI key set).
 
-    The deterministic, offline complement to ``analyze`` (which sends text to
-    an LLM): scans the PDF's vector drawings with PyMuPDF and proposes
-    confidence-scored area / length / count candidates. Nothing is persisted -
-    the user confirms or rejects each candidate on the canvas, then the
-    accepted ones flow through the normal bulk-create path where the server
-    re-derives the billed quantity (Audit B8).
+    Prefers the vision-LLM room-polygon path when the user has a vision-capable
+    AI key (CubiCasa-like named wall-snapped rooms). Falls back to offline
+    vector + OpenCV raster recognition when no key is configured or vision
+    returns nothing. Nothing is persisted — the user confirms or rejects each
+    candidate on the canvas (Audit B8).
     """
     doc = await service.get_document(doc_id)
     if doc is None:
@@ -4978,7 +5048,12 @@ async def recognize_document(
     # Audit B5 - IDOR: a document's geometry is as sensitive as its text.
     await _verify_takeoff_doc_access(doc, str(user_id) if user_id else "", session)
 
-    result = await service.recognize_candidates(doc_id, page, scale_pixels_per_unit or None)
+    result = await service.recognize_candidates(
+        doc_id,
+        page,
+        scale_pixels_per_unit or None,
+        user_id=str(user_id) if user_id else None,
+    )
     return RecognizeResponse(**result)
 
 

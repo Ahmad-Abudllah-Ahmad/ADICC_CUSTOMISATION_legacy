@@ -39,7 +39,7 @@ def _posture(**overrides):
         registration_mode="admin-approve",
         analytics_bundled=False,
         license_name="AGPL-3.0",
-        repository="https://github.com/datadrivenconstruction/OpenConstructionERP",
+        repository="https://adicc-uae.com",
     )
     base.update(overrides)
     return build_data_security_posture(**base)
@@ -133,7 +133,7 @@ def test_returned_provider_list_is_a_copy() -> None:
         registration_mode="closed",
         analytics_bundled=False,
         license_name="AGPL-3.0",
-        repository="https://github.com/datadrivenconstruction/OpenConstructionERP",
+        repository="https://adicc-uae.com",
     )
     providers.append("OpenAI")
     assert posture["ai"]["providers"] == ["Anthropic"]

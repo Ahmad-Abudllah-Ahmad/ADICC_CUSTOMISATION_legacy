@@ -49,9 +49,9 @@ oe-sdk = "oe_sdk.cli:main"
 
 [project.urls]
 Homepage = "https://datadrivenconstruction.io/erp"
-Documentation = "https://github.com/datadrivenconstruction/OpenConstructionERP/blob/main/docs/platform/how-it-works-for-builders.md"
-Repository = "https://github.com/datadrivenconstruction/OpenConstructionERP"
-Issues = "https://github.com/datadrivenconstruction/OpenConstructionERP/issues"
+Documentation = "https://adicc-uae.com/blob/main/docs/platform/how-it-works-for-builders.md"
+Repository = "https://adicc-uae.com"
+Issues = "https://adicc-uae.com/issues"
 
 [build-system]
 requires = ["hatchling"]

@@ -15,7 +15,6 @@ import { useThemeStore } from '@/stores/useThemeStore';
 import { CountryFlag, PartnerLogoBadge } from '@/shared/ui';
 import { usePartnerPack } from '@/shared/hooks/usePartnerPack';
 import { NotificationBell } from '@/shared/ui/NotificationBell';
-import { HeaderNewsButton } from '@/shared/ui/HeaderNewsButton';
 import { apiGet } from '@/shared/lib/api';
 import { copyToClipboard } from '@/shared/lib/browser';
 import {
@@ -28,8 +27,6 @@ import { APP_VERSION, APP_BUILD_FINGERPRINT } from '@/shared/lib/version';
 import { useToastStore } from '@/stores/useToastStore';
 import { useI18nReady } from '@/shared/lib/useI18nReady';
 import { isTauri, openAppInBrowser } from '@/shared/lib/desktop';
-import { SupportUsButton } from './SupportUsButton';
-import { SubscribeButton } from './SubscribeButton';
 import { ProjectJourneyButton } from './ProjectJourney';
 import { getRouteIcon } from './routeIcons';
 
@@ -299,14 +296,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
       {/* Right side — three zones separated by hairline dividers.
           Zone 2: Search · Zone 3: Notifications + Help · Zone 4: Account
           (Upload + Language + User). Each zone has internal `gap-1`,
-          dividers between zones are 1px hairlines.
-
-          SubscribeButton lives in Zone 3 next to HelpMenu (sized to
-          match the Support pill — same h-8 icon-with-label format on
-          desktop, icon-only on mobile). It used to sit absolutely
-          centred across the header but that created awkward visual
-          tension with the project switcher on the left; planted next
-          to Support/Help, the two CTAs read as a coherent cluster. */}
+          dividers between zones are 1px hairlines. */}
       <div className="flex items-center gap-2 shrink-0">
         {/* ── Journey (orientation) ─────────────────────────────────
             Names the lifecycle phase the current screen belongs to and
@@ -356,17 +346,8 @@ export function Header({ title, onMenuClick }: HeaderProps) {
         {/* Hairline divider between Zone 2 and Zone 3. */}
         <div className="hidden sm:block h-4 w-px bg-border-light/70" aria-hidden />
 
-        {/* ── Zone 3 (Notifications + Subscribe + Bug + Help) ──────
-            Order: NotificationBell · What's new · SupportUs · Subscribe · BugReport · Help.
-            The "ask the user for something" CTAs (Support / Subscribe) stay
-            adjacent; Bug + Help sit on the right edge so a user filing a
-            report doesn't have to scan past the marketing CTAs. */}
+        {/* ── Zone 3 (Notifications) ──────────────── */}
         <NotificationBell />
-        <HeaderNewsButton />
-        <SupportUsButton />
-        <SubscribeButton />
-        <BugReportMenu />
-        <HelpMenu />
 
         {/* Hairline divider between Zone 3 and Zone 4. */}
         <div className="hidden sm:block h-4 w-px bg-border-light/70" aria-hidden />
@@ -541,7 +522,7 @@ function BugReportMenu() {
   const handleEmail = () => {
     setOpen(false);
     const { body, title } = buildBugReportUrl(t);
-    const subject = `OpenConstructionERP Issue - ${title}`;
+    const subject = `ADICC ERP Issue - ${title}`;
     // mailto bodies are also length-limited (~2000 chars in Chrome),
     // so we trim aggressively. The downloaded log JSON is the long form.
     const safeBody = body.length > 1500 ? `${body.slice(0, 1500)}\n\n_[truncated - attach the JSON log if needed]_` : body;
@@ -565,7 +546,7 @@ function BugReportMenu() {
       app_version: APP_VERSION,
       platform: navigator.userAgent.includes('Win') ? 'Windows' : navigator.userAgent.includes('Mac') ? 'macOS' : 'Linux',
     });
-    window.open(`https://openconstructionerp.com/contact.html?${params}`, '_blank');
+    window.open(`https://adicc-uae.com/contact.html?${params}`, '_blank');
   };
 
   const handleDownloadLog = () => {
@@ -614,7 +595,7 @@ function BugReportMenu() {
       icon: MessageSquarePlus,
       iconColor: 'text-emerald-500',
       title: t('bug.channel_form', { defaultValue: 'Web feedback form' }),
-      desc: t('bug.channel_form_desc', { defaultValue: 'Richer fields and screenshots on openconstructionerp.com.' }),
+      desc: t('bug.channel_form_desc', { defaultValue: 'Richer fields and screenshots on adicc-uae.com.' }),
       onClick: handleFeedbackForm,
     },
     {
@@ -791,7 +772,7 @@ function HelpMenu() {
       feedback: 'true',
       app_version: APP_VERSION,
     });
-    window.open(`https://openconstructionerp.com/contact.html?${params}`, '_blank');
+    window.open(`https://adicc-uae.com/contact.html?${params}`, '_blank');
   };
 
   return (
@@ -837,7 +818,7 @@ function HelpMenu() {
               site so users land on the maintained guides, not the raw repo. */}
           <a
             role="menuitem"
-            href="https://openconstructionerp.com/docs"
+            href="https://adicc-uae.com/docs"
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => setOpen(false)}
@@ -849,7 +830,7 @@ function HelpMenu() {
           </a>
           <a
             role="menuitem"
-            href="https://github.com/datadrivenconstruction/OpenConstructionERP"
+            href="https://adicc-uae.com"
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => setOpen(false)}
@@ -909,7 +890,7 @@ function HelpMenu() {
               gives bug reporting a single, obvious home. */}
           <a
             role="menuitem"
-            href="mailto:info@datadrivenconstruction.io?subject=OpenConstructionERP%20Issue%20Report"
+            href="mailto:info@datadrivenconstruction.io?subject=ADICC%20ERP%20Issue%20Report"
             onClick={() => setOpen(false)}
             className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-content-primary hover:bg-surface-secondary transition-colors"
           >
@@ -1003,7 +984,7 @@ function LanguageSwitcher({
 /* ── User Menu ─────────────────────────────────────────────────────────── */
 
 /** GitHub repo slug for "Report a bug". Empty string = clipboard fallback. */
-const GITHUB_REPO = 'datadrivenconstruction/OpenConstructionERP';
+const GITHUB_REPO = '';  // bug reports open ADICC site below
 /** Hard ceiling for the GitHub issue body inside a URL. ~8KB is safe across browsers. */
 const MAX_BODY_BYTES = 7800;
 
@@ -1174,7 +1155,7 @@ function buildBugReportUrl(
   const encodedTitle = encodeURIComponent(title);
   const url = GITHUB_REPO
     ? `https://github.com/${GITHUB_REPO}/issues/new?title=${encodedTitle}&body=${encoded}`
-    : '';
+    : `https://adicc-uae.com/contact.html?title=${encodedTitle}`;
   return { url, body: safeBody, title };
 }
 

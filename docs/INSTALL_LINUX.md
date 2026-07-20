@@ -268,4 +268,4 @@ ls -l /usr/bin/IfcExporter        # should exist and be > 1 KB
 | `openconstructionerp: command not found` after pipx | Path not refreshed | `pipx ensurepath` then open a new shell |
 | BIM converter install "signal timed out", stuck on placeholder geometry | A slow link aborted an older build's blocking download | Fixed in 8.8.0+: the install now runs in the background, resumes, and unpacks without root or dpkg. Retry **Settings -> BIM Converters -> Install**; only if it still fails, install from the terminal (section 7) |
 
-If you still cannot install, run `openconstructionerp doctor` (or `python -m openconstructionerp doctor`) and open an issue with the full output: https://github.com/datadrivenconstruction/OpenConstructionERP/issues
+If you still cannot install, run `openconstructionerp doctor` (or `python -m openconstructionerp doctor`) and open an issue with the full output: https://adicc-uae.com/issues

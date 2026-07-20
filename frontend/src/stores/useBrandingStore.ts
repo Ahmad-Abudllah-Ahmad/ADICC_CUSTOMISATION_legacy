@@ -6,7 +6,7 @@
  * Lets users white-label the in-app sidebar with their own company
  * logo (PNG/JPG/SVG) or company name. When set, the user's brand
  * shows prominently at the top of the sidebar; the
- * "OpenConstructionERP" wordmark moves below it at one-third the
+ * "ADICC ERP" wordmark moves below it at one-third the
  * size as a "powered by" attribution — still visible (we ship under
  * AGPL-3.0 with attribution requirements) but no longer the main
  * brand on the page.
@@ -43,7 +43,7 @@ export interface BrandingState {
    * resets to `default`.
    */
   setCompanyName: (name: string) => void;
-  /** Clear all customisation and return to the OpenConstructionERP brand. */
+  /** Clear all customisation and return to the ADICC ERP brand. */
   reset: () => void;
   /**
    * Pull the workspace branding from the server and apply it (the server is the

@@ -15,9 +15,10 @@
  * so the widget never competes with the main viewport for raycasts or
  * render time.
  */
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import type { SceneManager, ViewPreset } from './SceneManager';
+import { installWebGLPrecisionShim } from './webglPrecisionShim';
 
 export interface BIMViewCubeProps {
   /** Active scene manager. `null` while the viewer is loading. */
@@ -82,16 +83,25 @@ export function BIMViewCube({
   /** Track the latest scene manager so click handlers don't capture stale refs. */
   const sceneManagerRef = useRef<SceneManager | null>(sceneManager);
   sceneManagerRef.current = sceneManager;
+  const [unavailable, setUnavailable] = useState(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const renderer = new THREE.WebGLRenderer({
-      canvas,
-      antialias: true,
-      alpha: true,
-    });
+    installWebGLPrecisionShim();
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        canvas,
+        antialias: true,
+        alpha: true,
+      });
+    } catch (err) {
+      console.warn('[BIMViewCube] WebGL unavailable:', err);
+      setUnavailable(true);
+      return;
+    }
     renderer.setPixelRatio(window.devicePixelRatio || 1);
     renderer.setSize(size, size, false);
     renderer.setClearColor(0x000000, 0);
@@ -236,6 +246,8 @@ export function BIMViewCube({
     // Touch the ref so React doesn't optimise out the dep tracking.
     sceneManagerRef.current = sceneManager;
   }, [sceneManager]);
+
+  if (unavailable) return null;
 
   return (
     <div

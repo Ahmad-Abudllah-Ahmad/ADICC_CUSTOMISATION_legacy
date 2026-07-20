@@ -600,6 +600,14 @@ export function CreateProjectModal({
       currency: editProject.currency ?? '',
       locale: editProject.locale ?? 'en',
     });
+    const storedClient =
+      (typeof editProject.custom_fields?.client_name === 'string'
+        ? editProject.custom_fields.client_name
+        : '') ||
+      (editProject.client_id && !/^[0-9a-f-]{36}$/i.test(editProject.client_id)
+        ? editProject.client_id
+        : '');
+    setClientName(storedClient);
     if (editProfile) {
       setPreset(editProfile.profile.preset || 'custom');
       setActivity(editProfile.profile.activity ?? []);
@@ -766,6 +774,11 @@ export function CreateProjectModal({
 
       // Custom picks send the normalized effective values (trimmed, and
       // uppercased for the currency code) instead of the raw input text.
+      // Client / owner is free text in the UI. The backend ``client_id``
+      // column is a 36-char id slot (UUID-sized) — stuffing a company name
+      // there 422s once the name exceeds 36 characters. Persist the name
+      // under custom_fields instead.
+      const trimmedClient = clientName.trim();
       const data: CreateProjectData = {
         ...form,
         region: form.region === '__custom__' ? effectiveRegion : form.region,
@@ -781,7 +794,8 @@ export function CreateProjectModal({
         // so an untouched Quick-create form still posts a minimal body.
         project_code: projectCode.trim() || null,
         project_type: projectType.trim() || null,
-        client_id: clientName.trim() || null,
+        client_id: null,
+        custom_fields: trimmedClient ? { client_name: trimmedClient } : null,
         contract_value: contractValue.trim() || null,
         budget_estimate: budgetEstimate.trim() || null,
         planned_start_date: plannedStart.trim() || null,

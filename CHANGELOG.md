@@ -690,7 +690,7 @@ A security and data-integrity hardening release from a deep internal audit.
 
 ### Fixed
 
-- A BIM model that is ready but carries no 3D geometry - for example when no native converter produced one - now shows a clear "No 3D geometry" notice instead of a blank canvas. Reported in [#59](https://github.com/datadrivenconstruction/OpenConstructionERP/issues/59).
+- A BIM model that is ready but carries no 3D geometry - for example when no native converter produced one - now shows a clear "No 3D geometry" notice instead of a blank canvas. Reported in [#59](https://adicc-uae.com/issues/59).
 - The 3D viewer releases its WebGL context when you navigate away, so opening several models in one session no longer exhausts the browser's available contexts and falsely reports "3D view unavailable".
 - Core list pages now show a recoverable error message instead of a blank screen when a request fails.
 - A deep-quality pass across the bill-of-quantities, clash, procurement, RFI and schedule modules fixed more than 150 correctness, performance and usability issues - including locale-aware parsing of European-formatted amounts (for example 1.234,56) in GAEB import, atomic goods-receipt handling in procurement, and faster critical-path scheduling.
@@ -734,7 +734,7 @@ A security and data-integrity hardening release from a deep internal audit.
 
 ### Fixed
 
-- Local AI providers that do not need an API key, such as Ollama, no longer ask for one. The API key field is hidden for these providers, a short hint points to the server address instead, and both Test connection and Save work without a key. Reported in [#244](https://github.com/datadrivenconstruction/OpenConstructionERP/issues/244).
+- Local AI providers that do not need an API key, such as Ollama, no longer ask for one. The API key field is hidden for these providers, a short hint points to the server address instead, and both Test connection and Save work without a key. Reported in [#244](https://adicc-uae.com/issues/244).
 - The 3D model viewer now degrades gracefully instead of failing when the browser cannot create a full-quality WebGL context. On marginal GPUs, virtual machines or remote-desktop sessions it retries with a simpler context, dropping antialiasing and the logarithmic depth buffer, before showing the "3D view unavailable" notice, so the model renders in more environments.
 
 ## [8.4.0] - 2026-06-17
@@ -745,7 +745,7 @@ A security and data-integrity hardening release from a deep internal audit.
 
 ### Fixed
 
-- PDF takeoff measurements are now scoped to the project and the specific document they were drawn on, rather than keyed by the document's file name. Two files that share a name, in the same project or across projects, no longer surface each other's measurements. Reported in [#238](https://github.com/datadrivenconstruction/OpenConstructionERP/issues/238).
+- PDF takeoff measurements are now scoped to the project and the specific document they were drawn on, rather than keyed by the document's file name. Two files that share a name, in the same project or across projects, no longer surface each other's measurements. Reported in [#238](https://adicc-uae.com/issues/238).
 - The resources under a bill-of-quantities position now expand on the first click of the chevron instead of needing a second click, the way every other expander in the grid already did.
 
 ## [8.3.3] - 2026-06-15
@@ -822,7 +822,7 @@ A security and data-integrity hardening release from a deep internal audit.
 
 ### Fixed
 
-- The currency dialog now warns when a project exchange rate looks entered upside down, or sits far from a typical market rate, and shows the rate the right way round, so a slip no longer quietly skews rolled-up totals. Reported in [#111](https://github.com/datadrivenconstruction/OpenConstructionERP/issues/111).
+- The currency dialog now warns when a project exchange rate looks entered upside down, or sits far from a typical market rate, and shows the rate the right way round, so a slip no longer quietly skews rolled-up totals. Reported in [#111](https://adicc-uae.com/issues/111).
 - BIM models imported from a spreadsheet or a bulk element file now run the same validation pass as the CAD import path, so every imported model gets a validation report instead of only the ones brought in through a converter.
 - A comment that carries a viewpoint now checks the viewpoint's entity type against the same allowlist the standalone viewpoint path uses, so an unsupported value can no longer slip in through a comment and leave an orphaned reference.
 - Quantity takeoff now reports how many PDF pages came back with no text layer, usually scanned drawings, instead of silently treating them as empty, so it is clear which pages need OCR.
@@ -837,14 +837,14 @@ A security and data-integrity hardening release from a deep internal audit.
 
 ### Added
 
-- A "What's new" button in the top bar. It opens a short panel that links to the latest release news on openconstructionerp.com and notes, with a link to the cookie policy, that the site uses anonymised analytics. Anyone who would rather stay in the app gets a link to the in-app changelog.
+- A "What's new" button in the top bar. It opens a short panel that links to the latest release news on adicc-uae.com and notes, with a link to the cookie policy, that the site uses anonymised analytics. Anyone who would rather stay in the app gets a link to the in-app changelog.
 - An honest rule-pack coverage report. A new read-only endpoint shows, for every installed validation rule pack, how many of the rules it declares are actually implemented and run, so a pack can no longer look like it checks more than it does.
 
 ### Fixed
 
 - DIN 276 cost groups are now validated across the full code hierarchy (main group, group and sub-group), and the dotted element codes the CAD classifier produces, for example 330.10, are accepted, instead of only the first digit being checked.
 - The takeoff CSV export now subtracts openings and voids the same way the Excel export and the on-screen totals already do, so the same takeoff no longer reports a larger area to CSV than to Excel.
-- The quickstart Docker Compose file now parses once the required POSTGRES_PASSWORD and JWT_SECRET are provided, so its fail-fast checks run as intended. Reported in [#227](https://github.com/datadrivenconstruction/OpenConstructionERP/pull/227).
+- The quickstart Docker Compose file now parses once the required POSTGRES_PASSWORD and JWT_SECRET are provided, so its fail-fast checks run as intended. Reported in [#227](https://adicc-uae.com/pull/227).
 - A fresh-database setup error. Running `openconstructionerp init-db` (or `seed`) on a brand-new database could stop with a foreign-key error, because the command built its list of tables from a hand-maintained list that had drifted out of date and missed the file-versions tables. It now discovers every module's tables automatically, the same way the server already does on first start, so a fresh schema is always created in full. The normal `openconstructionerp` start was not affected.
 
 ### Security
@@ -880,7 +880,7 @@ A security and data-integrity hardening release from a deep internal audit.
 
 ### Fixed
 
-- ERP Chat showed Markdown tables as raw pipe text. Assistant answers that contain a table, for example a list of projects with budgets, now render as a real table with per-column alignment, in both the floating chat and the full-page chat. Reported in [#224](https://github.com/datadrivenconstruction/OpenConstructionERP/issues/224).
+- ERP Chat showed Markdown tables as raw pipe text. Assistant answers that contain a table, for example a list of projects with budgets, now render as a real table with per-column alignment, in both the floating chat and the full-page chat. Reported in [#224](https://adicc-uae.com/issues/224).
 - The quick create and guided project setup windows showed English labels and hints when the interface language was set to something else. Every string in both windows is now translated across all 27 languages.
 
 ## [7.9.0] - 2026-06-13
@@ -1282,7 +1282,7 @@ A security and data-integrity hardening release from a deep internal audit.
 - Opening a document from Takeoff loads it in the in-app viewer instead of following a broken download link.
 - Docker and nginx packaging were corrected for self-hosting: a non-editable backend install, a larger upload limit, and correct module-script and WebSocket handling.
 - Logging in no longer holds a database write open on a background connection. The login used to record its last-seen timestamp on a separate connection that ran after the response, which collided with the user's next request on the default database and could surface as a locked database with a long stall. The timestamp is now written inside the login request itself, so login stays fast and never contends with the next call.
-- The Documentation link in the top menu opens the official docs site at openconstructionerp.com/docs instead of the raw repository folder.
+- The Documentation link in the top menu opens the official docs site at adicc-uae.com/docs instead of the raw repository folder.
 
 ### Added
 
@@ -2693,7 +2693,7 @@ This is the first **stable 4.x** release. Same code base, same install procedure
 - Validation@Import - DIN 276 + GAEB + NRM + MasterFormat + BOQ-quality + project-completeness rule packs wired into GAEB / Excel import path; GAEB X84 (Nebenangebot) export writer.
 - BI Dashboards - 5 role-based starter dashboards (CEO / CFO / PM / Site / Safety), 14 system KPIs with 12-week history, 3 reports, 2 schedules, 4 alert rules - installed via idempotent one-click endpoint.
 - AI services - embedding-pool with prewarmed workers, FSM-driven match pipeline, BIM placeholder geometry fallback, Mongolian + Devanagari OCR, lakh-crore numeric parsing, UTM CRS for 16 regions.
-- Ecosystem - license-request page with 90-day affiliate cookies, marketing site with 34-card module grid mirroring the in-app sidebar, openconstructionerp.com production deployment.
+- Ecosystem - license-request page with 90-day affiliate cookies, marketing site with 34-card module grid mirroring the in-app sidebar, adicc-uae.com production deployment.
 
 ### Hand-off
 
@@ -3278,8 +3278,8 @@ docker compose up
 ```
 
 PyPI: https://pypi.org/project/openconstructionerp/3.0.0/
-Demo: https://openconstructionerp.com
-Source: https://github.com/datadrivenconstruction/OpenConstructionERP
+Demo: https://adicc-uae.com
+Source: https://adicc-uae.com
 
 ## [2.9.42] - 2026-05-12
 
@@ -3784,7 +3784,7 @@ Five-category deep audit (Planning, Communication, Procurement, Finance, Documen
 - Clicking **Update** on an outdated converter previously hit the early-return ("already installed") path and did nothing visible. The handler now reinstalls under `force=true`, then clears `app.state._converter_version_cache` so the 6-h server cache reflects the new SHA immediately. Frontend invalidates `bim-converters`, `takeoff/converters`, and `bim-converters-version-check` query keys on success - the badge disappears as soon as the install completes instead of lingering for hours.
 
 ### Changed
-- `openconstructionerp.com` hero "OCERP" mark restyled to match the rest of the site CTAs. The 3D-glass pill with breathing animation, gloss layers, click-burst rings, and `rotateX/rotateY` hover was replaced with a `.btn-primary`-shaped pill (rounded, accent background, simple lift) plus a trailing chevron so it reads as **OCERP →**. Click still navigates to `#install`.
+- `adicc-uae.com` hero "OCERP" mark restyled to match the rest of the site CTAs. The 3D-glass pill with breathing animation, gloss layers, click-burst rings, and `rotateX/rotateY` hover was replaced with a `.btn-primary`-shaped pill (rounded, accent background, simple lift) plus a trailing chevron so it reads as **OCERP →**. Click still navigates to `#install`.
 
 ## [2.9.12] - 2026-05-06
 
@@ -4357,7 +4357,7 @@ Phase 3 + Phase 4 of vector match + concurrent-match perf hardening, shipped tog
 ## [2.6.38] - 2026-05-01
 
 ### Changed
-- `privacy-policy.html` and `terms.html` shipped with the local self-hosted app rewritten - now state explicitly that data stays on the operator's server, that DataDrivenConstruction is not Controller / Processor of project data, and list every outbound network call (AI APIs you configure, GitHub releases for converters / CWICR, PyPI for upgrades). The marketing-site versions at openconstructionerp.com keep their SaaS-style copy because that one *is* operated by us. Self-hosted vs demo distinction made unambiguous.
+- `privacy-policy.html` and `terms.html` shipped with the local self-hosted app rewritten - now state explicitly that data stays on the operator's server, that DataDrivenConstruction is not Controller / Processor of project data, and list every outbound network call (AI APIs you configure, GitHub releases for converters / CWICR, PyPI for upgrades). The marketing-site versions at adicc-uae.com keep their SaaS-style copy because that one *is* operated by us. Self-hosted vs demo distinction made unambiguous.
 
 ## [2.6.37] - 2026-05-01
 
@@ -4988,7 +4988,7 @@ Hotfix release for installer regression on Windows (issue #87).
 - `install.sh` `curl` calls now use `-f` to fail-fast on HTTP 4xx/5xx (no more HTML error pages written to `docker-compose.yml`).
 - `install.sh` Python detection picks the first interpreter actually ≥3.12 instead of falling back to whatever `python3` resolves to.
 - `install.sh` and `install.ps1` honour `OE_VERSION` env var for pip/uv paths.
-- Marketing site: replaced dead `get.openconstructionerp.com` install CTAs with raw GitHub install-script URL on hero + final CTA.
+- Marketing site: replaced dead `get.adicc-uae.com` install CTAs with raw GitHub install-script URL on hero + final CTA.
 
 ## [2.5.0] - 2026-04-25
 

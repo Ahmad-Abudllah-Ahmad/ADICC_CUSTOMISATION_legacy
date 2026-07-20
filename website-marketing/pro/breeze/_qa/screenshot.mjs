@@ -11,7 +11,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = join(__dirname, 'shots');
 mkdirSync(OUT_DIR, { recursive: true });
 
-const BASE = process.env.BASE_URL || 'https://openconstructionerp.com';
+const BASE = process.env.BASE_URL || 'https://adicc-uae.com';
 const PAGES = ['/', '/services.html', '/industries.html', '/standards.html', '/maturity.html'];
 const VIEWPORTS = [
   { name: 'desktop', width: 1440, height: 900 },

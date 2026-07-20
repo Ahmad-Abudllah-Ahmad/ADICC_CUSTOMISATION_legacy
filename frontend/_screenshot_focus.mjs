@@ -35,7 +35,7 @@ async function loadAndScroll(url) {
 }
 
 // ── 1. ask-block layout
-await loadAndScroll('https://openconstructionerp.com/industries.html');
+await loadAndScroll('https://adicc-uae.com');
 const ask = await page.locator('.ask-block').first();
 await ask.scrollIntoViewIfNeeded();
 await page.waitForTimeout(200);
@@ -50,7 +50,7 @@ await cta.screenshot({ path: join(OUT, 'industries.cta-buttons.png') });
 console.log('saved industries.cta-buttons.png');
 
 // ── 3. CTA on maturity (the start-assessment button)
-await loadAndScroll('https://openconstructionerp.com/maturity.html');
+await loadAndScroll('https://adicc-uae.com');
 const startBtn = await page.locator('button.btn-primary, a.btn-primary').first();
 await startBtn.scrollIntoViewIfNeeded();
 await page.waitForTimeout(200);

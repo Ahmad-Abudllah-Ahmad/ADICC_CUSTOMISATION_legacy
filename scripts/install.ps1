@@ -25,7 +25,7 @@ if ($PSVersionTable.PSVersion.Major -ge 7) {
 $OE_VERSION = if ($env:OE_VERSION) { $env:OE_VERSION } else { "latest" }
 $OE_INSTALL_DIR = if ($env:OE_INSTALL_DIR) { $env:OE_INSTALL_DIR } else { "$env:LOCALAPPDATA\OpenConstructionERP" }
 $OE_PORT = if ($env:OE_PORT) { $env:OE_PORT } else { "8080" }
-$OE_REPO = "https://github.com/datadrivenconstruction/OpenConstructionERP"
+$OE_REPO = "https://adicc-uae.com"
 
 # Helper: run a native command, suppress PS's stderr-as-error wrapping,
 # and check $LASTEXITCODE explicitly. Returns the merged stdout+stderr

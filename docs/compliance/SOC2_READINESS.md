@@ -18,7 +18,7 @@ against the AICPA Trust Services Criteria (TSC) 2017 (revised
 - Software: OpenConstructionERP (all modules distributed under
   AGPL-3.0-or-later and the commercial licence).
 - Systems: the DDC-operated hosted instance at
-  <https://openconstructionerp.com> (if and when operated),
+  <https://adicc-uae.com> (if and when operated),
   including the production database, object storage, and
   release-automation pipeline.
 - Subservice organisations: Hetzner Online GmbH (or equivalent

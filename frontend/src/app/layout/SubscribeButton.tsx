@@ -9,7 +9,7 @@ import clsx from 'clsx';
  * Newsletter Subscribe trigger in the header.
  *
  * Clicking opens the canonical newsletter form on the marketing site
- * (https://openconstructionerp.com/#newsletter) in a new tab. We do not
+ * (https://adicc-uae.com) in a new tab. We do not
  * embed an inline form anymore — the site is the single source of
  * truth for subscriptions, runs its own SMTP-backed pipeline, and
  * carries the up-to-date privacy copy.
@@ -23,7 +23,7 @@ import clsx from 'clsx';
  */
 
 const STORAGE_KEY = 'oe.newsletter_subscribed';
-const SUBSCRIBE_URL = 'https://openconstructionerp.com/#newsletter';
+const SUBSCRIBE_URL = 'https://adicc-uae.com';
 
 function getInitialSubscribed(): boolean {
   if (typeof window === 'undefined') return false;
@@ -45,7 +45,7 @@ export function SubscribeButton({ condensed = false }: { condensed?: boolean } =
   useEffect(() => {
     function handler(ev: MessageEvent) {
       if (
-        ev.origin === 'https://openconstructionerp.com' &&
+        ev.origin === 'https://adicc-uae.com' &&
         ev.data?.type === 'newsletter:subscribed'
       ) {
         try {
@@ -84,10 +84,10 @@ export function SubscribeButton({ condensed = false }: { condensed?: boolean } =
         type="button"
         onClick={handleClick}
         aria-label={t('header.subscribe.button_aria', {
-          defaultValue: 'Get release notes by email - opens the newsletter form on openconstructionerp.com',
+          defaultValue: 'Get release notes by email - opens the newsletter form on adicc-uae.com',
         })}
         title={t('header.subscribe.button_title', {
-          defaultValue: 'Get release notes by email (opens openconstructionerp.com)',
+          defaultValue: 'Get release notes by email (opens adicc-uae.com)',
         })}
         className={clsx(
           // Partner mode condenses to the icon-only form so the co-brand

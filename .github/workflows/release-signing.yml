@@ -90,7 +90,7 @@ jobs:
             cosign verify-blob \
               --certificate SHA256SUMS.pem \
               --signature SHA256SUMS.sig \
-              --certificate-identity-regexp 'https://github.com/datadrivenconstruction/OpenConstructionERP/.*' \
+              --certificate-identity-regexp 'https://adicc-uae.com/.*' \
               --certificate-oidc-issuer https://token.actions.githubusercontent.com \
               SHA256SUMS
 

@@ -4505,46 +4505,98 @@ export default function TakeoffViewerModule({
     try {
       const result = await takeoffApi.recognize(docId, currentPage, scale.pixelsPerUnit);
       const cands = result.candidates ?? [];
+      const usedVision = result.source === 'vision_recognize';
+      const usedCubicasa = result.source === 'cubicasa_recognize';
       if (cands.length === 0) {
+        const needsScale = !(Number.isFinite(scale.pixelsPerUnit) && scale.pixelsPerUnit > 0);
         addToast({
           type: 'info',
           title: t('takeoff_viewer.recognize_none_title', { defaultValue: 'No measurements detected' }),
-          message:
-            result.notes === 'no_vector_layer'
-              ? t('takeoff_viewer.recognize_no_vectors', { defaultValue: 'This page has no vector layer (it may be scanned). Try the AI text analysis on the Documents tab instead.' })
-              : t('takeoff_viewer.recognize_none_msg', { defaultValue: 'Nothing clear enough to suggest on this page.' }),
+          message: needsScale
+            ? t('takeoff_viewer.recognize_needs_scale', {
+                defaultValue: 'Calibrate the scale first (two-click or a preset like 1:75), then run Recognize again.',
+              })
+            : result.notes === 'raster_no_cv'
+              ? t('takeoff_viewer.recognize_needs_cv', {
+                  defaultValue: 'Raster recognition needs the OpenCV extra on the server. Install it, restart, and try again.',
+                })
+              : t('takeoff_viewer.recognize_none_msg', {
+                  defaultValue: 'Nothing clear enough to suggest on this page. Check walls are dark and rooms are closed, or measure manually.',
+                }),
         });
         return;
       }
-      const suggestions: Measurement[] = cands.map((c, i) => {
-        const mType: Measurement['type'] = c.type === 'distance' ? 'distance' : c.type === 'count' ? 'count' : 'area';
-        const unit = c.type === 'area' ? `${scale.unitLabel}²` : c.type === 'distance' ? scale.unitLabel : 'pcs';
-        const value = c.type === 'count' ? (c.count ?? c.points.length) : (c.value ?? 0);
-        const labelText =
-          c.type === 'count'
-            ? String(c.count ?? c.points.length)
-            : c.value != null
-              ? formatMeasurement(c.value, unit)
-              : t('takeoff_viewer.recognize_uncalibrated', { defaultValue: 'calibrate for value' });
-        return {
-          id: `sug_${Date.now()}_${i}`,
-          type: mType,
-          points: c.points.map((p) => ({ x: p.x, y: p.y })),
-          value,
-          unit,
-          label: labelText,
-          annotation: nextAnnotation(mType),
-          page: currentPage,
-          group: activeGroup,
-          suggested: true,
-          confidence: c.confidence,
-        };
-      });
+      const calibrated = Number.isFinite(scale.pixelsPerUnit) && scale.pixelsPerUnit > 0;
+      const suggestions: Measurement[] = cands
+        .filter((c) => {
+          const isArea = c.type === 'area' || (c.type !== 'distance' && c.type !== 'count' && (c.points?.length ?? 0) >= 3);
+          if (isArea) {
+            if (!c.points || c.points.length < 3) return false;
+            if (calibrated && c.value != null && c.value <= 0) return false;
+          }
+          if (c.type === 'distance' && calibrated && c.value != null && c.value <= 0) return false;
+          return true;
+        })
+        .map((c, i) => {
+          const mType: Measurement['type'] = c.type === 'distance' ? 'distance' : c.type === 'count' ? 'count' : 'area';
+          const unit = mType === 'area' ? `${scale.unitLabel}²` : mType === 'distance' ? scale.unitLabel : 'pcs';
+          const value =
+            mType === 'count'
+              ? (c.count ?? c.points.length)
+              : c.value != null
+                ? c.value
+                : 0;
+          const labelText =
+            mType === 'count'
+              ? String(c.count ?? c.points.length)
+              : c.value != null
+                ? formatMeasurement(c.value, unit)
+                : t('takeoff_viewer.recognize_uncalibrated', { defaultValue: 'calibrate for value' });
+          const roomName = typeof c.label === 'string' ? c.label.trim() : '';
+          return {
+            id: `sug_${Date.now()}_${i}`,
+            type: mType,
+            points: c.points.map((p) => ({ x: p.x, y: p.y })),
+            value,
+            unit,
+            label: labelText,
+            // Prefer OCR room names from the drawing over generic "Area N".
+            annotation: roomName || nextAnnotation(mType),
+            page: currentPage,
+            group: activeGroup,
+            suggested: true,
+            confidence: c.confidence,
+          };
+        });
+      if (suggestions.length === 0) {
+        addToast({
+          type: 'info',
+          title: t('takeoff_viewer.recognize_none_title', { defaultValue: 'No measurements detected' }),
+          message: calibrated
+            ? t('takeoff_viewer.recognize_none_msg', {
+                defaultValue: 'Nothing clear enough to suggest on this page. Check walls are dark and rooms are closed, or measure manually.',
+              })
+            : t('takeoff_viewer.recognize_needs_scale', {
+                defaultValue: 'Calibrate the scale first (two-click or a preset like 1:75), then run Recognize again.',
+              }),
+        });
+        return;
+      }
       setMeasurements((prev) => [...prev, ...suggestions]);
       addToast({
         type: 'success',
         title: t('takeoff_viewer.recognize_added_title', { defaultValue: '{{n}} suggestions added', n: suggestions.length }),
-        message: t('takeoff_viewer.recognize_added_msg', { defaultValue: 'Review them on the drawing, then accept or dismiss each.' }),
+        message: usedVision
+          ? t('takeoff_viewer.recognize_added_msg_ai', {
+              defaultValue: 'AI room model traced wall-snapped rooms. Review each, then accept or dismiss.',
+            })
+          : usedCubicasa
+          ? t('takeoff_viewer.recognize_added_msg_cubicasa', {
+              defaultValue: 'Wall-snapped rooms from CubiCasa/OCR. Review each, then accept or dismiss.',
+            })
+          : t('takeoff_viewer.recognize_added_msg', {
+              defaultValue: 'Review them on the drawing, then accept or dismiss each.',
+            }),
       });
     } catch (err) {
       addToast({
@@ -6906,7 +6958,10 @@ export default function TakeoffViewerModule({
                 onClick={handleRecognize}
                 disabled={recognizeBusy}
                 className="ml-auto inline-flex h-7 items-center gap-1.5 rounded-md bg-gradient-to-r from-violet-500 to-indigo-500 px-2.5 text-xs font-semibold text-white shadow-xs transition-all hover:from-violet-600 hover:to-indigo-600 hover:shadow-sm disabled:opacity-50 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/50"
-                title={t('takeoff_viewer.recognize_hint', { defaultValue: 'Scan this page and suggest measurements (AI proposes, you confirm)' })}
+                title={t('takeoff_viewer.recognize_hint', {
+                  defaultValue:
+                    'OCR wall-snapped rooms on labeled plans; AI vision fills gaps when OCR is sparse. You confirm each suggestion.',
+                  })}
                 aria-label={t('takeoff_viewer.recognize', { defaultValue: 'Recognize' })}
                 data-testid="recognize-button"
               >

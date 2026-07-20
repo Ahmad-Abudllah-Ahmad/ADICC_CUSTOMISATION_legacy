@@ -1042,7 +1042,7 @@ def create_app() -> FastAPI:
         description="Open-source modular platform for construction cost estimation",
         contact={
             "name": "DataDrivenConstruction · OpenConstructionERP",
-            "url": "https://openconstructionerp.com",
+            "url": "",
             "email": "info@datadrivenconstruction.io",
         },
         license_info={
@@ -1115,7 +1115,7 @@ def create_app() -> FastAPI:
         )
         cors_origins = [o for o in cors_origins if o != "*"]
         if not cors_origins:
-            cors_origins = ["https://openconstructionerp.com"]
+            cors_origins = [""]
 
     app.add_middleware(
         CORSMiddleware,
@@ -1555,7 +1555,7 @@ def create_app() -> FastAPI:
         """
         return {
             "license": "AGPL-3.0",
-            "source_code": "https://github.com/datadrivenconstruction/OpenConstructionERP",
+            "source_code": "",
             "copyright": "Copyright (c) 2026 Artem Boiko / DataDrivenConstruction",
             "notice": (
                 "This software is licensed under AGPL-3.0. "
@@ -1764,7 +1764,7 @@ def create_app() -> FastAPI:
             registration_mode=settings.registration_mode,
             analytics_bundled=False,
             license_name="AGPL-3.0",
-            repository="https://github.com/datadrivenconstruction/OpenConstructionERP",
+            repository="",
         )
 
     def _semver_tuple(v: str) -> tuple[int, ...]:
@@ -3229,7 +3229,7 @@ def create_app() -> FastAPI:
             )
             if _cli_data_dir:
                 logger.info("Data directory: %s", _cli_data_dir)
-            logger.info("Press Ctrl+C to stop. Docs: https://openconstructionerp.com/docs")
+            logger.info("Press Ctrl+C to stop. Docs: ")
         else:
             logger.info("Application started successfully")
 

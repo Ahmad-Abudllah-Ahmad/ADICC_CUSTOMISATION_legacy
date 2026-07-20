@@ -1,7 +1,7 @@
 import { chromium } from 'playwright';
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-await page.goto('https://openconstructionerp.com/', { waitUntil: 'networkidle' });
+await page.goto('https://adicc-uae.com', { waitUntil: 'networkidle' });
 
 // Find Pricing link in nav
 const links = await page.$$eval('a', (as) => as.filter(a => a.textContent?.trim() === 'Pricing').map(a => ({

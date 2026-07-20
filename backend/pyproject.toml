@@ -122,10 +122,10 @@ openconstructionerp = "app.cli:main"
 
 [project.urls]
 Homepage = "https://datadrivenconstruction.io/erp"
-Documentation = "https://openconstructionerp.com/docs"
-Repository = "https://github.com/datadrivenconstruction/OpenConstructionERP"
-Issues = "https://github.com/datadrivenconstruction/OpenConstructionERP/issues"
-Changelog = "https://github.com/datadrivenconstruction/OpenConstructionERP/blob/main/CHANGELOG.md"
+Documentation = "https://adicc-uae.com/docs"
+Repository = "https://adicc-uae.com"
+Issues = "https://adicc-uae.com/issues"
+Changelog = "https://adicc-uae.com/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 # Production add-ons: background tasks (Redis/Celery) + S3 storage. The
@@ -182,6 +182,14 @@ cv = [
     "paddleocr>=2.9.0",
     "Pillow>=12.1.1",
 ]
+# CubiCasa5K pretrained floor-plan room segmentation for Recognize.
+# Downloads ~200 MB weights to ~/.openestimate/models/cubicasa/ on first use
+# (or set OE_CUBICASA_WEIGHTS). CC BY-NC 4.0 research weights — non-commercial
+# use only. Without this extra Recognize falls through to vision LLM / OpenCV.
+floorplan-ml = [
+    "torch>=2.2.0",
+    "gdown>=5.0.0",
+]
 # E57 reader for the Point Cloud module (app/modules/pointcloud). The open
 # LAS/LAZ/COPC family is decoded out of the box (laspy + lazrs are base deps),
 # so this extra is now just E57: pye57 is a heavier native libE57 wheel that not
@@ -205,7 +213,7 @@ s3 = [
 ]
 # Everything
 all = [
-    "openconstructionerp[server,vector,semantic,cv,s3,pointcloud,analytics]",
+    "openconstructionerp[server,vector,semantic,cv,s3,pointcloud,analytics,floorplan-ml]",
 ]
 # Development tools
 dev = [

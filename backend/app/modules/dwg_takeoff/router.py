@@ -162,11 +162,21 @@ def _drawing_to_response(
 
 def _version_to_response(item: object) -> DwgDrawingVersionResponse:
     """Build a DwgDrawingVersionResponse from a DwgDrawingVersion ORM object."""
+    raw_layers = item.layers  # type: ignore[attr-defined]
+    layers = raw_layers if isinstance(raw_layers, list) else []
+    # Heal a past ezdxf bug: ``bool(layer.is_off)`` (method, always true)
+    # stored every layer as visible=false so room/door/window labels vanished
+    # from any client that honours the catalog. If *all* layers are off, treat
+    # that as corrupt metadata and expose them as visible.
+    if layers and all(
+        isinstance(layer, dict) and layer.get("visible") is False for layer in layers
+    ):
+        layers = [{**layer, "visible": True} for layer in layers if isinstance(layer, dict)]
     return DwgDrawingVersionResponse(
         id=item.id,  # type: ignore[attr-defined]
         drawing_id=item.drawing_id,  # type: ignore[attr-defined]
         version_number=item.version_number,  # type: ignore[attr-defined]
-        layers=item.layers,  # type: ignore[attr-defined]
+        layers=layers,
         entities_key=item.entities_key,  # type: ignore[attr-defined]
         entity_count=item.entity_count,  # type: ignore[attr-defined]
         extents=item.extents,  # type: ignore[attr-defined]

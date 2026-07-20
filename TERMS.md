@@ -6,7 +6,7 @@
 These Terms of Use ("Terms") govern use of the OpenConstructionERP
 software ("the Software") and, where applicable, the hosted instance
 operated by DataDrivenConstruction ("DDC") at
-`https://openconstructionerp.com` ("the Service"). By downloading,
+`https://adicc-uae.com` ("the Service"). By downloading,
 installing, or using the Software or the Service you agree to these
 Terms.
 

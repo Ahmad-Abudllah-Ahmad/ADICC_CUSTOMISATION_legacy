@@ -51,7 +51,7 @@ export function AppLayout({ title, children }: AppLayoutProps) {
 
   // When the user has white-labelled the workspace with their own company
   // name, the browser tab follows the same brand as the sidebar so the whole
-  // experience reads as "their" tool. Falls back to OpenConstructionERP.
+  // experience reads as "their" tool. Falls back to ADICC ERP.
   const brandName = useBrandingStore((s) => (s.companyName.trim() ? s.companyName.trim() : null));
 
   useEffect(() => {
@@ -59,7 +59,7 @@ export function AppLayout({ title, children }: AppLayoutProps) {
     // page heading uses, so the tab also follows the active language.
     const key = resolvePageTitleKey(title);
     const translated = title ? (key ? t(key, { defaultValue: title }) : title) : null;
-    const suffix = brandName ?? 'OpenConstructionERP';
+    const suffix = brandName ?? 'ADICC ERP';
     document.title = translated ? `${translated} | ${suffix}` : suffix;
     // i18n.language in deps so the tab re-translates on a language switch.
   }, [title, t, i18n.language, brandName]);

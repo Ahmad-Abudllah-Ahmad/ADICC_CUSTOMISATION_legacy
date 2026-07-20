@@ -466,6 +466,20 @@ function OfflineReadyBadge({
           },
           { duration: 45_000 },
         );
+      } else if (result.platform_unsupported && result.platform === 'darwin') {
+        addToast(
+          {
+            type: 'info',
+            title: t('dwg_takeoff.converter_install_mac_title', {
+              defaultValue: 'Set up a DWG reader on Mac',
+            }),
+            message:
+              (result.message || '') +
+              (result.instructions ? `\n\n${result.instructions}` : '') +
+              (result.download_url ? `\n\n${result.download_url}` : ''),
+          },
+          { duration: 60_000 },
+        );
       } else {
         addToast({
           type: 'warning',
@@ -1523,6 +1537,21 @@ export function DwgTakeoffPage() {
     setVisibleLayers(new Set(layers.map((l) => l.name)));
   }, [layers, selectedDrawingId]);
 
+  // When a re-parse adds layers (e.g. TEXT after LibreDWG upgrade) that were
+  // absent from the first filtered fetch, reveal them so labels are not stuck
+  // hidden behind a stale LINE/LWPOLYLINE-only visible set.
+  useEffect(() => {
+    if (seededLayersForDrawingRef.current !== selectedDrawingId) return;
+    if (fetchedLayers.length === 0 || visibleLayers.size === 0) return;
+    const missing = fetchedLayers.filter((l) => !visibleLayers.has(l.name));
+    if (missing.length === 0) return;
+    setVisibleLayers((prev) => {
+      const next = new Set(prev);
+      for (const l of missing) next.add(l.name);
+      return next;
+    });
+  }, [fetchedLayers, selectedDrawingId, visibleLayers]);
+
   // Initialize visible entity names when entities/layout change
   useEffect(() => {
     if (filteredEntities.length > 0) {
@@ -1604,9 +1633,12 @@ export function DwgTakeoffPage() {
   });
 
   // Debounce backend sync so the user can type "1:50" one character at a time
-  // without firing four PATCH requests.
+  // without firing four PATCH requests. Skip while conversion is running —
+  // those PATCHes used to queue behind the ODA transaction and trip the
+  // client 45s timeout ("Request timed out" right after upload).
   useEffect(() => {
     if (!selectedDrawingId) return;
+    if (drawingStatus === 'processing' || drawingStatus === 'uploaded') return;
     const handle = window.setTimeout(() => {
       updateScaleMutation.mutate({
         drawingId: selectedDrawingId,
@@ -1617,7 +1649,7 @@ export function DwgTakeoffPage() {
     return () => window.clearTimeout(handle);
     // intentionally excludes updateScaleMutation from deps - it's a stable ref
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDrawingId, drawingScale, scaleMode]);
+  }, [selectedDrawingId, drawingScale, scaleMode, drawingStatus]);
 
   // When the drawings list refreshes, hydrate local scale state from the
   // server-persisted fields (falling back to localStorage / defaults).
@@ -6465,18 +6497,11 @@ function ConversionProgressCard({
   );
 }
 
-/** Sub-component: one-click DWG converter installer.
+/** Sub-component: DWG converter installer / Mac setup guidance.
  *
- * Mounted by ConversionErrorCard when the backend signals "converter
- * missing" via the stable substring `DDC DwgExporter`. Calls the same
- * `POST /v1/takeoff/converters/dwg/install/` that /settings → Converters
- * uses, with a live progress bar (downloads ~150 MB of Qt6 DLLs on
- * Windows; Linux is unsupported and the response carries the apt-get
- * commands the user has to run themselves).
- *
- * On successful install, the file the user already uploaded is
- * pre-processed via `onInstalled` (delete-and-reupload, matching the
- * existing Retry semantics - backend has no re-convert endpoint).
+ * Mounted by ConversionErrorCard when the backend signals a missing DWG
+ * reader. On Windows/Linux this hits the one-click DDC installer. On macOS
+ * it probes for LibreDWG/ODA and surfaces install links (no fake success).
  */
 function InstallDwgConverterCTA({
   onInstalled,
@@ -6486,6 +6511,12 @@ function InstallDwgConverterCTA({
   const { t } = useTranslation();
   const addToast = useToastStore((s) => s.addToast);
   const [unsupportedMessage, setUnsupportedMessage] = useState<string | null>(null);
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const [instructions, setInstructions] = useState<string | null>(null);
+  const isMac =
+    typeof navigator !== 'undefined' &&
+    (/Mac|iPhone|iPad|iPod/i.test(navigator.platform) ||
+      /Mac OS X/i.test(navigator.userAgent));
 
   const installMutation = useMutation({
     mutationFn: () => installBIMConverter('dwg'),
@@ -6509,6 +6540,8 @@ function InstallDwgConverterCTA({
                 'Automated install is only available on Windows. On Linux, install the DDC DwgExporter manually.',
             }),
         );
+        setDownloadUrl(result.download_url || null);
+        setInstructions(result.instructions || null);
       } else {
         addToast({
           type: 'error',
@@ -6532,16 +6565,42 @@ function InstallDwgConverterCTA({
 
   if (unsupportedMessage) {
     return (
-      <div className="mt-4 rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-[11px] text-amber-700 dark:text-amber-200">
-        <p>{unsupportedMessage}</p>
-        <a
-          href="/settings?tab=converters"
-          className="mt-2 inline-flex items-center gap-1 text-amber-700 dark:text-amber-200 underline hover:no-underline"
-        >
-          {t('dwg_takeoff.conv_open_settings', {
-            defaultValue: 'Open Converters settings →',
-          })}
-        </a>
+      <div className="mt-4 rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-[11px] text-amber-700 dark:text-amber-200 space-y-2">
+        <p className="whitespace-pre-wrap">{unsupportedMessage}</p>
+        {instructions && (
+          <pre className="whitespace-pre-wrap text-[10px] opacity-90 font-mono bg-black/5 dark:bg-white/5 rounded p-2">
+            {instructions}
+          </pre>
+        )}
+        <div className="flex flex-wrap items-center gap-3">
+          {downloadUrl && (
+            <a
+              href={downloadUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 underline hover:no-underline"
+            >
+              {t('dwg_takeoff.conv_oda_download', {
+                defaultValue: 'Download ODA File Converter →',
+              })}
+            </a>
+          )}
+          <button
+            type="button"
+            onClick={() => installMutation.mutate()}
+            className="underline hover:no-underline"
+          >
+            {t('dwg_takeoff.conv_recheck', { defaultValue: 'Re-check install' })}
+          </button>
+          <a
+            href="/settings?tab=converters"
+            className="inline-flex items-center gap-1 underline hover:no-underline"
+          >
+            {t('dwg_takeoff.conv_open_settings', {
+              defaultValue: 'Open Converters settings →',
+            })}
+          </a>
+        </div>
       </div>
     );
   }
@@ -6552,7 +6611,7 @@ function InstallDwgConverterCTA({
         <ConverterInstallProgressBar
           converterId="dwg"
           installing={true}
-          sizeMb={150}
+          sizeMb={isMac ? 0 : 150}
         />
       </div>
     );
@@ -6567,15 +6626,24 @@ function InstallDwgConverterCTA({
         className="inline-flex items-center gap-1.5 rounded-md bg-emerald-600 text-white text-[11px] font-semibold px-3 py-1.5 hover:bg-emerald-700 transition-colors"
       >
         <Download size={12} />
-        {t('dwg_takeoff.conv_install_cta', {
-          defaultValue: 'Install DWG converter (1 click)',
-        })}
+        {isMac
+          ? t('dwg_takeoff.conv_detect_cta', {
+              defaultValue: 'Detect / set up DWG reader',
+            })
+          : t('dwg_takeoff.conv_install_cta', {
+              defaultValue: 'Install DWG converter (1 click)',
+            })}
       </button>
       <p className="mt-1.5 text-[10px] text-content-tertiary">
-        {t('dwg_takeoff.conv_install_hint', {
-          defaultValue:
-            'Downloads ~150 MB to ~/.openestimator/converters/ - Windows only. Takes 30-90 seconds.',
-        })}
+        {isMac
+          ? t('dwg_takeoff.conv_install_hint_mac', {
+              defaultValue:
+                'On Mac: for accurate floor plans install ODA File Converter into /Applications (or export DXF from CAD). brew install libredwg only gives a preview. Then re-upload.',
+            })
+          : t('dwg_takeoff.conv_install_hint', {
+              defaultValue:
+                'Downloads ~150 MB to ~/.openestimator/converters/ - Windows only. Takes 30-90 seconds.',
+            })}
       </p>
     </div>
   );
@@ -6593,11 +6661,14 @@ function ConversionErrorCard({
   onDelete?: () => void;
 }) {
   const { t } = useTranslation();
-  // Stable marker emitted by `_handle_dwg` when `find_converter('dwg')`
-  // returns None. Keeps the install CTA scoped - generic conversion
-  // failures (wrong version, corrupt file) should still show the
-  // "Retry / Delete" UX without an Install button that wouldn't help.
-  const isMissingConverter = !!message && message.includes('DDC DwgExporter');
+  // Install CTA when the backend says no DWG reader is available.
+  // Match DDC / ODA / LibreDWG install guidance — keep generic parse
+  // failures on the Retry/Delete path only.
+  const isMissingConverter =
+    !!message &&
+    /DDC DwgExporter|No DWG reader|ODA File Converter|brew install libredwg|not found on this server|no automatic installer/i.test(
+      message,
+    );
   return (
     <div className="flex flex-1 items-center justify-center p-6">
       <div
@@ -6621,17 +6692,17 @@ function ConversionErrorCard({
             <p className="text-xs text-content-tertiary mt-1 truncate" title={drawingName}>
               {drawingName}
             </p>
-            <p className="text-xs text-content-secondary mt-3 leading-relaxed">
-              {isMissingConverter
-                ? t('dwg_takeoff.conv_missing_message', {
-                    defaultValue:
-                      'OpenConstructionERP needs the DDC DwgExporter to read DWG files. Install it once - works for every DWG you upload after.',
-                  })
-                : message ||
-                  t('dwg_takeoff.conv_error_default', {
-                    defaultValue:
-                      'The server could not parse this file. Try re-saving as a newer DWG/DXF version or upload a different file.',
-                  })}
+            <p className="text-xs text-content-secondary mt-3 leading-relaxed whitespace-pre-wrap">
+              {message ||
+                (isMissingConverter
+                  ? t('dwg_takeoff.conv_missing_message', {
+                      defaultValue:
+                        'OpenConstructionERP needs a DWG reader to open .dwg files. On Windows use Install converter; on Mac install ODA File Converter or LibreDWG.',
+                    })
+                  : t('dwg_takeoff.conv_error_default', {
+                      defaultValue:
+                        'The server could not parse this file. Try re-saving as a newer DWG/DXF version or upload a different file.',
+                    }))}
             </p>
             {isMissingConverter && <InstallDwgConverterCTA onInstalled={onRetry} />}
             {(onRetry || onDelete) && (

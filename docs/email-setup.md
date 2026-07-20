@@ -64,7 +64,7 @@ async def submit_license_request(
     return inquiry
 ```
 
-CORS: `/api/v1/inquiries/*` must allow `openconstructionerp.com` + `localhost:8765` in
+CORS: `/api/v1/inquiries/*` must allow `adicc-uae.com` + `localhost:8765` in
 dev. Adjust `ALLOWED_ORIGINS` in `.env`.
 
 ---

@@ -1829,21 +1829,16 @@ class TakeoffService:
         doc_id: str,
         page: int,
         scale_pixels_per_unit: float | None,
+        user_id: str | None = None,
     ) -> dict[str, Any]:
-        """Detect candidate measurements from a PDF page's vector layer.
+        """Detect candidate measurements from a PDF page.
 
-        Offline, deterministic complement to ``analyze_document`` (which
-        sends text to an LLM): reads the stored PDF off disk, harvests the
-        page's vector drawings with PyMuPDF ``page.get_drawings()`` and runs
-        the pure :mod:`app.modules.takeoff.recognize` detectors. Nothing is
-        persisted - the candidates carry a confidence and a reason and are
-        confirmed by the user on the canvas (CLAUDE.md rule 7).
+        Prefer OCR / CubiCasa wall-snapped named rooms when they cover the plan
+        well. Vision-LLM is used to fill gaps (or as primary when OCR finds
+        almost nothing). Offline vector + OpenCV is last. Nothing is persisted —
+        candidates carry confidence/reason for canvas confirm.
 
-        Returns ``{candidates, page, source, notes}``. Honest failure modes:
-        PyMuPDF absent -> a 400 pointing at the optional ``cv`` extra; no
-        vector layer (a scanned/raster PDF) -> an empty candidate set with
-        ``notes='no_vector_layer'`` rather than fabricated geometry, with a
-        pointer to the online ``analyze`` path.
+        Returns ``{candidates, page, source, notes}``.
         """
         from app.modules.takeoff import recognize as _recognize
 
@@ -1879,29 +1874,64 @@ class TakeoffService:
                 ),
             ) from exc
 
-        # Render DPI for the raster fallback. The raster detector's morphology
-        # kernel is tuned in absolute pixels for ~150 DPI, so keep this in sync
-        # with app.modules.takeoff.raster_recognize.
-        raster_dpi = 150
-        raster_payload: tuple[bytes, int, int, int] | None = None
-        page_w_pt = page_h_pt = 0.0
         try:
             content = file_path.read_bytes()
+        except OSError:
+            logger.exception("takeoff.recognize failed to read PDF for doc %s", doc_id)
+            raise HTTPException(
+                status_code=422,
+                detail="Could not read this page. The PDF may be corrupt or password-protected.",
+            ) from None
+
+        # ── OCR / CubiCasa wall-snap (best recall on labeled floor-plan PDFs) ─
+        cubicasa_result = self._try_cubicasa_recognize(
+            content=content,
+            page=page,
+            scale_pixels_per_unit=scale_pixels_per_unit,
+        )
+        ocr_n = len((cubicasa_result or {}).get("candidates") or [])
+
+        # ── Vision LLM: use when OCR is weak, or merge-prefer if denser ─────
+        vision_result = await self._try_vision_recognize_rooms(
+            user_id=user_id,
+            content=content,
+            page=page,
+            scale_pixels_per_unit=scale_pixels_per_unit,
+        )
+        vision_n = len((vision_result or {}).get("candidates") or [])
+
+        # Labeled plans: OCR usually finds every printed room; sparse vision
+        # (2–3 boxes) must not win. Vision wins only when it finds clearly more.
+        if cubicasa_result is not None and ocr_n >= 4 and ocr_n >= vision_n:
+            return cubicasa_result
+        if vision_result is not None and vision_n > ocr_n:
+            return vision_result
+        if cubicasa_result is not None:
+            return cubicasa_result
+        if vision_result is not None:
+            return vision_result
+
+        # ── Offline fallback: vector + OpenCV raster ───────────────────────
+        # Render DPI for the raster path. Morphology kernels are tuned for ~150 DPI.
+        raster_dpi = 180
+        raster_payload: tuple[bytes, int, int, int] | None = None
+        page_w_pt = page_h_pt = 0.0
+        drawings: list[Any] = []
+        try:
             pdf = pymupdf.open(stream=content, filetype="pdf")
             try:
                 pg = pdf[page - 1]
-                drawings = pg.get_drawings()
+                drawings = list(pg.get_drawings() or [])
                 page_w_pt = float(pg.rect.width)
                 page_h_pt = float(pg.rect.height)
-                # No vector layer => scanned/raster page. Rasterise it so the
-                # OpenCV-based detector can still find rooms and walls.
-                if not drawings:
-                    try:
-                        pix = pg.get_pixmap(dpi=raster_dpi, alpha=False)
-                        raster_payload = (pix.samples, pix.h, pix.w, pix.n)
-                    except Exception:
-                        logger.exception("takeoff.recognize raster render failed for doc %s page %s", doc_id, page)
-                        raster_payload = None
+                # Always rasterise when possible. Many "vector" PDFs only carry
+                # sparse annotation paths; room areas still need the OpenCV path.
+                try:
+                    pix = pg.get_pixmap(dpi=raster_dpi, alpha=False)
+                    raster_payload = (pix.samples, pix.h, pix.w, pix.n)
+                except Exception:
+                    logger.exception("takeoff.recognize raster render failed for doc %s page %s", doc_id, page)
+                    raster_payload = None
             finally:
                 pdf.close()
         except HTTPException:
@@ -1913,17 +1943,12 @@ class TakeoffService:
                 detail="Could not read this page. The PDF may be corrupt or password-protected.",
             ) from None
 
-        # Vector layer present -> deterministic vector detector.
+        vector_candidates: list[dict[str, Any]] = []
         if drawings:
-            candidates = _recognize.recognize_candidates(drawings, scale_pixels_per_unit)
-            return {
-                "candidates": candidates,
-                "page": page,
-                "source": "vector_recognize",
-                "notes": None if candidates else "no_features",
-            }
+            vector_candidates = _recognize.recognize_candidates(drawings, scale_pixels_per_unit)
 
-        # Scanned / raster page -> OpenCV room + wall detection (cv extra).
+        raster_candidates: list[dict[str, Any]] = []
+        raster_notes: str | None = None
         if raster_payload is not None:
             try:
                 import numpy as np  # noqa: PLC0415 - lazy: optional 'cv' extra
@@ -1932,35 +1957,261 @@ class TakeoffService:
 
                 samples, height, width, channels = raster_payload
                 arr = np.frombuffer(samples, dtype=np.uint8).reshape(height, width, channels)
-                # PyMuPDF pixmaps are RGB(A); OpenCV wants contiguous BGR.
                 if channels >= 3:
                     image_bgr = np.ascontiguousarray(arr[:, :, 2::-1])
                 else:
                     image_bgr = arr.reshape(height, width)
-                candidates = _raster.recognize_raster(image_bgr, page_w_pt, page_h_pt, scale_pixels_per_unit)
-                return {
-                    "candidates": candidates,
-                    "page": page,
-                    "source": "raster_recognize",
-                    "notes": None if candidates else "raster_no_features",
-                }
+                raster_candidates = _raster.recognize_raster(
+                    image_bgr, page_w_pt, page_h_pt, scale_pixels_per_unit
+                )
             except ImportError:
-                # OpenCV / numpy (the 'cv' extra) is not installed - degrade
-                # honestly instead of pretending nothing was found.
-                return {
-                    "candidates": [],
-                    "page": page,
-                    "source": "raster_recognize",
-                    "notes": "raster_no_cv",
-                }
+                raster_notes = "raster_no_cv"
             except Exception:
                 logger.exception("takeoff.recognize raster detection failed for doc %s page %s", doc_id, page)
+                raster_notes = "raster_failed"
+
+        vector_areas = [c for c in vector_candidates if c.get("type") == "area"]
+        raster_areas = [c for c in raster_candidates if c.get("type") == "area"]
+        # Prefer raster rooms when the vector layer is empty / sparse / weak —
+        # that is the common case for scanned architectural sheets and for
+        # PDFs whose only vectors are title-block or hatch fragments.
+        use_raster_rooms = (not vector_areas) or (len(vector_areas) < 3 and len(raster_areas) >= len(vector_areas))
+        if use_raster_rooms and raster_areas:
+            lengths = [c for c in vector_candidates if c.get("type") == "distance"]
+            counts = [c for c in vector_candidates if c.get("type") == "count"]
+            raster_lengths = [c for c in raster_candidates if c.get("type") == "distance"]
+            # Keep the stronger length set; vector strokes beat Hough when both exist.
+            # Named-room coverage: drop distance clutter (same rule as raster_recognize).
+            named = sum(1 for c in raster_areas if c.get("label"))
+            if named >= 3:
+                raster_lengths = raster_lengths[:2]
+                lengths = lengths[:2] if lengths else raster_lengths
+            merged = list(raster_areas) + (lengths if lengths else raster_lengths) + counts
+            merged.sort(key=lambda c: c.get("confidence", 0.0), reverse=True)
+            return {
+                "candidates": merged[:40],
+                "page": page,
+                "source": "hybrid_recognize" if drawings else "raster_recognize",
+                "notes": None if merged else (raster_notes or "raster_no_features"),
+            }
+
+        if vector_candidates:
+            return {
+                "candidates": vector_candidates,
+                "page": page,
+                "source": "vector_recognize",
+                "notes": None,
+            }
+
+        if raster_candidates:
+            return {
+                "candidates": raster_candidates,
+                "page": page,
+                "source": "raster_recognize",
+                "notes": None,
+            }
 
         return {
             "candidates": [],
             "page": page,
-            "source": "vector_recognize",
-            "notes": "no_vector_layer",
+            "source": "vector_recognize" if drawings else "raster_recognize",
+            "notes": raster_notes or ("no_features" if drawings else "no_vector_layer"),
+        }
+
+    def _try_cubicasa_recognize(
+        self,
+        *,
+        content: bytes,
+        page: int,
+        scale_pixels_per_unit: float | None,
+    ) -> dict[str, Any] | None:
+        """Run CubiCasa5K pretrained room segmentation; ``None`` = soft skip."""
+        try:
+            import pymupdf  # noqa: PLC0415
+            import numpy as np  # noqa: PLC0415
+
+            from app.modules.takeoff.cubicasa import recognize_cubicasa
+        except ImportError:
+            return None
+
+        # Always attempt: OCR wall-snap works without CubiCasa weights; the
+        # neural path soft-skips when torch/weights are missing.
+        try:
+            pdf = pymupdf.open(stream=content, filetype="pdf")
+            try:
+                if page < 1 or page > pdf.page_count:
+                    return None
+                pg = pdf[page - 1]
+                page_w_pt = float(pg.rect.width)
+                page_h_pt = float(pg.rect.height)
+                pix = pg.get_pixmap(dpi=180, alpha=False)
+                arr = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.h, pix.w, pix.n)
+                if pix.n >= 3:
+                    image_bgr = np.ascontiguousarray(arr[:, :, 2::-1])
+                else:
+                    image_bgr = arr.reshape(pix.h, pix.w)
+            finally:
+                pdf.close()
+        except Exception:
+            logger.exception("takeoff.recognize CubiCasa rasterize failed for page %s", page)
+            return None
+
+        try:
+            candidates = recognize_cubicasa(
+                image_bgr,
+                page_w_pt,
+                page_h_pt,
+                scale_pixels_per_unit,
+            )
+        except Exception:
+            logger.exception("takeoff.recognize CubiCasa inference failed")
+            return None
+
+        if not candidates:
+            return None
+        return {
+            "candidates": candidates[:40],
+            "page": page,
+            "source": "cubicasa_recognize",
+            "notes": None,
+        }
+
+    async def _try_vision_recognize_rooms(
+        self,
+        *,
+        user_id: str | None,
+        content: bytes,
+        page: int,
+        scale_pixels_per_unit: float | None,
+    ) -> dict[str, Any] | None:
+        """Run vision room polygons for Recognize; ``None`` means use offline CV.
+
+        Soft-fails (returns ``None``) when there is no AI key, the model is not
+        vision-capable, rasterize fails, or the provider returns nothing usable.
+        Never raises for missing keys — Recognize must stay usable offline.
+        """
+        if not user_id or not content:
+            return None
+
+        try:
+            provider, api_key, model_override, effective_model = await self._resolve_plan_read_provider(
+                user_id
+            )
+        except HTTPException:
+            return None
+        except Exception:
+            logger.exception("takeoff.recognize vision provider resolve failed")
+            return None
+
+        from app.modules.ai.ai_client import call_ai, extract_json
+        from app.modules.ai.prompts import (
+            PLAN_READ_ROOMS_INSTRUCTION,
+            PLAN_READ_SCALE_INSTRUCTION,
+            PLAN_READ_VISION_PROMPT,
+            PLAN_READ_VISION_SYSTEM_PROMPT,
+            fence_user_content,
+        )
+        from app.modules.takeoff import plan_read as _pr
+        from app.modules.takeoff.schemas import TAKEOFF_CONFIDENCE_MEDIUM_THRESHOLD
+
+        try:
+            png, media_type, _dpi, page_w_pt, page_h_pt = _pr.rasterize_page(content, page)
+        except Exception:
+            logger.exception("takeoff.recognize vision rasterize failed for page %s", page)
+            return None
+
+        prompt = PLAN_READ_VISION_PROMPT.format(
+            mode_instructions="\n\n".join(
+                [PLAN_READ_SCALE_INSTRUCTION, PLAN_READ_ROOMS_INSTRUCTION]
+            ),
+            discipline_hint=fence_user_content("", max_len=500),
+        )
+        import base64
+
+        try:
+            raw_response, _tokens = await call_ai(
+                provider=provider,
+                api_key=api_key,
+                system=PLAN_READ_VISION_SYSTEM_PROMPT,
+                prompt=prompt,
+                image_base64=base64.b64encode(png).decode("utf-8"),
+                image_media_type=media_type,
+                max_tokens=max(_PLAN_READ_MAX_TOKENS, 4096),
+                model=model_override,
+            )
+        except Exception:
+            logger.warning(
+                "takeoff.recognize vision call failed (provider=%s model=%s); falling back to offline CV",
+                provider,
+                effective_model,
+                exc_info=True,
+            )
+            return None
+
+        parsed = extract_json(raw_response)
+        result, dropped = _pr.parse_plan_read_response(
+            parsed,
+            page=page,
+            page_width_pt=page_w_pt,
+            page_height_pt=page_h_pt,
+        )
+        if not result.rooms:
+            logger.info(
+                "takeoff.recognize vision returned no rooms (dropped=%s); falling back to offline CV",
+                dropped,
+            )
+            return None
+
+        scale_ratio = scale_pixels_per_unit
+        if (scale_ratio is None or scale_ratio <= 0) and result.scale is not None:
+            scale_ratio = _pr.scale_ratio_from_plan_scale(result.scale, page_w_pt, page_h_pt)
+
+        candidates: list[dict[str, Any]] = []
+        for room in result.rooms:
+            pdf_points = _pr.norm_polygon_to_pdf_points(room.polygon, page_w_pt, page_h_pt)
+            if len(pdf_points) < 3:
+                continue
+            self_intersects = _pr.polygon_self_intersects(pdf_points)
+            if self_intersects:
+                continue
+            area_pt2 = _pr.shoelace_area(pdf_points)
+            if area_pt2 < 4.0:
+                continue
+            value: float | None = None
+            if scale_ratio and scale_ratio > 0:
+                value = area_pt2 / (scale_ratio * scale_ratio)
+                if value is None or value <= 0:
+                    continue
+            name = (room.name or "").strip() or None
+            confidence = round(min(0.92, max(0.55, float(room.confidence))), 2)
+            if confidence >= TAKEOFF_CONFIDENCE_MEDIUM_THRESHOLD:
+                confidence = round(min(0.92, confidence), 2)
+            candidates.append(
+                {
+                    "type": "area",
+                    "points": [{"x": p[0], "y": p[1]} for p in pdf_points],
+                    "value": value,
+                    "dimension": "area",
+                    "count": None,
+                    "confidence": confidence,
+                    "reason": (
+                        f"AI room “{name}” wall-traced (verify)"
+                        if name
+                        else "AI room wall-traced (verify)"
+                    ),
+                    "label": name,
+                }
+            )
+
+        if not candidates:
+            return None
+
+        candidates.sort(key=lambda c: c.get("confidence", 0.0), reverse=True)
+        return {
+            "candidates": candidates[:40],
+            "page": page,
+            "source": "vision_recognize",
+            "notes": None,
         }
 
     async def find_similar_symbols(

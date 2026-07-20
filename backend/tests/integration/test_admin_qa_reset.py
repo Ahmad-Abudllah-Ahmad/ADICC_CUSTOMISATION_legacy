@@ -110,7 +110,7 @@ async def test_gate_production_hostname_rejects(gate_env):
     async with lifespan_ctx():
         transport = ASGITransport(app=app)
         # Use a hostname without any safe substring (no localhost/staging/test/qa/dev).
-        async with AsyncClient(transport=transport, base_url="http://app.openconstructionerp.com") as ac:
+        async with AsyncClient(transport=transport, base_url="http://app.adicc-uae.com") as ac:
             res = await ac.post(
                 "/api/v1/admin/qa-reset",
                 json={"tenant": "demo", "confirm_token": "test-token-xyz"},

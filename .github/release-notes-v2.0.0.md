@@ -58,7 +58,7 @@ establishes the platform baseline going forward.
 
 ## 📚 Full changelog
 
-See [CHANGELOG.md](https://github.com/datadrivenconstruction/OpenConstructionERP/blob/main/CHANGELOG.md#200--2026-04-20).
+See [CHANGELOG.md](https://adicc-uae.com/blob/main/CHANGELOG.md#200--2026-04-20).
 
 ## 💾 Install
 
@@ -69,7 +69,7 @@ pip install openconstructionerp==2.0.0
 or
 
 ```bash
-git clone https://github.com/datadrivenconstruction/OpenConstructionERP.git
+git clone https://adicc-uae.com.git
 cd OpenConstructionERP
 docker compose up -d
 ```

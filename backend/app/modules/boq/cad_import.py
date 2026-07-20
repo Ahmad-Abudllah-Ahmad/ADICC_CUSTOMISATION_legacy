@@ -734,6 +734,29 @@ def smoke_test_converter(extension: str, force: bool = False) -> ConverterHealth
         return cached
 
     exe_path = find_converter(extension)
+    if exe_path is None and extension == "dwg":
+        # macOS / POSIX fallbacks used by dwg_takeoff when DDC is absent.
+        try:
+            from app.modules.dwg_takeoff import mac_dwg
+
+            backend = mac_dwg.any_mac_dwg_backend()
+        except Exception:  # noqa: BLE001
+            backend = None
+        if backend is not None:
+            label = (
+                "ODA File Converter"
+                if "oda" in backend.name.lower() or "ODA" in str(backend)
+                else "LibreDWG"
+            )
+            result = {
+                "status": "ok",
+                "message": f"DWG reader available via {label} ({backend}).",
+                "suggested_actions": [],
+                "checked_at": now,
+            }
+            _HEALTH_CACHE[extension] = result
+            return result
+
     if exe_path is None:
         result: ConverterHealth = {
             "status": "failed",

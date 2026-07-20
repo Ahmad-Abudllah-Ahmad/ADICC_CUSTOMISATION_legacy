@@ -56,11 +56,11 @@ DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8080
 MIN_PYTHON = (3, 12)
 
-DOCS_URL = "https://openconstructionerp.com/docs"
-TROUBLESHOOTING_URL = "https://openconstructionerp.com/docs#troubleshooting"
-ISSUES_URL = "https://github.com/datadrivenconstruction/OpenConstructionERP/issues"
+DOCS_URL = ""
+TROUBLESHOOTING_URL = ""
+ISSUES_URL = ""
 COMMUNITY_URL = "https://t.me/datadrivenconstruction"
-GITHUB_URL = "https://github.com/datadrivenconstruction/OpenConstructionERP"
+GITHUB_URL = ""
 
 logger = logging.getLogger("openestimate.cli")
 

@@ -90,9 +90,9 @@ _TILE_UPSTREAM = "https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.
 _TILE_CACHE: OrderedDict[str, tuple[bytes, str]] = OrderedDict()
 _TILE_CACHE_MAX = 4096
 _TILE_HEADERS = {
-    "User-Agent": "OpenConstructionERP/1.0 (+https://openconstructionerp.com)",
+    "User-Agent": "OpenConstructionERP/1.0 (+",
     "Accept": "image/png,image/*;q=0.8,*/*;q=0.5",
-    "Referer": "https://openconstructionerp.com/",
+    "Referer": "",
 }
 # A basemap tile for a fixed z/x/y is effectively immutable for a week, so we
 # let the browser AND any shared cache hold onto it. ``immutable`` stops the

@@ -50,7 +50,7 @@ import { fetchUsers, type User, type UserRole } from '@/features/users/api';
 
 // Commercial license request page on the marketing site. The product is
 // AGPL-3.0; this is the honest upgrade path (no in-app payment flow).
-const LICENSE_REQUEST_URL = 'https://openconstructionerp.com/license-request.html';
+const LICENSE_REQUEST_URL = 'https://adicc-uae.com';
 const AGPL_URL = 'https://www.gnu.org/licenses/agpl-3.0.html';
 
 // ── Role display config (icon + badge variant). The human labels are read

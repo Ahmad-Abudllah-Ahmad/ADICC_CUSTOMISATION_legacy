@@ -97,7 +97,7 @@ See existing modules (`boq`, `costs`, `projects`) for reference implementations.
 
 ## Reporting Issues
 
-- Use [GitHub Issues](https://github.com/datadrivenconstruction/OpenConstructionERP/issues)
+- Use [GitHub Issues](https://adicc-uae.com/issues)
 - Include: version, steps to reproduce, expected vs actual behavior
 - For security issues, see [SECURITY.md](SECURITY.md)
 
@@ -110,7 +110,7 @@ First-time contributors will be asked to sign a CLA via a GitHub bot.
 
 ## Questions?
 
-- Open a [Discussion](https://github.com/datadrivenconstruction/OpenConstructionERP/discussions)
+- Open a [Discussion](https://adicc-uae.com/discussions)
 - Join our community chat (coming soon)
 
 Thank you for helping make construction cost estimation open and accessible!

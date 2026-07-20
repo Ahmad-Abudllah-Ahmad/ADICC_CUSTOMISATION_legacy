@@ -7,12 +7,35 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator, model_validator
 
 _HTML_TAG_RE = re.compile(r"<[^>]+>")
 _CURRENCY_CODE_RE = re.compile(r"^[A-Z]{3}$")
 _DECIMAL_RE = re.compile(r"^[0-9]+(\.[0-9]+)?$")
 _UNIT_CODE_RE = re.compile(r"^[A-Za-z0-9._/²³-]{1,20}$")
+# ``client_id`` column is String(36). The create form historically posted a
+# free-text client/owner name into this field; names longer than 36 chars
+# 422'd. Accept longer input and relocate non-id values into custom_fields.
+_UUID_RE = re.compile(
+    r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+)
+
+
+def _relocate_client_name_fields(
+    client_id: str | None,
+    custom_fields: dict[str, Any] | None,
+) -> tuple[str | None, dict[str, Any] | None]:
+    """Move free-text client names out of the 36-char ``client_id`` slot."""
+    if client_id is None:
+        return None, custom_fields
+    text = client_id.strip()
+    if not text:
+        return None, custom_fields
+    if _UUID_RE.match(text) and len(text) <= 36:
+        return text, custom_fields
+    fields = dict(custom_fields or {})
+    fields.setdefault("client_name", text)
+    return None, fields
 
 # Valid date formats accepted by the platform (ISO 8601 preferred)
 _DATE_FORMATS = ("%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%d.%m.%Y", "%m/%d/%Y")
@@ -341,7 +364,9 @@ class ProjectCreate(BaseModel):
     project_code: str | None = Field(default=None, max_length=50)
     project_type: str | None = Field(default=None, max_length=50)
     phase: str | None = Field(default=None, max_length=50)
-    client_id: str | None = Field(default=None, max_length=36)
+    # Accept free-text client/owner names from older clients; normalised
+    # into custom_fields.client_name by ``_normalise_client_id``.
+    client_id: str | None = Field(default=None, max_length=255)
     parent_project_id: UUID | None = None
     address: dict[str, Any] | None = None
     country_code: str | None = Field(
@@ -358,6 +383,13 @@ class ProjectCreate(BaseModel):
             return v
         cc = v.strip().upper()
         return cc or None
+
+    @model_validator(mode="after")
+    def _normalise_client_id(self) -> "ProjectCreate":
+        cid, fields = _relocate_client_name_fields(self.client_id, self.custom_fields)
+        self.client_id = cid
+        self.custom_fields = fields
+        return self
 
     contract_value: str | None = Field(default=None, max_length=50)
     planned_start_date: str | None = Field(default=None, max_length=20)
@@ -490,7 +522,7 @@ class ProjectUpdate(BaseModel):
     project_code: str | None = Field(default=None, max_length=50)
     project_type: str | None = Field(default=None, max_length=50)
     phase: str | None = Field(default=None, max_length=50)
-    client_id: str | None = Field(default=None, max_length=36)
+    client_id: str | None = Field(default=None, max_length=255)
     parent_project_id: UUID | None = None
     address: dict[str, Any] | None = None
     country_code: str | None = Field(
@@ -507,6 +539,16 @@ class ProjectUpdate(BaseModel):
             return v
         cc = v.strip().upper()
         return cc or None
+
+    @model_validator(mode="after")
+    def _normalise_client_id(self) -> "ProjectUpdate":
+        cid, fields = _relocate_client_name_fields(self.client_id, self.custom_fields)
+        self.client_id = cid
+        # Only overwrite custom_fields when we relocated a name, so a
+        # patch that omits custom_fields doesn't clear unrelated keys.
+        if fields is not self.custom_fields:
+            self.custom_fields = fields
+        return self
 
     contract_value: str | None = Field(default=None, max_length=50)
     planned_start_date: str | None = Field(default=None, max_length=20)

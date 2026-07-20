@@ -1190,16 +1190,13 @@ export function MatchWizardFlow() {
               'CAD-BIM Match → Cost is a new section and still has rough edges. Found a bug or have an idea? Please file an issue - every report tightens the next release.',
           })}
         </p>
-        <a
-          href="https://github.com/datadrivenconstruction/OpenConstructionERP/issues/new?labels=match-elements&template=bug_report.yml"
-          target="_blank"
-          rel="noopener noreferrer"
+        <span
           className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-300/60 bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-amber-900 shadow-sm transition-all hover:-translate-y-px hover:bg-amber-50 dark:border-amber-700/40 dark:bg-surface-primary/80 dark:text-amber-100 dark:hover:bg-amber-900/30"
         >
           <MessageSquarePlus className="h-3 w-3" />
           {t('match_elements.beta_cta', { defaultValue: 'Open an issue' })}
           <ExternalLink className="h-2.5 w-2.5 opacity-70" />
-        </a>
+        </span>
       </div>
 
       {/* Vector-DB readiness — probed up front so the user knows whether

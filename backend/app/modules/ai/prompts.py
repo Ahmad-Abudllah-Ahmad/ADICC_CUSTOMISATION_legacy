@@ -384,11 +384,31 @@ scale, return "scale": null. Never guess a ratio.\
 """
 
 PLAN_READ_ROOMS_INSTRUCTION = """\
-Trace each enclosed room as an ordered polygon of 4 to 60 normalized vertices \
-that follows the inner face of its walls. Read the room name from text printed \
-inside the room (use an empty string if there is no readable name). Score each \
-room's confidence by how clearly its boundary and name are readable. Do NOT \
-report furniture, hatching, or dimension lines as rooms.\
+Trace EVERY distinctly labeled enclosed room as its own ordered polygon.
+Prefer 4-corner axis-aligned rectangles when the room is rectangular; use \
+more vertices only for true L/U shapes. Every vertex must sit on the INNER \
+face of a wall (wall-snapped), never floating in open space or cutting \
+through walls.
+
+Room naming and splitting (critical):
+- Read the room name ONLY from text printed inside that room (BEDROOM, \
+KITCHEN, LIVING ROOM, DINING ROOM, DRAWING ROOM, OFFICE, GARAGE, LAUNDRY, \
+FOYER, MASTER BATH, C. BATH, CLOSET, OTS, PARKING, STORAGE, etc.). Use \
+Title Case. Empty string only if no label.
+- One polygon per labeled room. Never merge adjacent rooms (e.g. do NOT put \
+Living + Dining + Foyer into one "Dining Room" polygon). Open doorways still \
+split rooms at the door opening midpoint.
+- Closets, baths, laundry, and garage each get their own polygon when labeled \
+or clearly enclosed.
+- Repeat names that appear more than once (two BEDROOM labels) as separate \
+polygons; you may suffix " 1", " 2" only when needed to disambiguate.
+- Do NOT invent rooms (no fake Kitchen / Entry / Living Room) when the plan \
+already labels the space differently. Do NOT report furniture, appliances, \
+hatching, stairs symbols alone, dimension strings, or the title block as rooms.
+- Do NOT emit tiny fragment polygons, spiky contours, or multiple overlapping \
+polygons for the same room. One clean polygon per room label.
+
+Score each room's confidence by how clearly its boundary and name are readable.\
 """
 
 PLAN_READ_SYMBOLS_INSTRUCTION = """\

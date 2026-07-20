@@ -46,4 +46,4 @@ Allow: /
 User-agent: Bingbot
 Allow: /
 
-Sitemap: https://openconstructionerp.com/sitemap.xml
+Sitemap: https://adicc-uae.com/sitemap.xml

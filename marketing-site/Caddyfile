@@ -18,11 +18,11 @@ prozesswerk.31.97.123.81.nip.io {
   file_server
 }
 
-www.openconstructionerp.com {
-  redir https://openconstructionerp.com{uri} permanent
+adicc-uae.com {
+  redir https://adicc-uae.com{uri} permanent
 }
 
-openconstructionerp.com {
+adicc-uae.com {
   encode zstd gzip
 
   header {

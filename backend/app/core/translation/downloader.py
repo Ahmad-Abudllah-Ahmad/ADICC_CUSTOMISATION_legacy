@@ -61,7 +61,7 @@ _DOWNLOAD_TIMEOUT = httpx.Timeout(connect=10.0, read=300.0, write=30.0, pool=10.
 _IATE_ALLOWED_PREFIXES: tuple[str, ...] = (
     "https://iate.europa.eu/",
     "https://datadrivenconstruction.io/",
-    "https://openconstructionerp.com/",
+    "",
     "https://github.com/datadrivenconstruction/",
     "https://raw.githubusercontent.com/datadrivenconstruction/",
 )

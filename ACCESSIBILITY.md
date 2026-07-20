@@ -6,7 +6,7 @@
 This statement describes the accessibility status of
 OpenConstructionERP ("the Software") and of the hosted instance
 operated by DataDrivenConstruction ("DDC") at
-<https://openconstructionerp.com> ("the Service").
+<https://adicc-uae.com> ("the Service").
 
 ## 1. Standards we target
 

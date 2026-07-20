@@ -34,6 +34,9 @@ from typing import Any
 # A segment must be at least this many PDF points long to be considered a
 # real stroke (filters hatching, leader ticks and rendering noise).
 _MIN_SEGMENT_PX = 18.0
+# How close the first/last vertex of a path must be to treat it as a closed
+# room loop. Slightly looser than a single segment so door gaps still seal.
+_LOOP_CLOSE_PX = 28.0
 # A closed loop must enclose at least this pixel-squared area to count as a
 # region worth measuring (filters glyph outlines and tiny symbols).
 _MIN_AREA_PX2 = 600.0
@@ -193,8 +196,9 @@ def primitives_from_drawings(drawings: list[Any]) -> list[_Primitive]:
                         chain.append(a)
                     chain.append(b)
         # A path whose vertices return to the start is a closed loop.
-        if len(chain) >= 4 and _seg_length(chain[0], chain[-1]) <= _MIN_SEGMENT_PX:
-            prims.append(_Primitive("loop", chain[:-1]))
+        if len(chain) >= 4 and _seg_length(chain[0], chain[-1]) <= _LOOP_CLOSE_PX:
+            closed = chain[:-1] if _seg_length(chain[0], chain[-1]) <= _MIN_SEGMENT_PX else chain
+            prims.append(_Primitive("loop", closed))
         else:
             for a, b in loose:
                 if _seg_length(a, b) >= _MIN_SEGMENT_PX:
@@ -232,17 +236,22 @@ def detect_areas(prims: list[_Primitive], scale: float) -> list[dict[str, Any]]:
         x0, y0, x1, y1 = _bbox(pts)
         if math.hypot(x1 - x0, y1 - y0) < _SYMBOL_MAX_DIAG_PX:
             continue  # too small - handled by the count detector
+        if _segments_self_intersect(pts):
+            # Bow-ties / crossed hatch paths show as 0.00 m² or wild shapes on
+            # the canvas — skip rather than ask the user to clean them up.
+            continue
         if prim.kind == "rect" or _is_axis_rectangular(pts):
             confidence, reason = 0.85, "Closed rectangle in the drawing's vector layer"
-        elif _segments_self_intersect(pts):
-            confidence, reason = 0.3, "Closed region (self-intersecting outline, verify)"
         else:
             confidence, reason = 0.62, "Closed polygon region in the vector layer"
+        value = _area_value(pts, scale)
+        if scale and scale > 0 and (value is None or value <= 0):
+            continue
         out.append(
             {
                 "type": "area",
                 "points": [{"x": p[0], "y": p[1]} for p in pts],
-                "value": _area_value(pts, scale),
+                "value": value,
                 "dimension": "area",
                 "confidence": confidence,
                 "reason": reason,

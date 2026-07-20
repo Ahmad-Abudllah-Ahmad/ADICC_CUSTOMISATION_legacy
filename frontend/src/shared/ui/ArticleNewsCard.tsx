@@ -15,7 +15,7 @@ import { ArrowUpRight, Newspaper } from 'lucide-react';
  * `sidebar.video_news.*` i18n keys for the title/subtitle.
  */
 
-const ARTICLE_URL = 'https://openconstructionerp.com/uberization-of-construction/';
+const ARTICLE_URL = 'https://adicc-uae.com';
 
 export function ArticleNewsCard() {
   const { t } = useTranslation();

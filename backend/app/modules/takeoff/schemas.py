@@ -135,10 +135,18 @@ class RecognizeCandidate(BaseModel):
     count: int | None = None
     confidence: float = 0.0
     reason: str = ""
+    # OCR / drawing room name when available (e.g. "Living Room"); UI uses this
+    # as the measurement annotation instead of a generic "Area N".
+    label: str | None = None
 
 
 class RecognizeResponse(BaseModel):
-    """Result of offline vector recognition for one page (nothing persisted)."""
+    """Result of Recognize for one page (nothing persisted).
+
+    ``source`` is ``cubicasa_recognize`` when the CubiCasa5K pretrained model
+    produced candidates, ``vision_recognize`` for the AI room path, otherwise
+    offline ``raster_recognize`` / ``hybrid_recognize`` / ``vector_recognize``.
+    """
 
     candidates: list[RecognizeCandidate] = Field(default_factory=list)
     page: int
@@ -495,10 +503,11 @@ class LinkToBoqRequest(BaseModel):
 
 # ── Vision-LLM plan reading (issue #194) ────────────────────────────────────
 #
-# The vision-LLM path is an ADDITIONAL, higher-quality suggestion source that
-# sits alongside the offline OpenCV "Recognize" tool, never replacing it. Every
-# model output is a SUGGESTION carrying a real confidence; nothing is applied to
-# the takeoff or the BOQ without an explicit human accept (CLAUDE.md rule 7).
+# The vision-LLM path is the preferred high-quality room source for Recognize
+# when a BYO AI key is configured. Offline OpenCV Recognize remains the
+# fallback. Every model output is a SUGGESTION carrying a real confidence;
+# nothing is applied to the takeoff or the BOQ without an explicit human accept
+# (CLAUDE.md rule 7).
 #
 # Takeoff-local confidence band thresholds, mirroring the canonical values in
 # ``ai_estimator/service.py`` (0.78 / 0.62). Exposed through ``/plan-read/meta``

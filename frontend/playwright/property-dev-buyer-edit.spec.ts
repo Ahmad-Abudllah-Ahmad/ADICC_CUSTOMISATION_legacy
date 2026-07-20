@@ -22,7 +22,7 @@
  *   .tests-artifacts/r6/property_dev/buyer_edit/04_after_save.png
  *   .tests-artifacts/r6/property_dev/buyer_edit/05_table_refreshed.png
  *
- * Demo creds note: the openconstructionerp.com domain has an 'r' in it
+ * Demo creds note: the adicc-uae.com domain has an 'r' in it
  * (not "openestimate.io"); see ``feedback_demo_creds.md`` for context.
  */
 import { test, expect, type Page } from '@playwright/test';

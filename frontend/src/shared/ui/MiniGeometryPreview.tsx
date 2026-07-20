@@ -18,6 +18,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { installWebGLPrecisionShim } from '@/shared/ui/BIMViewer/webglPrecisionShim';
 
 /* ── Props ──────────────────────────────────────────────────────────────── */
 
@@ -172,11 +173,19 @@ export function MiniGeometryPreview({
     if (!canvas || !modelId || elementIds.length === 0) return;
 
     // --- Init Three.js ---
-    const renderer = new THREE.WebGLRenderer({
-      canvas,
-      antialias: true,
-      alpha: false,
-    });
+    installWebGLPrecisionShim();
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        canvas,
+        antialias: true,
+        alpha: false,
+      });
+    } catch (err) {
+      console.warn('[MiniGeometryPreview] WebGL unavailable:', err);
+      errorRef.current = true;
+      return;
+    }
     renderer.setPixelRatio(1);
     renderer.setSize(width, height);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;

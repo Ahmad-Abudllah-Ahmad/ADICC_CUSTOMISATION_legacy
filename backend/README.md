@@ -145,7 +145,7 @@ The lint rule set is `E, F, W, I, N, UP, B, A, C4, PT, RET, SIM`. The exact conf
 
 ## Links
 
-- Docs: https://openconstructionerp.com
+- Docs: https://adicc-uae.com
 - Issues: https://github.com/DataDrivenConstruction/OpenConstructionERP/issues
 - Source: https://github.com/DataDrivenConstruction/OpenConstructionERP
 

@@ -13,6 +13,7 @@ import asyncio
 import json
 import logging
 import os
+import shutil
 import uuid
 from datetime import UTC, datetime
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
@@ -330,6 +331,9 @@ def _normalize_entity(raw: dict[str, Any], index: int) -> dict[str, Any]:
         # renders the drawing's real font instead of a generic fallback.
         result["style"] = gd.get("style", "")
         result["font"] = gd.get("font", "")
+        # MTEXT insert is an attachment point (default top-left=1), not baseline.
+        if entity_type == "MTEXT":
+            result["attachment_point"] = int(gd.get("attachment_point") or 1)
     elif entity_type == "INSERT":
         result["start"] = gd.get("insert") or gd.get("insertion_point")
         result["block_name"] = gd.get("block_name") or gd.get("name", "")
@@ -1259,6 +1263,9 @@ class DwgTakeoffService:
     async def _process_drawing(self, drawing_id: uuid.UUID, file_path: str) -> None:
         """Process a DXF file: parse layers/entities, generate thumbnail."""
         await self.drawing_repo.update_fields(drawing_id, status="processing")
+        # Large ODA DXFs can take tens of seconds to parse — do not hold a
+        # write transaction across that work (blocks scale PATCH / polls).
+        await self.session.commit()
 
         # Prepare storage keys
         entities_key = f"{drawing_id}/entities.json"
@@ -1303,6 +1310,7 @@ class DwgTakeoffService:
                     else None
                 ),
             )
+            await self.session.commit()
 
             if is_empty:
                 logger.warning(
@@ -1389,29 +1397,57 @@ class DwgTakeoffService:
             detect_converter_capabilities = None  # type: ignore[assignment]
             _converter_subprocess_env = None  # type: ignore[assignment]
 
+        # Prefer DDC when present (Windows/Linux). On macOS (and as a
+        # Linux fallback) use ODA File Converter → DXF, then LibreDWG
+        # dwg2SVG + GeoJSON. LibreDWG's dwg2dxf is intentionally NOT used:
+        # it often emits DXF that ezdxf cannot load for modern AC#### files.
         if converter is None:
-            # Actionable install path - the previous message ("Please upload
-            # DXF format") hid the fact that DWG conversion is supported and
-            # just needs a one-time install. Surfacing the Quantities-page
-            # link + the GitHub manual fallback closes the support loop the
-            # multi-user reports landed in (the Offline Ready pill on the
-            # /dwg-takeoff page also offers a one-click install via the
-            # same /v1/takeoff/converters/dwg/install/ endpoint).
-            await self.drawing_repo.update_fields(
+            await self.drawing_repo.update_fields(drawing_id, status="processing")
+            # Release the row lock BEFORE ODA/LibreDWG runs (can take minutes).
+            # Holding the transaction across conversion blocked concurrent
+            # PATCHes (e.g. scale) for 45s+ and the UI showed "Request timed out".
+            await self.session.commit()
+            convert_timeout_s = int(os.getenv("OE_DWG_CONVERT_TIMEOUT_S", "300"))
+            handled = await self._handle_dwg_without_ddc(
                 drawing_id,
-                status="error",
-                error_message=(
+                file_path,
+                timeout_s=convert_timeout_s,
+            )
+            if handled:
+                return
+            import sys
+
+            from app.modules.dwg_takeoff.mac_dwg import oda_download_url
+
+            is_mac = sys.platform == "darwin"
+            if is_mac:
+                msg = (
+                    "No DWG reader found on this Mac. Install ODA File Converter "
+                    f"from {oda_download_url()} into /Applications (best quality, "
+                    "keeps layer names), or run `brew install libredwg` for a "
+                    "geometry fallback. You can also export DXF from your CAD "
+                    "app and upload that instead."
+                )
+            else:
+                msg = (
                     "DWG conversion requires the DDC DwgExporter binary, "
                     "which was not found on this server. Click the "
                     '"Install converter" pill at the top right of /dwg-takeoff, '
                     "or download manually from "
                     "https://github.com/datadrivenconstruction/cad2data-Revit-IFC-DWG-DGN. "
                     "DXF files work without the converter."
-                ),
+                )
+            await self.drawing_repo.update_fields(
+                drawing_id,
+                status="error",
+                error_message=msg,
             )
             return
 
         await self.drawing_repo.update_fields(drawing_id, status="processing")
+        # Same as the ODA path: commit before the long subprocess so other
+        # requests (scale PATCH, status polls) are not stuck on a row lock.
+        await self.session.commit()
 
         import subprocess
         from pathlib import Path as _Path
@@ -1590,6 +1626,156 @@ class DwgTakeoffService:
                 error_message=f"DWG parsing error: {exc}"[:500],
             )
             logger.exception("Failed to parse DWG %s: %s", drawing_id, exc)
+
+    async def _handle_dwg_without_ddc(
+        self,
+        drawing_id: uuid.UUID,
+        file_path: str,
+        *,
+        timeout_s: int,
+    ) -> bool:
+        """Try ODA → DXF or LibreDWG (SVG + GeoJSON) when DDC DwgExporter is missing.
+
+        Returns True when a backend handled the file (success or a specific
+        conversion failure already persisted). Returns False when no Mac/POSIX
+        backend is available so the caller can emit the install message.
+        """
+        from app.modules.dwg_takeoff import mac_dwg
+
+        oda = mac_dwg.find_oda_file_converter()
+        if oda is not None:
+            try:
+                dxf_path = await asyncio.to_thread(
+                    mac_dwg.convert_dwg_to_dxf_via_oda,
+                    file_path,
+                    timeout_s=timeout_s,
+                )
+                # ODA writes into a temp dir — copy into durable uploads storage.
+                upload_dir = _get_upload_dir()
+                durable_dxf = os.path.join(upload_dir, f"{drawing_id}.dxf")
+                await asyncio.to_thread(shutil.copy2, dxf_path, durable_dxf)
+                await self.drawing_repo.update_fields(
+                    drawing_id,
+                    file_format="dxf",
+                    file_path=durable_dxf,
+                    error_message=None,
+                )
+                await self.session.commit()
+                await self._process_drawing(drawing_id, durable_dxf)
+                # Tag version so the UI can distinguish ODA fidelity from LibreDWG.
+                version = await self.version_repo.get_latest_for_drawing(drawing_id)
+                if version is not None:
+                    md = dict(version.metadata_ or {})
+                    md.update(
+                        {
+                            "dwg_backend": "oda",
+                            "source": "oda_file_converter",
+                            "accuracy": "dxf",
+                        }
+                    )
+                    await self.version_repo.update_fields(version.id, metadata_=md)
+                logger.info("DWG %s converted via ODA File Converter → DXF", drawing_id)
+                return True
+            except Exception as exc:
+                logger.warning("ODA conversion failed for %s: %s", drawing_id, exc)
+                # Fall through to LibreDWG if present.
+
+        if (
+            mac_dwg.find_libredwg_dwg2svg() is not None
+            or mac_dwg.find_libredwg_dwgread() is not None
+        ):
+            try:
+                result = await asyncio.to_thread(
+                    mac_dwg.convert_dwg_via_libredwg,
+                    file_path,
+                    timeout_s=timeout_s,
+                )
+                await self._persist_parsed_dwg_entities(
+                    drawing_id,
+                    result,
+                    source_label="LibreDWG",
+                )
+                return True
+            except Exception as exc:
+                logger.exception("LibreDWG conversion failed for %s", drawing_id)
+                await self.drawing_repo.update_fields(
+                    drawing_id,
+                    status="error",
+                    error_message=(
+                        f"LibreDWG could not read this DWG accurately: {exc}. "
+                        f"Install ODA File Converter from {mac_dwg.oda_download_url()} "
+                        "for full sheet/layer fidelity, or export DXF from your CAD app."
+                    )[:500],
+                )
+                return True
+
+        return False
+
+    async def _persist_parsed_dwg_entities(
+        self,
+        drawing_id: uuid.UUID,
+        result: dict[str, Any],
+        *,
+        source_label: str,
+    ) -> None:
+        """Persist entities/version/thumbnail from a non-DDC DWG parse."""
+        from app.modules.dwg_takeoff import mac_dwg
+
+        if int(result.get("entity_count") or 0) == 0:
+            await self.drawing_repo.update_fields(
+                drawing_id,
+                status="error",
+                error_message="No drawable entities found in DWG file",
+            )
+            return
+
+        entities_key = f"{drawing_id}/entities.json"
+        entities_path = os.path.join(_get_entities_dir(), entities_key)
+        os.makedirs(os.path.dirname(entities_path), exist_ok=True)
+        with open(entities_path, "w", encoding="utf-8") as f:
+            json.dump(result["entities"], f)
+
+        thumbnail_key = f"{drawing_id}/thumbnail.svg"
+        try:
+            svg = mac_dwg.entities_to_svg_thumbnail(result)
+            thumb_dir = os.path.join(_dwg_data_base(), "dwg_thumbnails")
+            thumb_path = os.path.join(thumb_dir, thumbnail_key)
+            os.makedirs(os.path.dirname(thumb_path), exist_ok=True)
+            with open(thumb_path, "w", encoding="utf-8") as f:
+                f.write(svg)
+        except Exception:  # noqa: BLE001 - thumbnail is best-effort
+            logger.warning("Could not write SVG thumbnail for %s", drawing_id)
+            thumbnail_key_val: str | None = None
+        else:
+            thumbnail_key_val = thumbnail_key
+
+        version_number = await self.version_repo.get_next_version_number(drawing_id)
+        version = DwgDrawingVersion(
+            drawing_id=drawing_id,
+            version_number=version_number,
+            layers=result["layers"],
+            entities_key=entities_key,
+            entity_count=result["entity_count"],
+            extents=result["extents"],
+            units=result.get("units", "unitless"),
+            status="ready",
+            metadata_={"dwg_backend": source_label.lower().replace(" ", "_")},
+        )
+        self.session.add(version)
+        await self.drawing_repo.update_fields(
+            drawing_id,
+            status="ready",
+            error_message=None,
+            thumbnail_key=thumbnail_key_val,
+        )
+        await self.session.commit()
+        logger.info(
+            "DWG processed via %s: %s - %d entities, %d layers",
+            source_label,
+            drawing_id,
+            result["entity_count"],
+            len(result["layers"]),
+        )
 
     # ── Drawing CRUD ────────────────────────────────────────────────────
 
@@ -2421,9 +2607,42 @@ class DwgTakeoffService:
             logger.exception("Failed to load entities for drawing %s", drawing_id)
             return []
 
-        # Filter by visible layers if specified
+        # Prefer the version's fit extents when present so LibreDWG outlier
+        # coordinates (absorbed into stored JSON before clipping existed) do
+        # not force the canvas zoom to ~0%.
+        extents = version.extents if isinstance(version.extents, dict) else None
+        if extents and all(k in extents for k in ("min_x", "min_y", "max_x", "max_y")):
+            try:
+                from app.modules.dwg_takeoff import mac_dwg
+
+                clipped = [
+                    e for e in entities if mac_dwg.entity_intersects_extents(e, extents)
+                ]
+                if len(clipped) >= max(50, int(len(entities) * 0.15)):
+                    entities = clipped
+            except Exception:  # noqa: BLE001 - never fail entity load on clip
+                logger.debug("Entity extent clip skipped for %s", drawing_id, exc_info=True)
+
+        # Filter by visible layers if specified. Always keep TEXT/MTEXT layers
+        # that exist on disk but are missing from a stale layer catalog (common
+        # after LibreDWG re-parses that add labels without rewriting version.layers).
         if visible_layers is not None:
             visible_set = set(visible_layers)
+            catalog = {
+                str(layer.get("name") or "")
+                for layer in (
+                    version.layers
+                    if isinstance(version.layers, list)
+                    else (version.layers or {}).values()  # type: ignore[union-attr]
+                    if isinstance(version.layers, dict)
+                    else []
+                )
+                if isinstance(layer, dict)
+            }
+            file_layers = {str(e.get("layer") or "0") for e in entities}
+            for name in file_layers - catalog:
+                if name.upper() in {"TEXT", "MTEXT"} or name.upper().startswith("TEXT"):
+                    visible_set.add(name)
             entities = [e for e in entities if e.get("layer", "0") in visible_set]
 
         # Normalize entity format for frontend consumption:
@@ -2749,10 +2968,10 @@ class DwgTakeoffService:
     def get_offline_readiness() -> dict[str, Any]:
         """Probe local DWG converter availability.
 
-        The parser itself (ezdxf + ddc_dwg_parser) is fully local, so the
-        only thing that could push the user online is the ``DwgExporter``
-        binary needed for the ``.dwg`` path. DXF files already work without
-        it. Returns a dict matching :class:`DwgOfflineReadinessResponse`.
+        Ready when any of these are present: DDC ``DwgExporter``, ODA File
+        Converter, or LibreDWG ``dwg2SVG`` / ``dwgread``. DXF files already
+        work without any of them. Returns a dict matching
+        :class:`DwgOfflineReadinessResponse`.
         """
         try:
             from app.modules.boq.cad_import import find_converter
@@ -2761,25 +2980,49 @@ class DwgTakeoffService:
         except ImportError:
             converter = None
 
-        if converter is None:
+        if converter is not None:
             return {
-                "ready": False,
-                "converter_available": False,
-                "version": None,
-                "message": ("Install dwg2data to enable offline DWG conversion. DXF files already work without it."),
+                "ready": True,
+                "converter_available": True,
+                "version": getattr(converter, "name", None),
+                "message": "DWG conversion runs locally via DDC DwgExporter.",
             }
 
-        version: str | None = None
         try:
-            version = converter.name
-        except Exception:  # noqa: BLE001 - defensive: filesystem quirks
-            version = None
+            from app.modules.dwg_takeoff import mac_dwg
+
+            oda = mac_dwg.find_oda_file_converter()
+            if oda is not None:
+                return {
+                    "ready": True,
+                    "converter_available": True,
+                    "version": oda.name,
+                    "message": "DWG conversion runs locally via ODA File Converter.",
+                }
+            libre = mac_dwg.find_libredwg_dwg2svg() or mac_dwg.find_libredwg_dwgread()
+            if libre is not None:
+                return {
+                    "ready": True,
+                    "converter_available": True,
+                    "version": libre.name,
+                    "message": (
+                        "DWG opens via LibreDWG as a preview (blocks/sheets may be "
+                        "incomplete). Install ODA File Converter from "
+                        f"{mac_dwg.oda_download_url()} or upload a DXF for accurate "
+                        "floor plans and layer names."
+                    ),
+                }
+        except Exception:  # noqa: BLE001 - probe must never raise
+            logger.debug("macOS/POSIX DWG backend probe failed", exc_info=True)
 
         return {
-            "ready": True,
-            "converter_available": True,
-            "version": version,
-            "message": "DWG conversion runs locally on this machine.",
+            "ready": False,
+            "converter_available": False,
+            "version": None,
+            "message": (
+                "Install a DWG reader to enable offline .dwg conversion. "
+                "DXF files already work without it."
+            ),
         }
 
 

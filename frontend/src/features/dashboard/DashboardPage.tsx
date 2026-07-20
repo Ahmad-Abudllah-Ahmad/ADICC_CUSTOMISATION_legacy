@@ -2602,10 +2602,7 @@ function DashboardPageInner() {
         <span aria-hidden className="h-3 w-px bg-border-light" />
 
         {/* Open-source pill - slimmer (was a heavy gradient card) */}
-        <a
-          href="https://github.com/datadrivenconstruction/OpenConstructionERP"
-          target="_blank"
-          rel="noopener noreferrer"
+        <span
           className="group/oss inline-flex items-center gap-2 text-xs font-medium text-content-secondary hover:text-content-primary transition-colors"
         >
           <span className="relative flex h-2 w-2 shrink-0">
@@ -2614,7 +2611,7 @@ function DashboardPageInner() {
           </span>
           <span>{t('dashboard.open_source_badge', { defaultValue: 'Open-source construction ERP' })}</span>
           <ExternalLink size={11} className="text-content-quaternary group-hover/oss:text-oe-blue transition-colors" />
-        </a>
+        </span>
 
         <span aria-hidden className="h-3 w-px bg-border-light" />
 

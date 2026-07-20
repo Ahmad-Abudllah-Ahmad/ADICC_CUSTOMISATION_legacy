@@ -48,6 +48,9 @@ export interface Project {
   metadata: Record<string, unknown>;
   /** Building type, e.g. "office" / "hospital" - maps to a benchmark cell. */
   project_type?: string | null;
+  /** Contact/CRM id when linked; free-text client names live in custom_fields. */
+  client_id?: string | null;
+  custom_fields?: Record<string, unknown> | null;
   /** Gross floor area in m2 GFA as a decimal-string. Used by Cost Benchmarks. */
   gross_floor_area?: string | null;
   /** RFC 37 #88 — additional currencies + FX rate to project.currency. */
@@ -74,7 +77,9 @@ export interface CreateProjectData {
   /** Phase-12 expansion fields — all optional on the backend schema. */
   project_code?: string | null;
   project_type?: string | null;
+  /** Contact/CRM id (UUID string, max 36). Prefer ``custom_fields.client_name`` for free text. */
   client_id?: string | null;
+  custom_fields?: Record<string, unknown> | null;
   contract_value?: string | null;
   budget_estimate?: string | null;
   planned_start_date?: string | null;

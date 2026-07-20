@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Marketing-site form API with email + SMTP delivery.
 
-All openconstructionerp.com marketing forms POST here through Caddy
+All adicc-uae.com marketing forms POST here through Caddy
 (``/api/* -> 172.19.0.1:8891/...``) so they share a single SMTP path
 and a single per-IP rate-limiter. Backend FastAPI restarts during a
 deploy do NOT interrupt form submission because this service is its
@@ -280,7 +280,7 @@ PARTNERS_DATA_FILE = "/root/clawd/partner-applications.jsonl"
 # falls over. We keep it separate from the lead JSONL files so the
 # operations data stays clean.
 EMAIL_FAILURE_LOG = "/root/clawd/email-delivery-failures.jsonl"
-BASE_URL = os.environ.get("BASE_URL", "https://openconstructionerp.com")
+BASE_URL = os.environ.get("BASE_URL", "https://adicc-uae.com")
 
 
 def _log_email_failure(endpoint: str, recipient: str, error: str) -> None:
@@ -436,7 +436,7 @@ def make_license_customer_email(data, ref_id):
 <p style="font-size:14px;color:#64748b;margin-top:12px;">If anything is urgent, just reply to this email or write to <a href="mailto:info@datadrivenconstruction.io" style="color:#0066ff;">info@datadrivenconstruction.io</a>.</p>
 </div>
 <div style="text-align:center;margin-top:24px;font-size:12px;color:#94a3b8;">
-<p><a href="https://openconstructionerp.com" style="color:#94a3b8;">openconstructionerp.com</a> &middot; DataDrivenConstruction.io &middot; Graben-Neudorf, Germany</p>
+<p><a href="https://adicc-uae.com" style="color:#94a3b8;">adicc-uae.com</a> &middot; DataDrivenConstruction.io &middot; Graben-Neudorf, Germany</p>
 </div>
 </body></html>'''
 
@@ -564,8 +564,8 @@ def _make_generic_customer_email(data: dict, ref_id: str, kind: str) -> str:
         "</div>"
         "<div style=\"text-align:center;margin-top:24px;font-size:12px;"
         "color:#94a3b8;\">"
-        "<p><a href=\"https://openconstructionerp.com\" "
-        "style=\"color:#94a3b8;\">openconstructionerp.com</a> &middot; "
+        "<p><a href=\"https://adicc-uae.com\" "
+        "style=\"color:#94a3b8;\">adicc-uae.com</a> &middot; "
         "DataDrivenConstruction.io &middot; Graben-Neudorf, Germany</p>"
         "</div></body></html>"
     )
@@ -590,7 +590,7 @@ Activate Demo Access</a>
 <p style="font-size:13px;color:#888;">Or copy: <a href="{verify_url}" style="color:#2563eb;">{verify_url}</a></p>
 </div>
 <div style="text-align:center;margin-top:24px;font-size:12px;color:#aaa;">
-<p><a href="https://openconstructionerp.com" style="color:#888;">openconstructionerp.com</a>
+<p><a href="https://adicc-uae.com" style="color:#888;">adicc-uae.com</a>
 &middot; <a href="mailto:info@datadrivenconstruction.io" style="color:#888;">info@datadrivenconstruction.io</a></p>
 </div></body></html>'''
 
@@ -1034,8 +1034,8 @@ class Handler(BaseHTTPRequestHandler):
                 "If this wasn't you, just ignore this email - we will not add "
                 "you again.</p>"
                 "<p style=\"font-size:12px;color:#94a3b8;margin-top:22px;\">"
-                "<a href=\"https://openconstructionerp.com\" "
-                "style=\"color:#94a3b8;\">openconstructionerp.com</a> &middot; "
+                "<a href=\"https://adicc-uae.com\" "
+                "style=\"color:#94a3b8;\">adicc-uae.com</a> &middot; "
                 "DataDrivenConstruction.io</p></body></html>"
             )
             send_email(email, "Welcome to OpenConstructionERP updates", html)

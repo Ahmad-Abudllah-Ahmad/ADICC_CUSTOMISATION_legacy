@@ -263,6 +263,8 @@ export interface BIMConverterInstallResult {
   message: string;
   /** Linux / macOS — the OS has no Windows-style auto-install path. */
   platform_unsupported?: boolean;
+  /** macOS DWG — direct link to ODA File Converter guest download. */
+  download_url?: string;
   /** Linux only — apt package name and a copy-pasteable script. */
   apt_package?: string;
   instructions?: string;

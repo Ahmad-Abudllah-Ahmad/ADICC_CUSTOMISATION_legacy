@@ -167,7 +167,7 @@ CURRENT_PUBKEY_HEX: str = "00000000000000000000000000000000000000000000000000000
 # which is hosted on a separate origin from the package CDN so a
 # single-CDN compromise doesn't take both down.
 DEFAULT_MANIFEST_URL: str = "https://pkg.datadrivenconstruction.io/oe/manifest.json"
-FALLBACK_MANIFEST_URL: str = "https://openconstructionerp.com/manifest.json"
+FALLBACK_MANIFEST_URL: str = ""
 
 # Signature is fetched from <manifest_url>.sig - the same convention
 # Debian uses for InRelease/Release.gpg. Keeping it as a sibling URL

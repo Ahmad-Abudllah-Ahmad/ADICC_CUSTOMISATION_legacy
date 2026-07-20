@@ -12,6 +12,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CameraTween, type CameraState } from './CameraTween';
 import { AdaptiveResolution } from './adaptiveResolution';
 import { cappedDevicePixelRatio } from './pixelRatio';
+import { installWebGLPrecisionShim } from './webglPrecisionShim';
 import type { BIMQualityMode } from '@/stores/useBIMViewerStore';
 
 export interface Viewpoint {
@@ -156,6 +157,9 @@ export class SceneManager {
    * WebGL-less environment reaches the final throw, which BIMViewer catches.
    */
   private static createRenderer(canvas: HTMLCanvasElement): THREE.WebGLRenderer {
+    // Prevent Three.js from crashing when getShaderPrecisionFormat returns null
+    // (seen on some Mac / remote-desktop GPUs as "reading 'precision'").
+    installWebGLPrecisionShim();
     const attempts: THREE.WebGLRendererParameters[] = [
       { canvas, antialias: true, alpha: false, logarithmicDepthBuffer: true },
       { canvas, antialias: false, alpha: false, logarithmicDepthBuffer: true },

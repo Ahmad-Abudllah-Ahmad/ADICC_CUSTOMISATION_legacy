@@ -1975,15 +1975,12 @@ function DataPackagesTab() {
                   <Package size={16} />
                   {t('modules.community_submit_email', { defaultValue: 'Submit Module via Email' })}
                 </a>
-                <a
-                  href="https://github.com/datadrivenconstruction/OpenConstructionERP/issues/new?title=Module%20Proposal:%20&labels=module-proposal"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <span
                   className="inline-flex items-center gap-2 rounded-lg border border-border-light bg-surface-secondary px-4 py-2 text-sm font-medium text-content-primary hover:bg-surface-secondary/80 transition-colors"
                 >
                   <Info size={16} />
                   {t('modules.community_submit_github', { defaultValue: 'Propose on GitHub' })}
-                </a>
+                </span>
                 <a
                   href="https://t.me/datadrivenconstruction"
                   target="_blank"

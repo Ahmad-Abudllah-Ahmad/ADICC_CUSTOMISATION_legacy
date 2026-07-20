@@ -422,16 +422,30 @@ export function renderText(
   vp: ViewportState,
 ): void {
   if (!entity.start || !entity.text) return;
+  // Use true world height × scale. Do NOT clamp up to 8px — that turns
+  // thousands of sheet labels into an unreadable smudge at Fit/overview zoom.
+  // Keep the cull low enough that room names (height ≈ 5) and door/window
+  // tags (height ≈ 8–12) still appear when a single floor sheet is fitted.
+  const fontSize = (entity.height ?? 2.5) * vp.scale;
+  if (fontSize < 1.0) return;
   const pos = worldToScreen(entity.start.x, entity.start.y, vp);
-  const fontSize = Math.max(8, Math.min(72, (entity.height ?? 2.5) * vp.scale));
+  const drawSize = Math.min(64, fontSize);
   // MTEXT keeps its newlines (the backend maps MTEXT -> TEXT but preserves the
   // string), and canvas fillText ignores "\n", so render each line stacked.
   const lines = entity.text.split('\n');
-  const lineH = fontSize * 1.25;
+  const lineH = drawSize * 1.25;
+  // AutoCAD MTEXT attachment 1–3 = top, 4–6 = middle, 7–9 = bottom.
+  // Using 'bottom' for top-left inserts stacks schedule rows into each other.
+  const ap = entity.attachment_point;
+  const baseline: CanvasTextBaseline =
+    ap == null ? 'alphabetic' : ap <= 3 ? 'top' : ap <= 6 ? 'middle' : 'bottom';
+  const align: CanvasTextAlign =
+    ap == null ? 'left' : ap % 3 === 2 ? 'center' : ap % 3 === 0 ? 'right' : 'left';
 
   ctx.save();
-  ctx.font = `${fontSize}px ${resolveFontFamily(entity)}`;
-  ctx.textBaseline = 'bottom';
+  ctx.font = `${drawSize}px ${resolveFontFamily(entity)}`;
+  ctx.textBaseline = baseline;
+  ctx.textAlign = align;
   if (entity.rotation) {
     ctx.translate(pos.x, pos.y);
     ctx.rotate(-entity.rotation); // negate for screen Y-flip

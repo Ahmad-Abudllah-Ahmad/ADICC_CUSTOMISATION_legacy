@@ -53,14 +53,14 @@ interface Props {
 // attribute conversions back to this in-app CTA so we can measure
 // whether the popup pays for itself.
 //
-// 2026-05-13: pointed at openconstructionerp.com/contact (the canonical
+// 2026-05-13: pointed at adicc-uae.com/contact (the canonical
 // product marketing site, confirmed 200 with a real Contact page).
-// The earlier-tried openconstructionerp.com / openestimate.io hosts are
+// The earlier-tried adicc-uae.com / openestimate.io hosts are
 // parked / 405 and dead-ended the buttons.
 const URL_COMMUNITY =
-  'https://openconstructionerp.com/contact?topic=module_proposal_public&utm_source=oe_app&utm_medium=sidebar_cta&utm_campaign=request_module';
+  'https://adicc-uae.com';
 const URL_PRIVATE =
-  'https://openconstructionerp.com/contact?topic=module_proposal_private&utm_source=oe_app&utm_medium=sidebar_cta&utm_campaign=request_module_bespoke';
+  'https://adicc-uae.com';
 
 export function RequestCustomModuleDialog({ open, onClose }: Props) {
   const { t } = useTranslation();

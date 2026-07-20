@@ -57,6 +57,7 @@ import { fetchBIMElementContext, fetchBIMElementProperties } from '@/features/bi
 import { SceneManager } from './SceneManager';
 import { ElementManager } from './ElementManager';
 import { DeferredTeardown } from './deferredTeardown';
+import { installWebGLPrecisionShim } from './webglPrecisionShim';
 import {
   applySmartView,
   revertSmartView,
@@ -1170,6 +1171,9 @@ export function BIMViewer({
     // would otherwise dereference the missing scene). We return early without
     // registering the cleanup below, which is fine because no half-built scene
     // was ever placed in the refs.
+    // Also install the getShaderPrecisionFormat null-shim before construction
+    // so Mac / remote-desktop GPUs that return null don't crash Three.js.
+    installWebGLPrecisionShim();
     let scene: SceneManager;
     try {
       scene = new SceneManager(canvas);

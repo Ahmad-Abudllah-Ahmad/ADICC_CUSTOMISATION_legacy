@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
-_LOGO_URL = "https://openconstructionerp.com/logo-128.png"
+_LOGO_URL = ""
 _APP_NAME = "OpenConstructionERP"
 
 

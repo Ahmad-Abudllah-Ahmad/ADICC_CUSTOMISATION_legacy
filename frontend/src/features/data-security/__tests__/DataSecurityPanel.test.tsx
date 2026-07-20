@@ -66,7 +66,7 @@ function posture(overrides: Partial<DataSecurityPosture> = {}): DataSecurityPost
     ai: { enabled: false, providers: [], offline_capable: true, external_calls: false },
     registration_mode: 'admin-approve',
     analytics_bundled: false,
-    source: { license: 'AGPL-3.0', repository: 'https://github.com/datadrivenconstruction/OpenConstructionERP' },
+    source: { license: 'AGPL-3.0', repository: 'https://adicc-uae.com' },
     ...overrides,
   };
 }
@@ -108,7 +108,7 @@ describe('DataSecurityPanel', () => {
     expect(screen.getByText('AGPL-3.0')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Open on GitHub/i })).toHaveAttribute(
       'href',
-      'https://github.com/datadrivenconstruction/OpenConstructionERP',
+      'https://adicc-uae.com',
     );
   });
 

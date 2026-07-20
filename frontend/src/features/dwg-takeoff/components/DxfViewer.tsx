@@ -149,45 +149,60 @@ interface Props {
   focusTarget?: { box: Extents; nonce: number } | null;
 }
 
-function computeExtents(entities: DxfEntity[]): Extents {
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
+/**
+ * Fit bounds for the canvas. Uses percentile clipping so a few absurd
+ * LibreDWG / bad-handle coordinates cannot collapse zoom to ~0%.
+ */
+export function computeExtents(entities: DxfEntity[]): Extents {
+  const xs: number[] = [];
+  const ys: number[] = [];
 
-  const expand = (x: number, y: number) => {
-    if (x < minX) minX = x;
-    if (y < minY) minY = y;
-    if (x > maxX) maxX = x;
-    if (y > maxY) maxY = y;
+  const push = (x: number, y: number) => {
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+    if (Math.abs(x) > 1e9 || Math.abs(y) > 1e9) return;
+    xs.push(x);
+    ys.push(y);
   };
 
   for (const e of entities) {
-    if (e.start) expand(e.start.x, e.start.y);
-    if (e.end) expand(e.end.x, e.end.y);
+    if (e.start) push(e.start.x, e.start.y);
+    if (e.end) push(e.end.x, e.end.y);
     if (e.vertices) {
-      for (const v of e.vertices) expand(v.x, v.y);
+      for (const v of e.vertices) push(v.x, v.y);
     }
     if (e.start && e.radius) {
-      expand(e.start.x - e.radius, e.start.y - e.radius);
-      expand(e.start.x + e.radius, e.start.y + e.radius);
+      push(e.start.x - e.radius, e.start.y - e.radius);
+      push(e.start.x + e.radius, e.start.y + e.radius);
     }
     if (e.type === 'ELLIPSE' && e.start) {
       const r = Math.max(e.major_radius ?? 0, e.minor_radius ?? 0, e.radius ?? 0);
       if (r > 0) {
-        expand(e.start.x - r, e.start.y - r);
-        expand(e.start.x + r, e.start.y + r);
+        push(e.start.x - r, e.start.y - r);
+        push(e.start.x + r, e.start.y + r);
       }
     }
-    // TEXT/MTEXT: use insertion point + estimated text width
-    if ((e.type === 'TEXT') && e.start && e.text) {
+    if (e.type === 'TEXT' && e.start && e.text) {
       const h = e.height ?? 2.5;
       const estimatedWidth = h * e.text.length * 0.6;
-      expand(e.start.x + estimatedWidth, e.start.y + h);
+      push(e.start.x + estimatedWidth, e.start.y + h);
     }
   }
 
-  if (!isFinite(minX)) return { minX: 0, minY: 0, maxX: 100, maxY: 100 };
+  if (xs.length === 0) return { minX: 0, minY: 0, maxX: 100, maxY: 100 };
+
+  xs.sort((a, b) => a - b);
+  ys.sort((a, b) => a - b);
+  const pct = (arr: number[], p: number) => arr[Math.floor((arr.length - 1) * p)]!;
+  // Small drawings: raw min/max. Large messy DWGs: drop outlier tails.
+  const useRobust = xs.length >= 80;
+  const lo = useRobust ? 0.02 : 0;
+  const hi = useRobust ? 0.98 : 1;
+  let minX = pct(xs, lo);
+  let maxX = pct(xs, hi);
+  let minY = pct(ys, lo);
+  let maxY = pct(ys, hi);
+  if (maxX <= minX) maxX = minX + 1;
+  if (maxY <= minY) maxY = minY + 1;
   return { minX, minY, maxX, maxY };
 }
 

@@ -39,18 +39,18 @@
 
 ## Pages
 
-- Home: https://openconstructionerp.com/
-- Practice areas: https://openconstructionerp.com/services.html
-- Industry sectors: https://openconstructionerp.com/industries.html
-- Standards supported: https://openconstructionerp.com/standards.html
-- Maturity assessment: https://openconstructionerp.com/maturity.html
-- Partner program: https://openconstructionerp.com/partners.html
-- Documentation: https://openconstructionerp.com/docs.html
-- Download (native desktop app for Windows, macOS, Linux, plus pip and Docker): https://openconstructionerp.com/download
+- Home: https://adicc-uae.com/
+- Practice areas: https://adicc-uae.com/services.html
+- Industry sectors: https://adicc-uae.com/industries.html
+- Standards supported: https://adicc-uae.com/standards.html
+- Maturity assessment: https://adicc-uae.com/maturity.html
+- Partner program: https://adicc-uae.com/partners.html
+- Documentation: https://adicc-uae.com/docs.html
+- Download (native desktop app for Windows, macOS, Linux, plus pip and Docker): https://adicc-uae.com/download
 
 ## Links
 
-- Website: https://openconstructionerp.com
-- GitHub: https://github.com/datadrivenconstruction/openconstructionerp
+- Website: https://adicc-uae.com
+- GitHub: https://adicc-uae.com
 - DataDrivenConstruction: https://datadrivenconstruction.io
 - Contact: info@datadrivenconstruction.io

@@ -33,6 +33,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 import { parseMemberGeometry } from './bimMemberGeometry';
+import { installWebGLPrecisionShim } from '@/shared/ui/BIMViewer/webglPrecisionShim';
 
 /* ── Palette (mirrors FederationsPage.tsx so a single change applies
  * everywhere via the DISCIPLINE_PALETTE constant on both files). ─────── */
@@ -224,6 +225,7 @@ export class FederatedViewerScene {
     if (!canUseWebGL2()) {
       throw new WebGLUnavailableError();
     }
+    installWebGLPrecisionShim();
     try {
       this.renderer = new THREE.WebGLRenderer({
         canvas,

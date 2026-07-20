@@ -18,7 +18,7 @@ export function BetaBanner({
   moduleKey,
   title,
   description,
-  feedbackUrl = 'https://github.com/datadrivenconstruction/OpenConstructionERP/issues/new',
+  feedbackUrl = '',
   className = '',
 }: BetaBannerProps) {
   const { t } = useTranslation();

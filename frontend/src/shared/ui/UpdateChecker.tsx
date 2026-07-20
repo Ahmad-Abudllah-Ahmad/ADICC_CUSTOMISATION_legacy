@@ -240,7 +240,7 @@ export function useUpdateCheck(): ReleaseInfo | null {
           notes: data.body ?? '',
           url:
             data.html_url ??
-            'https://github.com/datadrivenconstruction/openconstructionerp/releases',
+            'https://adicc-uae.com',
           publishedAt: data.published_at ?? '',
         };
         writeCache(info);
@@ -296,7 +296,7 @@ export function UpdateNotification({ forceShow = false, hideDismiss = false }: U
         notes: data.body ?? '',
         url:
           data.html_url ??
-          'https://github.com/datadrivenconstruction/OpenConstructionERP/releases',
+          '',
         publishedAt: data.published_at ?? '',
       };
       writeCache(info);

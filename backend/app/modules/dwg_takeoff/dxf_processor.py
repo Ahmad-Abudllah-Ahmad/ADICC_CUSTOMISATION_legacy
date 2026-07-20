@@ -130,10 +130,13 @@ def _serialize_entity(
     elif entity_type == "MTEXT":
         insert = dxf.get("insert", None)
         style_name = dxf.get("style", "Standard")
+        # Attachment point (1–9): insert is top-left for 1, mid-left for 4, etc.
+        # The viewer must match this or schedule rows stack into each other.
         result["geometry_data"] = {
             "insert": {"x": insert.x, "y": insert.y} if insert else {"x": 0, "y": 0},
             "text": entity.plain_text() if hasattr(entity, "plain_text") else str(entity.text),
             "height": dxf.get("char_height", 1.0),
+            "attachment_point": int(dxf.get("attachment_point", 1) or 1),
             "style": style_name,
             "font": styles.get(style_name, ""),
         }
@@ -189,7 +192,11 @@ def parse_dxf(file_path: str) -> dict[str, Any]:
     try:
         doc = ezdxf.readfile(file_path)
     except Exception as exc:
-        raise ValueError(f"Failed to parse DXF file: {exc}") from exc
+        try:
+            from ezdxf import recover
+            doc, _ = recover.readfile(file_path)
+        except Exception as recover_exc:
+            raise ValueError(f"Failed to parse DXF file: {exc} (recover failed: {recover_exc})") from exc
 
     # Extract layers
     #
@@ -208,11 +215,16 @@ def parse_dxf(file_path: str) -> dict[str, Any]:
         is_off = False
         is_frozen = False
         try:
-            is_off = bool(layer.is_off)
+            # ezdxf exposes is_off / is_frozen as methods — must call them.
+            # ``bool(layer.is_off)`` is always True (bound method), which
+            # marked every layer invisible and hid room/door/window labels.
+            off_fn = layer.is_off
+            is_off = bool(off_fn() if callable(off_fn) else off_fn)
         except Exception:  # noqa: BLE001 - defensive: see comment above
             pass
         try:
-            is_frozen = bool(layer.is_frozen)
+            frozen_fn = layer.is_frozen
+            is_frozen = bool(frozen_fn() if callable(frozen_fn) else frozen_fn)
         except Exception:  # noqa: BLE001
             pass
         layers.append(
@@ -362,7 +374,11 @@ def generate_svg_thumbnail(file_path: str) -> str:
     _require_ezdxf()
 
     try:
-        doc = ezdxf.readfile(file_path)
+        try:
+            doc = ezdxf.readfile(file_path)
+        except Exception:
+            from ezdxf import recover
+            doc, _ = recover.readfile(file_path)
         msp = doc.modelspace()
 
         # ezdxf 1.4 reorganised the drawing add-on: the SVG bytes now come
