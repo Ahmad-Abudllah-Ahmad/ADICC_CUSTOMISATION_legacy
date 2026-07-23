@@ -303,6 +303,10 @@ def _normalize_entity(raw: dict[str, Any], index: int) -> dict[str, Any]:
     elif entity_type in ("LWPOLYLINE", "POLYLINE"):
         result["vertices"] = gd.get("points", [])
         result["closed"] = gd.get("closed", False)
+        if "is_solid" in gd:
+            result["is_solid"] = gd["is_solid"]
+        if "pattern_name" in gd:
+            result["pattern_name"] = gd["pattern_name"]
     elif entity_type == "CIRCLE":
         result["start"] = gd.get("center")
         result["radius"] = gd.get("radius")
@@ -340,11 +344,11 @@ def _normalize_entity(raw: dict[str, Any], index: int) -> dict[str, Any]:
         result["rotation"] = gd.get("rotation", 0)
         result["x_scale"] = gd.get("x_scale", 1.0)
         result["y_scale"] = gd.get("y_scale", 1.0)
-    elif entity_type == "HATCH":
-        result["vertices"] = gd.get("points", [])
+    elif entity_type in ("HATCH", "SOLID", "TRACE", "3DFACE"):
+        result["vertices"] = gd.get("points", []) or gd.get("vertices", [])
         result["closed"] = gd.get("closed", True)
         result["pattern_name"] = gd.get("pattern_name", "SOLID")
-        result["is_solid"] = gd.get("is_solid", False)
+        result["is_solid"] = gd.get("is_solid", True)
     elif entity_type == "SPLINE":
         result["type"] = "LWPOLYLINE"
         result["vertices"] = gd.get("control_points", [])

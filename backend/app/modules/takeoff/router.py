@@ -5034,13 +5034,14 @@ async def recognize_document(
     ),
     service: TakeoffService = Depends(_get_service),
 ) -> RecognizeResponse:
-    """Detect candidate measurements from a page (vision rooms when AI key set).
+    """Detect candidate measurements from a page's vector layer (offline).
 
-    Prefers the vision-LLM room-polygon path when the user has a vision-capable
-    AI key (CubiCasa-like named wall-snapped rooms). Falls back to offline
-    vector + OpenCV raster recognition when no key is configured or vision
-    returns nothing. Nothing is persisted — the user confirms or rejects each
-    candidate on the canvas (Audit B8).
+    The deterministic, offline complement to ``analyze`` (which sends text to
+    an LLM): scans the PDF's vector drawings with PyMuPDF and proposes
+    confidence-scored area / length / count candidates. Nothing is persisted -
+    the user confirms or rejects each candidate on the canvas, then the
+    accepted ones flow through the normal bulk-create path where the server
+    re-derives the billed quantity (Audit B8).
     """
     doc = await service.get_document(doc_id)
     if doc is None:
@@ -5048,12 +5049,7 @@ async def recognize_document(
     # Audit B5 - IDOR: a document's geometry is as sensitive as its text.
     await _verify_takeoff_doc_access(doc, str(user_id) if user_id else "", session)
 
-    result = await service.recognize_candidates(
-        doc_id,
-        page,
-        scale_pixels_per_unit or None,
-        user_id=str(user_id) if user_id else None,
-    )
+    result = await service.recognize_candidates(doc_id, page, scale_pixels_per_unit or None)
     return RecognizeResponse(**result)
 
 

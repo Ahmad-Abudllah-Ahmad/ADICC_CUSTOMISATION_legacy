@@ -687,6 +687,15 @@ def _takeoff_documents_dir() -> Path:
     return resolve_data_dir() / _TAKEOFF_DOCUMENTS_SUBDIR
 
 
+def _to_uuid(doc_id: str | None) -> uuid.UUID | None:
+    if not doc_id:
+        return None
+    try:
+        return uuid.UUID(str(doc_id).strip())
+    except (ValueError, TypeError):
+        return None
+
+
 def _find_existing_takeoff_pdf(doc_id: str) -> Path | None:
     """Resolve ``{doc_id}.pdf`` to an existing file, READ-ONLY back-compat.
 
@@ -1448,7 +1457,10 @@ class TakeoffService:
         )
 
     async def get_document(self, doc_id: str) -> TakeoffDocument | None:
-        return await self.repo.get_by_id(uuid.UUID(doc_id))
+        did = _to_uuid(doc_id)
+        if did is None:
+            return None
+        return await self.repo.get_by_id(did)
 
     async def set_document_page_scales(self, doc_id: str, page_scales: dict) -> TakeoffDocument | None:
         """Persist the document-level per-page scale calibration (issue #334).
@@ -1461,7 +1473,9 @@ class TakeoffService:
 
         Returns the refreshed row, or ``None`` when the document does not exist.
         """
-        did = uuid.UUID(doc_id)
+        did = _to_uuid(doc_id)
+        if did is None:
+            return None
         doc = await self.repo.get_by_id(did)
         if doc is None:
             return None
@@ -1801,7 +1815,10 @@ class TakeoffService:
         """
         from app.modules.takeoff import scale_detect as _scale_detect
 
-        doc = await self.repo.get_by_id(uuid.UUID(doc_id))
+        did = _to_uuid(doc_id)
+        if did is None:
+            raise HTTPException(status_code=404, detail="Takeoff document not found")
+        doc = await self.repo.get_by_id(did)
         if doc is None:
             raise HTTPException(status_code=404, detail="Takeoff document not found")
 
@@ -1829,20 +1846,28 @@ class TakeoffService:
         doc_id: str,
         page: int,
         scale_pixels_per_unit: float | None,
-        user_id: str | None = None,
     ) -> dict[str, Any]:
-        """Detect candidate measurements from a PDF page.
+        """Detect candidate measurements from a PDF page's vector layer.
 
-        Prefer OCR / CubiCasa wall-snapped named rooms when they cover the plan
-        well. Vision-LLM is used to fill gaps (or as primary when OCR finds
-        almost nothing). Offline vector + OpenCV is last. Nothing is persisted —
-        candidates carry confidence/reason for canvas confirm.
+        Offline, deterministic complement to ``analyze_document`` (which
+        sends text to an LLM): reads the stored PDF off disk, harvests the
+        page's vector drawings with PyMuPDF ``page.get_drawings()`` and runs
+        the pure :mod:`app.modules.takeoff.recognize` detectors. Nothing is
+        persisted - the candidates carry a confidence and a reason and are
+        confirmed by the user on the canvas (CLAUDE.md rule 7).
 
-        Returns ``{candidates, page, source, notes}``.
+        Returns ``{candidates, page, source, notes}``. Hybrid path: vector
+        drawings (when present) plus always-on raster OpenCV room/wall
+        detection for scanned or sparse-vector sheets. Honest failure modes:
+        PyMuPDF absent -> 400; OpenCV missing -> ``notes='raster_no_cv'`` when
+        the vector layer is also empty.
         """
         from app.modules.takeoff import recognize as _recognize
 
-        doc = await self.repo.get_by_id(uuid.UUID(doc_id))
+        did = _to_uuid(doc_id)
+        if did is None:
+            raise HTTPException(status_code=404, detail="Takeoff document not found")
+        doc = await self.repo.get_by_id(did)
         if doc is None:
             raise HTTPException(status_code=404, detail="Takeoff document not found")
         validate_page_for_document(doc, page)
@@ -1874,56 +1899,40 @@ class TakeoffService:
                 ),
             ) from exc
 
-        try:
-            content = file_path.read_bytes()
-        except OSError:
-            logger.exception("takeoff.recognize failed to read PDF for doc %s", doc_id)
-            raise HTTPException(
-                status_code=422,
-                detail="Could not read this page. The PDF may be corrupt or password-protected.",
-            ) from None
-
-        # ── OCR / CubiCasa wall-snap (best recall on labeled floor-plan PDFs) ─
-        cubicasa_result = self._try_cubicasa_recognize(
-            content=content,
-            page=page,
-            scale_pixels_per_unit=scale_pixels_per_unit,
-        )
-        ocr_n = len((cubicasa_result or {}).get("candidates") or [])
-
-        # ── Vision LLM: use when OCR is weak, or merge-prefer if denser ─────
-        vision_result = await self._try_vision_recognize_rooms(
-            user_id=user_id,
-            content=content,
-            page=page,
-            scale_pixels_per_unit=scale_pixels_per_unit,
-        )
-        vision_n = len((vision_result or {}).get("candidates") or [])
-
-        # Labeled plans: OCR usually finds every printed room; sparse vision
-        # (2–3 boxes) must not win. Vision wins only when it finds clearly more.
-        if cubicasa_result is not None and ocr_n >= 4 and ocr_n >= vision_n:
-            return cubicasa_result
-        if vision_result is not None and vision_n > ocr_n:
-            return vision_result
-        if cubicasa_result is not None:
-            return cubicasa_result
-        if vision_result is not None:
-            return vision_result
-
-        # ── Offline fallback: vector + OpenCV raster ───────────────────────
         # Render DPI for the raster path. Morphology kernels are tuned for ~150 DPI.
         raster_dpi = 180
         raster_payload: tuple[bytes, int, int, int] | None = None
         page_w_pt = page_h_pt = 0.0
         drawings: list[Any] = []
+        # Capture crop/rotation while the page is open — PyMuPDF pages are
+        # invalid after pdf.close(), and reading pg.cropbox then raises 500.
+        crop_x0 = crop_y0 = 0.0
+        rot_a, rot_b, rot_c, rot_d, rot_e, rot_f = 1.0, 0.0, 0.0, 1.0, 0.0, 0.0
         try:
+            content = file_path.read_bytes()
             pdf = pymupdf.open(stream=content, filetype="pdf")
             try:
                 pg = pdf[page - 1]
                 drawings = list(pg.get_drawings() or [])
                 page_w_pt = float(pg.rect.width)
                 page_h_pt = float(pg.rect.height)
+                try:
+                    cb = pg.cropbox
+                    rot_mat = pg.rotation_matrix
+                    crop_x0, crop_y0 = float(cb.x0), float(cb.y0)
+                    rot_a = float(rot_mat.a)
+                    rot_b = float(rot_mat.b)
+                    rot_c = float(rot_mat.c)
+                    rot_d = float(rot_mat.d)
+                    rot_e = float(rot_mat.e)
+                    rot_f = float(rot_mat.f)
+                except Exception:
+                    logger.debug(
+                        "takeoff.recognize could not read crop/rotation for doc %s page %s",
+                        doc_id,
+                        page,
+                        exc_info=True,
+                    )
                 # Always rasterise when possible. Many "vector" PDFs only carry
                 # sparse annotation paths; room areas still need the OpenCV path.
                 try:
@@ -1944,8 +1953,46 @@ class TakeoffService:
             ) from None
 
         vector_candidates: list[dict[str, Any]] = []
+        all_vector_areas: list[dict[str, Any]] = []
         if drawings:
             vector_candidates = _recognize.recognize_candidates(drawings, scale_pixels_per_unit)
+            # Uncapped area list — parking-CAD detection needs the stall population,
+            # not only the top-40 frames that survive ranking.
+            try:
+                all_vector_areas = [
+                    c
+                    for c in _recognize.detect_areas(
+                        _recognize.primitives_from_drawings(drawings),
+                        float(scale_pixels_per_unit or 0.0),
+                    )
+                    if c.get("type") == "area"
+                ]
+            except Exception:
+                all_vector_areas = [c for c in vector_candidates if c.get("type") == "area"]
+            if vector_candidates and (
+                crop_x0 != 0
+                or crop_y0 != 0
+                or rot_a != 1.0
+                or rot_b != 0.0
+                or rot_c != 0.0
+                or rot_d != 1.0
+                or rot_e != 0.0
+                or rot_f != 0.0
+            ):
+                rot_mat = pymupdf.Matrix(rot_a, rot_b, rot_c, rot_d, rot_e, rot_f)
+                for cand in list(vector_candidates) + all_vector_areas:
+                    pts = cand.get("points")
+                    if pts and not cand.get("_xf"):
+                        new_pts = []
+                        for pt in pts:
+                            rx = pt["x"] - crop_x0
+                            ry = pt["y"] - crop_y0
+                            p = pymupdf.Point(rx, ry) * rot_mat
+                            new_pts.append({"x": p.x, "y": p.y})
+                        cand["points"] = new_pts
+                        cand["_xf"] = True
+                for cand in list(vector_candidates) + all_vector_areas:
+                    cand.pop("_xf", None)
 
         raster_candidates: list[dict[str, Any]] = []
         raster_notes: str | None = None
@@ -1972,32 +2019,176 @@ class TakeoffService:
 
         vector_areas = [c for c in vector_candidates if c.get("type") == "area"]
         raster_areas = [c for c in raster_candidates if c.get("type") == "area"]
-        # Prefer raster rooms when the vector layer is empty / sparse / weak —
-        # that is the common case for scanned architectural sheets and for
-        # PDFs whose only vectors are title-block or hatch fragments.
-        use_raster_rooms = (not vector_areas) or (len(vector_areas) < 3 and len(raster_areas) >= len(vector_areas))
+
+        page_area = page_w_pt * page_h_pt
+
+        def _poly_area(pts: list[dict[str, float]]) -> float:
+            n = len(pts)
+            if n < 3:
+                return 0.0
+            s = sum(
+                pts[i]["x"] * pts[(i + 1) % n]["y"] - pts[(i + 1) % n]["x"] * pts[i]["y"]
+                for i in range(n)
+            )
+            return abs(s) / 2.0
+
+        def _cand_bbox(pts: list[dict[str, float]]) -> tuple[float, float, float, float]:
+            xs = [float(p["x"]) for p in pts]
+            ys = [float(p["y"]) for p in pts]
+            return (min(xs), min(ys), max(xs), max(ys))
+
+        def _bbox_iou(
+            a: tuple[float, float, float, float], b: tuple[float, float, float, float]
+        ) -> float:
+            ax0, ay0, ax1, ay1 = a
+            bx0, by0, bx1, by1 = b
+            ix0, iy0 = max(ax0, bx0), max(ay0, by0)
+            ix1, iy1 = min(ax1, bx1), min(ay1, by1)
+            iw, ih = max(0.0, ix1 - ix0), max(0.0, iy1 - iy0)
+            inter = iw * ih
+            if inter <= 0:
+                return 0.0
+            aa = max(0.0, ax1 - ax0) * max(0.0, ay1 - ay0)
+            ba = max(0.0, bx1 - bx0) * max(0.0, by1 - by0)
+            union = aa + ba - inter
+            return inter / union if union > 0 else 0.0
+
+        def _bbox_containment(
+            a: tuple[float, float, float, float], b: tuple[float, float, float, float]
+        ) -> float:
+            """Fraction of the smaller box covered by the intersection."""
+            ax0, ay0, ax1, ay1 = a
+            bx0, by0, bx1, by1 = b
+            ix0, iy0 = max(ax0, bx0), max(ay0, by0)
+            ix1, iy1 = min(ax1, bx1), min(ay1, by1)
+            iw, ih = max(0.0, ix1 - ix0), max(0.0, iy1 - iy0)
+            inter = iw * ih
+            aa = max(1e-9, (ax1 - ax0) * (ay1 - ay0))
+            ba = max(1e-9, (bx1 - bx0) * (by1 - by0))
+            return inter / min(aa, ba)
+
+        def _finalize_candidates(cands: list[dict[str, Any]]) -> list[dict[str, Any]]:
+            """Drop title-block noise and overlapping / nested area boxes.
+
+            Busy CAD sheets (legends, GFA tables, stall grids) otherwise return
+            dozens of stacked suggestions that hide the real floor zones.
+            """
+            if not cands:
+                return []
+            areas = [c for c in cands if c.get("type") == "area"]
+            distances = [c for c in cands if c.get("type") == "distance"]
+            counts = [c for c in cands if c.get("type") == "count"]
+
+            # Right-side title block / schedule strip (and tiny legend cells).
+            margin_x = page_w_pt * 0.76
+            cleaned: list[dict[str, Any]] = []
+            for c in areas:
+                pts = c.get("points") or []
+                if len(pts) < 3:
+                    continue
+                x0, y0, x1, y1 = _cand_bbox(pts)
+                cx, cy = (x0 + x1) * 0.5, (y0 + y1) * 0.5
+                bw, bh = max(1e-9, x1 - x0), max(1e-9, y1 - y0)
+                area_pt = bw * bh
+                # Legend / title-block column on the right of the sheet.
+                if cx >= margin_x and area_pt < page_area * 0.10:
+                    continue
+                # Tall thin legend rows in the title strip.
+                if cx >= margin_x and bh > 2.2 * bw:
+                    continue
+                # Car-park schedule / GFA table bands near the top edge.
+                if cy <= page_h_pt * 0.14 and area_pt < page_area * 0.06 and bw > 3.0 * bh:
+                    continue
+                # Bottom GFA calculation table strip.
+                if cy >= page_h_pt * 0.90 and area_pt < page_area * 0.06 and bw > 2.5 * bh:
+                    continue
+                # Near-full-page envelope that would cover every other zone.
+                if area_pt > page_area * 0.48:
+                    continue
+                # Thin horizontal bands (dimension strings / table rows), not rooms.
+                if bh < page_h_pt * 0.045 and bw > 3.5 * bh and area_pt < page_area * 0.04:
+                    continue
+                cleaned.append(c)
+
+            cleaned.sort(
+                key=lambda c: (
+                    1 if c.get("label") else 0,
+                    float(c.get("confidence") or 0.0),
+                    abs(float(c["value"])) if c.get("value") is not None else _poly_area(c.get("points") or []),
+                ),
+                reverse=True,
+            )
+
+            kept: list[dict[str, Any]] = []
+            for c in cleaned:
+                pts = c.get("points") or []
+                bb = _cand_bbox(pts)
+                drop = False
+                for k in kept:
+                    kb = _cand_bbox(k.get("points") or [])
+                    iou = _bbox_iou(bb, kb)
+                    nest = _bbox_containment(bb, kb)
+                    # Same space, nested fragment, or heavy overlap → keep the
+                    # higher-ranked (larger / named / more confident) one only.
+                    if iou >= 0.22 or nest >= 0.40:
+                        drop = True
+                        break
+                if not drop:
+                    kept.append(c)
+
+            # Prefer a readable set — dense overlays hide the drawing.
+            kept = kept[:16]
+            # Distances clutter curved GFA reviews; keep at most two.
+            distances = distances[:2] if len(kept) >= 4 else distances[:4]
+            return kept + distances + counts[:4]
+
+        def _is_dense_cad_parking(areas: list[dict[str, Any]]) -> bool:
+            """True when the vector layer is mostly repeated stall-sized boxes.
+
+            Podium / car-park CAD sheets flood Recognize with hundreds of
+            rectangles; the real GFA follows curved perimeter walls and must
+            come from the raster contour path instead.
+            """
+            rects = [c for c in areas if len(c.get("points") or []) == 4]
+            if len(rects) < 15:
+                return False
+            sizes = sorted(_poly_area(c["points"]) for c in rects)
+            med = sizes[len(sizes) // 2]
+            if med <= 0:
+                return False
+            similar = sum(1 for s in sizes if 0.45 * med <= s <= 2.2 * med)
+            return similar >= max(12, int(0.40 * len(rects)))
+
+        # Room-scale vector areas only — ignore title frames and micro boxes.
+        large_vector_areas = [
+            c for c in vector_areas if page_area * 0.003 <= _poly_area(c["points"]) <= page_area * 0.25
+        ]
+
+        parking_cad = _is_dense_cad_parking(all_vector_areas or vector_areas)
+        use_raster_rooms = bool(raster_areas) and (
+            (not large_vector_areas)
+            or (len(large_vector_areas) < 3 and len(raster_areas) >= len(large_vector_areas))
+            or parking_cad
+        )
         if use_raster_rooms and raster_areas:
             lengths = [c for c in vector_candidates if c.get("type") == "distance"]
             counts = [c for c in vector_candidates if c.get("type") == "count"]
             raster_lengths = [c for c in raster_candidates if c.get("type") == "distance"]
-            # Keep the stronger length set; vector strokes beat Hough when both exist.
-            # Named-room coverage: drop distance clutter (same rule as raster_recognize).
-            named = sum(1 for c in raster_areas if c.get("label"))
-            if named >= 3:
-                raster_lengths = raster_lengths[:2]
-                lengths = lengths[:2] if lengths else raster_lengths
+            # Do not mix stall / frame vector boxes back in — they stack on
+            # top of the raster GFA polygons and create the overlap mess.
             merged = list(raster_areas) + (lengths if lengths else raster_lengths) + counts
-            merged.sort(key=lambda c: c.get("confidence", 0.0), reverse=True)
             return {
-                "candidates": merged[:40],
+                "candidates": _finalize_candidates(merged),
                 "page": page,
                 "source": "hybrid_recognize" if drawings else "raster_recognize",
                 "notes": None if merged else (raster_notes or "raster_no_features"),
             }
 
         if vector_candidates:
+            cleaned_areas = list(large_vector_areas)
+            non_areas = [c for c in vector_candidates if c.get("type") != "area"]
             return {
-                "candidates": vector_candidates,
+                "candidates": _finalize_candidates(cleaned_areas + non_areas),
                 "page": page,
                 "source": "vector_recognize",
                 "notes": None,
@@ -2005,7 +2196,7 @@ class TakeoffService:
 
         if raster_candidates:
             return {
-                "candidates": raster_candidates,
+                "candidates": _finalize_candidates(raster_candidates),
                 "page": page,
                 "source": "raster_recognize",
                 "notes": None,
@@ -2016,202 +2207,6 @@ class TakeoffService:
             "page": page,
             "source": "vector_recognize" if drawings else "raster_recognize",
             "notes": raster_notes or ("no_features" if drawings else "no_vector_layer"),
-        }
-
-    def _try_cubicasa_recognize(
-        self,
-        *,
-        content: bytes,
-        page: int,
-        scale_pixels_per_unit: float | None,
-    ) -> dict[str, Any] | None:
-        """Run CubiCasa5K pretrained room segmentation; ``None`` = soft skip."""
-        try:
-            import pymupdf  # noqa: PLC0415
-            import numpy as np  # noqa: PLC0415
-
-            from app.modules.takeoff.cubicasa import recognize_cubicasa
-        except ImportError:
-            return None
-
-        # Always attempt: OCR wall-snap works without CubiCasa weights; the
-        # neural path soft-skips when torch/weights are missing.
-        try:
-            pdf = pymupdf.open(stream=content, filetype="pdf")
-            try:
-                if page < 1 or page > pdf.page_count:
-                    return None
-                pg = pdf[page - 1]
-                page_w_pt = float(pg.rect.width)
-                page_h_pt = float(pg.rect.height)
-                pix = pg.get_pixmap(dpi=180, alpha=False)
-                arr = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.h, pix.w, pix.n)
-                if pix.n >= 3:
-                    image_bgr = np.ascontiguousarray(arr[:, :, 2::-1])
-                else:
-                    image_bgr = arr.reshape(pix.h, pix.w)
-            finally:
-                pdf.close()
-        except Exception:
-            logger.exception("takeoff.recognize CubiCasa rasterize failed for page %s", page)
-            return None
-
-        try:
-            candidates = recognize_cubicasa(
-                image_bgr,
-                page_w_pt,
-                page_h_pt,
-                scale_pixels_per_unit,
-            )
-        except Exception:
-            logger.exception("takeoff.recognize CubiCasa inference failed")
-            return None
-
-        if not candidates:
-            return None
-        return {
-            "candidates": candidates[:40],
-            "page": page,
-            "source": "cubicasa_recognize",
-            "notes": None,
-        }
-
-    async def _try_vision_recognize_rooms(
-        self,
-        *,
-        user_id: str | None,
-        content: bytes,
-        page: int,
-        scale_pixels_per_unit: float | None,
-    ) -> dict[str, Any] | None:
-        """Run vision room polygons for Recognize; ``None`` means use offline CV.
-
-        Soft-fails (returns ``None``) when there is no AI key, the model is not
-        vision-capable, rasterize fails, or the provider returns nothing usable.
-        Never raises for missing keys — Recognize must stay usable offline.
-        """
-        if not user_id or not content:
-            return None
-
-        try:
-            provider, api_key, model_override, effective_model = await self._resolve_plan_read_provider(
-                user_id
-            )
-        except HTTPException:
-            return None
-        except Exception:
-            logger.exception("takeoff.recognize vision provider resolve failed")
-            return None
-
-        from app.modules.ai.ai_client import call_ai, extract_json
-        from app.modules.ai.prompts import (
-            PLAN_READ_ROOMS_INSTRUCTION,
-            PLAN_READ_SCALE_INSTRUCTION,
-            PLAN_READ_VISION_PROMPT,
-            PLAN_READ_VISION_SYSTEM_PROMPT,
-            fence_user_content,
-        )
-        from app.modules.takeoff import plan_read as _pr
-        from app.modules.takeoff.schemas import TAKEOFF_CONFIDENCE_MEDIUM_THRESHOLD
-
-        try:
-            png, media_type, _dpi, page_w_pt, page_h_pt = _pr.rasterize_page(content, page)
-        except Exception:
-            logger.exception("takeoff.recognize vision rasterize failed for page %s", page)
-            return None
-
-        prompt = PLAN_READ_VISION_PROMPT.format(
-            mode_instructions="\n\n".join(
-                [PLAN_READ_SCALE_INSTRUCTION, PLAN_READ_ROOMS_INSTRUCTION]
-            ),
-            discipline_hint=fence_user_content("", max_len=500),
-        )
-        import base64
-
-        try:
-            raw_response, _tokens = await call_ai(
-                provider=provider,
-                api_key=api_key,
-                system=PLAN_READ_VISION_SYSTEM_PROMPT,
-                prompt=prompt,
-                image_base64=base64.b64encode(png).decode("utf-8"),
-                image_media_type=media_type,
-                max_tokens=max(_PLAN_READ_MAX_TOKENS, 4096),
-                model=model_override,
-            )
-        except Exception:
-            logger.warning(
-                "takeoff.recognize vision call failed (provider=%s model=%s); falling back to offline CV",
-                provider,
-                effective_model,
-                exc_info=True,
-            )
-            return None
-
-        parsed = extract_json(raw_response)
-        result, dropped = _pr.parse_plan_read_response(
-            parsed,
-            page=page,
-            page_width_pt=page_w_pt,
-            page_height_pt=page_h_pt,
-        )
-        if not result.rooms:
-            logger.info(
-                "takeoff.recognize vision returned no rooms (dropped=%s); falling back to offline CV",
-                dropped,
-            )
-            return None
-
-        scale_ratio = scale_pixels_per_unit
-        if (scale_ratio is None or scale_ratio <= 0) and result.scale is not None:
-            scale_ratio = _pr.scale_ratio_from_plan_scale(result.scale, page_w_pt, page_h_pt)
-
-        candidates: list[dict[str, Any]] = []
-        for room in result.rooms:
-            pdf_points = _pr.norm_polygon_to_pdf_points(room.polygon, page_w_pt, page_h_pt)
-            if len(pdf_points) < 3:
-                continue
-            self_intersects = _pr.polygon_self_intersects(pdf_points)
-            if self_intersects:
-                continue
-            area_pt2 = _pr.shoelace_area(pdf_points)
-            if area_pt2 < 4.0:
-                continue
-            value: float | None = None
-            if scale_ratio and scale_ratio > 0:
-                value = area_pt2 / (scale_ratio * scale_ratio)
-                if value is None or value <= 0:
-                    continue
-            name = (room.name or "").strip() or None
-            confidence = round(min(0.92, max(0.55, float(room.confidence))), 2)
-            if confidence >= TAKEOFF_CONFIDENCE_MEDIUM_THRESHOLD:
-                confidence = round(min(0.92, confidence), 2)
-            candidates.append(
-                {
-                    "type": "area",
-                    "points": [{"x": p[0], "y": p[1]} for p in pdf_points],
-                    "value": value,
-                    "dimension": "area",
-                    "count": None,
-                    "confidence": confidence,
-                    "reason": (
-                        f"AI room “{name}” wall-traced (verify)"
-                        if name
-                        else "AI room wall-traced (verify)"
-                    ),
-                    "label": name,
-                }
-            )
-
-        if not candidates:
-            return None
-
-        candidates.sort(key=lambda c: c.get("confidence", 0.0), reverse=True)
-        return {
-            "candidates": candidates[:40],
-            "page": page,
-            "source": "vision_recognize",
-            "notes": None,
         }
 
     async def find_similar_symbols(
@@ -2232,7 +2227,10 @@ class TakeoffService:
         """
         from app.modules.takeoff import recognize as _recognize
 
-        doc = await self.repo.get_by_id(uuid.UUID(doc_id))
+        did = _to_uuid(doc_id)
+        if did is None:
+            raise HTTPException(status_code=404, detail="Takeoff document not found")
+        doc = await self.repo.get_by_id(did)
         if doc is None:
             raise HTTPException(status_code=404, detail="Takeoff document not found")
         validate_page_for_document(doc, page)
@@ -2261,12 +2259,18 @@ class TakeoffService:
                 ),
             ) from exc
 
+        cb = None
+        rot_mat = None
+        derot_mat = None
         try:
             content = file_path.read_bytes()
             pdf = pymupdf.open(stream=content, filetype="pdf")
             try:
                 pg = pdf[page - 1]
                 drawings = pg.get_drawings()
+                cb = pg.cropbox
+                rot_mat = pg.rotation_matrix
+                derot_mat = pg.derotation_matrix
             finally:
                 pdf.close()
         except HTTPException:
@@ -2278,7 +2282,26 @@ class TakeoffService:
                 detail="Could not read this page. The PDF may be corrupt or password-protected.",
             ) from None
 
-        result = _recognize.find_similar_symbols(drawings, seed_x, seed_y)
+        raw_seed_x, raw_seed_y = seed_x, seed_y
+        if cb and derot_mat:
+            p_unrot = pymupdf.Point(seed_x, seed_y) * derot_mat
+            raw_seed_x = p_unrot.x + cb.x0
+            raw_seed_y = p_unrot.y + cb.y0
+
+        result = _recognize.find_similar_symbols(drawings, raw_seed_x, raw_seed_y)
+
+        if cb and rot_mat:
+            for cand in result.get("candidates") or []:
+                pts = cand.get("points")
+                if pts:
+                    new_pts = []
+                    for pt in pts:
+                        rx = pt["x"] - cb.x0
+                        ry = pt["y"] - cb.y0
+                        p = pymupdf.Point(rx, ry) * rot_mat
+                        new_pts.append({"x": p.x, "y": p.y})
+                    cand["points"] = new_pts
+
         result["page"] = page
         return result
 

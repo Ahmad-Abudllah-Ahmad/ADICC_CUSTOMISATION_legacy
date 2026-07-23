@@ -4488,9 +4488,7 @@ export default function TakeoffViewerModule({
    *  Suggestions are flagged (never persisted) until the user accepts them. */
   const handleRecognize = useCallback(async () => {
     if (recognizeBusy) return;
-    // The server reads the stored PDF off disk, so it needs the document's
-    // id, which the deep-link download URL carries.
-    const docId = initialPdfUrl?.match(/\/documents\/([^/?#]+)\/(?:download|recognize)/)?.[1];
+    const docId = initialDocumentId || initialPdfUrl?.match(/\/documents\/([^/?#]+)/)?.[1];
     if (!docId) {
       addToast({
         type: 'info',
@@ -4505,8 +4503,6 @@ export default function TakeoffViewerModule({
     try {
       const result = await takeoffApi.recognize(docId, currentPage, scale.pixelsPerUnit);
       const cands = result.candidates ?? [];
-      const usedVision = result.source === 'vision_recognize';
-      const usedCubicasa = result.source === 'cubicasa_recognize';
       if (cands.length === 0) {
         const needsScale = !(Number.isFinite(scale.pixelsPerUnit) && scale.pixelsPerUnit > 0);
         addToast({
@@ -4586,17 +4582,7 @@ export default function TakeoffViewerModule({
       addToast({
         type: 'success',
         title: t('takeoff_viewer.recognize_added_title', { defaultValue: '{{n}} suggestions added', n: suggestions.length }),
-        message: usedVision
-          ? t('takeoff_viewer.recognize_added_msg_ai', {
-              defaultValue: 'AI room model traced wall-snapped rooms. Review each, then accept or dismiss.',
-            })
-          : usedCubicasa
-          ? t('takeoff_viewer.recognize_added_msg_cubicasa', {
-              defaultValue: 'Wall-snapped rooms from CubiCasa/OCR. Review each, then accept or dismiss.',
-            })
-          : t('takeoff_viewer.recognize_added_msg', {
-              defaultValue: 'Review them on the drawing, then accept or dismiss each.',
-            }),
+        message: t('takeoff_viewer.recognize_added_msg', { defaultValue: 'Review them on the drawing, then accept or dismiss each.' }),
       });
     } catch (err) {
       addToast({
@@ -4607,7 +4593,7 @@ export default function TakeoffViewerModule({
     } finally {
       setRecognizeBusy(false);
     }
-  }, [recognizeBusy, initialPdfUrl, currentPage, scale, activeGroup, nextAnnotation, addToast, t]);
+  }, [recognizeBusy, initialPdfUrl, initialDocumentId, currentPage, scale, activeGroup, nextAnnotation, addToast, t]);
 
   /* ── Count similar: seeded "count by example" (issue #194) ──────────────
    * The user arms the tool and clicks one symbol (a door, socket, column).
@@ -4619,7 +4605,7 @@ export default function TakeoffViewerModule({
    * through (identical to how handleRecognize consumes its candidate points). */
   const handleCountByExampleSeed = useCallback(
     async (seed: Point) => {
-      const docId = initialPdfUrl?.match(/\/documents\/([^/?#]+)\/(?:download|recognize)/)?.[1];
+      const docId = initialDocumentId || initialPdfUrl?.match(/\/documents\/([^/?#]+)/)?.[1];
       if (!docId) {
         addToast({
           type: 'info',
@@ -4697,7 +4683,7 @@ export default function TakeoffViewerModule({
         armCountSimilarRef.current = false;
       }
     },
-    [initialPdfUrl, currentPage, activeGroup, nextAnnotation, addToast, t],
+    [initialPdfUrl, initialDocumentId, currentPage, activeGroup, nextAnnotation, addToast, t],
   );
   // Keep the ref handleCanvasClick reads in sync with the latest closure.
   handleCountByExampleSeedRef.current = handleCountByExampleSeed;
@@ -4706,7 +4692,7 @@ export default function TakeoffViewerModule({
    *  half-drawn shape never swallows the seed click) and prompts the user to
    *  click a symbol; clicking the button again cancels. */
   const toggleCountSimilar = useCallback(() => {
-    const docId = initialPdfUrl?.match(/\/documents\/([^/?#]+)\/(?:download|recognize)/)?.[1];
+    const docId = initialDocumentId || initialPdfUrl?.match(/\/documents\/([^/?#]+)/)?.[1];
     if (!docId) {
       addToast({
         type: 'info',
@@ -4737,7 +4723,7 @@ export default function TakeoffViewerModule({
       }
       return next;
     });
-  }, [initialPdfUrl, addToast, t]);
+  }, [initialPdfUrl, initialDocumentId, addToast, t]);
 
   /* ── Read plan with AI: vision-LLM plan reading (issue #194) ────────────
    * The opt-in, bring-your-own-key, cost-capped complement to the offline
@@ -4779,7 +4765,7 @@ export default function TakeoffViewerModule({
    *  reviews and accepts (human-confirmed). Never auto-applies. */
   const handleReadWithAi = useCallback(async () => {
     if (planReadBusy) return;
-    const docId = initialPdfUrl?.match(/\/documents\/([^/?#]+)\/(?:download|recognize)/)?.[1];
+    const docId = initialDocumentId || initialPdfUrl?.match(/\/documents\/([^/?#]+)/)?.[1];
     const projectId = selectedProjectId || activeProjectId || '';
     if (!docId || !projectId) {
       addToast({
@@ -6958,10 +6944,7 @@ export default function TakeoffViewerModule({
                 onClick={handleRecognize}
                 disabled={recognizeBusy}
                 className="ml-auto inline-flex h-7 items-center gap-1.5 rounded-md bg-gradient-to-r from-violet-500 to-indigo-500 px-2.5 text-xs font-semibold text-white shadow-xs transition-all hover:from-violet-600 hover:to-indigo-600 hover:shadow-sm disabled:opacity-50 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/50"
-                title={t('takeoff_viewer.recognize_hint', {
-                  defaultValue:
-                    'OCR wall-snapped rooms on labeled plans; AI vision fills gaps when OCR is sparse. You confirm each suggestion.',
-                  })}
+                title={t('takeoff_viewer.recognize_hint', { defaultValue: 'Scan this page and suggest measurements (AI proposes, you confirm)' })}
                 aria-label={t('takeoff_viewer.recognize', { defaultValue: 'Recognize' })}
                 data-testid="recognize-button"
               >

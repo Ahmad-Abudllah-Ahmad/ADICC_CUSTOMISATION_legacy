@@ -2610,18 +2610,22 @@ def create_app() -> FastAPI:
             # without DDL rights (or any other failure) just logs a warning and
             # leaves schema management to the operator's `alembic upgrade head`,
             # exactly as before.
-            from app.core.postgres_migrator import postgres_auto_migrate
+            skip_auto_migrate = os.environ.get("SKIP_AUTO_MIGRATE", "false").lower() in ("true", "1", "yes")
+            if not skip_auto_migrate:
+                from app.core.postgres_migrator import postgres_auto_migrate
 
-            try:
-                migrated = await postgres_auto_migrate(engine, Base)
-                if migrated:
-                    logger.info("PostgreSQL auto-migration: %d schema objects (columns + indexes) added", migrated)
-            except Exception:
-                logger.warning("PostgreSQL auto-migration skipped (non-fatal)", exc_info=True)
+                try:
+                    migrated = await postgres_auto_migrate(engine, Base)
+                    if migrated:
+                        logger.info("PostgreSQL auto-migration: %d schema objects (columns + indexes) added", migrated)
+                except Exception:
+                    logger.warning("PostgreSQL auto-migration skipped (non-fatal)", exc_info=True)
 
-            async with engine.begin() as conn:
-                await conn.run_sync(Base.metadata.create_all)
-            logger.info("PostgreSQL tables created/verified")
+                async with engine.begin() as conn:
+                    await conn.run_sync(Base.metadata.create_all)
+                logger.info("PostgreSQL tables created/verified")
+            else:
+                logger.info("PostgreSQL auto-migration skipped via SKIP_AUTO_MIGRATE=true (fast startup)")
 
             # Stamp the alembic version table to head on a fresh managed DB.
             # create_all above materialises the full current schema, so the

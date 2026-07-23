@@ -8,7 +8,7 @@ drawing layer of a PDF page (PyMuPDF ``page.get_drawings()``) and proposes
 candidate measurements:
 
 * rectangles and clean closed loops -> ``area`` candidates,
-* long straight strokes -> ``distance`` (length) candidates,
+* long straight or curved strokes -> ``distance`` (length) candidates,
 * repeated small closed shapes -> ``count`` candidates.
 
 Nothing is persisted here. Every candidate carries an honest ``confidence``
@@ -114,6 +114,52 @@ def _bbox(pts: list[Point]) -> tuple[float, float, float, float]:
     return (min(xs), min(ys), max(xs), max(ys))
 
 
+def _flatten_cubic(p0: Point, p1: Point, p2: Point, p3: Point, *, steps: int = 10) -> list[Point]:
+    """Sample a cubic Bezier so arches / curves keep their true shape."""
+    out: list[Point] = []
+    n = max(2, steps)
+    for i in range(n + 1):
+        t = i / n
+        u = 1.0 - t
+        x = (
+            (u * u * u) * p0[0]
+            + 3.0 * (u * u) * t * p1[0]
+            + 3.0 * u * (t * t) * p2[0]
+            + (t * t * t) * p3[0]
+        )
+        y = (
+            (u * u * u) * p0[1]
+            + 3.0 * (u * u) * t * p1[1]
+            + 3.0 * u * (t * t) * p2[1]
+            + (t * t * t) * p3[1]
+        )
+        out.append((x, y))
+    return out
+
+
+def _flatten_quad(p0: Point, p1: Point, p2: Point, *, steps: int = 8) -> list[Point]:
+    """Sample a quadratic Bezier."""
+    out: list[Point] = []
+    n = max(2, steps)
+    for i in range(n + 1):
+        t = i / n
+        u = 1.0 - t
+        x = (u * u) * p0[0] + 2.0 * u * t * p1[0] + (t * t) * p2[0]
+        y = (u * u) * p0[1] + 2.0 * u * t * p1[1] + (t * t) * p2[1]
+        out.append((x, y))
+    return out
+
+
+def _extend_chain(chain: list[Point], samples: list[Point]) -> None:
+    """Append polyline samples, skipping a duplicated join vertex."""
+    if not samples:
+        return
+    start = 0
+    if chain and _seg_length(chain[-1], samples[0]) <= 0.75:
+        start = 1
+    chain.extend(samples[start:])
+
+
 def _is_axis_rectangular(pts: list[Point]) -> bool:
     """True when a 4-point loop is (near) an axis-aligned rectangle."""
     if len(pts) != 4:
@@ -167,10 +213,10 @@ def primitives_from_drawings(drawings: list[Any]) -> list[_Primitive]:
     """Normalize PyMuPDF ``page.get_drawings()`` output into primitives.
 
     Each path becomes zero or more primitives: an explicit ``re`` item is a
-    rectangle; a run of connected ``l`` items that returns to its start is a
-    closed loop; the remaining long ``l`` items are standalone segments.
-    Bezier (``c``) and quad (``qu``) items are flattened to their endpoints
-    so curved strokes still contribute a length estimate.
+    rectangle; a run of connected ``l`` / curve items that returns to its start
+    is a closed loop; the remaining long strokes are standalone segments.
+    Cubic (``c``) and quad (``qu``) Beziers are sampled along the curve so
+    arches and curved walls keep accurate geometry (not chord endpoints).
     """
     prims: list[_Primitive] = []
     for path in drawings or []:
@@ -178,7 +224,7 @@ def primitives_from_drawings(drawings: list[Any]) -> list[_Primitive]:
         if not items:
             continue
         chain: list[Point] = []
-        loose: list[tuple[Point, Point]] = []
+        loose: list[list[Point]] = []
         for it in items:
             if not it:
                 continue
@@ -187,22 +233,37 @@ def primitives_from_drawings(drawings: list[Any]) -> list[_Primitive]:
                 corners = _rect_corners(it[1]) if len(it) > 1 else None
                 if corners:
                     prims.append(_Primitive("rect", corners))
-            elif op in ("l", "c", "qu"):
+            elif op == "c":
+                raw = [p for p in (_xy(x) for x in it[1:]) if p is not None]
+                if len(raw) >= 4:
+                    samples = _flatten_cubic(raw[0], raw[1], raw[2], raw[3])
+                    loose.append(samples)
+                    _extend_chain(chain, samples)
+            elif op == "qu":
+                raw = [p for p in (_xy(x) for x in it[1:]) if p is not None]
+                if len(raw) >= 3:
+                    samples = _flatten_quad(raw[0], raw[1], raw[2])
+                    loose.append(samples)
+                    _extend_chain(chain, samples)
+            elif op == "l":
                 pts = [p for p in (_xy(x) for x in it[1:]) if p is not None]
                 if len(pts) >= 2:
-                    a, b = pts[0], pts[-1]
-                    loose.append((a, b))
-                    if not chain:
-                        chain.append(a)
-                    chain.append(b)
+                    samples = [pts[0], pts[-1]]
+                    loose.append(samples)
+                    _extend_chain(chain, samples)
         # A path whose vertices return to the start is a closed loop.
         if len(chain) >= 4 and _seg_length(chain[0], chain[-1]) <= _LOOP_CLOSE_PX:
             closed = chain[:-1] if _seg_length(chain[0], chain[-1]) <= _MIN_SEGMENT_PX else chain
             prims.append(_Primitive("loop", closed))
         else:
-            for a, b in loose:
-                if _seg_length(a, b) >= _MIN_SEGMENT_PX:
-                    prims.append(_Primitive("segment", [a, b]))
+            for samples in loose:
+                if len(samples) < 2:
+                    continue
+                length = _polyline_length(samples)
+                if length < _MIN_SEGMENT_PX:
+                    continue
+                # Keep the full sampled stroke (2 pts for lines, many for arcs).
+                prims.append(_Primitive("segment", samples))
     return prims
 
 
@@ -242,6 +303,14 @@ def detect_areas(prims: list[_Primitive], scale: float) -> list[dict[str, Any]]:
             continue
         if prim.kind == "rect" or _is_axis_rectangular(pts):
             confidence, reason = 0.85, "Closed rectangle in the drawing's vector layer"
+        elif len(pts) >= 8:
+            x0, y0, x1, y1 = _bbox(pts)
+            w, h = x1 - x0, y1 - y0
+            # Column bubbles / north-arrow rings — not measurable rooms.
+            if 0 < max(w, h) < 70 and abs(w - h) / max(w, h) < 0.22:
+                continue
+            confidence = 0.84 if area_px >= 5000.0 else 0.78
+            reason = "Closed curved / arched region in the vector layer"
         else:
             confidence, reason = 0.62, "Closed polygon region in the vector layer"
         value = _area_value(pts, scale)
@@ -261,24 +330,28 @@ def detect_areas(prims: list[_Primitive], scale: float) -> list[dict[str, Any]]:
 
 
 def detect_lengths(prims: list[_Primitive], scale: float) -> list[dict[str, Any]]:
-    """Long straight strokes -> distance (length) candidates.
+    """Long strokes (straight or curved) -> distance (length) candidates.
 
     Only the longer strokes are surfaced: short segments are almost always
     hatching, dimension ticks or symbol detail, not a wall the user wants to
     measure. The cut is the 70th length percentile (with a hard floor) so a
-    busy sheet does not flood the panel with every tick mark.
+    busy sheet does not flood the panel with every tick mark. Curved strokes
+    keep their sampled polyline so arch lengths stay accurate.
     """
     segs = [p for p in prims if p.kind == "segment"]
     if not segs:
         return []
-    lengths = sorted(_seg_length(p.points[0], p.points[1]) for p in segs)
+    lengths = sorted(_polyline_length(p.points) for p in segs)
     cut = max(lengths[int(len(lengths) * 0.7)], _MIN_SEGMENT_PX * 2.5)
     span = lengths[-1] or 1.0
     out: list[dict[str, Any]] = []
     seen: set[tuple[int, int, int, int]] = set()
     for prim in segs:
-        a, b = prim.points[0], prim.points[1]
-        length_px = _seg_length(a, b)
+        pts = prim.points
+        if len(pts) < 2:
+            continue
+        a, b = pts[0], pts[-1]
+        length_px = _polyline_length(pts)
         if length_px < cut:
             continue
         key = (round(a[0] / 6), round(a[1] / 6), round(b[0] / 6), round(b[1] / 6))
@@ -287,14 +360,19 @@ def detect_lengths(prims: list[_Primitive], scale: float) -> list[dict[str, Any]
         seen.add(key)
         # Longer-than-typical strokes are likelier to be real walls/grid lines.
         confidence = round(min(0.82, 0.55 + 0.27 * (length_px / span)), 2)
+        curved = len(pts) > 2
         out.append(
             {
                 "type": "distance",
-                "points": [{"x": a[0], "y": a[1]}, {"x": b[0], "y": b[1]}],
-                "value": _length_value([a, b], scale),
+                "points": [{"x": p[0], "y": p[1]} for p in pts],
+                "value": _length_value(pts, scale),
                 "dimension": "length",
                 "confidence": confidence,
-                "reason": "Long straight stroke in the vector layer",
+                "reason": (
+                    "Curved / arched stroke in the vector layer"
+                    if curved
+                    else "Long straight stroke in the vector layer"
+                ),
             }
         )
     return out
@@ -361,7 +439,26 @@ def recognize_candidates(
     scale = float(scale_pixels_per_unit or 0.0)
     prims = primitives_from_drawings(drawings)
     candidates = detect_areas(prims, scale) + detect_lengths(prims, scale) + detect_counts(prims)
-    candidates.sort(key=lambda c: c.get("confidence", 0.0), reverse=True)
+
+    def _rank_size(c: dict[str, Any]) -> float:
+        """Secondary sort key: larger rooms / longer strokes surface first."""
+        if c.get("value") is not None:
+            try:
+                return abs(float(c["value"]))
+            except (TypeError, ValueError):
+                pass
+        pts = c.get("points") or []
+        xy = [(float(p["x"]), float(p["y"])) for p in pts if isinstance(p, dict)]
+        if c.get("type") == "area" and len(xy) >= 3:
+            return _shoelace_area(xy)
+        if c.get("type") == "distance" and len(xy) >= 2:
+            return _polyline_length(xy)
+        return float(c.get("count") or 0)
+
+    candidates.sort(
+        key=lambda c: (c.get("confidence", 0.0), _rank_size(c)),
+        reverse=True,
+    )
     return candidates[:max_candidates]
 
 

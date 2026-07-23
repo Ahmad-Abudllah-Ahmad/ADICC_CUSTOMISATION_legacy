@@ -506,33 +506,17 @@ export function LoginPage() {
           />
         </div>
 
-        {/* Eyebrow pill */}
-        <div className="mb-5 animate-stagger-in" style={{ animationDelay: '0ms' }}>
-          <span className="inline-flex items-center gap-2 rounded-full bg-emerald-500/[0.08] dark:bg-emerald-400/[0.1] px-3.5 py-1.5">
-            <span className="relative flex h-[6px] w-[6px]">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
-              <span className="relative inline-flex rounded-full h-[6px] w-[6px] bg-emerald-500" />
-            </span>
-            <span className="text-[11px] font-medium tracking-[0.04em] text-emerald-700 dark:text-emerald-300">Open Source</span>
-          </span>
-        </div>
-
         {/* Marketing headline - kept as h2 because the form panel below has the
             authoritative h1 (visually hidden, always present in DOM). */}
         <h2 className="text-[32px] xl:text-[36px] font-semibold text-content-primary leading-[1.08] tracking-[-0.025em] animate-stagger-in" style={{ animationDelay: '60ms' }}>
           {t('login.hero_h_a', { defaultValue: 'The' })}{' '}
           <span className="bg-gradient-to-r from-oe-blue to-sky-500 bg-clip-text text-transparent">#1</span>{' '}
-          {t('login.hero_h_b', { defaultValue: 'open-source workspace for' })}
+          {t('login.hero_h_b', { defaultValue: 'workspace for' })}
           <br />
           <span className="bg-gradient-to-r from-oe-blue to-sky-500 bg-clip-text text-transparent">
             {t('login.hero_h_c', { defaultValue: 'construction project management' })}
           </span>
         </h2>
-
-        {/* Subhead */}
-        <p className="mt-5 text-[17px] text-content-secondary/70 leading-[1.65] tracking-[-0.008em] max-w-[420px] animate-stagger-in" style={{ animationDelay: '120ms' }}>
-          {t('login.hero_desc', { defaultValue: 'Plan, estimate, schedule, tender - every step of a project on one professional platform.' })}
-        </p>
 
         {/* Stats row */}
         <div className="mt-5 flex items-center gap-5 animate-stagger-in" style={{ animationDelay: '180ms' }}>
@@ -637,42 +621,6 @@ export function LoginPage() {
           })}
         </div>
 
-        {/* Value props - restored as a clean two-up grid with refined
-            typography (no boxed icon backgrounds, accent rule above each
-            title) so the marketing column lands on something concrete
-            after the honeycomb. */}
-        <div className="mt-2 flex flex-wrap items-start gap-x-5 gap-y-2 animate-stagger-in" style={{ animationDelay: '320ms' }}>
-          {[
-            { icon: ShieldCheck, title: t('login.feat_local_title', { defaultValue: 'Your data, your machine' }), desc: t('login.feat_local', { defaultValue: 'Nothing leaves your computer. Full ownership,\nzero cloud dependency.' }) },
-            { icon: Brain,       title: t('login.feat_ai_title',    { defaultValue: 'AI-assisted, human-confirmed' }), desc: t('login.feat_ai',    { defaultValue: 'Smart suggestions with confidence scores. You always have the final say.' }) },
-          ].map((feat) => {
-            const Icon = feat.icon;
-            return (
-              <div key={feat.title} className="relative pl-4 max-w-[210px]">
-                <span aria-hidden className="absolute left-0 top-1 h-[14px] w-[2px] rounded-full bg-gradient-to-b from-oe-blue to-sky-500/60" />
-                <div className="flex items-center gap-1.5">
-                  <Icon size={13} strokeWidth={1.8} className="text-oe-blue/85" />
-                  <span className="text-[12.5px] font-semibold tracking-[-0.01em] text-content-primary leading-tight">
-                    {feat.title}
-                  </span>
-                </div>
-                <p className="mt-1 text-[11.5px] leading-[1.55] text-content-tertiary tracking-[-0.005em] whitespace-pre-line">
-                  {feat.desc}
-                </p>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Footer */}
-        <div className="mt-4 space-y-1 animate-stagger-in" style={{ animationDelay: '380ms' }}>
-          <div className="flex items-center gap-2 text-[11px] text-content-quaternary/60">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" className="opacity-40"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-            <a href="/api/source" target="_blank" rel="noopener noreferrer" className="hover:text-content-tertiary transition-colors">AGPL-3.0</a>
-            <span className="opacity-30">&middot;</span>
-            <a href="/" target="_blank" rel="noopener noreferrer" className="hover:text-content-tertiary transition-colors">ADICC ERP</a>
-          </div>
-        </div>
       </div>
 
       {/* Center column removed - tags moved to left panel footer */}
@@ -760,21 +708,7 @@ export function LoginPage() {
             </p>
           </div>
 
-          {/* Open-source banner (mobile) */}
-          <div className="lg:hidden mb-4 animate-stagger-in" style={{ animationDelay: '100ms' }}>
-            <div className="rounded-xl bg-gradient-to-r from-oe-blue/10 via-violet-500/10 to-emerald-500/10 border border-oe-blue/20 px-4 py-3 text-center">
-              <div className="flex items-center justify-center gap-1.5 mb-1">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-                </span>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600">Open Source</span>
-              </div>
-              <p className="text-sm font-bold bg-gradient-to-r from-oe-blue via-violet-600 to-emerald-600 bg-clip-text text-transparent">
-                {t('login.open_source_badge', { defaultValue: 'The #1 Open-Source Construction ERP' })}
-              </p>
-            </div>
-          </div>
+
 
           {/* Form - premium multi-layer glass.
               login-glass-pro adds layered borders, a coloured ambient drop
@@ -935,66 +869,7 @@ export function LoginPage() {
           </div>
           )}
 
-          {/* GitHub + Community - two primary entry points for the
-              open-source project (replaces the old single "Learn more"
-              link). Premium two-line cards with a tinted icon badge:
-              graphite for the source repo, oe-blue gradient for the
-              community hub. Mirrors the page's login-glass-pro language. */}
-          <div className="mt-4 grid grid-cols-2 gap-3 animate-stagger-in" style={{ animationDelay: '520ms' }}>
-            <a
-              href="https://adicc-uae.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`${t('login.github', { defaultValue: 'GitHub' })} - ${t('login.github_sub', { defaultValue: 'Source code' })}`}
-              className="group relative flex items-center gap-3 overflow-hidden rounded-xl border border-border-light/70 dark:border-white/15 bg-white/75 dark:bg-white/[0.07] backdrop-blur-sm px-3.5 py-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/90 dark:hover:bg-white/[0.12] dark:hover:border-white/25 hover:border-content-primary/25 hover:shadow-lg"
-            >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-content-primary/[0.06] dark:bg-white/10 text-content-primary transition-colors group-hover:bg-content-primary/10 dark:group-hover:bg-white/15">
-                <Github size={17} strokeWidth={1.9} />
-              </span>
-              <span className="min-w-0 flex-1 leading-tight">
-                <span className="block text-[13px] font-semibold text-content-primary">
-                  {t('login.github', { defaultValue: 'GitHub' })}
-                </span>
-                <span className="block truncate text-[11px] text-content-tertiary dark:text-content-secondary">
-                  {t('login.github_sub', { defaultValue: 'Source code' })}
-                </span>
-              </span>
-              <ArrowUpRight
-                size={15}
-                className="shrink-0 text-content-quaternary dark:text-content-tertiary transition-all duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-content-secondary"
-              />
-            </a>
-            <a
-              href="https://t.me/datadrivenconstruction"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`${t('login.community', { defaultValue: 'Community' })} - ${t('login.community_sub', { defaultValue: 'Get help & discuss' })}`}
-              className="group relative flex items-center gap-3 overflow-hidden rounded-xl border border-border-light/70 dark:border-white/15 bg-white/75 dark:bg-white/[0.07] backdrop-blur-sm px-3.5 py-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/90 dark:hover:bg-white/[0.12] dark:hover:border-white/25 hover:border-content-primary/25 hover:shadow-lg"
-            >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-content-primary/[0.06] dark:bg-white/10 text-content-primary transition-colors group-hover:bg-content-primary/10 dark:group-hover:bg-white/15">
-                <Users size={17} strokeWidth={1.9} />
-              </span>
-              <span className="min-w-0 flex-1 leading-tight">
-                <span className="block text-[13px] font-semibold text-content-primary">
-                  {t('login.community', { defaultValue: 'Community' })}
-                </span>
-                <span className="block truncate text-[11px] text-content-tertiary dark:text-content-secondary">
-                  {t('login.community_sub', { defaultValue: 'Get help & discuss' })}
-                </span>
-              </span>
-              <ArrowUpRight
-                size={15}
-                className="shrink-0 text-content-quaternary dark:text-content-tertiary transition-all duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-content-secondary"
-              />
-            </a>
-          </div>
-          <div className="lg:hidden mt-2 text-center text-2xs text-content-quaternary">
-            <div className="flex items-center justify-center gap-3">
-              <a href="/" target="_blank" rel="noopener noreferrer" className="hover:text-content-secondary transition-colors">ADICC ERP</a>
-              <span>·</span>
-              <a href="https://adicc-uae.com" target="_blank" rel="noopener noreferrer" className="hover:text-content-secondary transition-colors">GitHub</a>
-            </div>
-          </div>
+
         </div>
       </div>
 

@@ -62,6 +62,9 @@ function isInViewport(
   } else if (entity.vertices?.length) {
     cx = entity.vertices[0]!.x;
     cy = entity.vertices[0]!.y;
+  } else if ((entity as any).points?.length) {
+    cx = (entity as any).points[0]!.x;
+    cy = (entity as any).points[0]!.y;
   } else {
     // Can't determine position — render to be safe
     return true;
@@ -137,6 +140,11 @@ export function renderEntities(
     applyStyle(ctx, entity, selectedId);
 
     switch (entity.type) {
+      case 'SOLID':
+      case 'TRACE':
+      case '3DFACE':
+        renderSolid(ctx, entity, vp);
+        break;
       case 'LINE':
         renderLine(ctx, entity, vp);
         break;
@@ -219,6 +227,12 @@ export function renderPolyline(
   }
   if (entity.closed) {
     ctx.closePath();
+    if (entity.is_solid || (entity.pattern_name && entity.pattern_name.toUpperCase() === 'SOLID')) {
+      ctx.save();
+      ctx.globalAlpha = 0.75;
+      ctx.fill();
+      ctx.restore();
+    }
   }
   ctx.stroke();
 }
@@ -234,8 +248,9 @@ export function renderArc(
   const startAngle = entity.start_angle ?? 0;
   const endAngle = entity.end_angle ?? Math.PI * 2;
   ctx.beginPath();
-  // DXF arcs are CCW; with Y-axis flipped in worldToScreen, negate angles and sweep CW
-  ctx.arc(center.x, center.y, r, -startAngle, -endAngle, false);
+  // DXF arcs are CCW in Cartesian space; with Y-axis flipped in worldToScreen,
+  // negate angles and sweep counter-clockwise in Canvas screen space (anticlockwise = true)
+  ctx.arc(center.x, center.y, r, -startAngle, -endAngle, true);
   ctx.stroke();
 }
 
@@ -328,13 +343,14 @@ export function renderHatch(
   entity: DxfEntity,
   vp: ViewportState,
 ): void {
-  if (!entity.vertices || entity.vertices.length < 3) return;
+  const pts = entity.vertices ?? (entity as any).points;
+  if (!pts || pts.length < 3) return;
 
   ctx.beginPath();
-  const first = worldToScreen(entity.vertices[0]!.x, entity.vertices[0]!.y, vp);
+  const first = worldToScreen(pts[0]!.x, pts[0]!.y, vp);
   ctx.moveTo(first.x, first.y);
-  for (let i = 1; i < entity.vertices.length; i++) {
-    const v = entity.vertices[i]!;
+  for (let i = 1; i < pts.length; i++) {
+    const v = pts[i]!;
     const p = worldToScreen(v.x, v.y, vp);
     ctx.lineTo(p.x, p.y);
   }
@@ -344,34 +360,55 @@ export function renderHatch(
 
   const patternName = (entity.pattern_name ?? '').toUpperCase();
 
-  if (entity.is_solid || patternName === 'SOLID') {
-    // Solid fill
-    ctx.globalAlpha = 0.15;
+  if (entity.is_solid || patternName === 'SOLID' || patternName === '') {
+    // Solid fill (columns, wall core fills, filled blocks)
+    ctx.globalAlpha = 0.75;
     ctx.fill();
   } else if (patternName === 'ANSI31' || patternName === 'ANSI32' || patternName === 'ANSI37') {
     // Diagonal line patterns
     const color = ctx.fillStyle as string;
     const pattern = createDiagonalPattern(ctx, color, 8);
     if (pattern) {
-      ctx.globalAlpha = 0.35;
+      ctx.globalAlpha = 0.6;
       ctx.fillStyle = pattern;
       ctx.fill();
     } else {
-      ctx.globalAlpha = 0.1;
+      ctx.globalAlpha = 0.35;
       ctx.fill();
     }
-  } else if (patternName) {
-    // Other named patterns — use slightly higher opacity fill as fallback
-    ctx.globalAlpha = 0.1;
-    ctx.fill();
   } else {
-    // Unknown / default
-    ctx.globalAlpha = 0.15;
+    // Other named patterns
+    ctx.globalAlpha = 0.5;
     ctx.fill();
   }
 
   // Always stroke the boundary
-  ctx.globalAlpha = 0.4;
+  ctx.globalAlpha = 0.9;
+  ctx.stroke();
+  ctx.restore();
+}
+
+export function renderSolid(
+  ctx: CanvasRenderingContext2D,
+  entity: DxfEntity,
+  vp: ViewportState,
+): void {
+  const pts = entity.vertices ?? (entity as any).points;
+  if (!pts || pts.length < 3) return;
+
+  ctx.beginPath();
+  const first = worldToScreen(pts[0]!.x, pts[0]!.y, vp);
+  ctx.moveTo(first.x, first.y);
+  for (let i = 1; i < pts.length; i++) {
+    const p = worldToScreen(pts[i]!.x, pts[i]!.y, vp);
+    ctx.lineTo(p.x, p.y);
+  }
+  ctx.closePath();
+
+  ctx.save();
+  ctx.globalAlpha = 0.85;
+  ctx.fill();
+  ctx.globalAlpha = 1.0;
   ctx.stroke();
   ctx.restore();
 }

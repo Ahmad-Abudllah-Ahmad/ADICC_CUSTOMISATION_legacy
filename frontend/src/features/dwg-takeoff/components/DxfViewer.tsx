@@ -1763,6 +1763,14 @@ function renderMultiSelectionHalos(
       ctx.beginPath();
       ctx.arc(c.x, c.y, r, 0, Math.PI * 2);
       ctx.stroke();
+    } else if (ent.type === 'ARC' && ent.start && ent.radius) {
+      const c = worldToScreen(ent.start.x, ent.start.y, vp);
+      const r = ent.radius * vp.scale;
+      const sa = ent.start_angle ?? 0;
+      const ea = ent.end_angle ?? Math.PI * 2;
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, r, -sa, -ea, true);
+      ctx.stroke();
     } else if (ent.start) {
       const c = worldToScreen(ent.start.x, ent.start.y, vp);
       ctx.beginPath();

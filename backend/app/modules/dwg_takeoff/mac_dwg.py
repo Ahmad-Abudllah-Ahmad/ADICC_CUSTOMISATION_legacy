@@ -33,15 +33,30 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 _EXTENT_ABS_MAX = 1.0e9
-_PATH_D_RE = re.compile(r'([ML])\s*([-\d.eE+]+)\s*,\s*([-\d.eE+]+)')
+_PATH_D_RE = re.compile(r'([MLAaZz])\s*([-\d.eE+,\s]*)')
 _SVG_PATH_RE = re.compile(r'<path[^>]*\bd="([^"]+)"', re.IGNORECASE)
+_SVG_PATH_FULL_RE = re.compile(
+    r'<path[^>]*\bd="([^"]+)"[^>]*(?:style="([^"]*)"|)',
+    re.IGNORECASE,
+)
 _SVG_CIRCLE_RE = re.compile(
     r'<circle[^>]*\bcx="([^"]+)"[^>]*\bcy="([^"]+)"[^>]*\br="([^"]+)"',
     re.IGNORECASE,
 )
 _SVG_POLYGON_RE = re.compile(r'<polygon[^>]*\bpoints="([^"]+)"', re.IGNORECASE)
+# Extract stroke color from SVG style attribute
+_SVG_STROKE_RE = re.compile(r'stroke\s*:\s*([^;"\s]+)', re.IGNORECASE)
+# Match <defs>...</defs> blocks
+_SVG_DEFS_RE = re.compile(r'<defs[^>]*>(.*?)</defs>', re.IGNORECASE | re.DOTALL)
+# Match <use ... xlink:href="#id" transform="..."> elements
+_SVG_USE_RE = re.compile(
+    r'<use[^>]*xlink:href="#([^"]+)"[^>]*(?:transform="([^"]+)")?[^>]*/?>',
+    re.IGNORECASE,
+)
+# Match id attributes on elements inside defs
+_SVG_ELEMENT_ID_RE = re.compile(r'\bid="([^"]+)"', re.IGNORECASE)
 
-# ACI → hex (subset used by dxf_processor)
+# ACI → hex — extended palette covering standard AutoCAD colors.
 _ACI_HEX: dict[int, str] = {
     1: "#ff0000",
     2: "#ffff00",
@@ -52,6 +67,18 @@ _ACI_HEX: dict[int, str] = {
     7: "#ffffff",
     8: "#808080",
     9: "#c0c0c0",
+    10: "#ff0000", 11: "#ff7f7f", 12: "#cc0000",
+    20: "#ff3f00", 21: "#ff9f7f", 30: "#ff7f00",
+    40: "#ffbf00", 41: "#ffdf7f", 50: "#ffff00",
+    60: "#bfff00", 70: "#7fff00", 80: "#3fff00",
+    90: "#00ff00", 100: "#00ff3f", 110: "#00ff7f",
+    120: "#00ffbf", 130: "#00ffff", 140: "#00bfff",
+    150: "#007fff", 160: "#003fff", 170: "#0000ff",
+    180: "#3f00ff", 190: "#7f00ff", 200: "#bf00ff",
+    210: "#ff00ff", 220: "#ff00bf", 230: "#ff007f",
+    240: "#ff003f", 250: "#333333", 251: "#464646",
+    252: "#585858", 253: "#6b6b6b", 254: "#808080",
+    255: "#ffffff",
 }
 
 _SUBCLASS_TO_ENTITY: dict[str, str] = {
@@ -66,6 +93,9 @@ _SUBCLASS_TO_ENTITY: dict[str, str] = {
     "acdbmtext": "MTEXT",
     "acdbblockreference": "INSERT",
     "acdbhatch": "HATCH",
+    "acdbsolid": "SOLID",
+    "acdbtrace": "SOLID",
+    "acdbface": "SOLID",
     "acdbspline": "SPLINE",
     "acdbdimension": "DIMENSION",
 }
@@ -287,15 +317,142 @@ def _coords_to_points(coords: Any) -> list[dict[str, float]]:
     return points
 
 
+def _svg_arc_to_points(
+    x1: float, y1: float,
+    rx: float, ry: float,
+    x_rotation: float,
+    large_arc: int, sweep: int,
+    x2: float, y2: float,
+    *,
+    segments: int = 16,
+) -> list[dict[str, float]]:
+    """Approximate an SVG elliptical arc as polyline points.
+
+    Uses the SVG arc parameterisation (endpoint → center) then samples
+    the arc at ``segments`` equal-angle steps. Falls back to a straight
+    line if the radii are degenerate.
+    """
+    pts: list[dict[str, float]] = []
+    if rx <= 0 or ry <= 0:
+        pts.append({"x": x2, "y": y2})
+        return pts
+
+    phi = math.radians(x_rotation)
+    cos_phi = math.cos(phi)
+    sin_phi = math.sin(phi)
+
+    # Step 1: compute (x1', y1')
+    dx2 = (x1 - x2) / 2.0
+    dy2 = (y1 - y2) / 2.0
+    x1p = cos_phi * dx2 + sin_phi * dy2
+    y1p = -sin_phi * dx2 + cos_phi * dy2
+
+    # Correct radii
+    x1p2 = x1p * x1p
+    y1p2 = y1p * y1p
+    rx2 = rx * rx
+    ry2 = ry * ry
+    lam = x1p2 / rx2 + y1p2 / ry2
+    if lam > 1.0:
+        s = math.sqrt(lam)
+        rx *= s
+        ry *= s
+        rx2 = rx * rx
+        ry2 = ry * ry
+
+    # Step 2: compute (cx', cy')
+    num = max(rx2 * ry2 - rx2 * y1p2 - ry2 * x1p2, 0.0)
+    den = rx2 * y1p2 + ry2 * x1p2
+    sq = math.sqrt(num / den) if den > 0 else 0.0
+    if large_arc == sweep:
+        sq = -sq
+    cxp = sq * rx * y1p / ry
+    cyp = -sq * ry * x1p / rx
+
+    # Step 3: compute center and angles
+    cx = cos_phi * cxp - sin_phi * cyp + (x1 + x2) / 2.0
+    cy = sin_phi * cxp + cos_phi * cyp + (y1 + y2) / 2.0
+
+    def _angle(ux: float, uy: float, vx: float, vy: float) -> float:
+        n = math.sqrt(ux * ux + uy * uy) * math.sqrt(vx * vx + vy * vy)
+        if n == 0:
+            return 0.0
+        c = max(-1.0, min(1.0, (ux * vx + uy * vy) / n))
+        a = math.acos(c)
+        if ux * vy - uy * vx < 0:
+            a = -a
+        return a
+
+    theta1 = _angle(1, 0, (x1p - cxp) / rx, (y1p - cyp) / ry)
+    dtheta = _angle(
+        (x1p - cxp) / rx, (y1p - cyp) / ry,
+        (-x1p - cxp) / rx, (-y1p - cyp) / ry,
+    )
+    if sweep == 0 and dtheta > 0:
+        dtheta -= 2.0 * math.pi
+    elif sweep == 1 and dtheta < 0:
+        dtheta += 2.0 * math.pi
+
+    # Step 4: sample arc
+    for i in range(1, segments + 1):
+        t = theta1 + dtheta * i / segments
+        xr = rx * math.cos(t)
+        yr = ry * math.sin(t)
+        px = cos_phi * xr - sin_phi * yr + cx
+        py = sin_phi * xr + cos_phi * yr + cy
+        if _sane_xy(px, py):
+            pts.append({"x": px, "y": py})
+
+    return pts
+
+
 def _path_d_to_points(d: str) -> list[dict[str, float]]:
+    """Parse SVG path data including M, L, and A commands into points."""
     points: list[dict[str, float]] = []
-    for match in _PATH_D_RE.finditer(d or ""):
-        try:
-            x, y = float(match.group(2)), float(match.group(3))
-        except (TypeError, ValueError):
-            continue
-        if _sane_xy(x, y):
-            points.append({"x": x, "y": y})
+    cur_x, cur_y = 0.0, 0.0
+    # Tokenise: split on command letters, keeping the letter.
+    tokens = re.findall(r'[MLAaZz]|[-+]?[\d]*\.?[\d]+(?:[eE][-+]?\d+)?', d or "")
+    i = 0
+    while i < len(tokens):
+        tok = tokens[i]
+        if tok in ('M', 'L'):
+            i += 1
+            # Consume pairs of numbers
+            while i + 1 < len(tokens) and tokens[i] not in 'MLAaZz':
+                try:
+                    x, y = float(tokens[i]), float(tokens[i + 1])
+                except (TypeError, ValueError):
+                    i += 1
+                    continue
+                i += 2
+                if _sane_xy(x, y):
+                    points.append({"x": x, "y": y})
+                    cur_x, cur_y = x, y
+        elif tok == 'A':
+            i += 1
+            # SVG arc: rx ry x-rotation large-arc-flag sweep-flag x y
+            while i + 6 < len(tokens) and tokens[i] not in 'MLAaZz':
+                try:
+                    rx = abs(float(tokens[i]))
+                    ry = abs(float(tokens[i + 1]))
+                    x_rot = float(tokens[i + 2])
+                    la = int(float(tokens[i + 3]))
+                    sw = int(float(tokens[i + 4]))
+                    ex = float(tokens[i + 5])
+                    ey = float(tokens[i + 6])
+                except (TypeError, ValueError):
+                    i += 1
+                    continue
+                i += 7
+                arc_pts = _svg_arc_to_points(
+                    cur_x, cur_y, rx, ry, x_rot, la, sw, ex, ey,
+                )
+                points.extend(arc_pts)
+                cur_x, cur_y = ex, ey
+        elif tok in ('Z', 'z'):
+            i += 1
+        else:
+            i += 1
     return points
 
 
@@ -624,8 +781,9 @@ def parse_libredwg_geojson(
             pts = [p for p in _coords_to_points(coords) if _sane_xy(p["x"], p["y"])]
             if len(pts) < 2:
                 continue
-            etype = "LWPOLYLINE"
-            geometry_data = {"points": pts, "closed": True}
+            is_hatch = "hatch" in str(props.get("SubClasses") or "").lower()
+            etype = "HATCH" if is_hatch else ("SOLID" if etype == "SOLID" else "LWPOLYLINE")
+            geometry_data = {"points": pts, "closed": True, "is_solid": True, "pattern_name": "SOLID"}
         elif gtype == "Point":
             if not isinstance(coords, (list, tuple)) or len(coords) < 2:
                 continue
@@ -672,41 +830,171 @@ def parse_libredwg_geojson(
     return _finalize_entities(entities, source="libredwg_geojson")
 
 
+def _extract_svg_color(style: str | None) -> str:
+    """Extract stroke color from an SVG style attribute string."""
+    if not style:
+        return "#cccccc"
+    m = _SVG_STROKE_RE.search(style)
+    if not m:
+        return "#cccccc"
+    raw = m.group(1).lower()
+    _CSS_COLORS: dict[str, str] = {
+        "black": "#cccccc",  # map black → light grey for dark background
+        "white": "#ffffff",
+        "red": "#ff0000",
+        "green": "#00ff00",
+        "blue": "#0000ff",
+        "yellow": "#ffff00",
+        "cyan": "#00ffff",
+        "magenta": "#ff00ff",
+        "gray": "#808080",
+        "grey": "#808080",
+    }
+    if raw in _CSS_COLORS:
+        return _CSS_COLORS[raw]
+    if raw.startswith("#"):
+        return raw
+    return "#cccccc"
+
+
+def _parse_svg_transform(transform: str) -> tuple[float, float, float, float]:
+    """Parse a simple SVG transform string, returning (tx, ty, rotate_deg, scale).
+
+    Handles translate(x y), rotate(deg), scale(s) and their combination.
+    """
+    tx = ty = 0.0
+    rotate_deg = 0.0
+    scale = 1.0
+    if not transform:
+        return tx, ty, rotate_deg, scale
+    for m in re.finditer(r'translate\(([^)]+)\)', transform):
+        parts = re.findall(r'[-+]?[\d]*\.?[\d]+(?:[eE][-+]?\d+)?', m.group(1))
+        if len(parts) >= 2:
+            tx, ty = float(parts[0]), float(parts[1])
+        elif len(parts) == 1:
+            tx = float(parts[0])
+    for m in re.finditer(r'rotate\(([^)]+)\)', transform):
+        parts = re.findall(r'[-+]?[\d]*\.?[\d]+(?:[eE][-+]?\d+)?', m.group(1))
+        if parts:
+            rotate_deg = float(parts[0])
+    for m in re.finditer(r'scale\(([^)]+)\)', transform):
+        parts = re.findall(r'[-+]?[\d]*\.?[\d]+(?:[eE][-+]?\d+)?', m.group(1))
+        if parts:
+            scale = float(parts[0])
+    return tx, ty, rotate_deg, scale
+
+
+def _transform_point(
+    x: float, y: float,
+    tx: float, ty: float,
+    rotate_deg: float, scale: float,
+) -> tuple[float, float]:
+    """Apply translate + rotate + scale to a point."""
+    x *= scale
+    y *= scale
+    if rotate_deg != 0.0:
+        rad = math.radians(rotate_deg)
+        cos_r = math.cos(rad)
+        sin_r = math.sin(rad)
+        x, y = x * cos_r - y * sin_r, x * sin_r + y * cos_r
+    return x + tx, y + ty
+
+
+def _make_entity_from_path(
+    d: str,
+    color: str,
+    *,
+    tx: float = 0.0,
+    ty: float = 0.0,
+    rotate_deg: float = 0.0,
+    scale: float = 1.0,
+) -> dict[str, Any] | None:
+    """Convert an SVG path d-string to a LINE or LWPOLYLINE entity."""
+    pts = _path_d_to_points(d)
+    if tx != 0.0 or ty != 0.0 or rotate_deg != 0.0 or scale != 1.0:
+        transformed: list[dict[str, float]] = []
+        for p in pts:
+            nx, ny = _transform_point(p["x"], p["y"], tx, ty, rotate_deg, scale)
+            if _sane_xy(nx, ny):
+                transformed.append({"x": nx, "y": ny})
+        pts = transformed
+    if len(pts) < 2:
+        return None
+    if len(pts) == 2:
+        return {
+            "entity_type": "LINE",
+            "layer": "LINE",
+            "color": color,
+            "geometry_data": {"start": pts[0], "end": pts[1]},
+            "layout": "Model",
+        }
+    return {
+        "entity_type": "LWPOLYLINE",
+        "layer": "LWPOLYLINE",
+        "color": color,
+        "geometry_data": {"points": pts, "closed": False},
+        "layout": "Model",
+    }
+
+
 def parse_libredwg_svg(svg_text: str) -> dict[str, Any]:
     """Parse LibreDWG ``dwg2SVG`` output into takeoff line/polyline entities.
 
-    LibreDWG often nests all geometry under ``<defs>`` with world coordinates
-    already baked into ``<path d="...">`` values, so we collect every path /
-    polygon / meaningful circle in the file.
+    Handles:
+    - ``<path>`` elements with M, L, and A (arc) commands
+    - ``<polygon>`` / ``<circle>`` elements
+    - ``<defs>`` block definitions expanded via ``<use>`` references
+    - Stroke color extraction from ``style`` attributes
     """
     entities: list[dict[str, Any]] = []
 
-    for d in _SVG_PATH_RE.findall(svg_text):
-        pts = _path_d_to_points(d)
-        if len(pts) < 2:
-            continue
-        if len(pts) == 2:
-            entities.append(
-                {
-                    "entity_type": "LINE",
-                    "layer": "LINE",
-                    "color": "#ffffff",
-                    "geometry_data": {"start": pts[0], "end": pts[1]},
-                    "layout": "Model",
-                }
-            )
-        else:
-            entities.append(
-                {
-                    "entity_type": "LWPOLYLINE",
-                    "layer": "LWPOLYLINE",
-                    "color": "#ffffff",
-                    "geometry_data": {"points": pts, "closed": False},
-                    "layout": "Model",
-                }
-            )
+    # ── Step 1: Parse <defs> blocks and index their content by id ─────────
+    defs_content: dict[str, list[str]] = {}  # id → list of path d-strings
+    defs_circles: dict[str, list[tuple[float, float, float]]] = {}  # id → circles
+    for defs_match in _SVG_DEFS_RE.finditer(svg_text):
+        defs_text = defs_match.group(1)
+        # Group elements by their parent block id. dwg2SVG wraps each block
+        # in an element with an id like "dwg-object-NNN" or a raw id.
+        # We parse all paths/circles inside defs keyed by the nearest id.
+        current_id: str | None = None
+        for line in defs_text.split("\n"):
+            id_m = _SVG_ELEMENT_ID_RE.search(line)
+            if id_m:
+                current_id = id_m.group(1)
+            for path_m in _SVG_PATH_FULL_RE.finditer(line):
+                d_str = path_m.group(1)
+                if current_id:
+                    defs_content.setdefault(current_id, []).append(d_str)
+            for circ_m in _SVG_CIRCLE_RE.finditer(line):
+                try:
+                    cx = float(circ_m.group(1))
+                    cy = float(circ_m.group(2))
+                    r = float(circ_m.group(3))
+                    if current_id and r >= 0.5 and _sane_xy(cx, cy):
+                        defs_circles.setdefault(current_id, []).append((cx, cy, r))
+                except (TypeError, ValueError):
+                    continue
 
-    for points_attr in _SVG_POLYGON_RE.findall(svg_text):
+    # ── Step 2: Strip <defs> so main-pass doesn't re-parse them ───────────
+    svg_no_defs = _SVG_DEFS_RE.sub("", svg_text)
+
+    # ── Step 3: Parse main SVG paths (outside defs) ───────────────────────
+    for m in _SVG_PATH_FULL_RE.finditer(svg_no_defs):
+        d_str = m.group(1)
+        style = m.group(2) or ""
+        # Also try to find style in the full match if the regex didn't capture it
+        if not style:
+            full_tag = m.group(0)
+            sm = re.search(r'style="([^"]+)"', full_tag)
+            if sm:
+                style = sm.group(1)
+        color = _extract_svg_color(style)
+        ent = _make_entity_from_path(d_str, color)
+        if ent is not None:
+            entities.append(ent)
+
+    # ── Step 4: Parse polygons ────────────────────────────────────────────
+    for points_attr in _SVG_POLYGON_RE.findall(svg_no_defs):
         pts: list[dict[str, float]] = []
         raw_nums = re.findall(r"[-\d.eE+]+", points_attr)
         for i in range(0, len(raw_nums) - 1, 2):
@@ -721,13 +1009,14 @@ def parse_libredwg_svg(svg_text: str) -> dict[str, Any]:
                 {
                     "entity_type": "LWPOLYLINE",
                     "layer": "LWPOLYLINE",
-                    "color": "#ffffff",
+                    "color": "#cccccc",
                     "geometry_data": {"points": pts, "closed": True},
                     "layout": "Model",
                 }
             )
 
-    for match in _SVG_CIRCLE_RE.finditer(svg_text):
+    # ── Step 5: Parse circles ─────────────────────────────────────────────
+    for match in _SVG_CIRCLE_RE.finditer(svg_no_defs):
         try:
             cx, cy, r = float(match.group(1)), float(match.group(2)), float(match.group(3))
         except (TypeError, ValueError):
@@ -739,11 +1028,39 @@ def parse_libredwg_svg(svg_text: str) -> dict[str, Any]:
             {
                 "entity_type": "CIRCLE",
                 "layer": "CIRCLE",
-                "color": "#ffffff",
+                "color": "#cccccc",
                 "geometry_data": {"center": {"x": cx, "y": cy}, "radius": r},
                 "layout": "Model",
             }
         )
+
+    # ── Step 6: Expand <use> references (block instances) ─────────────────
+    for use_m in _SVG_USE_RE.finditer(svg_no_defs):
+        ref_id = use_m.group(1)
+        transform_str = use_m.group(2) or ""
+        tx, ty, rot, sc = _parse_svg_transform(transform_str)
+        # Expand paths from the referenced block
+        for d_str in defs_content.get(ref_id, []):
+            ent = _make_entity_from_path(
+                d_str, "#cccccc",
+                tx=tx, ty=ty, rotate_deg=rot, scale=sc,
+            )
+            if ent is not None:
+                entities.append(ent)
+        # Expand circles from the referenced block
+        for bcx, bcy, br in defs_circles.get(ref_id, []):
+            nx, ny = _transform_point(bcx, bcy, tx, ty, rot, sc)
+            nr = br * abs(sc)
+            if nr >= 0.5 and _sane_xy(nx, ny):
+                entities.append(
+                    {
+                        "entity_type": "CIRCLE",
+                        "layer": "CIRCLE",
+                        "color": "#cccccc",
+                        "geometry_data": {"center": {"x": nx, "y": ny}, "radius": nr},
+                        "layout": "Model",
+                    }
+                )
 
     return _finalize_entities(entities, source="libredwg_svg")
 
@@ -782,6 +1099,9 @@ def _merge_entity_lists(
         if k is not None:
             seen.add(k)
     for ent in extra:
+        # Allow all meaningful entity types through — the old filter dropped
+        # SOLID, HATCH, DIMENSION, INSERT, ELLIPSE, SPLINE which are needed
+        # for filled shapes, dimension annotations, and block references.
         if ent.get("entity_type") not in (
             "LINE",
             "LWPOLYLINE",
@@ -789,6 +1109,13 @@ def _merge_entity_lists(
             "ARC",
             "TEXT",
             "MTEXT",
+            "SOLID",
+            "HATCH",
+            "DIMENSION",
+            "INSERT",
+            "ELLIPSE",
+            "SPLINE",
+            "POLYLINE",
         ):
             continue
         k = _key(ent)

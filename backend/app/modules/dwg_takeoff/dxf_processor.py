@@ -163,8 +163,53 @@ def _serialize_entity(
             result["geometry_data"] = {"control_points": points}
         except Exception:
             result["geometry_data"] = {"control_points": []}
+    elif entity_type in ("SOLID", "TRACE", "3DFACE"):
+        try:
+            v0 = entity.dxf.vtx0
+            v1 = entity.dxf.vtx1
+            v2 = entity.dxf.vtx2
+            v3 = getattr(entity.dxf, "vtx3", v2)
+            if entity_type in ("SOLID", "TRACE"):
+                points = [
+                    {"x": v0.x, "y": v0.y},
+                    {"x": v1.x, "y": v1.y},
+                    {"x": v3.x, "y": v3.y},
+                    {"x": v2.x, "y": v2.y},
+                ]
+            else:
+                points = [
+                    {"x": v0.x, "y": v0.y},
+                    {"x": v1.x, "y": v1.y},
+                    {"x": v2.x, "y": v2.y},
+                    {"x": v3.x, "y": v3.y},
+                ]
+            result["geometry_data"] = {"points": points, "closed": True, "is_solid": True}
+        except Exception:
+            result["geometry_data"] = {"points": [], "closed": True, "is_solid": True}
     elif entity_type == "HATCH":
-        result["geometry_data"] = {"pattern_name": dxf.get("pattern_name", "SOLID")}
+        points = []
+        is_solid = False
+        try:
+            is_solid = getattr(entity, "solid_fill", False) or dxf.get("pattern_name", "").upper() == "SOLID"
+            for p in getattr(entity, "paths", []):
+                p_type = type(p).__name__
+                if p_type == "PolylinePath" and hasattr(p, "vertices"):
+                    for v in p.vertices:
+                        points.append({"x": v[0], "y": v[1]})
+                elif p_type == "EdgePath" and hasattr(p, "edges"):
+                    for edge in p.edges:
+                        if hasattr(edge, "start"):
+                            points.append({"x": edge.start[0], "y": edge.start[1]})
+                        if hasattr(edge, "end"):
+                            points.append({"x": edge.end[0], "y": edge.end[1]})
+        except Exception:
+            pass
+        result["geometry_data"] = {
+            "points": points,
+            "closed": True,
+            "pattern_name": dxf.get("pattern_name", "SOLID"),
+            "is_solid": is_solid,
+        }
     elif entity_type == "DIMENSION":
         result["geometry_data"] = {
             "dimension_type": dxf.get("dimtype", 0),

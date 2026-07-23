@@ -51,9 +51,8 @@ import numpy as np
 
 # Room words commonly printed on architectural floor plans (OCR seed list).
 _ROOM_TOKEN_RE = re.compile(
-    r"(ROOM|CHAMBER|KITCHEN|DINING|DRAWING|LIVING|BATH(?:ROOM)?|HALL|PORCH|PANTRY|"
-    r"SERVANT|CLOSET|ALCOVE|STORES|COAT|LINEN|ROOF|BEDROOM|BDRM|BED|PARKING|"
-    r"STAIRS?|OTS|GARAGE|OFFICE|PATIO|FOYER|LAUNDRY|BREAKFAST|ENTRY|MASTER)",
+    r"(ROOM|CHAMBER|KITCHEN|DINING|LIVING|BATH|HALL|PORCH|PANTRY|SERVANT|"
+    r"CLOSET|ALCOVE|STORES|COAT|LINEN|ROOF|BEDROOM|BED|PARKING|STAIRS?|OTS)",
     re.IGNORECASE,
 )
 _CAPTION_RE = re.compile(
@@ -86,33 +85,44 @@ _ROOM_ERODE_PX = 2
 _ROOM_MIN_PAGE_FRAC = 0.003
 # Named rooms may be smaller (baths / alcoves) after wall snapping.
 _ROOM_MIN_PAGE_FRAC_NAMED = 0.0012
-# Cap below a whole-floor envelope so merged open-plan blobs are rejected or
-# split by watershed rather than accepted as one "room".
-_ROOM_MAX_PAGE_FRAC = 0.12
-# Named OCR rooms (open-plan dining, etc.) may legitimately exceed the unnamed cap.
-_ROOM_MAX_PAGE_FRAC_NAMED = 0.28
+# Cap below a whole-page envelope. Open parking / podium decks are large; the
+# old 12% cap discarded the real GFA plate and left only stall fragments.
+_ROOM_MAX_PAGE_FRAC = 0.35
+# Named OCR rooms (parking decks, open-plan) may fill more of the sheet.
+_ROOM_MAX_PAGE_FRAC_NAMED = 0.55
+# Connected-component accept ceiling (aligned with named max).
+_ROOM_COMPONENT_MAX_FRAC = 0.55
 # Connected components larger than this are candidates for watershed splitting
-# through residual door openings.
+# through residual door openings — but only up to _ROOM_SPLIT_MAX_FRAC so
+# large open decks keep one curved contour.
 _ROOM_SPLIT_PAGE_FRAC = 0.040
+_ROOM_SPLIT_MAX_FRAC = 0.12
 # Distance-transform peak fraction used when splitting a large room blob.
 # Higher = fewer seeds = less fragmentation through furniture / stair lines.
 _ROOM_WATERSHED_PEAK = 0.30
 # Douglas-Peucker simplification, as a fraction of the contour perimeter.
-# Tighter than before so polygons track wall jogs instead of cutting corners.
-_ROOM_APPROX_EPS_FRAC = 0.008
+# Tight enough to track arches / wall jogs without following every ink speck.
+_ROOM_APPROX_EPS_FRAC = 0.004
+# Even tighter when the contour is clearly curved (many turns).
+_ROOM_APPROX_EPS_CURVED = 0.0025
 # A simplified room polygon with <= this many corners and a high bbox fill
 # ("extent") is treated as a clean rectangle and scored a little higher.
 _ROOM_RECT_MAX_VERTS = 12
 _ROOM_RECT_MIN_EXTENT = 0.55
 # Contour-to-minAreaRect fill ratio above which we snap to a clean rectangle.
 _ROOM_RECT_MIN_SOLIDITY = 0.65
+# Only force an axis-aligned box when the fill is this rectangular (otherwise
+# arches / L-shapes / slanted walls keep their true contour).
+_ROOM_AABB_EXTENT = 0.96
+# Max vertices kept on a room polygon (canvas stays responsive on dense curves).
+_ROOM_POLY_MAX_VERTS = 72
 # Drop near-zero / bow-tie polygons that would show as 0.00 on the canvas.
 _MIN_ROOM_AREA_PT2 = 4.0
 # IoU above which two room candidates are treated as the same space.
-_ROOM_IOU_DEDUP = 0.55
+_ROOM_IOU_DEDUP = 0.32
 # Extra wall dilate (px) applied only to the free-space used for seeded BFS so
 # door gaps close and named rooms stop bleeding into neighbours.
-_SEED_WALL_DILATE_PX = 7
+_SEED_WALL_DILATE_PX = 5
 # When at least this many named rooms exist, drop unnamed geometry noise.
 _MIN_NAMED_TO_DROP_UNNAMED = 4
 # Max distance suggestions kept after building-footprint filtering.
@@ -311,7 +321,7 @@ def _watershed_split_component(
     for i in range(2, int(markers.max()) + 1):
         part = ((markers == i) & (free_mask > 0)).astype(np.uint8) * 255
         frac = int(cv2.countNonZero(part)) / page_area
-        if _ROOM_MIN_PAGE_FRAC <= frac <= _ROOM_MAX_PAGE_FRAC:
+        if _ROOM_MIN_PAGE_FRAC <= frac <= _ROOM_COMPONENT_MAX_FRAC:
             parts.append(part)
     return parts if parts else [free_mask]
 
@@ -345,26 +355,15 @@ def _normalize_room_name(raw: str) -> str | None:
         return None
     # Modern plans often print "C. Bath" / "C Bath" for common bathroom.
     cleaned = re.sub(r"\bC\b\s+(?=[Bb]ath)", "Common ", cleaned)
-    # Ordered longest-first so SERVANTS / BEDROOM / BATHROOM match before shorter prefixes.
+    # Ordered longest-first so SERVANTS / BEDROOM match before shorter prefixes.
     known = [
         "SERVANTS",
         "SERVANT",
-        "BREAKFAST",
-        "BATHROOM",
         "BEDROOM",
-        "BDRM",
         "PARKING",
-        "LAUNDRY",
-        "GARAGE",
-        "OFFICE",
-        "PATIO",
-        "FOYER",
-        "ENTRY",
-        "MASTER",
         "STAIRS",
         "STAIR",
         "LIVING",
-        "DRAWING",
         "DINING",
         "KITCHEN",
         "CHAMBER",
@@ -400,10 +399,8 @@ def _normalize_room_name(raw: str) -> str | None:
             kept.append("Servant's")
         elif match == "COAT":
             kept.append("Coats")
-        elif match in {"BEDROOM", "BED", "BDRM"}:
+        elif match in {"BEDROOM", "BED"}:
             kept.append("Bed")
-        elif match == "BATHROOM":
-            kept.append("Bathroom")
         elif match in {"STAIRS", "STAIR"}:
             kept.append("Stairs")
         elif match == "OTS":
@@ -412,40 +409,21 @@ def _normalize_room_name(raw: str) -> str | None:
             kept.append("Parking")
         elif match == "COMMON":
             kept.append("Common")
-        elif match == "MASTER":
-            kept.append("Master")
-        elif match == "GARAGE":
-            kept.append("Garage")
-        elif match == "OFFICE":
-            kept.append("Office")
-        elif match == "PATIO":
-            kept.append("Patio")
-        elif match == "FOYER":
-            kept.append("Foyer")
-        elif match == "ENTRY":
-            kept.append("Entry")
-        elif match == "LAUNDRY":
-            kept.append("Laundry")
-        elif match == "BREAKFAST":
-            kept.append("Breakfast")
         else:
             kept.append(match.title())
-    if not kept or kept == ["Room"] or kept == ["Master"]:
+    if not kept or kept == ["Room"]:
         return None
     # Collapse "Servant's Room Room"
     while kept.count("Room") > 1:
         kept.remove("Room")
     # Reject OCR glues like "Dining Kitchen Room" — keep the first primary only.
-    # Keep Master as a modifier so "Master Bath" / "Master Bed Room" survive.
     primaries = {
         "Living",
-        "Drawing",
         "Dining",
         "Kitchen",
         "Bed",
         "Chamber",
         "Bath",
-        "Bathroom",
         "Hall",
         "Porch",
         "Parking",
@@ -460,30 +438,15 @@ def _normalize_room_name(raw: str) -> str | None:
         "Linen",
         "Stores",
         "Roof",
-        "Garage",
-        "Office",
-        "Patio",
-        "Foyer",
-        "Entry",
-        "Laundry",
-        "Breakfast",
     }
     primary_hits = [k for k in kept if k in primaries]
-    if len(primary_hits) > 1 and "Common" not in primary_hits and "Master" not in kept:
+    if len(primary_hits) > 1 and "Common" not in primary_hits:
         first = primary_hits[0]
         kept = [first] + [k for k in kept if k == "Room" or k not in primaries]
-    if "Master" in kept and "Bath" in kept:
-        return "Master Bath"
-    if "Master" in kept and "Bathroom" in kept:
-        return "Master Bath"
-    if "Master" in kept and "Bed" in kept:
-        return "Master Bed Room"
     if "Bed" in kept:
         return "Bed Room"
-    if "Common" in kept and ("Bath" in kept or "Bathroom" in kept):
+    if "Common" in kept and "Bath" in kept:
         return "Common Bath"
-    if "Bathroom" in kept:
-        return "Bathroom"
     if kept == ["Parking"] or kept[0] == "Parking":
         return "Parking"
     if kept == ["Stairs"] or kept[0] == "Stairs":
@@ -491,7 +454,7 @@ def _normalize_room_name(raw: str) -> str | None:
     if kept == ["OTS"] or kept[0] == "OTS":
         return "OTS"
     primary = kept[0]
-    if primary in {"Living", "Drawing", "Dining", "Servant's"} and "Room" not in kept:
+    if primary in {"Living", "Dining", "Servant's"} and "Room" not in kept:
         kept.append("Room")
     if primary == "Servant's":
         return "Servant's Room"
@@ -769,20 +732,6 @@ def _ocr_room_labels(gray: Any) -> list[tuple[str, int, int]]:
         tsv_path = base_path + ".tsv"
         if proc.returncode in (0, 1) and os.path.isfile(tsv_path):
             words_primary = _parse_tsv_words(tsv_path, scale_up=scale_up, min_conf=18)
-        # PSM 6 recovers block labels (LIVING, GARAGE) that sparse PSM 11 skips.
-        base6 = os.path.join(tmp_dir, "out_6")
-        proc6 = subprocess.run(
-            ["tesseract", img_path, base6, "--psm", "6", "tsv"],
-            capture_output=True,
-            check=False,
-        )
-        tsv6 = base6 + ".tsv"
-        if proc6.returncode in (0, 1) and os.path.isfile(tsv6):
-            extra = _parse_tsv_words(tsv6, scale_up=scale_up, min_conf=40)
-            # Keep only high-confidence room tokens to avoid caption ghosts.
-            for word in extra:
-                if _ROOM_TOKEN_RE.search(word[0]):
-                    words_primary.append(word)
         found.extend(_phrases_from_words(words_primary, page_h=h))
     except OSError:
         pass
@@ -844,37 +793,26 @@ def _ocr_room_labels(gray: Any) -> list[tuple[str, int, int]]:
         bases_present & {"Living Room", "Dining Room"}
     )
     space = max(70.0, min(h, w) * 0.055)
-    # Bath + Common Bath + Master Bath share one quota (ghost C/Bath hits are common).
+    # Bath + Common Bath share one quota (ghost C/Bath hits are common).
     bath_pool: list[tuple[str, int, int]] = []
-    for bname in ("Common Bath", "Master Bath", "Bathroom", "Bath"):
+    for bname in ("Common Bath", "Bath"):
         bath_pool.extend(by_name.pop(bname, []))
     if bath_pool:
-        # Prefer specific wording; drop plain Bath when Master/Common exists nearby.
-        bath_pool.sort(
-            key=lambda s: (
-                0 if s[0].startswith("Master") else 1 if s[0].startswith("Common") else 2,
-                s[2],
-                s[1],
-            )
-        )
-        # SAMPLE plans often have Master Bath + hall Bathroom.
-        bath_cap = 3 if stacked_plates else 3
-        bath_kept = _spaced(bath_pool, max(space, min(h, w) * 0.10))[:bath_cap]
+        # Prefer Common Bath wording; drop plain Bath when Common Bath exists.
+        has_common = any(n.startswith("Common") for n, _, _ in bath_pool)
+        if has_common:
+            bath_pool = [s for s in bath_pool if s[0].startswith("Common")]
+        bath_pool.sort(key=lambda s: (0 if s[0].startswith("Common") else 1, s[2], s[1]))
+        # Single-plate modern plans almost always have one bath label.
+        bath_cap = 2 if stacked_plates else 1
+        bath_kept = _spaced(bath_pool, max(space, min(h, w) * 0.12))[:bath_cap]
         final.extend(bath_kept)
 
     for base, items in by_name.items():
         # Keep every well-spaced seed for repeated room types.
-        if base in {
-            "Chamber",
-            "Closet",
-            "Hall",
-            "Porch",
-            "Alcove",
-            "Bed Room",
-            "Master Bed Room",
-        }:
+        if base in {"Chamber", "Closet", "Hall", "Porch", "Alcove", "Bed Room"}:
             kept = _spaced(items, space)
-            if base in {"Bed Room", "Master Bed Room"}:
+            if base == "Bed Room":
                 kept = kept[:4]
             elif base == "Chamber":
                 kept = kept[:6]
@@ -890,6 +828,11 @@ def _ocr_room_labels(gray: Any) -> list[tuple[str, int, int]]:
             continue
         # Other unique names: uppermost (plan label over caption).
         final.append(sorted(items, key=lambda s: s[2])[0])
+
+    # CAD title-block / legend column — never seed rooms from the right strip
+    # (was producing stacked Area boxes over schedules and "Roof" legends).
+    title_x = int(w * 0.78)
+    final = [(n, x, y) for n, x, y in final if x < title_x]
 
     return _disambiguate_duplicate_names(final)
 
@@ -1226,108 +1169,83 @@ def _named_rooms_as_rects(
     free: Any,
     seeds: list[tuple[str, int, int]],
 ) -> list[tuple[str, list[Point], Any]]:
-    """Build one wall-snapped room polygon per OCR label.
+    """Build one axis-aligned room rectangle per OCR label.
 
     1. Geodesic Voronoi ownership (splits open-plan rooms at door midpoints)
-    2. Contour of each cell (follows walls; AABB when nearly rectangular)
-    3. Ray-cast fallback when the geodesic cell collapses to a text-sized sliver
-    4. Mild expand of near-rect boxes to structural walls without crossing neighbours
+    2. Axis-aligned bbox of each cell
+    3. Expand to structural walls (ignores text ink) so boxes hug wall lines
     """
     h, w = wall.shape[:2]
-    page_area = float(h * w) or 1.0
     seed_free = _sealed_free_for_seeds(wall, free)
     geo = _geodesic_rooms_from_seeds(seed_free, seeds)
-    max_expand = max(20, int(min(h, w) * 0.055))
+    max_expand = max(28, int(min(h, w) * 0.08))
+    # Precompute union of all cells for forbidden masks.
     all_masks = {name: mask for name, mask in geo}
-    seed_xy = {name: (cx, cy) for name, cx, cy in seeds}
-    other_pts = [(cx, cy) for _, cx, cy in seeds]
-
-    out: list[tuple[str, list[Point], Any]] = []
+    named_rects: list[tuple[str, tuple[int, int, int, int]]] = []
     for name, mask in geo:
-        try:
-            k = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-            mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, k, iterations=1)
-        except cv2.error:
-            pass
-        area_px = int(cv2.countNonZero(mask))
-        poly = _mask_polygon(mask, force_rect=False)
-        # Collapsed / text-sliver cells: ray-cast from the printed label instead.
-        if (
-            poly is None
-            or area_px < max(80, int(page_area * 0.0025))
-            or len(poly) > 14
-        ):
-            sx, sy = seed_xy.get(name, (None, None))
-            if sx is not None:
-                others = [p for p in other_pts if p != (sx, sy)]
-                ray = _axis_aligned_rect_from_seed(wall, free, int(sx), int(sy), others)
-                if ray is not None:
-                    poly = _axis_aligned_poly(ray)
-                    mask = _rect_to_mask(ray, h, w)
-                    area_px = int(cv2.countNonZero(mask))
-        if poly is None or len(poly) < 3:
+        ys, xs = np.where(mask > 0)
+        if len(xs) == 0:
             continue
-        # Cap vertex noise for takeoff overlays while keeping L/U shapes (≤12).
-        if len(poly) > 12:
-            xs = [p[0] for p in poly]
-            ys = [p[1] for p in poly]
-            poly = _axis_aligned_poly(
-                (int(min(xs)), int(min(ys)), int(max(xs)), int(max(ys)))
-            )
-        xs = [p[0] for p in poly]
-        ys = [p[1] for p in poly]
-        x0, y0, x1, y1 = int(min(xs)), int(min(ys)), int(max(xs)), int(max(ys))
-        if x1 - x0 < 8 or y1 - y0 < 8:
-            continue
-        area_poly = _shoelace_area(poly)
-        bbox_area = float(max(1, (x1 - x0) * (y1 - y0)))
-        if area_poly / bbox_area >= 0.72 and len(poly) <= 6:
-            rect = (x0, y0, x1, y1)
-            forbidden = np.zeros((h, w), np.uint8)
-            for other, omask in all_masks.items():
-                if other != name:
-                    forbidden = cv2.bitwise_or(forbidden, omask)
-            rect = _expand_rect_to_structure_walls(
-                wall, free, rect, forbidden=forbidden, max_expand=max_expand
-            )
-            poly = _axis_aligned_poly(rect)
-            mask = _rect_to_mask(rect, h, w)
-        out.append((name, poly, mask))
+        rect = (int(xs.min()), int(ys.min()), int(xs.max()), int(ys.max()))
+        forbidden = np.zeros((h, w), np.uint8)
+        for other, omask in all_masks.items():
+            if other != name:
+                forbidden = cv2.bitwise_or(forbidden, omask)
+        rect = _expand_rect_to_structure_walls(
+            wall, free, rect, forbidden=forbidden, max_expand=max_expand
+        )
+        named_rects.append((name, rect))
 
-    # Split overlapping axis-aligned neighbours (open-plan bleed after expand).
-    rect_idx = [i for i, (_, poly, _) in enumerate(out) if len(poly) == 4]
+    # Split shared edges so neighbouring rooms don't overlap after expand.
     for _ in range(3):
         changed = False
-        for a in range(len(rect_idx)):
-            for b in range(a + 1, len(rect_idx)):
-                i, j = rect_idx[a], rect_idx[b]
-                n1, p1, _ = out[i]
-                n2, p2, _ = out[j]
-                ax0, ay0 = int(min(p[0] for p in p1)), int(min(p[1] for p in p1))
-                ax1, ay1 = int(max(p[0] for p in p1)), int(max(p[1] for p in p1))
-                bx0, by0 = int(min(p[0] for p in p2)), int(min(p[1] for p in p2))
-                bx1, by1 = int(max(p[0] for p in p2)), int(max(p[1] for p in p2))
+        for i in range(len(named_rects)):
+            for j in range(i + 1, len(named_rects)):
+                n1, (ax0, ay0, ax1, ay1) = named_rects[i]
+                n2, (bx0, by0, bx1, by1) = named_rects[j]
                 ix0, iy0 = max(ax0, bx0), max(ay0, by0)
                 ix1, iy1 = min(ax1, bx1), min(ay1, by1)
                 if ix1 - ix0 < 4 or iy1 - iy0 < 4:
                     continue
+                # Prefer splitting on the thinner overlap axis.
                 if ix1 - ix0 <= iy1 - iy0:
                     mid = (ix0 + ix1) // 2
+                    # Keep left room's right edge / right room's left edge at mid.
                     if (ax0 + ax1) / 2 <= (bx0 + bx1) / 2:
-                        r1, r2 = (ax0, ay0, mid, ay1), (mid, by0, bx1, by1)
+                        named_rects[i] = (n1, (ax0, ay0, mid, ay1))
+                        named_rects[j] = (n2, (mid, by0, bx1, by1))
                     else:
-                        r1, r2 = (mid, ay0, ax1, ay1), (bx0, by0, mid, by1)
+                        named_rects[i] = (n1, (mid, ay0, ax1, ay1))
+                        named_rects[j] = (n2, (bx0, by0, mid, by1))
                 else:
                     mid = (iy0 + iy1) // 2
                     if (ay0 + ay1) / 2 <= (by0 + by1) / 2:
-                        r1, r2 = (ax0, ay0, ax1, mid), (bx0, mid, bx1, by1)
+                        named_rects[i] = (n1, (ax0, ay0, ax1, mid))
+                        named_rects[j] = (n2, (bx0, mid, bx1, by1))
                     else:
-                        r1, r2 = (ax0, mid, ax1, ay1), (bx0, by0, bx1, mid)
-                out[i] = (n1, _axis_aligned_poly(r1), _rect_to_mask(r1, h, w))
-                out[j] = (n2, _axis_aligned_poly(r2), _rect_to_mask(r2, h, w))
+                        named_rects[i] = (n1, (ax0, mid, ax1, ay1))
+                        named_rects[j] = (n2, (bx0, by0, bx1, mid))
                 changed = True
         if not changed:
             break
+
+    out: list[tuple[str, list[Point], Any]] = []
+    for name, rect in named_rects:
+        x0, y0, x1, y1 = rect
+        if x1 - x0 < 8 or y1 - y0 < 8:
+            continue
+        geo_mask = all_masks.get(name)
+        if geo_mask is not None and int(cv2.countNonZero(geo_mask)) >= 32:
+            # Use the geodesic cell itself so arches / curved walls stay in the
+            # polygon. Clipping to the AABB first squared off every curve.
+            mask = geo_mask.copy()
+        else:
+            mask = cv2.bitwise_and(free, _rect_to_mask(rect, h, w))
+        poly = _mask_polygon(mask, force_rect=False)
+        if poly is None or len(poly) < 3:
+            poly = _axis_aligned_poly(rect)
+            mask = _rect_to_mask(rect, h, w)
+        out.append((name, poly, mask))
     return out
 
 
@@ -1348,23 +1266,36 @@ def _cand_from_mask(
     max_frac = _ROOM_MAX_PAGE_FRAC_NAMED if label else _ROOM_MAX_PAGE_FRAC
     if frac < min_frac or frac > max_frac:
         return None
-    # Named rooms: prefer a supplied wall-snapped poly; else contour the mask.
+    # Named rooms: prefer a supplied polygon; else contour (not forced AABB on curves).
     if poly_px is None:
-        poly_px = _mask_polygon(mask, force_rect=False)
+        poly_px = _mask_polygon(mask, force_rect=bool(label))
     if poly_px is None or len(poly_px) < 3:
         return None
-    # Snap only near-rect labeled rooms to clean H/V boxes.
+    # Reject near-full-page envelopes (bbox). Sparse fill can still pass the
+    # frac cap while painting one huge overlapping box over every zone.
+    xs_bb = [p[0] for p in poly_px]
+    ys_bb = [p[1] for p in poly_px]
+    bb_frac = ((max(xs_bb) - min(xs_bb)) * (max(ys_bb) - min(ys_bb))) / page_area
+    if bb_frac > 0.50:
+        return None
+    # Axis-align only clean 4-point rectangles — never flatten arches to a box.
     if label and len(poly_px) == 4:
         xs = [p[0] for p in poly_px]
         ys = [p[1] for p in poly_px]
-        area_p = _shoelace_area(poly_px)
-        bbox_a = max(1.0, (max(xs) - min(xs)) * (max(ys) - min(ys)))
-        if area_p / bbox_a >= 0.85:
-            poly_px = _axis_aligned_poly(
-                (int(min(xs)), int(min(ys)), int(max(xs)), int(max(ys)))
-            )
+        # Only snap when the four points already form an axis-aligned box.
+        if (
+            abs(xs[0] - xs[3]) < 1.5
+            and abs(xs[1] - xs[2]) < 1.5
+            and abs(ys[0] - ys[1]) < 1.5
+            and abs(ys[2] - ys[3]) < 1.5
+        ):
+            poly_px = _axis_aligned_poly((int(min(xs)), int(min(ys)), int(max(xs)), int(max(ys))))
     pts_pt = [to_pt(px, py) for px, py in poly_px]
-    area_pt2 = _shoelace_area(pts_pt)
+    # Accurate fill area from the mask (shoelace undercounts curved edges).
+    origin = to_pt(0.0, 0.0)
+    ax = abs(to_pt(1.0, 0.0)[0] - origin[0])
+    ay = abs(to_pt(0.0, 1.0)[1] - origin[1])
+    area_pt2 = float(area_px) * ax * ay if ax > 0 and ay > 0 else _shoelace_area(pts_pt)
     if area_pt2 < _MIN_ROOM_AREA_PT2:
         return None
     value = _area_value(area_pt2, scale)
@@ -1410,6 +1341,7 @@ def _detect_rooms(gray: Any, to_pt, scale: float) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     ocr_seeds = _ocr_room_labels(gray)
     claimed = np.zeros((h, w), np.uint8)
+    title_x = int(w * 0.78)
 
     if len(ocr_seeds) >= 2:
         for name, poly_px, mask in _named_rooms_as_rects(wall, free, ocr_seeds):
@@ -1444,7 +1376,7 @@ def _detect_rooms(gray: Any, to_pt, scale: float) -> list[dict[str, Any]]:
         for idx in order:
             area_px = int(stats[idx, cv2.CC_STAT_AREA])
             frac = area_px / page_area
-            if frac < _ROOM_MIN_PAGE_FRAC or frac > 0.22:
+            if frac < _ROOM_MIN_PAGE_FRAC or frac > _ROOM_COMPONENT_MAX_FRAC:
                 continue
             x = int(stats[idx, cv2.CC_STAT_LEFT])
             y = int(stats[idx, cv2.CC_STAT_TOP])
@@ -1452,10 +1384,18 @@ def _detect_rooms(gray: Any, to_pt, scale: float) -> list[dict[str, Any]]:
             bh = int(stats[idx, cv2.CC_STAT_HEIGHT])
             if x <= 2 and y <= 2 and x + bw >= w - 2 and y + bh >= h - 2:
                 continue
+            # Legend / title-block column — skip small cells stacked there.
+            if (x + bw * 0.5) >= title_x and frac < 0.08:
+                continue
+            # Thin horizontal bands (dimension strings), not floor zones.
+            if bh < h * 0.045 and bw > 3.5 * bh and frac < 0.04:
+                continue
             component = ((labels == idx).astype(np.uint8) * 255)
+            # Mid-size only: large open parking / podium decks must stay one
+            # curved contour — watershed chops them into stall-sized fragments.
             parts = (
                 _watershed_split_component(wall, component, page_area=page_area)
-                if frac >= _ROOM_SPLIT_PAGE_FRAC
+                if _ROOM_SPLIT_PAGE_FRAC <= frac < _ROOM_SPLIT_MAX_FRAC
                 else [component]
             )
             for mask in parts:
@@ -1493,11 +1433,26 @@ def _detect_rooms(gray: Any, to_pt, scale: float) -> list[dict[str, Any]]:
                     continue
                 replaced = False
                 for i, prev in enumerate(out):
-                    if _bbox_iou(cand["_bbox"], prev["_bbox"]) >= _ROOM_IOU_DEDUP:
-                        # Prefer named / higher-confidence.
-                        if (cand.get("label") and not prev.get("label")) or cand["confidence"] > prev[
-                            "confidence"
-                        ]:
+                    iou = _bbox_iou(cand["_bbox"], prev["_bbox"])
+                    # Nested fragment inside a larger room → keep the larger /
+                    # named one only (avoids stacked Area N boxes).
+                    ax0, ay0, ax1, ay1 = cand["_bbox"]
+                    bx0, by0, bx1, by1 = prev["_bbox"]
+                    inter_w = max(0.0, min(ax1, bx1) - max(ax0, bx0))
+                    inter_h = max(0.0, min(ay1, by1) - max(ay0, by0))
+                    inter = inter_w * inter_h
+                    aa = max(1e-9, (ax1 - ax0) * (ay1 - ay0))
+                    ba = max(1e-9, (bx1 - bx0) * (by1 - by0))
+                    nest = inter / min(aa, ba)
+                    if iou >= _ROOM_IOU_DEDUP or nest >= 0.42:
+                        prefer = False
+                        if cand.get("label") and not prev.get("label"):
+                            prefer = True
+                        elif cand["confidence"] > prev["confidence"]:
+                            prefer = True
+                        elif aa > ba * 1.15 and not prev.get("label"):
+                            prefer = True
+                        if prefer:
                             out[i] = cand
                         replaced = True
                         break
@@ -1594,9 +1549,10 @@ def _merge_adjacent_room_rects(
 def _mask_polygon(mask: Any, *, force_rect: bool = False) -> list[Point] | None:
     """Simplified outer-contour polygon (in px) for a binary room mask.
 
-    Near-rectangular fills snap to ``minAreaRect`` so suggestions read as clean
-    room boxes instead of jagged scan contours. ``force_rect`` always returns
-    the axis-aligned bounds (used for OCR-named rooms).
+    Near-rectangular fills may snap to a clean box. Arches, curves and
+    irregular bays keep a dense contour so area polygons follow the walls.
+    ``force_rect`` only forces an AABB when the fill is already almost
+    rectangular — curved named rooms still keep their true outline.
     """
     try:
         work = mask
@@ -1607,7 +1563,7 @@ def _mask_polygon(mask: Any, *, force_rect: bool = False) -> list[Point] | None:
             eroded = cv2.erode(work, k, iterations=1)
             if int(cv2.countNonZero(eroded)) >= 32:
                 work = eroded
-        contours, _ = cv2.findContours(work, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours, _ = cv2.findContours(work, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
         if not contours:
             return None
         contour = max(contours, key=cv2.contourArea)
@@ -1615,14 +1571,26 @@ def _mask_polygon(mask: Any, *, force_rect: bool = False) -> list[Point] | None:
         if area < 16:
             return None
         peri = cv2.arcLength(contour, True)
-        approx = cv2.approxPolyDP(contour, _ROOM_APPROX_EPS_FRAC * peri, True)
-        if len(approx) < 3:
+        approx_loose = cv2.approxPolyDP(contour, _ROOM_APPROX_EPS_FRAC * peri, True)
+        if len(approx_loose) < 3:
             return None
         x, y, bw, bh = cv2.boundingRect(contour)
         bbox_area = float(max(1, bw * bh))
         extent = area / bbox_area
-        # Axis-aligned room box when dense — or always for named rooms.
-        if (force_rect or extent >= 0.62) and bw >= 12 and bh >= 12:
+        # Curved / irregular: many corners, loose bbox fill, or long perimeter.
+        peri_ratio = (peri * peri) / max(area, 1.0)
+        is_curved = len(approx_loose) >= 6 or extent < 0.85 or peri_ratio > 22.0
+        eps = _ROOM_APPROX_EPS_CURVED if is_curved else _ROOM_APPROX_EPS_FRAC
+        approx = cv2.approxPolyDP(contour, eps * peri, True)
+        if len(approx) < 3:
+            approx = approx_loose
+        # Axis-aligned box only when the region is already a clean rectangle.
+        if (
+            (force_rect or extent >= _ROOM_AABB_EXTENT)
+            and not is_curved
+            and bw >= 12
+            and bh >= 12
+        ):
             return [
                 (float(x), float(y)),
                 (float(x + bw), float(y)),
@@ -1633,9 +1601,10 @@ def _mask_polygon(mask: Any, *, force_rect: bool = False) -> list[Point] | None:
         box = cv2.boxPoints(rect)
         rect_area = max(1.0, float(cv2.contourArea(box)))
         solidity = area / rect_area
-        # Snap tidy / near-rect rooms to a rectangle — professional look on plans.
+        # Snap tidy / near-rect rooms to a rectangle — not curved bays.
         if (
-            (extent >= _ROOM_RECT_MIN_EXTENT or solidity >= _ROOM_RECT_MIN_SOLIDITY)
+            not is_curved
+            and (extent >= _ROOM_RECT_MIN_EXTENT or solidity >= _ROOM_RECT_MIN_SOLIDITY)
             and len(approx) <= _ROOM_RECT_MAX_VERTS + 6
         ):
             return [(float(p[0]), float(p[1])) for p in box]
@@ -1643,12 +1612,19 @@ def _mask_polygon(mask: Any, *, force_rect: bool = False) -> list[Point] | None:
         # corners but the usable takeoff area is still the rectangular bay).
         hull = cv2.convexHull(contour)
         hull_area = float(cv2.contourArea(hull)) or 1.0
-        if area / hull_area >= 0.85:
+        if (not is_curved) and area / hull_area >= 0.85:
             peri_h = cv2.arcLength(hull, True)
             approx_h = cv2.approxPolyDP(hull, max(_ROOM_APPROX_EPS_FRAC, 0.012) * peri_h, True)
             if len(approx_h) >= 3:
                 return [(float(p[0][0]), float(p[0][1])) for p in approx_h]
-        return [(float(p[0][0]), float(p[0][1])) for p in approx]
+        poly = [(float(p[0][0]), float(p[0][1])) for p in approx]
+        if len(poly) > _ROOM_POLY_MAX_VERTS:
+            # Re-simplify to the vertex budget while keeping the outer shape.
+            step = max(1, len(poly) // _ROOM_POLY_MAX_VERTS)
+            poly = poly[::step]
+            if poly[0] != poly[-1] and len(poly) >= 3:
+                pass
+        return poly if len(poly) >= 3 else None
     except cv2.error:
         return None
 

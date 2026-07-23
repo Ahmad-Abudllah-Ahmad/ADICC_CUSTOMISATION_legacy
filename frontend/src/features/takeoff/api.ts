@@ -114,14 +114,13 @@ export interface RecognizeCandidate {
   count?: number | null;
   confidence: number;
   reason: string;
-  /** Room name from OCR or AI vision (e.g. "Living Room"). */
+  /** OCR room name from the drawing when available (e.g. "Living Room"). */
   label?: string | null;
 }
 
 export interface RecognizeResult {
   candidates: RecognizeCandidate[];
   page: number;
-  /** cubicasa_recognize | vision_recognize | raster_recognize | hybrid_recognize | vector_recognize */
   source: string;
   notes: string | null;
 }
@@ -342,6 +341,7 @@ export const takeoffApi = {
     return apiPost<RecognizeResult>(
       `/v1/takeoff/documents/${encodeURIComponent(docId)}/recognize/?page=${page}&scale_pixels_per_unit=${sp}`,
       {},
+      { longRunning: true },
     );
   },
 
