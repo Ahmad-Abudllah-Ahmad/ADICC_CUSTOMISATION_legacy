@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - name: Check the tree for internal-only files
@@ -38,7 +38,7 @@ jobs:
           # Full history so the guard scans every commit reachable from HEAD,
           # not just the tip; the tree is clean today and must stay that way.
           fetch-depth: 0
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - name: Scan commit messages for AI attribution trailers
