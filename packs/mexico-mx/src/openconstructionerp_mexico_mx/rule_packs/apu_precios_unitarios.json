@@ -1,0 +1,15 @@
+{
+  "rule_pack_id": "apu_precios_unitarios",
+  "name": "APU - Analisis de Precios Unitarios",
+  "standard": "Reglamento de la LOPSRM (integration of precios unitarios)",
+  "jurisdiction": "MX",
+  "regulator": "Secretaria de la Funcion Publica (SFP)",
+  "description": "Unit-price (precio unitario) integration the Mexican way: a costo directo (mano de obra, materiales, maquinaria y herramienta) carries indirectos, financiamiento, utilidad and cargos adicionales in turn, with IVA added to the estimate total. The oe_mexico_pack module integrates a unit price through these steps, and the APU completeness rule checks that a costed concept declares its costo-directo components.",
+  "applies_to": ["boq", "estimation", "validation"],
+  "integration_order": ["costo_directo", "indirectos", "financiamiento", "utilidad", "cargos_adicionales"],
+  "enables_rule_ids": [
+    "mexico.apu_completeness",
+    "boq_quality.resource_split_mismatch",
+    "boq_quality.total_mismatch"
+  ]
+}

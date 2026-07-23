@@ -1,0 +1,30 @@
+{
+  "rule_pack_id": "nbr_5419_2015",
+  "name": "ABNT NBR 5419:2015 (partes 1-4) — Protecao contra descargas atmosfericas (SPDA)",
+  "name_pt": "ABNT NBR 5419:2015 — Protecao contra descargas atmosfericas",
+  "standard": "ABNT NBR 5419",
+  "jurisdiction": "BR",
+  "regulator": "ABNT — Associacao Brasileira de Normas Tecnicas",
+  "publication_year": 2015,
+  "parts": [
+    "5419-1 — Principios gerais",
+    "5419-2 — Gerenciamento de risco",
+    "5419-3 — Danos fisicos a estruturas e perigos a vida",
+    "5419-4 — Sistemas eletricos e eletronicos internos na estrutura"
+  ],
+  "description": "Enforces ABNT NBR 5419:2015 lightning protection (SPDA — Sistema de Protecao contra Descargas Atmosfericas). Requires risk assessment per part 2 (calculation of R1-R4 vs tolerable risk RT), classification of protection level (NP I-IV), external SPDA scope (captadores, cabos de descida, aterramento) and internal SPDA (equipotencializacao + SPD surge protective devices) per part 4.",
+  "description_pt": "Aplica a NBR 5419:2015 — SPDA. Exige analise de risco conforme a parte 2 (calculo de R1-R4 vs risco tolerable RT), classificacao de nivel de protecao (NP I-IV), escopo de SPDA externa (captadores, cabos de descida, aterramento) e SPDA interna (equipotencializacao + DPS) conforme a parte 4.",
+  "applies_to": ["projects", "boq", "validation"],
+  "config": {
+    "protection_levels": ["NP I", "NP II", "NP III", "NP IV"],
+    "risk_assessment_required": true
+  },
+  "enables_rule_ids": [
+    "nbr5419.risk_assessment_documented",
+    "nbr5419.protection_level_assigned",
+    "nbr5419.captadores_specified",
+    "nbr5419.aterramento_specified",
+    "nbr5419.equipotencializacao_specified",
+    "nbr5419.dps_specified"
+  ]
+}

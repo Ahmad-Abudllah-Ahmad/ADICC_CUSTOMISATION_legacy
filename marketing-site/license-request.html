@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Commercial Licence Request - OpenConstructionERP</title>
+<meta name="description" content="Request a commercial licence for OpenConstructionERP: drop the AGPL obligation, multi-tenant deployment, white-label SaaS, and DDC cad2data converters (DWG/RVT/IFC/DGN).">
+<meta name="keywords" content="OpenConstructionERP commercial licence, construction ERP white-label, DDC cad2data converter licence, BIM converter licence, RVT IFC DWG converter">
+<meta name="robots" content="index, follow">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://adicc-uae.com/license-request">
+<meta property="og:title" content="Commercial Licence Request - OpenConstructionERP">
+<meta property="og:description" content="Commercial licence, white-label SaaS, and DDC cad2data converters. Quoted on request, invoiced in EUR. Reply within two business days.">
+<meta property="og:image" content="https://adicc-uae.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Commercial Licence Request - OpenConstructionERP">
+<meta name="twitter:description" content="Commercial licence, white-label SaaS, and DDC cad2data converters.">
+<meta name="twitter:image" content="https://adicc-uae.com/og-image.png">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="canonical" href="https://adicc-uae.com/license-request">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Request a license",
+  "url": "https://adicc-uae.com/license-request",
+  "description": "Request a commercial or enterprise license for OpenConstructionERP.",
+  "isPartOf": { "@type": "WebSite", "name": "OpenConstructionERP", "url": "https://adicc-uae.com" }
+}
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+/* ============ TOKENS (Breeze theme, mirrors main site) ============ */
+:root{
+  --bg-0:#f1f2f3;
+  --bg-1:#ebeced;
+  --bg-2:#e4e5e7;
+  --ink-0:#0b1220;
+  --ink-1:#1e293b;
+  --ink-2:#475569;
+  --ink-3:#94a3b8;
+  --line-0:rgba(15,23,42,.05);
+  --line-1:rgba(15,23,42,.09);
+  --line-2:rgba(15,23,42,.14);
+  --accent:#2d5e8e;
+  --accent-2:#3c6fa0;
+  --accent-3:#244c74;
+  --accent-5:#3c6fa0;
+  --card-bg:rgba(255,255,255,.72);
+  --shadow-card:0 1px 2px rgba(15,23,42,.04), 0 12px 32px -16px rgba(15,23,42,.16);
+  --shadow-card-hover:0 1px 2px rgba(15,23,42,.04), 0 24px 48px -18px rgba(45,94,142,.22);
+  color-scheme:light;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg-0);
+  color:var(--ink-0);
+  font-family:'Inter',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  text-rendering:optimizeLegibility;
+  min-height:100svh;
+  display:flex;
+  flex-direction:column;
+  overflow-x:hidden;
+}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+::selection{background:color-mix(in oklab,var(--accent) 28%,transparent);color:var(--ink-0)}
+
+/* ============ Background layers ============ */
+.bg-wrap{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.bg-gradient{
+  position:absolute;inset:0;
+  background:linear-gradient(160deg,#f1f2f3 0%,#eeeff0 40%,#ebeced 72%,#e4e5e7 100%);
+}
+.blob{position:absolute;border-radius:999px;filter:blur(120px);animation:drift 50s ease-in-out infinite alternate}
+.blob-a{top:-10%;left:-5%;width:820px;height:820px;background:radial-gradient(circle at 50% 50%,rgba(45, 94, 142, 0.10),transparent 70%);animation-delay:0s}
+.blob-b{bottom:-15%;right:-10%;width:900px;height:900px;background:radial-gradient(circle at 50% 50%,rgba(45, 94, 142, 0.08),transparent 70%);animation-delay:-18s}
+.blob-c{top:32%;right:14%;width:620px;height:620px;background:radial-gradient(circle at 50% 50%,rgba(45, 94, 142, 0.06),transparent 72%);animation-delay:-32s}
+@keyframes drift{
+  0%{transform:translate3d(-3%,-2%,0) scale(1)}
+  50%{transform:translate3d(4%,3%,0) scale(1.08)}
+  100%{transform:translate3d(-2%,4%,0) scale(.96)}
+}
+.bg-noise{
+  position:absolute;inset:0;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='480' height='480'><filter id='m'><feTurbulence type='fractalNoise' baseFrequency='0.02' numOctaves='3' seed='4' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.46 0 0 0 0 0.46 0 0 0 0 0.46 0 0 0 0.5 0'/></filter><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.34 0 0 0 0 0.34 0 0 0 0 0.34 0 0 0 0.7 0'/></filter><rect width='100%25' height='100%25' filter='url(%23m)'/><rect width='100%25' height='100%25' filter='url(%23g)'/></svg>");
+  background-size:480px 480px;
+  opacity:.075;
+  mix-blend-mode:multiply;
+}
+.page-body{position:relative;z-index:1;flex:1;display:flex;flex-direction:column}
+
+/* ============ Nav ============ */
+.nav{
+  position:fixed;top:0;left:0;right:0;height:64px;z-index:60;
+  display:flex;align-items:center;
+  padding:0 clamp(16px,3vw,32px);
+  background:color-mix(in oklab,var(--bg-0) 78%,transparent);
+  backdrop-filter:blur(14px) saturate(140%);
+  -webkit-backdrop-filter:blur(14px) saturate(140%);
+  border-bottom:1px solid var(--line-0);
+  transition:background .4s ease,border-color .4s ease;
+}
+.nav-inner{width:100%;max-width:1280px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{
+  display:inline-flex;align-items:center;gap:10px;
+  font-family:'Inter Tight','Inter',sans-serif;
+  font-weight:600;font-size:15px;letter-spacing:-.01em;color:var(--ink-0);
+}
+.brand-mark{width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--accent) 0%,var(--accent-2) 100%);box-shadow:0 6px 16px -8px color-mix(in oklab,var(--accent) 70%,transparent)}
+.brand-mark svg{color:#fff}
+.brand-name{display:inline-flex}
+.brand-seg-1{color:var(--ink-0)}
+.brand-seg-2{color:var(--accent)}
+.brand-seg-3{color:var(--ink-0)}
+.nav-back{
+  display:inline-flex;align-items:center;gap:6px;
+  height:36px;padding:0 14px;border-radius:999px;
+  border:1px solid var(--line-1);
+  font-family:'Inter Tight','Inter',sans-serif;font-weight:500;font-size:13px;color:var(--ink-1);
+  background:color-mix(in oklab,#ffffff 60%,transparent);
+  transition:transform .2s ease,border-color .2s ease,color .2s ease,background .2s ease;
+}
+.nav-back:hover{transform:translateY(-1px);border-color:var(--accent);color:var(--accent);background:color-mix(in oklab,var(--accent) 6%,transparent)}
+
+/* ============ Layout ============ */
+.page{flex:1;padding:104px clamp(16px,3vw,32px) 64px;display:flex;justify-content:center}
+.container{width:100%;max-width:1180px;display:flex;flex-direction:column;gap:72px}
+
+/* ============ Hero ============ */
+.hero{display:flex;flex-direction:column;align-items:center;gap:20px;text-align:center;max-width:880px;margin:0 auto}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:10px;
+  font-family:'JetBrains Mono',ui-monospace,monospace;
+  font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--accent);
+}
+.eyebrow::before,.eyebrow::after{content:"";width:28px;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent)}
+.eyebrow::before{background:linear-gradient(90deg,transparent,var(--accent))}
+.eyebrow::after{background:linear-gradient(90deg,var(--accent),transparent)}
+
+h1.display{
+  font-family:'Inter Tight','Inter',sans-serif;
+  font-weight:600;
+  font-size:clamp(36px,5.4vw,60px);
+  line-height:1.05;letter-spacing:-.025em;
+  color:var(--ink-0);
+  max-width:18ch;
+}
+h1.display em{
+  font-family:'Instrument Serif',serif;
+  font-style:italic;
+  font-weight:400;
+  background:linear-gradient(120deg,var(--accent) 0%,var(--accent-3) 60%,var(--accent-5) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hero-lede{
+  font-size:17px;line-height:1.6;color:var(--ink-2);
+  max-width:62ch;
+}
+.ref-badge{
+  display:none;align-items:center;gap:10px;
+  padding:8px 14px;border-radius:999px;
+  background:color-mix(in oklab,var(--accent) 8%,transparent);
+  border:1px solid color-mix(in oklab,var(--accent) 25%,var(--line-1));
+  font-family:'JetBrains Mono',ui-monospace,monospace;
+  font-size:11.5px;letter-spacing:.04em;color:var(--accent);
+  width:fit-content;margin:0 auto;
+}
+.ref-badge.show{display:inline-flex}
+.ref-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ============ Tier cards ============ */
+.tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.tier{
+  position:relative;
+  background:var(--card-bg);
+  backdrop-filter:blur(14px) saturate(140%);
+  -webkit-backdrop-filter:blur(14px) saturate(140%);
+  border:1px solid var(--line-1);
+  border-radius:18px;padding:28px;
+  display:flex;flex-direction:column;gap:14px;
+  box-shadow:var(--shadow-card);
+  transition:transform .3s cubic-bezier(.22,.61,.36,1),border-color .3s ease,box-shadow .3s ease;
+  overflow:hidden;
+}
+.tier::before{
+  content:"";position:absolute;inset:0;border-radius:18px;padding:1px;
+  background:linear-gradient(135deg,transparent 40%,color-mix(in oklab,var(--accent) 30%,transparent) 100%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;
+  opacity:0;transition:opacity .3s ease;pointer-events:none;
+}
+.tier:hover{transform:translateY(-3px);box-shadow:var(--shadow-card-hover);border-color:color-mix(in oklab,var(--accent) 18%,var(--line-1))}
+.tier:hover::before{opacity:1}
+.tier.featured{border-color:color-mix(in oklab,var(--accent) 26%,var(--line-1))}
+.tier.featured::before{opacity:.6}
+.tier-icon{
+  width:48px;height:48px;border-radius:14px;
+  display:inline-flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,color-mix(in oklab,var(--accent) 12%,#fff) 0%,color-mix(in oklab,var(--accent-2) 14%,#fff) 100%);
+  color:var(--accent);
+  box-shadow:inset 0 0 0 1px color-mix(in oklab,var(--accent) 18%,transparent);
+}
+.tier-icon svg{width:24px;height:24px}
+.tier-name{
+  font-family:'JetBrains Mono',ui-monospace,monospace;
+  font-size:11px;font-weight:600;
+  letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3);
+}
+.tier.featured .tier-name{color:var(--accent)}
+.tier-price{
+  font-family:'Inter Tight','Inter',sans-serif;
+  font-size:30px;font-weight:600;letter-spacing:-.02em;
+  color:var(--ink-0);line-height:1.1;
+}
+.tier-desc{font-size:13.5px;color:var(--ink-2);line-height:1.6}
+.tier ul{list-style:none;padding:0;margin:8px 0 0;display:flex;flex-direction:column;gap:8px}
+.tier li{
+  font-size:13px;color:var(--ink-1);line-height:1.5;
+  display:flex;gap:10px;align-items:flex-start;
+}
+.tier li svg{flex-shrink:0;width:16px;height:16px;margin-top:2px;color:var(--accent)}
+
+/* ============ How-it-works strip ============ */
+.steps{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:20px;
+  padding:28px;border-radius:18px;
+  background:linear-gradient(135deg,color-mix(in oklab,var(--accent) 4%,#fff) 0%,color-mix(in oklab,var(--accent-2) 4%,#fff) 100%);
+  border:1px solid var(--line-1);
+}
+.step{display:flex;flex-direction:column;gap:8px}
+.step-num{
+  font-family:'Instrument Serif',serif;font-style:italic;
+  font-size:32px;line-height:1;
+  background:linear-gradient(120deg,var(--accent),var(--accent-3));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.step-title{font-family:'Inter Tight','Inter',sans-serif;font-weight:600;font-size:15px;color:var(--ink-0);letter-spacing:-.01em}
+.step-desc{font-size:13px;color:var(--ink-2);line-height:1.55}
+
+/* ============ Form section ============ */
+.form-section{
+  display:grid;grid-template-columns:.85fr 1.15fr;gap:48px;
+  background:var(--card-bg);
+  backdrop-filter:blur(18px) saturate(140%);
+  -webkit-backdrop-filter:blur(18px) saturate(140%);
+  border:1px solid var(--line-1);
+  border-radius:22px;padding:44px;
+  box-shadow:0 1px 2px rgba(15,23,42,.04),0 24px 48px -20px rgba(15,23,42,.18);
+}
+.form-intro h2{
+  font-family:'Inter Tight','Inter',sans-serif;font-weight:600;
+  font-size:26px;letter-spacing:-.02em;line-height:1.2;margin:0 0 10px;
+  color:var(--ink-0);
+}
+.form-intro h2 em{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;color:var(--accent)}
+.form-intro p{font-size:14px;color:var(--ink-2);line-height:1.6;max-width:34ch;margin:0}
+.form-meta{
+  margin-top:24px;padding-top:24px;border-top:1px solid var(--line-1);
+  font-family:'JetBrains Mono',ui-monospace,monospace;
+  font-size:11px;letter-spacing:.04em;color:var(--ink-3);line-height:1.7;
+}
+.form-meta strong{color:var(--ink-1);font-weight:600}
+.form-meta a{color:var(--accent)}
+.form-meta a:hover{text-decoration:underline}
+
+.form-group{margin-bottom:18px}
+.form-group label{
+  display:block;
+  font-family:'JetBrains Mono',ui-monospace,monospace;
+  font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-2);margin-bottom:6px;
+}
+.form-group label .req{color:var(--accent);margin-left:3px}
+.form-group input,.form-group select,.form-group textarea{
+  width:100%;padding:12px 14px;
+  border:1px solid var(--line-1);border-radius:10px;
+  font-family:inherit;font-size:14.5px;color:var(--ink-0);
+  background:color-mix(in oklab,#ffffff 88%,transparent);
+  transition:border-color .2s,box-shadow .2s,background .2s;
+  outline:none;
+}
+.form-group input::placeholder,.form-group textarea::placeholder{color:var(--ink-3)}
+.form-group input:hover,.form-group select:hover,.form-group textarea:hover{border-color:var(--line-2)}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px color-mix(in oklab,var(--accent) 18%,transparent);
+  background:#fff;
+}
+.form-group textarea{resize:vertical;min-height:96px;line-height:1.55}
+.form-group select{appearance:none;cursor:pointer;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' stroke='%23475569' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");background-repeat:no-repeat;background-position:right 14px center;padding-right:32px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+.btn{
+  position:relative;width:100%;padding:14px 22px;
+  background:linear-gradient(135deg,var(--accent) 0%,var(--accent-3) 100%);
+  color:#fff;border:none;border-radius:12px;
+  font-family:'Inter Tight','Inter',sans-serif;font-weight:600;font-size:15px;letter-spacing:-.005em;
+  cursor:pointer;
+  box-shadow:0 12px 28px -10px color-mix(in oklab,var(--accent) 65%,transparent),0 2px 6px -2px rgba(15,23,42,.18);
+  transition:transform .15s ease,box-shadow .25s ease,opacity .2s;
+  margin-top:6px;
+}
+.btn:hover{transform:translateY(-1px);box-shadow:0 18px 36px -10px color-mix(in oklab,var(--accent) 75%,transparent),0 2px 8px -2px rgba(15,23,42,.22)}
+.btn:active{transform:translateY(0)}
+.btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.terms{font-size:11.5px;color:var(--ink-3);text-align:center;margin-top:14px;line-height:1.55}
+.terms a{color:var(--ink-2);text-decoration:underline;text-underline-offset:2px}
+.terms a:hover{color:var(--accent)}
+
+/* Error + success */
+.error-msg{
+  display:none;
+  background:linear-gradient(135deg,#fef2f2 0%,#fff5f5 100%);
+  color:#b91c1c;font-size:13px;
+  padding:11px 14px;border-radius:10px;margin-bottom:16px;
+  border:1px solid #fecaca;
+}
+.success{
+  display:none;text-align:center;padding:24px 12px;
+}
+.success .check{
+  width:72px;height:72px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;margin:0 auto 18px;
+  background:linear-gradient(135deg,#dcfce7 0%,#ecfdf5 100%);
+  box-shadow:inset 0 0 0 1px rgba(16,185,129,.25),0 12px 24px -10px rgba(16,185,129,.3);
+}
+.success .check svg{width:36px;height:36px;color:#059669}
+.success h2{
+  font-family:'Inter Tight','Inter',sans-serif;font-weight:600;
+  font-size:22px;letter-spacing:-.01em;margin:0 0 8px;color:var(--ink-0);
+}
+.success h2 em{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;color:var(--accent)}
+.success p{font-size:14px;color:var(--ink-2);line-height:1.6;margin:6px 0}
+.success .ref{
+  display:inline-block;margin-top:18px;padding:10px 16px;
+  background:color-mix(in oklab,var(--accent) 6%,#fff);
+  border:1px solid color-mix(in oklab,var(--accent) 22%,var(--line-1));
+  border-radius:10px;
+  font-family:'JetBrains Mono',ui-monospace,monospace;
+  font-size:13px;color:var(--ink-1);letter-spacing:.04em;
+}
+.success .ref strong{color:var(--accent);font-weight:600}
+
+/* Spinner */
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:-3px;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ============ Footer ============ */
+.footer{
+  position:relative;z-index:1;
+  border-top:1px solid var(--line-1);
+  padding:24px clamp(16px,3vw,32px);
+  font-family:'JetBrains Mono',ui-monospace,monospace;
+  font-size:11px;letter-spacing:.05em;color:var(--ink-3);
+  display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;
+  background:color-mix(in oklab,var(--bg-0) 80%,transparent);
+  backdrop-filter:blur(8px);
+}
+.footer a{color:var(--ink-2)}
+.footer a:hover{color:var(--accent)}
+
+/* ============ Responsive ============ */
+@media(max-width:960px){
+  .tiers{grid-template-columns:1fr;gap:14px}
+  .steps{grid-template-columns:1fr;gap:18px;padding:22px}
+  .form-section{grid-template-columns:1fr;gap:28px;padding:28px}
+}
+@media(max-width:600px){
+  .page{padding:96px 16px 48px}
+  .container{gap:48px}
+  .form-row{grid-template-columns:1fr}
+  .hero-lede{font-size:15.5px}
+}
+
+/* Reveal-on-scroll for sections */
+.reveal{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s ease}
+.reveal.in{opacity:1;transform:translateY(0)}
+@media(prefers-reduced-motion:reduce){
+  .reveal,.blob{animation:none;transition:none;opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+
+<div class="bg-wrap" aria-hidden="true">
+  <div class="bg-gradient"></div>
+  <div class="blob blob-a"></div>
+  <div class="blob blob-b"></div>
+  <div class="blob blob-c"></div>
+  <div class="bg-noise"></div>
+</div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="brand">
+      <span class="brand-mark">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-8h6v8"/></svg>
+      </span>
+      <span class="brand-name"><span class="brand-seg-1">Open</span><span class="brand-seg-2">Construction</span><span class="brand-seg-3">ERP</span></span>
+    </a>
+    <a href="/" class="nav-back" data-i18n-html="page.license.nav_back">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Back to homepage
+    </a>
+  </div>
+</nav>
+
+<div class="page-body">
+<main class="page">
+  <div class="container">
+
+    <!-- HERO -->
+    <section class="hero reveal">
+      <span class="eyebrow" data-i18n="page.license.eyebrow">Commercial Licence Request</span>
+      <h1 class="display" data-i18n-html="page.license.hero_title">Run OpenConstructionERP <em>for your business</em>, with full commercial rights.</h1>
+      <p class="hero-lede" data-i18n="page.license.hero_lede">Clear, published prices in EUR. Licences are one-time and perpetual, the converters and cost data are yearly, and it is all free for students and educators.</p>
+      <div id="refBadge" class="ref-badge">
+        <span class="dot"></span>
+        <span data-i18n-html="page.license.referred_by">Referred by partner: <strong id="refCode">-</strong></span>
+      </div>
+    </section>
+
+    <!-- TIERS -->
+    <section class="tiers reveal">
+      <div class="tier featured">
+        <span class="tier-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-8h6v8"/></svg>
+        </span>
+        <div class="tier-name" data-i18n="page.license.tier1_name">Commercial licence</div>
+        <div class="tier-price" data-i18n-html="page.license.tier1_price">&euro;5,000 <span style="font-size:13px;font-weight:500;color:var(--ink-3)">one-time</span></div>
+        <p class="tier-desc" data-i18n="page.license.tier1_desc">Commercial use for a single company, unlimited users. Drops the AGPL source-disclosure obligation. First year of updates and support included, then 20% per year.</p>
+        <ul>
+          <li data-i18n-html="page.license.tier1_li1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Single organisation, unlimited internal users</li>
+          <li data-i18n-html="page.license.tier1_li2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Private modifications, no copyleft</li>
+          <li data-i18n-html="page.license.tier1_li3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Email support, 2 business-day SLA</li>
+        </ul>
+      </div>
+
+      <div class="tier">
+        <span class="tier-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        </span>
+        <div class="tier-name" data-i18n="page.license.tier2_name">White-label SaaS</div>
+        <div class="tier-price" data-i18n-html="page.license.tier2_price">&euro;10,000 <span style="font-size:13px;font-weight:500;color:var(--ink-3)">one-time</span></div>
+        <p class="tier-desc" data-i18n="page.license.tier2_desc">Host OpenConstructionERP under your own brand for paying tenants. Up to 10 organisations, then +&euro;3,000 per extra 10. Priority support, custom theming and domain.</p>
+        <ul>
+          <li data-i18n-html="page.license.tier2_li1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Up to 10 paying tenants</li>
+          <li data-i18n-html="page.license.tier2_li2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Custom branding, domain, login flow</li>
+          <li data-i18n-html="page.license.tier2_li3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Priority support, quarterly roadmap call</li>
+        </ul>
+      </div>
+
+      <div class="tier">
+        <span class="tier-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        </span>
+        <div class="tier-name" data-i18n="page.license.tier3_name">DDC cad2data converters</div>
+        <div class="tier-price" data-i18n-html="page.license.tier3_price">&euro;3,600 <span style="font-size:13px;font-weight:500;color:var(--ink-3)">per year</span></div>
+        <p class="tier-desc" data-i18n="page.license.tier3_desc">Commercial licence for the DDC cad2data pipeline - RVT / IFC / DWG / DGN → canonical JSON. Server-side deployment or embedded SDK.</p>
+        <ul>
+          <li data-i18n-html="page.license.tier3_li1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Linux .deb packages, signed amd64 + arm64</li>
+          <li data-i18n-html="page.license.tier3_li2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>RVT, IFC, DWG, DGN converters</li>
+          <li data-i18n-html="page.license.tier3_li3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Per-server or embedded SDK licence</li>
+        </ul>
+      </div>
+    </section>
+
+    <style>
+    /* Full price list + student grant - published pricing */
+    .pl-eyebrow,.st-eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+    .st-eyebrow svg{width:17px;height:17px}
+    .pl-head{max-width:760px}
+    .pl-head h2{font-family:'Inter Tight','Inter',sans-serif;font-weight:600;font-size:clamp(26px,3.4vw,38px);letter-spacing:-.025em;line-height:1.1;margin:14px 0 12px;color:var(--ink-0)}
+    .pl-head h2 em{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;color:var(--accent)}
+    .pl-head p{font-size:15px;line-height:1.65;color:var(--ink-2);margin:0}
+    .pl-table{margin-top:28px;border:1px solid var(--line-1);border-radius:18px;overflow:hidden;background:var(--card-bg);box-shadow:var(--shadow-card)}
+    .pl-row{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center;padding:18px 24px;border-bottom:1px solid var(--line-1)}
+    .pl-row:last-child{border-bottom:0}
+    .pl-row.free{background:color-mix(in oklab,var(--accent) 5%,transparent)}
+    .pl-item b{display:block;font-family:'Inter Tight','Inter',sans-serif;font-weight:600;font-size:15.5px;color:var(--ink-0);letter-spacing:-.01em}
+    .pl-item span{display:block;font-size:13px;color:var(--ink-2);line-height:1.5;margin-top:3px}
+    .pl-price{font-family:'Inter Tight','Inter',sans-serif;font-weight:600;font-size:20px;color:var(--ink-0);white-space:nowrap;text-align:right}
+    .pl-price em{display:block;font-family:'JetBrains Mono',ui-monospace,monospace;font-style:normal;font-weight:500;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-top:3px}
+    .pl-price.free-tag{color:var(--accent)}
+    .pl-terms{margin-top:22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+    .pl-term{display:flex;gap:10px;font-size:13px;color:var(--ink-2);line-height:1.5}
+    .pl-term svg{flex:0 0 auto;width:16px;height:16px;color:var(--accent);margin-top:1px}
+    .students-section{position:relative;overflow:hidden;border:1px solid color-mix(in oklab,var(--accent) 30%,var(--line-1));border-radius:22px;padding:clamp(28px,4vw,48px);background:radial-gradient(120% 150% at 0% 0%,color-mix(in oklab,var(--accent) 12%,transparent) 0%,transparent 55%),radial-gradient(120% 150% at 100% 100%,color-mix(in oklab,var(--accent-5) 12%,transparent) 0%,transparent 55%),var(--card-bg)}
+    .students-section h2{font-family:'Inter Tight','Inter',sans-serif;font-weight:600;font-size:clamp(24px,3.2vw,36px);letter-spacing:-.025em;line-height:1.1;margin:10px 0 12px;color:var(--ink-0);max-width:22ch}
+    .students-section h2 em{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;color:var(--accent)}
+    .students-section .st-lede{font-size:15.5px;line-height:1.65;color:var(--ink-2);margin:0 0 24px;max-width:64ch}
+    .st-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-bottom:28px}
+    .st-col h4{display:flex;align-items:center;gap:8px;font-family:'Inter Tight','Inter',sans-serif;font-weight:600;font-size:14px;color:var(--ink-0);margin:0 0 6px}
+    .st-col h4 svg{width:16px;height:16px;color:var(--accent);flex:0 0 auto}
+    .st-col p{font-size:13px;color:var(--ink-2);line-height:1.55;margin:0}
+    .st-cta{display:inline-flex;align-items:center;gap:9px;padding:13px 22px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-3));color:#fff;font-family:'Inter Tight','Inter',sans-serif;font-weight:600;font-size:15px;box-shadow:0 12px 28px -10px color-mix(in oklab,var(--accent) 65%,transparent);transition:transform .15s ease}
+    .st-cta:hover{transform:translateY(-1px)}
+    .st-cta svg{width:14px;height:14px}
+    @media(max-width:760px){.st-grid{grid-template-columns:1fr;gap:16px}}
+    </style>
+
+    <!-- FULL PRICE LIST -->
+    <section class="pricelist-section reveal">
+      <div class="pl-head">
+        <span class="pl-eyebrow" data-i18n="page.license.pl_eyebrow">Full price list</span>
+        <h2 data-i18n-html="page.license.pl_title">Everything, in <em>plain numbers</em>.</h2>
+        <p data-i18n="page.license.pl_desc">Published prices in EUR. Licences are one-time and perpetual; the first year of updates and support is included, then 20% per year. Converters and cost data are yearly. No hidden tiers.</p>
+      </div>
+      <div class="pl-table">
+        <div class="pl-row">
+          <div class="pl-item"><b data-i18n="page.license.pl_lic_name">Commercial licence</b><span data-i18n="page.license.pl_lic_desc">Per company, unlimited users. Drops the AGPL source-disclosure obligation.</span></div>
+          <div class="pl-price" data-i18n-html="page.license.pl_lic_price">&euro;5,000 <em>one-time</em></div>
+        </div>
+        <div class="pl-row">
+          <div class="pl-item"><b data-i18n="page.license.pl_wl_name">White-label / OEM</b><span data-i18n="page.license.pl_wl_desc">Your brand, embed or resell. Up to 10 tenants, then +&euro;3,000 per extra 10.</span></div>
+          <div class="pl-price" data-i18n-html="page.license.pl_wl_price">&euro;10,000 <em>one-time</em></div>
+        </div>
+        <div class="pl-row">
+          <div class="pl-item"><b data-i18n="page.license.pl_conv_name">cad2data converters</b><span data-i18n="page.license.pl_conv_desc">RVT / IFC / DWG / DGN to canonical JSON. Format updates included.</span></div>
+          <div class="pl-price" data-i18n-html="page.license.pl_conv_price">&euro;3,600 <em>per year</em></div>
+        </div>
+        <div class="pl-row">
+          <div class="pl-item"><b data-i18n="page.license.pl_cwicr_name">CWICR cost database</b><span data-i18n="page.license.pl_cwicr_desc">One region, 55,000+ priced items. Yours to keep.</span></div>
+          <div class="pl-price" data-i18n-html="page.license.pl_cwicr_price">&euro;1,500 <em>one-time / region</em></div>
+        </div>
+        <div class="pl-row">
+          <div class="pl-item"><b data-i18n="page.license.pl_impl_name">Implementation</b><span data-i18n="page.license.pl_impl_desc">Onboarding, data migration and training, by us or a local partner.</span></div>
+          <div class="pl-price" data-i18n-html="page.license.pl_impl_price">from &euro;6,000 <em>one-time</em></div>
+        </div>
+        <div class="pl-row">
+          <div class="pl-item"><b data-i18n="page.license.pl_maint_name">Maintenance</b><span data-i18n="page.license.pl_maint_desc">All updates plus standard support. The first year is included.</span></div>
+          <div class="pl-price" data-i18n-html="page.license.pl_maint_price">20% <em>per year, from year 2</em></div>
+        </div>
+        <div class="pl-row">
+          <div class="pl-item"><b data-i18n="page.license.pl_sla_name">Priority SLA</b><span data-i18n="page.license.pl_sla_desc">Guaranteed response times. Optional upgrade on top of maintenance.</span></div>
+          <div class="pl-price" data-i18n-html="page.license.pl_sla_price">&euro;2,400 <em>per year</em></div>
+        </div>
+        <div class="pl-row free">
+          <div class="pl-item"><b data-i18n="page.license.pl_comm_name">Community support</b><span data-i18n="page.license.pl_comm_desc">GitHub, documentation and the community forum.</span></div>
+          <div class="pl-price free-tag" data-i18n="page.license.pl_comm_price">Free</div>
+        </div>
+      </div>
+      <div class="pl-terms">
+        <div class="pl-term"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span data-i18n="page.license.pl_term1">Your rate is locked while you keep renewing.</span></div>
+        <div class="pl-term"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="page.license.pl_term2">Stop maintenance anytime - you keep your version forever.</span></div>
+        <div class="pl-term"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg><span data-i18n="page.license.pl_term3">30-day trial of the commercial features and converters on request.</span></div>
+        <div class="pl-term"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg><span data-i18n="page.license.pl_term4">Partners resell all of this and keep 70%.</span></div>
+      </div>
+    </section>
+
+    <!-- FREE FOR STUDENTS & EDUCATORS -->
+    <section class="students-section reveal" id="students">
+      <span class="st-eyebrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10L12 5 3 10l9 5 9-5z"/><path d="M7 12v4.5c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5V12"/></svg><span data-i18n="page.license.st_eyebrow">Students &amp; education</span></span>
+      <h2 data-i18n-html="page.license.st_title">Free for students and educators - <em>everything</em>.</h2>
+      <p class="st-lede" data-i18n="page.license.st_lede">If you are learning, teaching or doing research, you get all of it at no cost: the full platform, the cad2data converters and the regional cost data. The same software companies pay for.</p>
+      <div class="st-grid">
+        <div class="st-col">
+          <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg><span data-i18n="page.license.st_col1_title">What you get</span></h4>
+          <p data-i18n="page.license.st_col1_desc">The full platform, the converters and the regional cost data. Nothing held back, nothing gated.</p>
+        </div>
+        <div class="st-col">
+          <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg><span data-i18n="page.license.st_col2_title">Who qualifies</span></h4>
+          <p data-i18n="page.license.st_col2_desc">Students, teachers and researchers. Verify with your academic email (.edu or your university domain).</p>
+        </div>
+        <div class="st-col">
+          <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10L12 5 3 10l9 5 9-5z"/><path d="M7 12v4.5c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5V12"/></svg><span data-i18n="page.license.st_col3_title">How it is used</span></h4>
+          <p data-i18n="page.license.st_col3_desc">Coursework, theses, research, even student startups. When it turns into a funded company, move to a commercial licence.</p>
+        </div>
+      </div>
+      <a class="st-cta" href="#form">
+        <span data-i18n="page.license.st_cta">Apply with your academic email</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </section>
+
+    <!-- STEPS -->
+    <section class="steps reveal" aria-label="What happens next" data-i18n-aria-label="page.license.steps_aria">
+      <div class="step">
+        <span class="step-num">01</span>
+        <div class="step-title" data-i18n="page.license.step1_title">You request a quote</div>
+        <div class="step-desc" data-i18n="page.license.step1_desc">Tell us the tier, deployment plan and headcount. Two minutes, no calls required.</div>
+      </div>
+      <div class="step">
+        <span class="step-num">02</span>
+        <div class="step-title" data-i18n="page.license.step2_title">We reply in two business days</div>
+        <div class="step-desc" data-i18n="page.license.step2_desc">You receive a draft agreement and an invoice in EUR. Negotiate or sign as-is.</div>
+      </div>
+      <div class="step">
+        <span class="step-num">03</span>
+        <div class="step-title" data-i18n="page.license.step3_title">Pay and deploy</div>
+        <div class="step-desc" data-i18n="page.license.step3_desc">Settle the invoice, get your licence key and a private support channel. Done.</div>
+      </div>
+    </section>
+
+    <!-- FORM -->
+    <section class="form-section reveal" id="form">
+      <div class="form-intro">
+        <h2 data-i18n-html="page.license.form_intro_title">Request <em>a quote</em></h2>
+        <p data-i18n="page.license.form_intro_desc">Fill in the form and we will reply within two business days with an invoice and a draft agreement.</p>
+        <div class="form-meta" data-i18n-html="page.license.form_meta">
+          <strong>Vendor</strong><br>
+          DataDrivenConstruction.io<br>
+          Graben-Neudorf, Germany<br><br>
+          <strong>Licence</strong><br>
+          Dual-licensed: AGPL-3.0 / commercial<br><br>
+          Need to talk first?<br>
+          <a href="mailto:info@datadrivenconstruction.io">info@datadrivenconstruction.io</a>
+        </div>
+      </div>
+
+      <div>
+        <div id="formWrap">
+          <div id="errorMsg" class="error-msg" role="alert"></div>
+          <form id="licenceForm" novalidate>
+            <!-- Honeypot - bots fill it, real users never see it. Backend rejects non-empty submissions. -->
+            <input type="text" id="_honey" name="_honey" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="firstName" data-i18n-html="page.license.label_first_name">First name <span class="req">*</span></label>
+                <input type="text" id="firstName" placeholder="John" required autocomplete="given-name" data-i18n-attr="placeholder:page.license.ph_first_name">
+              </div>
+              <div class="form-group">
+                <label for="lastName" data-i18n-html="page.license.label_last_name">Last name <span class="req">*</span></label>
+                <input type="text" id="lastName" placeholder="Smith" required autocomplete="family-name" data-i18n-attr="placeholder:page.license.ph_last_name">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="email" data-i18n-html="page.license.label_email">Work email <span class="req">*</span></label>
+              <input type="email" id="email" placeholder="john@company.com" required autocomplete="email">
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="company" data-i18n-html="page.license.label_company">Company <span class="req">*</span></label>
+                <input type="text" id="company" placeholder="Your company" required autocomplete="organization" data-i18n-attr="placeholder:page.license.ph_company">
+              </div>
+              <div class="form-group">
+                <label for="country" data-i18n-html="page.license.label_country">Country <span class="req">*</span></label>
+                <input type="text" id="country" placeholder="Germany" required autocomplete="country-name" data-i18n-attr="placeholder:page.license.ph_country">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="tier" data-i18n-html="page.license.label_tier">Licence tier <span class="req">*</span></label>
+              <select id="tier" required>
+                <option value="" data-i18n="page.license.option_select">Select…</option>
+                <option value="starter" data-i18n="page.license.option_starter">Commercial licence - €5,000 one-time</option>
+                <option value="whitelabel" data-i18n="page.license.option_whitelabel">White-label / OEM - €10,000 one-time</option>
+                <option value="converters" data-i18n="page.license.option_converters">cad2data converters - €3,600/yr</option>
+                <option value="cwicr" data-i18n="page.license.option_cwicr">CWICR cost database - €1,500/region</option>
+                <option value="student" data-i18n="page.license.option_student">Student / education - free</option>
+                <option value="nonprofit" data-i18n="page.license.option_nonprofit">Academia / non-profit / open-source - free</option>
+                <option value="other" data-i18n="page.license.option_other">Not sure yet - please advise</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="message" data-i18n="page.license.label_notes">Notes</label>
+              <textarea id="message" rows="3" placeholder="Deployment plans, headcount, timeline, specific converters needed…" data-i18n-attr="placeholder:page.license.ph_notes"></textarea>
+            </div>
+
+            <button type="submit" class="btn" id="submitBtn" data-i18n="page.license.submit_btn">Request licence quote</button>
+            <p class="terms" data-i18n-html="page.license.terms">By submitting, you agree to our <a href="/privacy-policy.html">Privacy Policy</a>. We will only use your details to prepare a quote and reach out about your request.</p>
+          </form>
+        </div>
+
+        <div id="successSection" class="success">
+          <div class="check">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h2 data-i18n-html="page.license.success_title">Thank you - <em>request received</em></h2>
+          <p data-i18n="page.license.success_p1">A quote and draft agreement will land in your inbox within two business days.</p>
+          <p data-i18n="page.license.success_p2">If we ever need to follow up, just quote the reference below.</p>
+          <div class="ref" data-i18n-html="page.license.success_ref">Reference: <strong id="refId">-</strong></div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer class="footer">
+  <div data-i18n-html="page.license.footer_copy">&copy; 2026 OpenConstructionERP &middot; AGPL-3.0 / commercial dual-licence</div>
+  <div>
+    <a href="/privacy-policy.html" data-i18n="page.license.footer_privacy">Privacy</a> &middot;
+    <a href="/imprint.html" data-i18n="page.license.footer_imprint">Imprint</a> &middot;
+    <a href="/" data-i18n="page.license.footer_homepage">Homepage</a>
+  </div>
+</footer>
+</div>
+
+<script>
+(function(){
+  /* ───── Reveal-on-scroll ───── */
+  if('IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    },{threshold:.12});
+    document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+  } else {
+    document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('in'); });
+  }
+
+  /* ───── Affiliate tracking - 90-day cookie ───── */
+  var COOKIE_DAYS = 90;
+  var COOKIE_NAME = 'ocerp_ref';
+  var COOKIE_FIRST = 'ocerp_ref_first';
+  function setCookie(name, value, days){
+    var d = new Date();
+    d.setTime(d.getTime() + days*24*60*60*1000);
+    document.cookie = name+'='+encodeURIComponent(value)+';expires='+d.toUTCString()+';path=/;SameSite=Lax';
+  }
+  function getCookie(name){
+    var m = document.cookie.match(new RegExp('(^| )'+name+'=([^;]+)'));
+    return m ? decodeURIComponent(m[2]) : null;
+  }
+  var params = new URLSearchParams(window.location.search);
+  var refFromUrl = params.get('ref');
+  if(refFromUrl){
+    setCookie(COOKIE_NAME, refFromUrl, COOKIE_DAYS);
+    if(!getCookie(COOKIE_FIRST)){
+      setCookie(COOKIE_FIRST, new Date().toISOString(), COOKIE_DAYS);
+    }
+  }
+  var activeRef = getCookie(COOKIE_NAME);
+  var firstSeen = getCookie(COOKIE_FIRST);
+  if(activeRef){
+    document.getElementById('refCode').textContent = activeRef;
+    document.getElementById('refBadge').classList.add('show');
+  }
+
+  /* ───── Anti-spam preflight (mirrors backend rules) ───── */
+  var JUNK_NAMES = [
+    'test','tests','testing','тест','тестт','тесттт',
+    'demo','demouser','user','юзер',
+    'asdf','asdfg','asdfgh','asd','asdq','asdwq','asde',
+    'qwer','qwerty','qwertyu','qwe',
+    'zxcv','zxcvb','zxcvbn',
+    'abc','abcd','abcde','abcdef',
+    'aaa','bbb','ccc','xxx','yyy','zzz',
+    'wer','werd','wert','fff','ggg','ddd','sss','aaaa',
+    'fake','n/a','na','none','nobody','anonymous',
+    'lol','lmao','kek','hehe','haha',
+    'ыва','фыв','фыва','ываф','йцу','йцук','йцукен'
+  ];
+  var DISPOSABLE_EMAIL_DOMAINS = [
+    'mailinator.com','tempmail.com','tempmail.net','temp-mail.org',
+    '10minutemail.com','10minutemail.net','guerrillamail.com',
+    'guerrillamail.net','guerrillamail.org','throwawaymail.com',
+    'yopmail.com','trashmail.com','trashmail.net','fakeinbox.com',
+    'sharklasers.com','getairmail.com','dispostable.com',
+    'mailnesia.com','maildrop.cc','mintemail.com','mohmal.com',
+    'dropmail.me','harakirimail.com','mvrht.net','spam4.me',
+    'tmpmail.org','tmpmail.net','spamgourmet.com','discard.email',
+    'incognitomail.com','anonbox.net','mytrashmail.com',
+    'lealking.com','nyspring.com','nazisat.com','agoalz.com','algarr.com',
+    'example.com','example.org','example.net','test.com','test.test',
+    'localhost','invalid','invalid.com','asdf.com','qwerty.com',
+    '123.com','123.ry'
+  ];
+  function isJunkName(n){
+    if(!n) return true;
+    var lc = n.toLowerCase().trim();
+    if(lc.length < 2) return true;
+    if(JUNK_NAMES.indexOf(lc) !== -1) return true;
+    if(/^\d+$/.test(lc)) return true;
+    if(/^(.)\1{1,}$/.test(lc)) return true;
+    var lettersOnly = lc.replace(/[^a-zа-яё]/g, '');
+    if(lettersOnly && JUNK_NAMES.indexOf(lettersOnly) !== -1) return true;
+    return false;
+  }
+  function rejectEmail(em){
+    em = em.toLowerCase().trim();
+    var at = em.indexOf('@');
+    if(at < 1) return 'Please enter a valid email address.';
+    var local = em.substring(0, at);
+    var domain = em.substring(at + 1).replace(/^\.+|\.+$/g,'');
+    for(var i=0;i<DISPOSABLE_EMAIL_DOMAINS.length;i++){
+      var bad = DISPOSABLE_EMAIL_DOMAINS[i];
+      if(domain === bad || domain.endsWith('.'+bad)){
+        return 'Please use your real work email - disposable addresses are not accepted for licence requests.';
+      }
+    }
+    var junkLocal = [/^test\d*$/i,/^tests\d*$/i,/^demo\d*$/i,/^asdf*$/i,/^qwer(ty)?\d*$/i,/^abc\d*$/i,/^123+$/,/^a+$/i,/^x+$/i,/^(.)\1{2,}$/];
+    for(var j=0;j<junkLocal.length;j++){
+      if(junkLocal[j].test(local)){
+        return 'Please use your real email - placeholder addresses like "test@…" are not accepted.';
+      }
+    }
+    var dparts = domain.split('.');
+    if(dparts.length && /^\d+$/.test(dparts[0])){
+      return 'Please enter an email from a real domain.';
+    }
+    return null;
+  }
+
+  /* ───── Submit ───── */
+  var form = document.getElementById('licenceForm');
+  var btn = document.getElementById('submitBtn');
+  var errEl = document.getElementById('errorMsg');
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    errEl.style.display = 'none';
+
+    var firstName = document.getElementById('firstName').value.trim();
+    var lastName = document.getElementById('lastName').value.trim();
+    var email = document.getElementById('email').value.trim();
+    var company = document.getElementById('company').value.trim();
+    var country = document.getElementById('country').value.trim();
+    var tier = document.getElementById('tier').value;
+    var message = document.getElementById('message').value.trim();
+
+    function showErr(msg, focusId){
+      errEl.textContent = msg;
+      errEl.style.display = 'block';
+      if(focusId){ var f = document.getElementById(focusId); if(f && f.focus) f.focus(); }
+    }
+
+    if(!firstName || !lastName || !email || !company || !country || !tier){
+      showErr('Please fill in all required fields.'); return;
+    }
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ showErr('Please enter a valid email address.', 'email'); return; }
+    if(isJunkName(firstName)){ showErr('Please enter your real first name - placeholder values like "test" or "123" are not allowed.', 'firstName'); return; }
+    if(isJunkName(lastName)){ showErr('Please enter your real last name - placeholder values like "test" or "123" are not allowed.', 'lastName'); return; }
+    var emailErr = rejectEmail(email);
+    if(emailErr){ showErr(emailErr, 'email'); return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Sending…';
+
+    var honeyEl = document.getElementById('_honey');
+    var data = {
+      firstName: firstName,
+      lastName: lastName,
+      email: email,
+      company: company,
+      country: country,
+      tier: tier,
+      message: message,
+      ref: activeRef || '',
+      ref_first_seen: firstSeen || '',
+      landing_page: window.location.href,
+      utm_source: params.get('utm_source') || '',
+      utm_medium: params.get('utm_medium') || '',
+      utm_campaign: params.get('utm_campaign') || '',
+      timestamp: new Date().toISOString(),
+      userAgent: navigator.userAgent,
+      language: navigator.language,
+      _honey: honeyEl ? honeyEl.value : ''
+    };
+
+    function resetButton(){
+      btn.disabled = false;
+      btn.innerHTML = 'Request licence quote';
+    }
+
+    fetch('/api/license-request', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(data)
+    })
+    .then(function(r){
+      return r.json().catch(function(){ return {}; }).then(function(payload){
+        return { ok: r.ok, status: r.status, payload: payload };
+      });
+    })
+    .then(function(res){
+      if(res.ok){
+        document.getElementById('formWrap').style.display = 'none';
+        document.getElementById('successSection').style.display = 'block';
+        document.getElementById('refId').textContent = (res.payload && res.payload.reference_id) || '-';
+        document.getElementById('successSection').scrollIntoView({behavior:'smooth', block:'center'});
+        return;
+      }
+      var msg = (res.payload && res.payload.message)
+        || 'Request could not be submitted. Please check your details and try again.';
+      showErr(msg, res.payload && res.payload.field);
+      resetButton();
+    })
+    .catch(function(){
+      showErr('Could not reach the server. Please check your connection and try again, or email info@datadrivenconstruction.io.');
+      resetButton();
+    });
+  });
+})();
+</script>
+<script src="/i18n/i18n.js" defer></script>
+</body>
+</html>

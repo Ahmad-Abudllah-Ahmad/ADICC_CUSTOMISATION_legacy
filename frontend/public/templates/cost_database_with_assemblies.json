@@ -1,0 +1,97 @@
+[
+  {
+    "code": "WI-FOOT-STRIP-2X1",
+    "description": "Strip footing — 2 ft wide × 1 ft deep, reinforced, formed and poured",
+    "unit": "lf",
+    "rate": 38.50,
+    "currency": "USD",
+    "source": "custom",
+    "classification": {"masterformat": "03 31 13"},
+    "region": "US_CUSTOM",
+    "components": [
+      {"code": "LAB-CARP-01",  "factor": 0.18, "unit": "hr",  "type": "labor"},
+      {"code": "LAB-LAB-01",   "factor": 0.22, "unit": "hr",  "type": "labor"},
+      {"code": "MAT-CONC-3K",  "factor": 0.075,"unit": "yd3", "type": "material"},
+      {"code": "MAT-REBAR-60", "factor": 4.50, "unit": "lb",  "type": "material"},
+      {"code": "EQP-EXC-SML",  "factor": 0.025,"unit": "hr",  "type": "equipment"}
+    ]
+  },
+  {
+    "code": "WI-WALL-CIP-8",
+    "description": "Cast-in-place concrete wall, 8 inch thick — forming, reinforcement, pour",
+    "unit": "sf",
+    "rate": 18.75,
+    "currency": "USD",
+    "source": "custom",
+    "classification": {"masterformat": "03 30 53"},
+    "region": "US_CUSTOM",
+    "components": [
+      {"code": "LAB-CARP-01",   "factor": 0.15, "unit": "hr",  "type": "labor"},
+      {"code": "LAB-LAB-01",    "factor": 0.12, "unit": "hr",  "type": "labor"},
+      {"code": "MAT-CONC-3K",   "factor": 0.025,"unit": "yd3", "type": "material"},
+      {"code": "MAT-REBAR-60",  "factor": 1.20, "unit": "lb",  "type": "material"},
+      {"code": "EQP-PUMP-CONC", "factor": 0.008,"unit": "hr",  "type": "equipment"}
+    ]
+  },
+  {
+    "code": "WI-WALL-CMU-8",
+    "description": "Concrete masonry unit wall, 8 inch — block, mortar, reinforced cells",
+    "unit": "sf",
+    "rate": 14.20,
+    "currency": "USD",
+    "source": "custom",
+    "classification": {"masterformat": "04 22 00"},
+    "region": "US_CUSTOM",
+    "components": [
+      {"code": "LAB-MASON-01", "factor": 0.16, "unit": "hr", "type": "labor"},
+      {"code": "LAB-LAB-01",   "factor": 0.08, "unit": "hr", "type": "labor"},
+      {"code": "MAT-CMU-8",    "factor": 1.13, "unit": "ea", "type": "material"},
+      {"code": "MAT-REBAR-60", "factor": 0.30, "unit": "lb", "type": "material"}
+    ]
+  },
+  {
+    "code": "WI-FRAM-WALL-2X4",
+    "description": "Wood frame interior wall — 2x4 studs at 16 inch o.c. with plates",
+    "unit": "sf",
+    "rate": 7.85,
+    "currency": "USD",
+    "source": "custom",
+    "classification": {"masterformat": "06 11 00"},
+    "region": "US_CUSTOM",
+    "components": [
+      {"code": "LAB-CARP-01", "factor": 0.07, "unit": "hr", "type": "labor"},
+      {"code": "LAB-CARP-02", "factor": 0.05, "unit": "hr", "type": "labor"},
+      {"code": "MAT-LUMB-2X4","factor": 1.05, "unit": "ea", "type": "material"}
+    ]
+  },
+  {
+    "code": "WI-DRYW-58-PNT",
+    "description": "Drywall — 5/8 inch board with tape, mud, and 2-coat interior paint",
+    "unit": "sf",
+    "rate": 5.95,
+    "currency": "USD",
+    "source": "custom",
+    "classification": {"masterformat": "09 29 00"},
+    "region": "US_CUSTOM",
+    "components": [
+      {"code": "LAB-CARP-01",   "factor": 0.04, "unit": "hr", "type": "labor"},
+      {"code": "LAB-LAB-01",    "factor": 0.02, "unit": "hr", "type": "labor"},
+      {"code": "MAT-DRYW-58",   "factor": 1.05, "unit": "sf", "type": "material"},
+      {"code": "MAT-PAINT-INT", "factor": 1.00, "unit": "sf", "type": "material"}
+    ]
+  },
+  {
+    "code": "WI-ROOF-ASPH-PITCH",
+    "description": "Asphalt shingle roofing — 30-year shingles, felt underlayment, 4:12 pitch",
+    "unit": "sq",
+    "rate": 485.00,
+    "currency": "USD",
+    "source": "custom",
+    "classification": {"masterformat": "07 31 13"},
+    "region": "US_CUSTOM",
+    "components": [
+      {"code": "SUB-ROOF-ASPH", "factor": 1.00, "unit": "sq", "type": "subcontractor"},
+      {"code": "LAB-FOREM-01",  "factor": 0.18, "unit": "hr", "type": "labor"}
+    ]
+  }
+]

@@ -1,0 +1,90 @@
+# OpenConstructionERP - Quickstart Docker Compose
+#
+# ⚠️  EVALUATION / LOCAL-DEMO ONLY - NOT FOR PRODUCTION
+#
+# Both POSTGRES_PASSWORD and JWT_SECRET MUST be supplied via env vars
+# (or a `.env` file beside this compose file). Compose fails fast with
+# a readable error if they are missing - instead of silently shipping
+# globally-shared defaults that anyone could use to forge JWTs (BUG-D03).
+# Generate them once with:
+#
+#   echo "POSTGRES_PASSWORD=$(openssl rand -base64 24)" >  .env
+#   echo "JWT_SECRET=$(openssl rand -hex 32)"           >> .env
+#
+# Any real deployment SHOULD use docker-compose.prod.yml.
+#
+# Zero-config, all-in-one deployment. Just run:
+#   docker compose -f docker-compose.quickstart.yml up --build
+#
+# This starts:
+#   - PostgreSQL 16 (data persisted in Docker volume, not exposed to host)
+#   - Backend (FastAPI, serves API + frontend)
+#   - Accessible at http://localhost:8080
+#
+# PostgreSQL is required (SQLite support was removed in v6.6.0). To run the
+# unified image against your own PostgreSQL instead of the bundled one:
+#   docker run -d -p 8080:8080 -v oe_data:/data \
+#     -e DATABASE_URL=postgresql+asyncpg://user:pass@host:5432/dbname \
+#     -e JWT_SECRET=$(openssl rand -hex 32) \
+#     openconstructionerp
+#   (Build first: docker build -t openconstructionerp -f deploy/docker/Dockerfile.unified .)
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: oe
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set - generate with: openssl rand -base64 24}"
+      POSTGRES_DB: openestimate
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U oe -d openestimate"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    # Not exposed to host - only accessible by backend
+
+  app:
+    build:
+      context: .
+      dockerfile: deploy/docker/Dockerfile.unified
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      # PostgreSQL connection - required, the image has no database default
+      DATABASE_URL: postgresql+asyncpg://oe:${POSTGRES_PASSWORD}@postgres:5432/openestimate
+      DATABASE_SYNC_URL: postgresql://oe:${POSTGRES_PASSWORD}@postgres:5432/openestimate
+      # Security - required, no default. Compose fails fast if blank.
+      JWT_SECRET: "${JWT_SECRET:?JWT_SECRET must be set - generate with: openssl rand -hex 32}"
+      # Frontend serving
+      SERVE_FRONTEND: "true"
+      ALLOWED_ORIGINS: "http://localhost:8080,http://localhost"
+      # Persistent data dir - pins the unified resolver at the /data volume
+      # below so BIM geometry survives container recreate (otherwise the
+      # resolver defaults to ~/.openestimate in the ephemeral container layer).
+      OE_DATA_DIR: /data
+      # Defaults
+      APP_ENV: development
+      APP_DEBUG: "false"
+      VECTOR_BACKEND: lancedb
+    volumes:
+      - app_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  pg_data:
+    driver: local
+  app_data:
+    driver: local

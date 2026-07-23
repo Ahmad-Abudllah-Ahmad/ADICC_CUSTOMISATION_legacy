@@ -1,0 +1,34 @@
+{
+  "rule_pack_id": "sans_1200_measurement",
+  "name": "SANS 1200 - Standardized Specification for Civil Engineering Construction",
+  "standard": "SANS 1200",
+  "jurisdiction": "ZA",
+  "regulator": "South African Bureau of Standards (SABS)",
+  "description": "Civil engineering construction measurement and specification per the SANS 1200 series (site clearance, earthworks, concrete, pipelines, roads). Switches on the universal BOQ quality rules today. SANS 1200 specific structure checks are on the roadmap and are reported as unsupported until implemented in core.",
+  "applies_to": ["projects", "boq", "validation"],
+  "sections_reference": [
+    {"code": "SANS 1200 A", "title": "General"},
+    {"code": "SANS 1200 C", "title": "Site clearance"},
+    {"code": "SANS 1200 D", "title": "Earthworks"},
+    {"code": "SANS 1200 DB", "title": "Earthworks (pipe trenches)"},
+    {"code": "SANS 1200 G", "title": "Concrete (structural)"},
+    {"code": "SANS 1200 GA", "title": "Concrete (small works)"},
+    {"code": "SANS 1200 GE", "title": "Precast concrete"},
+    {"code": "SANS 1200 H", "title": "Structural steelwork"},
+    {"code": "SANS 1200 L", "title": "Medium-pressure pipelines"},
+    {"code": "SANS 1200 LD", "title": "Sewers"},
+    {"code": "SANS 1200 LE", "title": "Stormwater drainage"},
+    {"code": "SANS 1200 M", "title": "Roads (general)"},
+    {"code": "SANS 1200 ME", "title": "Subbase"},
+    {"code": "SANS 1200 MF", "title": "Base"},
+    {"code": "SANS 1200 MG", "title": "Bituminous surface treatment"},
+    {"code": "SANS 1200 MH", "title": "Asphalt base and surfacing"}
+  ],
+  "enables_rule_ids": [
+    "boq_quality.no_zero_unit_rate",
+    "boq_quality.no_missing_quantity",
+    "boq_quality.no_duplicate_positions",
+    "sans1200.section_classified",
+    "sans1200.measurement_unit_valid"
+  ]
+}

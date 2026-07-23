@@ -1,0 +1,28 @@
+{
+  "rule_pack_id": "sbc_301_loads",
+  "name": "SBC 301 — Structural Loads & Design",
+  "name_ar": "SBC 301 — الأحمال والتصميم الإنشائي",
+  "standard": "Saudi Building Code 2018 — SBC 301 (Loads)",
+  "jurisdiction": "SA",
+  "regulator": "Saudi Building Code National Committee (SBCNC)",
+  "publication_year": 2018,
+  "derives_from": ["ASCE 7-16", "IBC 2018"],
+  "applies_to": ["projects", "boq", "validation"],
+  "description": "Enables OCERP built-in validation rules that enforce SBC 301 (Loads) — Saudi-specific seismic micro-zonation (Zones 0-3, including the Red Sea coastal trough), basic wind speeds for the Arabian Peninsula (typically 33-44 m/s 3-sec gust depending on region), Hajj-period live-load surcharges for assembly occupancies in Makkah and Madinah, sandstorm dust load on roofs, and sabkha settlement allowance.",
+  "description_ar": "تفعيل قواعد التحقق لإنفاذ متطلبات SBC 301 (الأحمال) — التصنيف الزلزالي السعودي، سرعات الرياح الأساسية لشبه الجزيرة العربية، أحمال الحشود في موسم الحج، أحمال الغبار والعواصف الرملية، وبدلات هبوط السبخة.",
+  "severity_overrides": {},
+  "enables_rule_ids": [
+    "sbc301.seismic_zone_assigned",
+    "sbc301.seismic_design_category_assigned",
+    "sbc301.basic_wind_speed_documented",
+    "sbc301.wind_exposure_category_assigned",
+    "sbc301.dead_load_calculation_present",
+    "sbc301.live_load_per_occupancy_documented",
+    "sbc301.hajj_assembly_surcharge_for_makkah_madinah",
+    "sbc301.sandstorm_dust_roof_load_considered",
+    "sbc301.sabkha_settlement_allowance",
+    "sbc301.coastal_corrosion_exposure_assigned",
+    "sbc301.foundation_depth_below_active_zone",
+    "sbc301.load_combinations_documented"
+  ]
+}

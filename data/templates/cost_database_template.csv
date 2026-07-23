@@ -1,0 +1,4 @@
+code,description,unit,rate,currency,classification
+LAB-CARP-01,Carpenter — journeyman,hr,68.50,USD,03 10 00
+MAT-CONC-3K,Ready-mix concrete C3000 psi,yd3,165.00,USD,03 30 00
+EQP-EXC-MED,Excavator — medium (operated),hr,185.00,USD,31 23 00

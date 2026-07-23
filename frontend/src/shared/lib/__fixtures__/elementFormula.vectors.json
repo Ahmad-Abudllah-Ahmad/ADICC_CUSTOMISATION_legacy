@@ -1,0 +1,60 @@
+{
+  "_comment": "Issue #347 per-element quantity formula parity vectors. Loaded by BOTH frontend/src/features/boq/grid/formula/elementFormula.test.ts and backend/tests/unit/test_quantity_formula.py so the normaliser, numeric test, variable builder and evaluator agree byte-for-byte across FE (float) and BE (Decimal). Keep formulas canonical (dot decimals, * for multiply) and expected values exact at <=4 dp so float and Decimal both match. Error cases here are ONLY ones BOTH sides reject; backend-only rejections (function calls, power, attribute access) live in the backend unit test.",
+  "paramNames": [
+    { "raw": "area_m2", "normalized": "area_m2" },
+    { "raw": "Area (m2)", "normalized": "area_m2" },
+    { "raw": "Volume", "normalized": "volume" },
+    { "raw": "length_m", "normalized": "length_m" },
+    { "raw": "Thickness (mm)", "normalized": "thickness_mm" },
+    { "raw": "2ndFloor", "normalized": "_2ndfloor" },
+    { "raw": "  padded  ", "normalized": "padded" },
+    { "raw": "a--b__c", "normalized": "a_b_c" },
+    { "raw": "Hohe", "normalized": "hohe" },
+    { "raw": "!!!", "normalized": "" }
+  ],
+  "numeric": [
+    { "value": 12.5, "numeric": true },
+    { "value": 0, "numeric": true },
+    { "value": -3.5, "numeric": true },
+    { "value": "3.14", "numeric": true },
+    { "value": "1e3", "numeric": true },
+    { "value": ".5", "numeric": true },
+    { "value": "+2", "numeric": true },
+    { "value": "  7  ", "numeric": true },
+    { "value": true, "numeric": false },
+    { "value": "abc", "numeric": false },
+    { "value": "", "numeric": false },
+    { "value": "1,5", "numeric": false },
+    { "value": null, "numeric": false }
+  ],
+  "buildVars": [
+    {
+      "quantities": { "area_m2": 10, "volume_m3": "2.5", "flag": true, "name": "wall" },
+      "properties": { "Thickness (mm)": 200, "area_m2": 999, "height": "3" },
+      "expected": { "area_m2": 10, "volume_m3": 2.5, "thickness_mm": 200, "height": 3 }
+    },
+    {
+      "quantities": {},
+      "properties": { "Width (m)": 1.2 },
+      "expected": { "width_m": 1.2 }
+    }
+  ],
+  "formulaEval": [
+    { "formula": "area_m2 * 2", "vars": { "area_m2": 10 }, "expected": 20 },
+    { "formula": "(a + b) * 2", "vars": { "a": 3, "b": 4 }, "expected": 14 },
+    { "formula": "length_m * height_m", "vars": { "length_m": 3, "height_m": 2.5 }, "expected": 7.5 },
+    { "formula": "10 / 4", "vars": {}, "expected": 2.5 },
+    { "formula": "area_m2 * 0.5 + volume_m3", "vars": { "area_m2": 10, "volume_m3": 1.25 }, "expected": 6.25 },
+    { "formula": "-x + 5", "vars": { "x": 2 }, "expected": 3 },
+    { "formula": "count * 1.15", "vars": { "count": 4 }, "expected": 4.6 },
+    { "formula": "a / b", "vars": { "a": 9, "b": 4 }, "expected": 2.25 },
+    { "formula": "2 + 3 * 4", "vars": {}, "expected": 14 },
+    { "formula": "(2 + 3) * 4", "vars": {}, "expected": 20 }
+  ],
+  "formulaError": [
+    { "formula": "area_m2 * 2", "vars": {}, "reason": "unknown variable" },
+    { "formula": "5 / 0", "vars": {}, "reason": "division by zero" },
+    { "formula": "2 +", "vars": {}, "reason": "syntax error" },
+    { "formula": "", "vars": {}, "reason": "empty" }
+  ]
+}

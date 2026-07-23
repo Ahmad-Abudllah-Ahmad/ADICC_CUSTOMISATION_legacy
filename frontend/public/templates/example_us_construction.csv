@@ -1,0 +1,31 @@
+code,description,unit,rate,currency,classification
+LAB-CARP-01,Carpenter — journeyman,hr,68.50,USD,03 10 00
+LAB-CARP-02,Carpenter — apprentice,hr,42.00,USD,03 10 00
+LAB-MASON-01,Mason — journeyman,hr,72.00,USD,04 05 00
+LAB-IRONW-01,Ironworker — structural,hr,82.50,USD,05 12 00
+LAB-ELEC-01,Electrician — journeyman,hr,85.00,USD,26 05 00
+LAB-PLMB-01,Plumber — journeyman,hr,82.00,USD,22 05 00
+LAB-LAB-01,General laborer,hr,35.00,USD,01 50 00
+LAB-OPER-01,Equipment operator — class A,hr,65.00,USD,01 51 00
+LAB-FOREM-01,Foreman — supervisor,hr,95.00,USD,01 56 00
+MAT-CONC-3K,Ready-mix concrete C3000 psi,yd3,165.00,USD,03 30 00
+MAT-CONC-4K,Ready-mix concrete C4000 psi,yd3,180.00,USD,03 30 00
+MAT-REBAR-60,Rebar — Grade 60 #4 (1/2 inch),lb,0.85,USD,03 20 00
+MAT-REBAR-70,Rebar — Grade 60 #5 (5/8 inch),lb,0.90,USD,03 20 00
+MAT-CMU-8,Concrete masonry unit 8 inch,ea,2.85,USD,04 22 00
+MAT-BRICK-MOD,Modular face brick,ea,0.92,USD,04 21 00
+MAT-DRYW-58,Drywall gypsum board 5/8 inch,sf,0.95,USD,09 21 00
+MAT-INSUL-R19,Fiberglass batt insulation R-19,sf,1.20,USD,07 21 00
+MAT-PAINT-INT,Interior latex paint — primer + 2 coats,sf,1.85,USD,09 91 00
+MAT-LUMB-2X4,Lumber — SPF 2x4x8 stud,ea,5.85,USD,06 11 00
+MAT-LUMB-2X10,Lumber — SPF 2x10x16,ea,28.50,USD,06 11 00
+MAT-PLYW-3-4,Plywood — 4x8 3/4 inch sheathing,ea,52.00,USD,06 16 00
+EQP-EXC-SML,Excavator — small (operated),hr,125.00,USD,31 23 00
+EQP-EXC-MED,Excavator — medium (operated),hr,185.00,USD,31 23 00
+EQP-CRANE-50T,Mobile crane — 50 ton,hr,425.00,USD,01 54 00
+EQP-PUMP-CONC,Concrete pump truck (operated),hr,285.00,USD,03 30 53
+EQP-BULDR-D6,Bulldozer — Cat D6 (operated),hr,235.00,USD,31 22 00
+EQP-COMPR-185,Air compressor — 185 cfm,day,165.00,USD,01 54 00
+EQP-SCAFF,Scaffold rental — section/week,wk,18.50,USD,01 54 00
+SUB-HVAC-RES,Subcontractor — residential HVAC install,sf,12.50,USD,23 00 00
+SUB-ROOF-ASPH,Subcontractor — asphalt shingle roofing,sq,425.00,USD,07 31 13

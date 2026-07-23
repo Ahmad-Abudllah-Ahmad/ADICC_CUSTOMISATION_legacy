@@ -1,0 +1,151 @@
+# Doker formwork pack — onboarding wizard
+# Streamed via GET /api/v1/partner-pack/onboarding-script
+# Replaces the default OnboardingWizard step sequence when this pack is active.
+
+version: 1
+pack: doker-formwork
+locale: de
+
+steps:
+  - id: welcome
+    title: "Willkommen bei OCERP × Doker"
+    body: >-
+      Diese Installation ist für Schalungs- und Betonbau-Unternehmen
+      vorkonfiguriert. In den nächsten Schritten richten wir Ihre
+      Firmenprofil, die Schalungsbibliothek und die DIN- und VOB-
+      Validierungs-Regeln ein.
+    cta: "Los geht's"
+    illustration: "welcome"
+
+  - id: company_profile
+    title: "Firmenprofil"
+    body: >-
+      Wenige Angaben zu Ihrem Schalungsbetrieb, damit wir Vorlagen und
+      Benchmarks passend einrichten.
+    cta: "Weiter"
+    fields:
+      - name: company_size_schalungsbauer
+        label: "Anzahl Schalungsbauer im Betrieb"
+        type: select
+        required: true
+        options:
+          - { value: "1-5",     label: "1–5 (Klein)" }
+          - { value: "6-20",    label: "6–20 (Mittel)" }
+          - { value: "21-50",   label: "21–50 (Gross)" }
+          - { value: "50+",     label: "Mehr als 50" }
+      - name: primary_project_type
+        label: "Typische Projektart"
+        type: select
+        required: true
+        options:
+          - { value: "hochbau",     label: "Hochbau (Wohn/Büro)" }
+          - { value: "tiefbau",     label: "Tiefbau (Brücken, Tunnel)" }
+          - { value: "industriebau", label: "Industriebau (Hallen, Silos)" }
+          - { value: "gemischt",    label: "Gemischt" }
+      - name: bg_bau_member
+        label: "BG-BAU-Mitglied?"
+        type: boolean
+        default: true
+      - name: vob_contracts_default
+        label: "Standard-Vertragsform"
+        type: select
+        default: "vob_b"
+        options:
+          - { value: "vob_b", label: "VOB/B (öffentliche Auftraggeber)" }
+          - { value: "bgb",   label: "BGB (freier Vertrag)" }
+          - { value: "beides", label: "Beides — projektabhängig" }
+      - name: home_region
+        label: "Standort des Hauptsitzes"
+        type: select
+        required: true
+        options:
+          - { value: "DE-BY",  label: "Bayern (München-Index)" }
+          - { value: "DE-BE",  label: "Berlin (Berlin-Index)" }
+          - { value: "DE-NW",  label: "NRW (Düsseldorf-Index)" }
+          - { value: "DE-BW",  label: "Baden-Württemberg" }
+          - { value: "DE-HE",  label: "Hessen" }
+          - { value: "DE-OTHER", label: "Andere" }
+          - { value: "AT",     label: "Österreich" }
+          - { value: "CH",     label: "Schweiz" }
+
+  - id: doker_systems_inventory
+    title: "Doker-Schalungssysteme in Ihrem Bestand"
+    body: >-
+      Welche Doker-/Doka-Systeme setzen Sie aktuell ein? Wir hinterlegen
+      die passenden Lastklassen, Modulraster und typischen Nutzungshäufigkeiten
+      in Ihrer Ressourcenbibliothek.
+    cta: "Weiter"
+    fields:
+      - name: systems_in_use
+        label: "Eingesetzte Systeme (Mehrfachauswahl)"
+        type: multiselect
+        options:
+          - { value: "frami_xlife",       label: "Frami Xlife (Wand)" }
+          - { value: "framax_xlife_plus", label: "Framax Xlife plus (Wand)" }
+          - { value: "alu_star_100",      label: "Alu-Star 100 (Wand, Alu)" }
+          - { value: "dokaflex_1_2_4",    label: "Dokaflex 1-2-4 (Decke)" }
+          - { value: "dokamatic_table",   label: "Dokamatic Tisch (Decke)" }
+          - { value: "rs_xlife",          label: "RS Xlife (Stütze)" }
+          - { value: "ks_xclimb_60",      label: "Xclimb 60 (Kletter)" }
+          - { value: "staxo_100",         label: "Staxo 100 (Traggerüst)" }
+      - name: default_pour_rate_m_per_h
+        label: "Standard-Aufschüttungsgeschwindigkeit (m/h)"
+        type: number
+        default: 2.5
+        min: 0.5
+        max: 7.0
+      - name: default_consistency_class
+        label: "Standard-Konsistenzklasse Frischbeton"
+        type: select
+        default: "F3"
+        options:
+          - { value: "F2",  label: "F2 (steif)" }
+          - { value: "F3",  label: "F3 (plastisch — typisch)" }
+          - { value: "F4",  label: "F4 (weich)" }
+          - { value: "F5",  label: "F5 (sehr weich)" }
+          - { value: "SCC", label: "SVB (selbstverdichtend)" }
+
+  - id: enable_din_validation
+    title: "DIN-/VOB-/DGUV-Validierungen aktivieren"
+    body: >-
+      Folgende Validierungen werden für jede neue LV-Position und jeden
+      Schalungsplan automatisch ausgeführt:
+      • DIN 18218 Frischbetondruck (Schalung gegen Aufschüttungsgeschwindigkeit)
+      • DIN EN 12812 Traggerüste (Lastklassen, Durchbiegung, γ_F)
+      • DIN EN 13670 Ausführung (EXC-Klasse, Nachbehandlungsklasse, c_nom)
+      • DIN EN 206 / DIN 1045-2 Beton (Festigkeit, Expositionsklasse)
+      • VOB/C DIN 18331 Betonarbeiten (Abrechnungseinheiten, Nebenleistungen)
+      • DGUV 101-008 Arbeitssicherheit (Absturzsicherung ≥2 m, PSA)
+      • Schalungszyklus-Qualität und Schalungsökonomie
+    cta: "Alle aktivieren"
+    target_route: "/validation/rule-packs"
+    enables_rule_packs:
+      - din_18218_formwork_pressure
+      - din_en_12812_falsework
+      - din_en_13670_concrete_execution
+      - concrete_din_en_206
+      - vob_c_din_18331_concrete_works
+      - dguv_101_008_formwork_safety
+      - formwork_cycle_quality
+      - formwork_cycle_economics
+
+  - id: import_rebar_takeoff
+    title: "Bewehrungs-Take-off aus CAD importieren"
+    body: >-
+      Laden Sie eine CAD-Datei (DWG, IFC, RVT) hoch — wir extrahieren
+      Bewehrungspositionen und ordnen sie Ihren BOQ-Sektionen zu.
+      Confidence-Scores zeigen, welche Positionen Sie prüfen sollten.
+    cta: "CAD-Datei hochladen"
+    target_route: "/cad/upload?focus=reinforcement"
+    skippable: true
+
+  - id: apply_cycle_templates
+    title: "Schalungszyklus-Vorlagen anwenden"
+    body: >-
+      Übernehmen Sie unsere vorgefertigten Takt-Vorlagen für Wand-, Stützen-,
+      Decken- und Trägerschalung. Diese steuern die Termin- und Ressourcen-
+      planung in Ihren ersten Projekten (typische Taktzeiten und
+      Nutzungshäufigkeiten je Doker-System sind hinterlegt).
+    cta: "Vorlagen übernehmen"
+    target_route: "/schedule-advanced/templates?pack=doker-formwork"
+    finishes_wizard: true

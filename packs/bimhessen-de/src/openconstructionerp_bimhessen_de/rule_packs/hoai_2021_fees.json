@@ -1,0 +1,60 @@
+{
+  "$schema": "openconstructionerp.partner_pack.rule_pack/v1",
+  "slug": "hoai_2021_fees",
+  "rule_pack_id": "hoai_2021_fees",
+  "display_name": "HOAI 2021 — Honorar für Architekten- und Ingenieurleistungen",
+  "name": "HOAI Leistungsphasen 1–9 & Honorarberechnung",
+  "description": "Honorarordnung für Architekten und Ingenieure, Fassung 2013 / novelliert 2021 (BGBl. I S. 2792, in Kraft seit 01.01.2021 nach EuGH-Urteil C-377/17). Auch wenn die Mindest- und Höchstsätze nicht mehr verbindlich sind, wird die HOAI als Orientierungsmaßstab für Honorarvereinbarungen weiterhin breit angewendet. Validiert Leistungsphasen 1–9 (Vollständigkeit, Reihenfolge), Honorarzone (HZ I–V) und die Anrechenbaren Kosten nach § 4.",
+  "standard": "HOAI 2021",
+  "jurisdiction": "DE",
+  "severity_default": "warning",
+  "category": "fees",
+  "locale_default": "de",
+  "enables_rule_ids": [
+    "hoai.leistungsphase_1_grundlagenermittlung_scope_documented",
+    "hoai.leistungsphase_2_vorplanung_scope_documented",
+    "hoai.leistungsphase_3_entwurfsplanung_scope_documented",
+    "hoai.leistungsphase_4_genehmigungsplanung_scope_documented",
+    "hoai.leistungsphase_5_ausführungsplanung_scope_documented",
+    "hoai.leistungsphase_6_vorbereitung_vergabe_scope_documented",
+    "hoai.leistungsphase_7_mitwirkung_vergabe_scope_documented",
+    "hoai.leistungsphase_8_objektüberwachung_scope_documented",
+    "hoai.leistungsphase_9_objektbetreuung_scope_documented",
+    "hoai.leistungsphasen_percentages_sum_to_100",
+    "hoai.leistungsphasen_order_continuous",
+    "hoai.honorarzone_assigned_i_ii_iii_iv_v",
+    "hoai.honorarzone_evaluation_criteria_documented",
+    "hoai.honorarsatz_basis_min_mittel_hoch_documented",
+    "hoai.anrechenbare_kosten_per_par4_documented",
+    "hoai.anrechenbare_kosten_basis_din276_kg300_kg400",
+    "hoai.honorartafel_par35_par39_referenced",
+    "hoai.umbauzuschlag_documented_if_applicable",
+    "hoai.nebenkosten_per_par14_documented",
+    "hoai.honorarvereinbarung_schriftform_par7",
+    "hoai.besondere_leistungen_separately_documented"
+  ],
+  "metadata": {
+    "edition": "HOAI 2013 / Novellierung 2021",
+    "legal_status": "Orientierungsmaßstab (nicht mehr verbindlich nach EuGH C-377/17, 04.07.2019)",
+    "leistungsphasen": [
+      "LP1 Grundlagenermittlung",
+      "LP2 Vorplanung",
+      "LP3 Entwurfsplanung",
+      "LP4 Genehmigungsplanung",
+      "LP5 Ausführungsplanung",
+      "LP6 Vorbereitung der Vergabe",
+      "LP7 Mitwirkung bei der Vergabe",
+      "LP8 Objektüberwachung",
+      "LP9 Objektbetreuung"
+    ],
+    "honorarzonen": ["HZ I (sehr geringe)", "HZ II (geringe)", "HZ III (durchschnittliche)", "HZ IV (hohe)", "HZ V (sehr hohe Anforderungen)"],
+    "honorarsätze": ["Mindestsatz (Basis)", "Mittelsatz", "Höchstsatz"],
+    "references": [
+      "HOAI 2021, BGBl. I 2021 S. 2792",
+      "EuGH-Urteil C-377/17 vom 04.07.2019",
+      "§ 4 Anrechenbare Kosten",
+      "§ 7 Honorarvereinbarung (Schriftform)",
+      "§§ 35, 39 Honorartafeln Gebäude / Innenräume"
+    ]
+  }
+}

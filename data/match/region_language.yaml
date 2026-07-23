@@ -1,0 +1,172 @@
+# DDC-CWICR-OE: DataDrivenConstruction · OpenConstructionERP
+# Copyright (c) 2026 Artem Boiko / DataDrivenConstruction
+#
+# Region/catalogue → ISO-639-1 language tag mapping.
+#
+# This is the data-file mirror of
+# ``app.core.match_service.region_language.REGION_LANGUAGE``. It lets
+# operators register a new CWICR catalogue (e.g. ``KE_NAIROBI``) and the
+# language it ships in WITHOUT a Python source edit.
+#
+# HOW TO EXTEND
+# -------------
+#   1. Add a new ``COUNTRY_CITY`` (or bare ``COUNTRY`` for region groups
+#      that ship a single mono-city catalogue) entry under ``regions``.
+#   2. Value is the ISO-639-1 two-letter language tag the catalogue
+#      labels are written in (de, en, es, fr, pt, ar, zh, ...).
+#   3. Save. The matcher's translation cascade and language collection
+#      router pick up the new region on next backend boot. No Python
+#      edit. No release.
+#
+# CONVENTIONS
+# -----------
+# - Keys MUST follow the canonical ``COUNTRY_CITY`` form used in the
+#   CWICR parquet ``region`` column and the project's
+#   ``cost_database_id`` picker.
+# - Historical aliases (``UK_GBP`` → ``GB_LONDON``, ``SP_BARCELONA`` →
+#   ``ES_MADRID``, ``CS_PRAGUE`` → ``CZ_PRAGUE``, ...) live in
+#   ``aliases`` and resolve to a canonical entry in ``regions``.
+# - Bare ISO-3166 alpha-2 country codes whose letters clash with
+#   ISO-639 language codes (AR/ID/HR/BG/BR/CN/CZ/JP/KR/RO/TH/TR/VN/...)
+#   live in ``bare_country_overrides`` so the country interpretation
+#   wins over the language one.
+#
+# FALLBACK BEHAVIOUR
+# ------------------
+# Loader treats missing-file / malformed-YAML / missing-pyyaml as
+# non-fatal. The Python ``REGION_LANGUAGE`` dict in
+# ``region_language.py`` remains the canonical source of truth until
+# Agent C wires the YAML path through. This file is currently a
+# zero-effect mirror — adding entries here has no runtime effect until
+# the load hook lands.
+
+regions:
+  # ── German-speaking (DACH) ──────────────────────────────────────────
+  DE_BERLIN: de
+  DE_MUNICH: de
+  DE_HAMBURG: de
+  AT_VIENNA: de
+  CH_ZURICH: de
+
+  # ── Romance ─────────────────────────────────────────────────────────
+  FR_PARIS: fr
+  ES_MADRID: es
+  IT_ROME: it
+  PT_LISBON: pt
+  BR_SAOPAULO: pt
+  PT_SAOPAULO: pt        # legacy id, retained for back-compat
+
+  # ── English / Anglophone ────────────────────────────────────────────
+  GB_LONDON: en
+  IE_DUBLIN: en
+  USA_USD: en
+  USA_NEWYORK: en
+  CA_TORONTO: en
+  AU_SYDNEY: en
+  NZ_AUCKLAND: en
+  ZA_JOHANNESBURG: en
+  NG_LAGOS: en
+  KE_NAIROBI: en
+  GH_ACCRA: en
+  UG_KAMPALA: en
+  TZ_DARESSALAAM: en
+  RW_KIGALI: en
+  ZM_LUSAKA: en
+  BW_GABORONE: en
+  NA_WINDHOEK: en
+  ZW_HARARE: en
+  MW_LILONGWE: en
+  IN_MUMBAI: en
+
+  # ── Africa — Francophone / Arabic / Lusophone / Amharic ─────────────
+  MA_CASABLANCA: ar
+  DZ_ALGIERS: ar
+  TN_TUNIS: ar
+  EG_CAIRO: ar
+  SD_KHARTOUM: ar
+  LY_TRIPOLI: ar
+  SN_DAKAR: fr
+  CI_ABIDJAN: fr
+  CM_DOUALA: fr
+  BJ_COTONOU: fr
+  ML_BAMAKO: fr
+  BF_OUAGADOUGOU: fr
+  TG_LOME: fr
+  MG_ANTANANARIVO: fr
+  AO_LUANDA: pt
+  MZ_MAPUTO: pt
+  ET_ADDISABABA: am
+
+  # ── Slavic / CIS ────────────────────────────────────────────────────
+  PL_WARSAW: pl
+  CZ_PRAGUE: cs
+  RO_BUCHAREST: ro
+  RU_STPETERSBURG: ru
+  RU_MOSCOW: ru
+  BG_SOFIA: bg
+  LT_VILNIUS: lt
+  HR_ZAGREB: hr
+
+  # ── Benelux ─────────────────────────────────────────────────────────
+  NL_AMSTERDAM: nl
+  BE_BRUSSELS: nl
+
+  # ── Nordic ──────────────────────────────────────────────────────────
+  SV_STOCKHOLM: sv
+
+  # ── Asia / MENA ─────────────────────────────────────────────────────
+  ZH_CHINA: zh
+  JP_TOKYO: ja
+  KR_SEOUL: ko
+  ID_JAKARTA: id
+  TH_BANGKOK: th
+  VN_HANOI: vi
+  AE_DUBAI: ar
+  SA_RIYADH: ar
+  TR_NATIONAL: tr
+  HI_MUMBAI: hi
+
+  # ── Authentic national / regional official bases ────────────────────
+  BR_NATIONAL: pt        # SINAPI analytical compositions
+  ES_ANDALUCIA: es       # BCCA (Andalucia)
+  IT_TOSCANA: it         # Prezzario Regione Toscana
+  VN_NATIONAL: vi        # Dinh Muc national norms
+  ID_NATIONAL: id        # AHSP national unit-price analyses
+  GR_NATIONAL: el        # GGDE analytical tariffs
+
+  # ── LatAm ───────────────────────────────────────────────────────────
+  MX_MEXICO: es
+  MX_MEXICOCITY: es
+  AR_BUENOSAIRES: es
+
+aliases:
+  UK_GBP: GB_LONDON          # used by an early UK rate import
+  ENG_TORONTO: CA_TORONTO    # mis-prefixed in a 2025 batch
+  SP_BARCELONA: ES_MADRID    # ES is the ISO code; SP was a typo
+  CS_PRAGUE: CZ_PRAGUE       # CS is the language code, not country
+  ZH_SHANGHAI: ZH_CHINA      # language-prefixed catalogue id
+  CN_SHANGHAI: ZH_CHINA      # old v3 China id
+  TR_ISTANBUL: TR_NATIONAL   # old metro id
+  JA_TOKYO: JP_TOKYO
+  KO_SEOUL: KR_SEOUL
+  VI_HANOI: VN_HANOI
+  AR_DUBAI: AE_DUBAI
+
+bare_country_overrides:
+  AR: es      # Argentina (Buenos Aires) — not Arabic
+  BG: bg      # Bulgaria
+  BR: pt      # Brazil
+  CN: zh      # China
+  CZ: cs      # Czech Republic — language is cs, not cz
+  GB: en      # United Kingdom — historical British alias
+  HR: hr      # Croatia
+  ID: id      # Indonesia
+  JP: ja      # Japan
+  KR: ko      # Korea
+  RO: ro      # Romania
+  TH: th      # Thailand
+  TR: tr      # Turkey
+  VN: vi      # Vietnam
+  AE: ar      # United Arab Emirates speaks Arabic
+  SA: ar      # Saudi Arabia speaks Arabic
+  USA: en     # 3-letter US alias still in use by some catalogues

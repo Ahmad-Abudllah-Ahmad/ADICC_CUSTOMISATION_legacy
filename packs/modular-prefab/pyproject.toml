@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openconstructionerp-modular-prefab"
+version = "0.2.0"
+description = "Pre-configured partner pack for modular construction, off-site fabrication and PMC contractors — factory-line scheduling, dimensional tolerances, transport logistics (EU+US), inter-module assembly, phased handover. EN 1090, ICC/MBI 1200+1205, CSA A277, NEN 9090, AS 5104 / ISO 2394, ISO 19650, DfMA."
+readme = "README.md"
+license = { text = "AGPL-3.0-or-later" }
+requires-python = ">=3.11"
+authors = [
+    { name = "OpenConstructionERP", email = "info@datadrivenconstruction.io" },
+]
+keywords = ["openconstructionerp", "ocerp", "partner-pack", "modular", "prefab", "pmc", "dfma", "off-site", "en1090", "icc-mbi", "csa-a277", "iso-19650"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Other Audience",
+    "Topic :: Office/Business",
+    "Natural Language :: English",
+]
+dependencies = [
+    "openconstructionerp>=5.5.0",
+]
+
+[project.urls]
+Source = "https://github.com/DataDrivenConstruction/openconstructionerp"
+
+[project.entry-points."openconstructionerp.partner_packs"]
+modular-prefab = "openconstructionerp_modular_prefab:MANIFEST"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+openconstructionerp_modular_prefab = [
+    "logo.svg",
+    "onboarding.yaml",
+    "rule_packs/*.json",
+]

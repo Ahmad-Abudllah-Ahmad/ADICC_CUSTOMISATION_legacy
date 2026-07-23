@@ -1,0 +1,24 @@
+{
+  "rule_pack_id": "cdm_2015",
+  "name": "CDM 2015 — Construction (Design and Management) Regulations",
+  "standard": "CDM 2015",
+  "jurisdiction": "GB",
+  "description": "Enables OCERP built-in validation rules that enforce the duties imposed by the Construction (Design and Management) Regulations 2015 (HSE). Covers duty-holder appointments (Client, Principal Designer, Principal Contractor, Designers, Contractors, Workers), F10 notification thresholds (>30 days with >20 workers simultaneously, OR >500 person-days), Construction Phase Plan, Pre-Construction Information and Health & Safety File obligations.",
+  "enables_rule_ids": [
+    "cdm.client_duties_assigned",
+    "cdm.principal_designer_appointed",
+    "cdm.principal_contractor_appointed",
+    "cdm.designer_duties_documented",
+    "cdm.contractor_duties_documented",
+    "cdm.worker_consultation_evidenced",
+    "cdm.f10_notification_threshold_evaluated",
+    "cdm.f10_notification_submitted_when_required",
+    "cdm.pre_construction_information_pack_present",
+    "cdm.construction_phase_plan_present",
+    "cdm.construction_phase_plan_proportionate_to_risk",
+    "cdm.health_and_safety_file_handed_over",
+    "cdm.welfare_facilities_provision_documented",
+    "cdm.risk_register_maintained",
+    "cdm.competence_skills_knowledge_evidence"
+  ]
+}

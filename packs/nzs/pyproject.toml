@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openconstructionerp-nzs"
+version = "0.1.0"
+description = "Pre-configured partner pack for New Zealand contractors — NZBC (B1/AS1 etc.), NZS 3604:2011 timber framing, NZS 3910:2023 conditions of contract, MBIE acceptable solutions, Rawlinsons NZ."
+readme = "README.md"
+license = { text = "AGPL-3.0-or-later" }
+requires-python = ">=3.11"
+authors = [
+    { name = "OpenConstructionERP", email = "info@datadrivenconstruction.io" },
+]
+keywords = [
+    "openconstructionerp", "ocerp", "partner-pack",
+    "new-zealand", "nzbc", "nzs3604", "nzs3910",
+    "mbie", "lbp", "rawlinsons-nz", "gst",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Other Audience",
+    "Topic :: Office/Business",
+    "Natural Language :: English",
+]
+dependencies = [
+    "openconstructionerp>=5.5.0",
+]
+
+[project.urls]
+Source = "https://github.com/DataDrivenConstruction/openconstructionerp"
+
+[project.entry-points."openconstructionerp.partner_packs"]
+nzs = "openconstructionerp_nzs:MANIFEST"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+openconstructionerp_nzs = [
+    "logo.svg",
+    "onboarding.yaml",
+    "locales/*.json",
+    "rule_packs/*.json",
+]

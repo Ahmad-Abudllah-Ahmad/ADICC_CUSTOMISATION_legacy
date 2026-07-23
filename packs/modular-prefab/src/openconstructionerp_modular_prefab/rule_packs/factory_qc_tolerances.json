@@ -1,0 +1,25 @@
+{
+  "rule_pack_id": "factory_qc_tolerances",
+  "name": "Factory QC — dimensional & geometric tolerances",
+  "standard": "ICC/MBI 1200-2021 / EN 13670 / ISO 22156 / AS 5104",
+  "jurisdiction": "INTL",
+  "description": "Enables OCERP built-in validation rules that enforce the tighter dimensional and geometric tolerances required for off-site / modular construction. Module-level checks (±3 mm typical), assembly-level (±10 mm at building face), structural plumb (< L/1000), squareness (diagonal-diff < 5 mm per 3 m), opening dimensions (±2 mm for joinery), connection bolt-hole tolerances per EN 1090-2 (±2 mm). References ICC/MBI 1200 Off-site construction — Manufactured commercial modules (US), EN 13670 Execution of concrete structures (when modules contain structural concrete), and AS 5104 reliability targets.",
+  "enables_rule_ids": [
+    "tol.module_length_within_3mm",
+    "tol.module_width_within_3mm",
+    "tol.module_height_within_3mm",
+    "tol.module_squareness_diagonal_5mm_per_3m",
+    "tol.module_plumb_within_l_over_1000",
+    "tol.module_face_flatness_within_3mm_per_2m",
+    "tol.assembly_building_face_within_10mm",
+    "tol.assembly_floor_level_within_5mm_per_5m",
+    "tol.opening_dimensions_within_2mm",
+    "tol.bolt_hole_position_within_2mm_en1090",
+    "tol.weld_throat_thickness_iso_5817_class_b",
+    "tol.concrete_cast_in_insert_position_within_10mm",
+    "tol.inter_module_gap_within_design_envelope",
+    "tol.tolerance_chain_analysis_attached",
+    "tol.first_off_inspection_signed",
+    "tol.dimensional_survey_report_attached"
+  ]
+}

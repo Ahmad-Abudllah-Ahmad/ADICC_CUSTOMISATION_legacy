@@ -1,0 +1,120 @@
+// DDC-CWICR-OE: DataDrivenConstruction · OpenConstructionERP
+// Copyright (c) 2026 Artem Boiko / DataDrivenConstruction
+//
+// Cases icon resolution - one source of truth.
+//
+// Playbook cards (CasesPage) and the stepper (PlaybookRunner) both render an
+// icon per playbook and per step from a string `icon` name in the data files.
+// This map covers every name those playbooks reference so each resolves to its
+// real lucide-react glyph; Sparkles is the fallback only for an unknown name.
+
+import { type ComponentType } from 'react';
+import {
+  AlertTriangle,
+  BadgeCheck,
+  Banknote,
+  BookOpen,
+  Box,
+  Boxes,
+  Building2,
+  Calculator,
+  CalendarClock,
+  Camera,
+  ClipboardCheck,
+  ClipboardList,
+  Clock,
+  Combine,
+  Crosshair,
+  Database,
+  Dice5,
+  FileBarChart,
+  FileCheck,
+  FileSignature,
+  FileSpreadsheet,
+  Flag,
+  FolderOpen,
+  Gavel,
+  GitCompare,
+  GitCompareArrows,
+  Handshake,
+  HardHat,
+  HelpCircle,
+  Layers,
+  LineChart,
+  ListChecks,
+  MessageSquare,
+  NotebookPen,
+  PackageCheck,
+  Receipt,
+  ReceiptText,
+  Ruler,
+  Scale,
+  Send,
+  ShieldAlert,
+  ShieldCheck,
+  Sparkles,
+  Table2,
+  TrendingUp,
+  Trophy,
+  Upload,
+  Users,
+  type LucideProps,
+} from 'lucide-react';
+
+/** Every icon name referenced by a playbook or step maps to a real glyph. */
+export const ICON_MAP: Record<string, ComponentType<LucideProps>> = {
+  AlertTriangle,
+  BadgeCheck,
+  Banknote,
+  BookOpen,
+  Box,
+  Boxes,
+  Building2,
+  Calculator,
+  CalendarClock,
+  Camera,
+  ClipboardCheck,
+  ClipboardList,
+  Clock,
+  Combine,
+  Crosshair,
+  Database,
+  Dice5,
+  FileBarChart,
+  FileCheck,
+  FileSignature,
+  FileSpreadsheet,
+  Flag,
+  FolderOpen,
+  Gavel,
+  GitCompare,
+  GitCompareArrows,
+  Handshake,
+  HardHat,
+  HelpCircle,
+  Layers,
+  LineChart,
+  ListChecks,
+  MessageSquare,
+  NotebookPen,
+  PackageCheck,
+  Receipt,
+  ReceiptText,
+  Ruler,
+  Scale,
+  Send,
+  ShieldAlert,
+  ShieldCheck,
+  Sparkles,
+  Table2,
+  TrendingUp,
+  Trophy,
+  Upload,
+  Users,
+};
+
+/** Resolve a playbook/step icon name to its glyph; Sparkles for the unknown. */
+export function iconFor(name: string | undefined): ComponentType<LucideProps> {
+  if (name && name in ICON_MAP) return ICON_MAP[name]!;
+  return Sparkles;
+}

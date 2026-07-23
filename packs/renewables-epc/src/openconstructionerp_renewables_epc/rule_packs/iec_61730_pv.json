@@ -1,0 +1,18 @@
+{
+  "rule_pack_id": "iec_61730_pv",
+  "name": "IEC 61730 — PV module safety qualification (construction + testing)",
+  "standard": "IEC 61730-1:2023 (Requirements for construction) + IEC 61730-2:2023 (Requirements for testing) + IEC 61215-1:2021 (PV module design qualification, type approval) + IEC 62548:2023 (PV array design) + IEC 60364-7-712:2017 (Electrical installations — PV)",
+  "jurisdiction": "INTL",
+  "description": "PV module + array safety qualification baseline. IEC 61730-1 covers construction requirements (mechanical, material, durability); IEC 61730-2 covers test sequences (electrical insulation, dielectric withstand, hot-spot, fire, mechanical load, hail, partial discharge); IEC 61215 covers performance qualification + type approval; IEC 62548 covers array-level design rules; IEC 60364-7-712 covers electrical installation. For deep PV-engineering rules (DC/AC ratio, soiling, degradation, shading, bifacial gain, tracker design) enable the pv_design_full rule pack alongside.",
+  "enables_rule_ids": [
+    "iec61730.module_class_a_certified",
+    "iec61730.module_application_class_set",
+    "iec61730.module_fire_class_documented",
+    "iec61730_2.test_sequence_evidence_attached",
+    "iec61215.module_design_qualification_certified",
+    "iec62548.string_voltage_within_limit",
+    "iec62548.array_overcurrent_protection_sized",
+    "iec62548.dc_isolation_documented",
+    "iec60364_7_712.equipotential_bonding_documented"
+  ]
+}

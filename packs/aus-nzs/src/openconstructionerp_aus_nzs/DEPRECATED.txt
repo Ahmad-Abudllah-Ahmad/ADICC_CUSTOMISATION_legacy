@@ -1,0 +1,16 @@
+DEPRECATED — openconstructionerp-aus-nzs
+==========================================
+
+This combined AU + NZ pack is no longer maintained. AU and NZ use
+different currencies (AUD vs NZD), different GST rates (10% vs 15%)
+and substantially different contract / building-code regimes that
+cannot reasonably share a single PartnerPackManifest default.
+
+Migrate to one of:
+
+  pip install openconstructionerp-aus   # Australia
+  pip install openconstructionerp-nzs   # New Zealand
+
+The aus-nzs shim re-exports the openconstructionerp-aus manifest
+unchanged for backward compatibility. It will be removed in a future
+major release.

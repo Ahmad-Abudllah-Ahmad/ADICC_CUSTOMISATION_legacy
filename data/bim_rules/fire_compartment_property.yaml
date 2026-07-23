@@ -1,0 +1,56 @@
+# Internal-wall fire-rating completeness.
+#
+# Every interior wall (IfcWall with IsExternal=false) must declare a
+# FireRating property. The set of acceptable values follows DIN 4102-2 /
+# EN 13501-2 ("F30", "F60", "F90", "F120", "F180") plus the explicit
+# "none" sentinel for walls intentionally outside any fire compartment
+# (which still must be recorded — silent absence is the failure case).
+schema_version: "1.0"
+pack:
+  id: fire_compartment_property
+  name: Interior Wall Fire-Rating Completeness
+  description: |
+    Validates that every internal wall declares a FireRating value
+    drawn from the DIN 4102-2 / EN 13501-2 vocabulary.
+  source: openconstructionerp
+  version: "1.0.0"
+  applies_to:
+    classifications: ["DIN276", "DIN4102"]
+    project_regions: ["DE", "AT", "CH"]
+
+rules:
+  - id: internal_wall_fire_rating_present
+    name: FireRating present on every internal wall
+    severity: error
+    rationale: |
+      Fire-compartment design fails silently when wall fire-ratings are
+      missing; this rule guarantees the property is at least populated
+      before any compartment-completeness audit runs downstream.
+    selector:
+      ifc_class: IfcWall
+      properties:
+        - { key: IsExternal, op: eq, value: false }
+    assertion:
+      property:
+        key: FireRating
+        op: exists
+        value: true
+    failure_message: "Internal wall has no FireRating property."
+
+  - id: internal_wall_fire_rating_valid
+    name: FireRating value drawn from DIN 4102 / EN 13501 vocabulary
+    severity: warning
+    rationale: |
+      Ratings outside the standard vocabulary cannot be aggregated into
+      compartment certificates and force manual review.
+    selector:
+      ifc_class: IfcWall
+      properties:
+        - { key: IsExternal, op: eq, value: false }
+        - { key: FireRating, op: exists, value: true }
+    assertion:
+      property:
+        key: FireRating
+        op: in
+        value: ["none", "F30", "F60", "F90", "F120", "F180"]
+    failure_message: "FireRating '{{FireRating}}' is not in the DIN 4102 / EN 13501 vocabulary."

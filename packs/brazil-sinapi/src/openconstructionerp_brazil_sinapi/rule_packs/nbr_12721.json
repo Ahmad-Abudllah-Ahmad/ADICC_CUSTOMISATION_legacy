@@ -1,0 +1,29 @@
+{
+  "rule_pack_id": "nbr_12721",
+  "name": "ABNT NBR 12721:2006 (+ Errata 1:2007) — Avaliacao de custos unitarios de construcao para incorporacao imobiliaria",
+  "name_pt": "ABNT NBR 12721:2006 — Avaliacao de custos unitarios de construcao",
+  "standard": "NBR 12721",
+  "jurisdiction": "BR",
+  "regulator": "ABNT — Associacao Brasileira de Normas Tecnicas",
+  "publication_year": 2006,
+  "errata_year": 2007,
+  "description": "Enforces the ABNT NBR 12721 unit-cost evaluation method (CUB — Custo Unitario Basico) used for residential and commercial incorporation: area equivalente calculation, padrao (low/normal/high) classification, projeto-padrao assignment, fracao ideal consistency, and required memorial descritivo attachment.",
+  "description_pt": "Aplica o metodo de avaliacao de custos unitarios da NBR 12721 (CUB) para incorporacao imobiliaria: calculo da area equivalente, classificacao por padrao (baixo/normal/alto), atribuicao de projeto-padrao, consistencia da fracao ideal e exigencia do memorial descritivo.",
+  "applies_to": ["projects", "boq", "validation"],
+  "config": {
+    "padroes": ["baixo", "normal", "alto"],
+    "projetos_padrao_residencial": ["R1", "R8", "R16", "PP4", "PIS"],
+    "projetos_padrao_comercial": ["CSL-8", "CSL-16", "CAL-8"],
+    "cub_reference_source": "Sinduscon estadual"
+  },
+  "enables_rule_ids": [
+    "nbr12721.cub_reference_present",
+    "nbr12721.cub_reference_sinduscon_uf_match",
+    "nbr12721.area_equivalente_calculated",
+    "nbr12721.padrao_classification_set",
+    "nbr12721.projeto_padrao_assigned",
+    "nbr12721.fracao_ideal_consistent",
+    "nbr12721.memorial_descritivo_attached",
+    "nbr12721.quadro_qci_required"
+  ]
+}

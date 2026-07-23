@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Documentation — OpenConstructionERP | Free Construction Cost Estimation Software</title>
+ <meta name="description" content="Complete documentation for OpenConstructionERP — installation guide, BOQ editor, cost database (55K+ items), AI estimation, 4D/5D planning, CAD/BIM takeoff, validation, tendering. Step-by-step tutorials with screenshots.">
+ <meta name="keywords" content="OpenConstructionERP documentation, construction ERP guide, BOQ editor tutorial, cost estimation software, DIN 276 guide, NRM tutorial, MasterFormat, GAEB XML, AI construction estimation, quantity surveying software, Baukalkulation Anleitung">
+ <meta name="robots" content="index, follow">
+ <meta name="author" content="Data Driven Construction">
+ <link rel="canonical" href="https://adicc-uae.com/docs.html">
+ <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+ <link rel="manifest" href="/site.webmanifest">
+ <meta name="theme-color" content="#0284c7">
+
+ <link rel="alternate" hreflang="x-default" href="https://adicc-uae.com/docs.html">
+ <link rel="alternate" hreflang="en" href="https://adicc-uae.com/docs.html?lang=en">
+ <link rel="alternate" hreflang="de" href="https://adicc-uae.com/docs.html?lang=de">
+
+ <!-- Twitter Card -->
+ <meta name="twitter:card" content="summary_large_image">
+ <meta name="twitter:title" content="OpenConstructionERP Documentation">
+ <meta name="twitter:description" content="Step-by-step guide: BOQ editor, 55K+ cost items, AI estimation, 4D/5D, CAD/BIM takeoff, modules, 21 languages.">
+ <meta name="twitter:image" content="https://adicc-uae.com/og-image.png">
+
+ <!-- Google Analytics -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=G-JYQXK2652T"></script>
+ <script>
+   window.dataLayer = window.dataLayer || [];
+   function gtag(){dataLayer.push(arguments);}
+   gtag('js', new Date());
+   gtag('config', 'G-JYQXK2652T');
+ </script>
+
+ <!-- Open Graph -->
+ <meta property="og:type" content="article">
+ <meta property="og:title" content="OpenConstructionERP Documentation — Free Construction ERP">
+ <meta property="og:description" content="Step-by-step guide: BOQ editor, 55K+ cost items, AI estimation, 4D/5D, CAD/BIM takeoff, Asset Register, Markups, Pivot dashboards. 40+ modules, 20 languages, v2.0.">
+ <meta property="og:url" content="https://adicc-uae.com/docs.html">
+ <meta property="og:site_name" content="OpenConstructionERP">
+
+ <!-- Structured Data -->
+ <script type="application/ld+json">
+ {
+   "@context": "https://schema.org",
+   "@graph": [
+     {
+       "@type": "BreadcrumbList",
+       "itemListElement": [
+         { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://adicc-uae.com/" },
+         { "@type": "ListItem", "position": 2, "name": "Documentation", "item": "https://adicc-uae.com/docs.html" }
+       ]
+     },
+     {
+       "@type": "TechArticle",
+       "@id": "https://adicc-uae.com/docs.html#article",
+       "headline": "OpenConstructionERP Documentation",
+       "description": "Complete documentation for the free open-source construction cost estimation platform — installation, BOQ editor, cost database, AI estimation, 4D/5D, CAD/BIM takeoff, validation, tendering.",
+       "url": "https://adicc-uae.com/docs.html",
+       "image": "https://adicc-uae.com/og-image.png",
+       "inLanguage": "en",
+       "author":    { "@type": "Organization", "name": "DataDrivenConstruction", "url": "https://datadrivenconstruction.io" },
+       "publisher": { "@type": "Organization", "name": "OpenConstructionERP",   "url": "https://adicc-uae.com" },
+       "about":     { "@type": "SoftwareApplication", "name": "OpenConstructionERP" }
+     }
+   ]
+ }
+ </script>
+ <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+ <style>
+ *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+ :root{--blue:#2563eb;--blue-light:#eff6ff;--violet:#7c3aed;--g50:#f9fafb;--g100:#f3f4f6;--g200:#e5e7eb;--g500:#6b7280;--g600:#4b5563;--g700:#374151;--g800:#1f2937;--g900:#111827;--green:#059669}
+ html{scroll-behavior:smooth;scroll-padding-top:70px}body{font-family:'Inter',system-ui,sans-serif;color:var(--g800);line-height:1.6;background:#fff}
+ h1,h2,h3,h4{font-family:'Plus Jakarta Sans','Inter',sans-serif;font-weight:700;line-height:1.2}
+ a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
+ code{font-family:'JetBrains Mono',monospace;background:var(--g100);padding:2px 6px;border-radius:4px;font-size:.875em}
+ pre{background:var(--g900);color:#e5e7eb;padding:20px 24px;border-radius:12px;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:.875rem;line-height:1.7;margin:16px 0}
+ pre code{background:none;padding:0;color:inherit}
+ img{max-width:100%;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,.08)}
+ .ctr{max-width:900px;margin:0 auto;padding:0 24px}
+ .nav{background:#fff;border-bottom:1px solid var(--g200);position:sticky;top:0;z-index:50;backdrop-filter:blur(8px)}
+ .nav-i{max-width:900px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between}
+ .nav-l{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.15rem;color:var(--g900);letter-spacing:-0.01em}
+ .nav-l span{color:var(--blue)}
+ .nav-r{display:flex;gap:20px;font-size:.875rem;font-weight:500}.nav-r a{color:var(--g600)}.nav-r a:hover{color:var(--blue);text-decoration:none}
+ .hero{background:linear-gradient(135deg,var(--blue-light) 0%,#f5f3ff 50%,#fff 100%);padding:64px 0 48px;text-align:center}
+ .hero h1{font-size:2.5rem;color:var(--g900);margin-bottom:12px}
+ .hero h1 span{background:linear-gradient(135deg,var(--blue),var(--violet));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+ .hero p{font-size:1.1rem;color:var(--g500);max-width:600px;margin:0 auto}
+ .bdg{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;font-size:.75rem;font-weight:600}
+ .bdg-b{background:var(--blue-light);color:var(--blue)}.bdg-g{background:#ecfdf5;color:var(--green)}
+ .toc{background:var(--g50);border:1px solid var(--g200);border-radius:12px;padding:24px 28px;margin:32px 0}
+ .toc h3{font-size:.875rem;text-transform:uppercase;letter-spacing:.05em;color:var(--g500);margin-bottom:12px}
+ .toc ol{padding-left:20px}.toc li{margin:6px 0;font-size:.9rem}.toc a{color:var(--g700);font-weight:500}
+ section{padding:48px 0;border-bottom:1px solid var(--g100)}section:last-child{border-bottom:none}
+ section h2{font-size:1.75rem;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+ section h3{font-size:1.25rem;margin:24px 0 8px;color:var(--g700)}
+ section p{color:var(--g600);margin:8px 0}
+ section ul{padding-left:20px;margin:8px 0}section li{margin:4px 0;color:var(--g600)}section li strong{color:var(--g800)}
+ .ss{margin:24px 0;border:1px solid var(--g200);border-radius:12px;overflow:hidden}
+ .ss img{border-radius:0;box-shadow:none;display:block}
+ .ss-c{background:var(--g50);padding:10px 16px;font-size:.8rem;color:var(--g500);text-align:center;border-top:1px solid var(--g200)}
+ .g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
+ @media(max-width:640px){.g2{grid-template-columns:1fr}.hero h1{font-size:1.75rem}}
+ .cd{background:var(--g50);border:1px solid var(--g200);border-radius:12px;padding:20px}
+ .cd h4{font-size:1rem;margin-bottom:6px}.cd p{font-size:.875rem}
+ table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.875rem}
+ th{background:var(--g50);text-align:left;padding:10px 12px;font-weight:600;border-bottom:2px solid var(--g200)}
+ td{padding:10px 12px;border-bottom:1px solid var(--g100)}
+ .ft{background:var(--g900);color:var(--g200);padding:40px 0;text-align:center;margin-top:48px}.ft a{color:var(--blue)}.ft p{font-size:.875rem;margin:4px 0}
+ .st{display:flex;gap:16px;margin:16px 0;align-items:flex-start}
+ .st-n{background:var(--blue);color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.875rem;flex-shrink:0}
+ .st-c{flex:1}.st-c h4{font-size:.95rem;margin-bottom:4px}.st-c p{font-size:.875rem}
+ 
+/* Sidebar */
+.sidebar{position:fixed;top:56px;left:0;bottom:0;width:260px;background:var(--g50);border-right:1px solid var(--g200);overflow-y:auto;padding:20px 0;z-index:90;font-size:.84rem}
+.sidebar::-webkit-scrollbar{width:4px}.sidebar::-webkit-scrollbar-thumb{background:var(--g300);border-radius:4px}
+.sb-sec{padding:0 16px;margin-bottom:20px}
+.sb-t{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--g400);padding:0 8px;margin-bottom:6px}
+.sb-a{display:flex;align-items:center;gap:10px;padding:7px 12px;border-radius:8px;color:var(--g600);font-weight:500;transition:all .15s;text-decoration:none}
+.sb-a:hover{background:var(--blue);color:#fff;text-decoration:none}.sb-a svg{flex-shrink:0;opacity:.7}.sb-a:hover svg{opacity:1}.sb-a.act svg{opacity:1}
+.sb-a.act{background:var(--blue);color:#fff}
+.sb-a .em{font-size:.95rem;width:20px;text-align:center}
+.sb-sub{padding-left:36px}
+.sb-sub a{display:block;padding:4px 8px;border-radius:6px;color:var(--g500);font-size:.8rem;font-weight:400;text-decoration:none}
+.sb-sub a:hover{color:var(--blue);background:var(--bl)}
+/* Adjust main content for sidebar */
+.ctr{max-width:860px;margin-left:284px;padding:0 24px}
+@media(max-width:900px){.sidebar{display:none}.ctr{margin-left:auto}}
+
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+ <div class="sb-sec">
+ <div class="sb-t">Getting Started</div>
+ <a href="#overview" class="sb-a"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg> Overview</a>
+ <a href="#install" class="sb-a"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg> Installation</a>
+ <div class="sb-sub">
+ <a href="#install-oneline">One-Line Install</a>
+ <a href="#install-docker">Docker</a>
+ <a href="#install-local">Local Dev</a>
+ </div>
+ </div>
+ <div class="sb-sec">
+ <div class="sb-t">Core Features</div>
+ <a href="#boq" class="sb-a"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg> BOQ Editor</a>
+ <div class="sb-sub">
+ <a href="#boq-structure">Structure & Editing</a>
+ <a href="#boq-validation">Validation</a>
+ <a href="#boq-export">Export & Import</a>
+ <a href="#boq-shortcuts">Shortcuts</a>
+ </div>
+ <a href="#costs" class="sb-a"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg> Cost Database</a>
+ <div class="sb-sub">
+ <a href="#costs-regions">Regional Databases</a>
+ <a href="#costs-vector">Vector Search</a>
+ </div>
+ <a href="#takeoff" class="sb-a"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg> CAD/BIM Takeoff</a>
+ <div class="sb-sub">
+ <a href="#takeoff-formats">Supported Formats</a>
+ <a href="#takeoff-qto">QTO Grouping</a>
+ <a href="#takeoff-pdf">PDF Measurements</a>
+ </div>
+ <a href="#ai" class="sb-a"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg> AI Estimation</a>
+ <div class="sb-sub">
+ <a href="#ai-providers">Providers</a>
+ <a href="#ai-quick">Quick Estimate</a>
+ <a href="#ai-matching">Cost Matching</a>
+ <a href="#ai-advisor">AI Advisor</a>
+ </div>
+ </div>
+ <div class="sb-sec">
+ <div class="sb-t">Planning</div>
+ <a href="#planning" class="sb-a"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg> 4D Schedule</a>
+ <a href="#planning" class="sb-a"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="12" x2="12" y1="20" y2="10"/><line x1="18" x2="18" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="16"/></svg> 5D Cost Model</a>
+ </div>
+ <div class="sb-sec">
+ <div class="sb-t">Project Management</div>
+ <a href="#contacts" class="sb-a"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Contacts</a>
+ <a href="#tasks" class="sb-a"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Tasks</a>
+ <a href="#rfi" class="sb-a"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> RFI</a>
+ <a href="#meetings" class="sb-a"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg> Meetings</a>
+ <a href="#gantt" class="sb-a"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="4" width="12" height="4" rx="1"/><rect x="5" y="12" width="14" height="4" rx="1"/><rect x="7" y="20" width="10" height="4" rx="1"/></svg> Gantt Chart</a>
+ </div>
+ <div class="sb-sec">
+ <div class="sb-t">Finance & Procurement</div>
+ <a href="#finance" class="sb-a"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Finance</a>
+ <a href="#procurement" class="sb-a"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg> Procurement</a>
+ </div>
+ <div class="sb-sec">
+ <div class="sb-t">Quality & Safety</div>
+ <a href="#safety" class="sb-a"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Safety</a>
+ <a href="#inspections" class="sb-a"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Inspections</a>
+ <a href="#ncr" class="sb-a"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> NCR</a>
+ </div>
+ <div class="sb-sec">
+ <div class="sb-t">Documents & BIM</div>
+ <a href="#submittals" class="sb-a"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M12 18v-6"/><path d="M9 15l3-3 3 3"/></svg> Submittals</a>
+ <a href="#correspondence" class="sb-a"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Correspondence</a>
+ <a href="#cde" class="sb-a"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> CDE</a>
+ <a href="#transmittals" class="sb-a"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Transmittals</a>
+ <a href="#bimhub" class="sb-a"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg> BIM Hub</a>
+ </div>
+ <div class="sb-sec">
+ <div class="sb-t">System</div>
+ <a href="#reporting" class="sb-a"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Reporting</a>
+ <a href="#notifications" class="sb-a"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> Notifications</a>
+ <a href="#comments" class="sb-a"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Comments</a>
+ <a href="#regional-settings" class="sb-a"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Regional Settings</a>
+ <a href="#module-system" class="sb-a"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg> Module System</a>
+ <a href="#regional-packs" class="sb-a"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M3 7V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2"/><path d="M3 7l9 4 9-4"/><path d="M12 11v10"/></svg> Regional Packs</a>
+ <a href="#import-export" class="sb-a"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Import/Export</a>
+ </div>
+ <div class="sb-sec">
+ <div class="sb-t">Configuration</div>
+ <a href="#settings" class="sb-a"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12.2 2h-.4a2 2 0 0 0-2 2v.2a2 2 0 0 1-1 1.7l-.4.3a2 2 0 0 1-2 0l-.2-.1a2 2 0 0 0-2.7.7l-.2.4a2 2 0 0 0 .7 2.7l.2.1a2 2 0 0 1 1 1.7v.5a2 2 0 0 1-1 1.7l-.2.1a2 2 0 0 0-.7 2.7l.2.4a2 2 0 0 0 2.7.7l.2-.1a2 2 0 0 1 2 0l.4.3a2 2 0 0 1 1 1.7V20a2 2 0 0 0 2 2h.4a2 2 0 0 0 2-2v-.2a2 2 0 0 1 1-1.7l.4-.3a2 2 0 0 1 2 0l.2.1a2 2 0 0 0 2.7-.7l.2-.4a2 2 0 0 0-.7-2.7l-.2-.1a2 2 0 0 1-1-1.7v-.5a2 2 0 0 1 1-1.7l.2-.1a2 2 0 0 0 .7-2.7l-.2-.4a2 2 0 0 0-2.7-.7l-.2.1a2 2 0 0 1-2 0l-.4-.3a2 2 0 0 1-1-1.7V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg> Settings</a>
+ <a href="#api" class="sb-a"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg> API Reference</a>
+ </div>
+ <div class="sb-sec">
+ <div class="sb-t">Community</div>
+ <a href="#support" class="sb-a"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg> Support</a>
+ </div>
+</aside>
+
+<script>
+// Active section highlighting on scroll
+const sbl=document.querySelectorAll('.sb-a');
+const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){sbl.forEach(l=>l.classList.remove('act'));const id=e.target.id;const l=document.querySelector('.sb-a[href="#'+id+'"]');if(l)l.classList.add('act');}});},{rootMargin:'-70px 0px -60% 0px'});
+document.querySelectorAll('section[id]').forEach(s=>obs.observe(s));
+
+// Handle ALL sidebar link clicks with smooth scroll
+document.querySelectorAll('.sidebar a').forEach(a=>{
+  a.addEventListener('click',function(e){
+    const href=this.getAttribute('href');
+    if(!href||!href.startsWith('#'))return;
+    e.preventDefault();
+    const target=document.querySelector(href);
+    if(target){
+      const y=target.getBoundingClientRect().top+window.scrollY-72;
+      window.scrollTo({top:y,behavior:'smooth'});
+      history.pushState(null,null,href);
+    }
+  });
+});
+</script>
+
+<nav class="nav"><div class="nav-i"><a href="/" class="nav-l">OpenConstructionERP</a><div class="nav-r"><a href="/">Home</a><a href="/docs.html" style="color:var(--blue)">Docs</a><a href="https://adicc-uae.com" target="_blank">GitHub</a><a href="/contact.html">Contact</a></div></div></nav>
+
+<div class="hero"><div class="ctr"><div style="margin-bottom:16px"><span class="bdg bdg-b">v2.5.6</span> <span class="bdg bdg-g">Open Source</span></div><h1><span>Documentation</span></h1><p>Everything you need to install, configure, and use OpenConstructionERP for professional construction cost estimation.</p><p style="margin-top:18px"><a href="https://www.youtube.com/watch?v=X06cIaroAeI" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:999px;background:#ff0000;color:#fff;font-weight:600;font-size:.9rem;text-decoration:none;box-shadow:0 4px 14px rgba(255,0,0,.25)"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.016 3.016 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.016 3.016 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.546 15.568V8.432L15.818 12l-6.272 3.568z"/></svg>Watch the 12-min walkthrough on YouTube</a></p></div></div>
+
+<!-- Full walkthrough video -->
+<div style="background:#0f172a;padding:40px 0 48px;color:#e2e8f0">
+<div class="ctr">
+<div style="text-align:center;margin-bottom:16px"><span class="bdg" style="background:rgba(96,165,250,.18);color:#93c5fd">12 min · with music</span></div>
+<h2 style="font-size:1.5rem;color:#fff;text-align:center;margin-bottom:6px;display:block">Full product walkthrough</h2>
+<p style="text-align:center;color:#94a3b8;margin:0 auto 20px;font-size:.95rem;max-width:640px">Onboarding → New project → BoQ → BIM linking → DWG → PDF takeoff → Full estimate → Tasks → Data Explorer → AI estimate → Portfolio.</p>
+<div style="position:relative;width:100%;padding-top:56.25%;border-radius:12px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.4);background:#000">
+<iframe
+  src="https://www.youtube.com/embed/X06cIaroAeI?rel=0&modestbranding=1"
+  title="OpenConstructionERP — Full 12-minute product walkthrough"
+  style="position:absolute;inset:0;width:100%;height:100%;border:0"
+  loading="lazy"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+  referrerpolicy="strict-origin-when-cross-origin"
+  allowfullscreen></iframe>
+</div>
+<p style="text-align:center;margin-top:16px;color:#94a3b8;font-size:.875rem">Captions, chapters and 1.5× playback are built into the player above. Prefer to watch directly on YouTube? <a href="https://www.youtube.com/watch?v=X06cIaroAeI" target="_blank" rel="noopener" style="color:#93c5fd;font-weight:600">▶ Open on YouTube</a> · <a href="https://www.youtube.com/@datadrivenconstruction" target="_blank" rel="noopener" style="color:#93c5fd">subscribe to the channel</a> for new release walkthroughs · <a href="https://adicc-uae.com/raw/main/docs/media/oce_full_demo.mp4" style="color:#93c5fd">download MP4 (47 MB)</a>.</p>
+</div>
+</div>
+
+<!-- See It In Action — block-ordered gallery -->
+<div class="ctr">
+<section id="see-it" style="padding:48px 0;border-bottom:1px solid var(--g100)">
+<h2>See It In Action</h2>
+<p>Each block below is a short GIF cut from the full walkthrough above — same order as the video, so you can jump to whichever workflow matters most. Want one continuous flow? <a href="https://www.youtube.com/watch?v=X06cIaroAeI" target="_blank" rel="noopener"><strong>▶ Watch the 12-minute walkthrough on YouTube</strong></a>.</p>
+<div class="g2" style="margin-top:24px">
+<div class="cd" style="padding:0;overflow:hidden"><img src="https://raw.githubusercontent.com/datadrivenconstruction/OpenConstructionERP/main/docs/gifs/07_Role_Based_Onboarding.gif" alt="Role-Based Onboarding" style="width:100%;display:block;border-radius:0;box-shadow:none"><div style="padding:14px 18px"><h4 style="margin-bottom:4px">👤 1 · Role-Based Onboarding</h4><p style="margin:0;font-size:.875rem;color:var(--g600)">Sign in as Admin / Estimator / Manager — the wizard pre-selects the right 17 of 46 modules for your role.</p></div></div>
+<div class="cd" style="padding:0;overflow:hidden"><img src="https://raw.githubusercontent.com/datadrivenconstruction/OpenConstructionERP/main/docs/gifs/08_New_Project_Global.gif" alt="New Project Global" style="width:100%;display:block;border-radius:0;box-shadow:none"><div style="padding:14px 18px"><h4 style="margin-bottom:4px">🌍 2 · New Project, Any Region</h4><p style="margin:0;font-size:.875rem;color:var(--g600)">Pick currency, classification standard, regional factor — live map & weather come along for free.</p></div></div>
+<div class="cd" style="padding:0;overflow:hidden"><img src="https://raw.githubusercontent.com/datadrivenconstruction/OpenConstructionERP/main/docs/gifs/15_BoQ_Editor.gif" alt="BoQ Editor" style="width:100%;display:block;border-radius:0;box-shadow:none"><div style="padding:14px 18px"><h4 style="margin-bottom:4px">⚡ 3 · Build the Bill of Quantities</h4><p style="margin:0;font-size:.875rem;color:var(--g600)">Keyboard-first editor, 55K+ priced items, AI cost finder & Smart AI — quality score updates live.</p></div></div>
+<div class="cd" style="padding:0;overflow:hidden"><img src="https://raw.githubusercontent.com/datadrivenconstruction/OpenConstructionERP/main/docs/gifs/09_Bulk_Link_BIM_Group.gif" alt="BIM Bulk Link" style="width:100%;display:block;border-radius:0;box-shadow:none"><div style="padding:14px 18px"><h4 style="margin-bottom:4px">🏗️ 4 · BIM → BOQ Bulk Link</h4><p style="margin:0;font-size:.875rem;color:var(--g600)">Link 100 BIM walls → one BOQ line with aggregated area / volume / length.</p></div></div>
+<div class="cd" style="padding:0;overflow:hidden"><img src="https://raw.githubusercontent.com/datadrivenconstruction/OpenConstructionERP/main/docs/gifs/10_DWG_Layers.gif" alt="DWG Layers" style="width:100%;display:block;border-radius:0;box-shadow:none"><div style="padding:14px 18px"><h4 style="margin-bottom:4px">📐 5 · DWG Drawings & Layers</h4><p style="margin:0;font-size:.875rem;color:var(--g600)">636 wall entities across 10 DWG layers — every one linkable to the BOQ, measured in place.</p></div></div>
+<div class="cd" style="padding:0;overflow:hidden"><img src="https://raw.githubusercontent.com/datadrivenconstruction/OpenConstructionERP/main/docs/gifs/16_PDF_Takeoff_v2.gif" alt="PDF Takeoff" style="width:100%;display:block;border-radius:0;box-shadow:none"><div style="padding:14px 18px"><h4 style="margin-bottom:4px">🖊️ 6 · PDF Takeoff</h4><p style="margin:0;font-size:.875rem;color:var(--g600)">Drop a floorplan, measure distance / area / count, push the numbers straight into the BOQ.</p></div></div>
+<div class="cd" style="padding:0;overflow:hidden"><img src="https://raw.githubusercontent.com/datadrivenconstruction/OpenConstructionERP/main/docs/gifs/11_Complete_Estimate_6M.gif" alt="Complete Estimate" style="width:100%;display:block;border-radius:0;box-shadow:none"><div style="padding:14px 18px"><h4 style="margin-bottom:4px">💵 7 · Complete Estimate — $6.26M</h4><p style="margin:0;font-size:.875rem;color:var(--g600)">Real BIM project → 215 positions, 88 sections, CWICR-priced, quality score 99.</p></div></div>
+<div class="cd" style="padding:0;overflow:hidden"><img src="https://raw.githubusercontent.com/datadrivenconstruction/OpenConstructionERP/main/docs/gifs/12_Tasks_Linked_To_BIM.gif" alt="BIM-Linked Tasks" style="width:100%;display:block;border-radius:0;box-shadow:none"><div style="padding:14px 18px"><h4 style="margin-bottom:4px">✅ 8 · Every Module — BIM-Linked Tasks</h4><p style="margin:0;font-size:.875rem;color:var(--g600)">Issues tied to exact model elements, tracked on a Kanban board alongside schedule, docs & requirements.</p></div></div>
+<div class="cd" style="padding:0;overflow:hidden"><img src="https://raw.githubusercontent.com/datadrivenconstruction/OpenConstructionERP/main/docs/gifs/13_Data_Explorer_Pivot.gif" alt="Data Explorer Pivot" style="width:100%;display:block;border-radius:0;box-shadow:none"><div style="padding:14px 18px"><h4 style="margin-bottom:4px">📊 9 · Data Explorer — Pivot → BOQ</h4><p style="margin:0;font-size:.875rem;color:var(--g600)">CAD-BIM Explorer pivot becomes 10 BOQ positions in one click — charts, data bars & drill-down included.</p></div></div>
+<div class="cd" style="padding:0;overflow:hidden"><img src="https://raw.githubusercontent.com/datadrivenconstruction/OpenConstructionERP/main/docs/gifs/02_AI_Photo_to_Estimate.gif" alt="AI Photo to Estimate" style="width:100%;display:block;border-radius:0;box-shadow:none"><div style="padding:14px 18px"><h4 style="margin-bottom:4px">📸 10 · AI Estimate from a Photo</h4><p style="margin:0;font-size:.875rem;color:var(--g600)">Upload a construction photo → GPT-4o + YOLO return a scoped BOQ in seconds, confidence-scored.</p></div></div>
+<div class="cd" style="padding:0;overflow:hidden"><img src="https://raw.githubusercontent.com/datadrivenconstruction/OpenConstructionERP/main/docs/gifs/14_Projects_Dashboard.gif" alt="Projects Dashboard" style="width:100%;display:block;border-radius:0;box-shadow:none"><div style="padding:14px 18px"><h4 style="margin-bottom:4px">🗺️ 11 · Global Portfolio Dashboard</h4><p style="margin:0;font-size:.875rem;color:var(--g600)">7 projects, 4 continents, $28.3M in active estimates — one workspace, one map.</p></div></div>
+<div class="cd" style="padding:0;overflow:hidden"><img src="https://raw.githubusercontent.com/datadrivenconstruction/OpenConstructionERP/main/docs/gifs/05_Instant_Search.gif" alt="Instant Search" style="width:100%;display:block;border-radius:0;box-shadow:none"><div style="padding:14px 18px"><h4 style="margin-bottom:4px">🔍 Bonus · Instant Search</h4><p style="margin:0;font-size:.875rem;color:var(--g600)">Find any of 55K+ cost items across 11 regional databases by keyword, unit or classification.</p></div></div>
+</div>
+</section>
+</div>
+
+<div class="ctr">
+<div class="toc" style="margin-left:0"><h3>Contents</h3><ol><li><a href="#overview">Platform Overview</a></li><li><a href="#install">Installation Guide</a></li><li><a href="#boq">BOQ Editor</a></li><li><a href="#costs">Cost Database</a></li><li><a href="#takeoff">CAD/BIM &amp; PDF Takeoff</a></li><li><a href="#ai">AI Estimation</a></li><li><a href="#planning">4D Schedule &amp; 5D Cost Model</a></li><li><a href="#contacts">Contacts Directory</a></li><li><a href="#tasks">Tasks</a></li><li><a href="#rfi">RFI</a></li><li><a href="#finance">Finance</a></li><li><a href="#procurement">Procurement</a></li><li><a href="#safety">Safety</a></li><li><a href="#meetings">Meetings</a></li><li><a href="#inspections">Inspections</a></li><li><a href="#ncr">Non-Conformance Reports</a></li><li><a href="#submittals">Submittals</a></li><li><a href="#correspondence">Correspondence</a></li><li><a href="#cde">Common Data Environment</a></li><li><a href="#transmittals">Transmittals</a></li><li><a href="#bimhub">BIM Hub</a></li><li><a href="#reporting">Reporting &amp; KPI Dashboard</a></li><li><a href="#notifications">Notifications</a></li><li><a href="#comments">Comments</a></li><li><a href="#gantt">Gantt Chart</a></li><li><a href="#regional-settings">Regional Settings</a></li><li><a href="#module-system">Module System</a></li><li><a href="#regional-packs">Regional Packs</a></li><li><a href="#import-export">Import/Export</a></li><li><a href="#settings">Configuration</a></li><li><a href="#api">API Reference</a></li><li><a href="#support">Support</a></li></ol></div>
+
+<section id="overview"><h2>Platform Overview</h2><p>OpenConstructionERP is a complete construction cost estimation and project management platform that runs entirely on your machine. It replaces expensive commercial estimating suites with an open, self-hosted alternative. The platform covers the entire construction lifecycle — from initial feasibility studies and quantity takeoff to detailed BOQ preparation, tendering, bid comparison, project execution, quality management, and financial control. All your data stays on your server. No cloud dependency, no subscriptions, no per-seat fees.</p><p style="margin-top:12px"><strong>v2.0 highlights:</strong> 40+ modules covering the full construction lifecycle — Contacts Directory, Tasks with Kanban, RFI tracking, Finance (invoices, budgets, EVM), Procurement, Safety, Meetings, Quality Inspections, NCR, Submittals, Correspondence, CDE (ISO&nbsp;19650), Transmittals, BIM Hub, Asset Register with COBie export, Reporting &amp; KPI dashboard, Markups (PDF↔DWG↔hub), Pivot visualisations &amp; Charts column picker, Pluggable email service, Multi-tenant Contacts, scheduled reports, 11 Regional Packs, and full Import/Export.</p><div class="ss"><img src="/doc-01-dashboard.png" alt="Dashboard"><div class="ss-c">Dashboard with project KPIs, Getting Started steps, recent projects, and system status panel</div></div><div class="ss"><img src="https://raw.githubusercontent.com/datadrivenconstruction/OpenConstructionERP/main/docs/gifs/01_HERO_Full_Workflow.gif" alt="Full workflow walkthrough"><div class="ss-c">End-to-end walkthrough &mdash; Photo &rarr; AI estimate &rarr; BOQ &rarr; BIM/DWG/PDF takeoff &rarr; tasks &rarr; reports &mdash; in one continuous flow</div></div><div class="g2"><div class="cd"><h4>BOQ Management</h4><p>Hierarchical Bills of Quantities with sections, positions, resources, assemblies, and automatic markups.</p></div><div class="cd"><h4>55K+ Cost Items</h4><p>CWICR database with 11 regional pricing sets covering DACH, UK, US, France, Spain, Brazil, Russia, UAE, China, India, Canada.</p></div><div class="cd"><h4>AI Estimation</h4><p>Generate BOQ from text, photos, PDFs, Excel, or CAD/BIM models using any LLM provider.</p></div><div class="cd"><h4>CAD/BIM Takeoff</h4><p>Extract quantities from RVT, IFC, DWG, DGN via DDC converters.</p></div><div class="cd"><h4>4D/5D Planning</h4><p>Gantt scheduling with CPM, Earned Value Management, S-curve, Monte Carlo simulation.</p></div><div class="cd"><h4>30+ Modules</h4><p>Finance, Safety, Quality, CDE, BIM Hub, Procurement, RFI, Tasks, Meetings, and more. Enable only what you need.</p></div></div></section>
+
+<section id="first-steps">
+<h2>First Steps After Installation</h2>
+<p>After installing OpenConstructionERP, follow these steps to set up your first project and create your first cost estimate. The entire process takes about 10 minutes.</p>
+
+<h3 id="fs-login">Step 1: Log In</h3>
+<p>Open your browser and navigate to <code>http://localhost:5173</code> (local development) or <code>http://localhost:8080</code> (Docker). You will see the login page with a "Demo Access" panel. Click on <strong>Admin</strong> to log in instantly with the demo account, or enter your own credentials if you registered a new account.</p>
+
+<h3 id="fs-onboarding">Step 2: Complete Onboarding</h3>
+<p>On first login, the onboarding wizard guides you through initial setup:</p>
+<ol>
+<li><strong>Choose your language</strong> &mdash; Select from 21 available languages. The entire UI switches immediately.</li>
+<li><strong>Select your region</strong> &mdash; This determines which cost database and classification standard are used by default (e.g., DIN 276 for Germany, NRM for UK, MasterFormat for US).</li>
+<li><strong>Configure AI (optional)</strong> &mdash; If you want AI estimation features, enter an API key from any supported provider (Anthropic, OpenAI, Gemini, etc.). You can skip this and add it later in Settings.</li>
+<li><strong>Load cost database</strong> &mdash; The system offers to download and import the CWICR cost database for your selected region (55,719 items). This takes about 30 seconds.</li>
+</ol>
+
+<h3 id="fs-project">Step 3: Create Your First Project</h3>
+<p>Click <strong>New Project</strong> on the Dashboard or navigate to Projects. Fill in:</p>
+<ul>
+<li><strong>Project name</strong> &mdash; e.g., "Residential Building Berlin-Mitte"</li>
+<li><strong>Description</strong> &mdash; Brief scope description</li>
+<li><strong>Region</strong> &mdash; Determines currency and default classification standard</li>
+<li><strong>Classification standard</strong> &mdash; DIN 276, NRM 1/2, MasterFormat, or custom</li>
+</ul>
+<p>After creating the project, you are redirected to the project detail page where you can start adding BOQs.</p>
+
+<h3 id="fs-boq">Step 4: Create Your First BOQ</h3>
+<p>From the project page, click <strong>New Estimate</strong>. Give it a name (e.g., "Cost Estimate v1") and optionally choose a template. The BOQ editor opens with an empty grid ready for your first position.</p>
+
+<h3 id="fs-position">Step 5: Add Positions</h3>
+<p>In the BOQ editor, click <strong>Add Position</strong> or press Enter on an empty row. Fill in:</p>
+<ul>
+<li><strong>Ordinal</strong> &mdash; Position number (e.g., "01.001")</li>
+<li><strong>Description</strong> &mdash; What work is being done (e.g., "Reinforced concrete C30/37 for foundation slab")</li>
+<li><strong>Unit</strong> &mdash; Measurement unit (m3, m2, m, kg, pcs, lsum)</li>
+<li><strong>Quantity</strong> &mdash; How much (e.g., 86.4)</li>
+<li><strong>Unit Rate</strong> &mdash; Price per unit (e.g., 295.00 EUR)</li>
+</ul>
+<p>The <strong>Total</strong> column calculates automatically (Quantity x Unit Rate). You can also search the cost database by clicking the database icon next to any position to find and apply a rate from the 55,000+ CWICR items.</p>
+</section>
+
+<section id="install"><h2>Installation Guide</h2><p>OpenConstructionERP is designed to be easy to install regardless of your technical background. Choose the method that matches your setup — all options take less than 5 minutes. The application uses SQLite by default, so you do not need to install or configure any database server. Everything works out of the box. <strong>Requires Python 3.12+</strong> for the pip and one-line paths.</p><h3 id="install-pip">Option A: pip (recommended — 1 command)</h3><pre><code>pip install --upgrade openconstructionerp
+openestimate</code></pre><p>Installs backend + pre-built React frontend in one wheel (~7.4 MB). Opens at <code>http://localhost:8080</code> with the full UI. SQLite, zero config. If anything looks wrong, run <code>openestimate doctor</code>.</p><h3 id="install-linux">Linux / Ubuntu users — read this</h3><p>On Ubuntu 23.04+ (including Ubuntu 26) and Debian 12+, <code>pip install</code> directly to the system Python fails with <code>error: externally-managed-environment</code> (PEP 668). Use a virtual environment instead:</p><pre><code># Ubuntu 26 — install Python 3.12 explicitly if needed
+sudo apt install -y python3.12 python3.12-venv
+
+# Create and activate a venv, then install
+python3.12 -m venv ~/openestimate-venv
+source ~/openestimate-venv/bin/activate
+pip install --upgrade openconstructionerp
+openestimate</code></pre><p>If pip falls back to a source build, install the headers: <code>sudo apt install -y build-essential libpq-dev libjpeg-dev zlib1g-dev libgeos-dev</code>. Full Linux guide with troubleshooting: <a href="https://adicc-uae.com/blob/main/docs/INSTALL_LINUX.md">docs/INSTALL_LINUX.md</a>.</p><h3 id="install-oneline">Option B: One-Line Install (auto-detects Docker / uv / pip)</h3><pre><code># Linux / macOS
+curl -fsSL https://raw.githubusercontent.com/datadrivenconstruction/OpenConstructionERP/main/scripts/install.sh | bash
+
+# Windows (PowerShell)
+irm https://raw.githubusercontent.com/datadrivenconstruction/OpenConstructionERP/main/scripts/install.ps1 | iex</code></pre><p>Picks Docker if installed, otherwise uv, otherwise pip. Runs at <code>http://localhost:8080</code>.</p><h3 id="install-docker">Option C: Docker</h3><pre><code>git clone https://adicc-uae.com.git
+cd OpenConstructionERP
+make quickstart</code></pre><p>Opens at <code>http://localhost:8080</code> (~2 min first build).</p><h3 id="install-local">Option D: Local Development (clone + npm + uvicorn)</h3><pre><code>git clone https://adicc-uae.com.git
+cd OpenConstructionERP
+
+# Backend (SQLite, zero config)
+cd backend &amp;&amp; pip install -r requirements.txt
+uvicorn app.main:create_app --factory --reload --port 8000
+
+# Frontend (new terminal)
+cd frontend &amp;&amp; npm install &amp;&amp; npm run dev</code></pre><p>Backend: <code>http://localhost:8000</code> / Frontend: <code>http://localhost:5173</code></p><h3 id="install-demo">Demo Accounts</h3><table><tr><th>Account</th><th>Email</th><th>Password</th><th>Role</th></tr><tr><td>Admin</td><td><code>demo@openconstructionerp.com</code></td><td><code>DemoPass1234!</code></td><td>Full access</td></tr><tr><td>Estimator</td><td><code>estimator@openconstructionerp.com</code></td><td><code>DemoPass1234!</code></td><td>Estimator</td></tr><tr><td>Manager</td><td><code>manager@openconstructionerp.com</code></td><td><code>DemoPass1234!</code></td><td>Manager</td></tr></table><p>5 demo projects (Berlin, London, New York, Paris, Dubai) with complete BOQs, schedules, and cost models.</p></section>
+
+<section id="boq"><h2>BOQ Editor</h2><p>The Bill of Quantities editor is where you spend most of your time. It provides a professional, spreadsheet-like interface powered by AG Grid with construction-specific features built in — hierarchical sections, resource linking, assembly recipes, and automatic markup calculations. Every change is tracked with full undo/redo support. 42 validation rules run automatically in the background, catching errors like missing quantities, zero prices, duplicate positions, and classification compliance issues before they become problems.</p>
+<p style="margin:8px 0 16px;font-size:.875rem;color:var(--g500)">🎬 <a href="https://www.youtube.com/watch?v=X06cIaroAeI" target="_blank" rel="noopener"><strong>See the BOQ editor in action on YouTube</strong></a> &mdash; keyboard-first editing, 55K+ priced items, live quality score.</p><div class="ss"><img src="/doc-02-boq-list.png" alt="BOQ Editor"><div class="ss-c">Bill of Quantities overview showing 11 estimates across 5 projects with stats: 424 positions, 232.6M total value</div></div><div class="ss"><img src="https://raw.githubusercontent.com/datadrivenconstruction/OpenConstructionERP/main/docs/gifs/06_Build_BOQ_Fast.gif" alt="Build BOQ Fast"><div class="ss-c">Keyboard-first BOQ build &mdash; Tab between cells, autocomplete from 55K+ priced items, live quality score, undo/redo every step</div></div><div class="ss"><img src="https://raw.githubusercontent.com/datadrivenconstruction/OpenConstructionERP/main/docs/gifs/15_BoQ_Editor.gif" alt="BoQ Editor in motion"><div class="ss-c">Section &amp; position management &mdash; drag-and-drop hierarchy, inline edit, AI cost finder, regional rate switching</div></div><ul><li id="boq-structure"><strong>Hierarchical structure</strong> - Sections, positions, sub-positions with drag-and-drop</li><li id="boq-editing"><strong>Inline editing</strong> - Click any cell to edit. Tab between fields. Undo/redo</li><li><strong>Resources &amp; assemblies</strong> - Link labor, materials, equipment. Build reusable recipes</li><li id="boq-export"><strong>Markups</strong> - Overhead, profit, VAT, contingency per project or regional defaults</li><li id="boq-validation"><strong>Validation</strong> - 42 rules check for missing quantities, zero prices, compliance</li><li><strong>Export</strong> - Excel, CSV, PDF report, GAEB XML (X83)</li></ul><h3 id="boq-sections">Working with Sections</h3>
+<p>Sections organize your BOQ into logical groups (e.g., "300 Structure", "400 HVAC"). To create a section:</p>
+<ol>
+<li>Click <strong>Add Section</strong> in the toolbar</li>
+<li>Enter the section name and optional DIN 276/NRM classification code</li>
+<li>All positions added after a section header belong to that section</li>
+<li>Each section shows its own subtotal at the bottom</li>
+</ol>
+<p>You can collapse/expand sections to focus on specific trades. Drag sections to reorder the entire BOQ structure.</p>
+
+<h3 id="boq-resources">Linking Resources</h3>
+<p>Each BOQ position can have linked resources that break down the unit rate into components:</p>
+<ul>
+<li><strong>Materials</strong> &mdash; Concrete, steel, bricks, insulation (from Resource Catalog)</li>
+<li><strong>Labor</strong> &mdash; Worker hours by trade (formworker, electrician, plumber)</li>
+<li><strong>Equipment</strong> &mdash; Crane hours, excavator, concrete pump</li>
+</ul>
+<p>To add resources: expand a position row, click "Add Resource", search the catalog, set the quantity factor (e.g., 120 kg rebar per m3 concrete). The position unit rate updates automatically from the sum of its resources.</p>
+
+<h3 id="boq-markups">Configuring Markups</h3>
+<p>Markups are applied after the net total (sum of all positions). Common markups include:</p>
+<ul>
+<li><strong>Overhead</strong> &mdash; Company overhead costs (typically 8-15%)</li>
+<li><strong>Profit</strong> &mdash; Contractor profit margin (typically 5-12%)</li>
+<li><strong>Contingency</strong> &mdash; Risk reserve for unforeseen costs (typically 5-10%)</li>
+<li><strong>VAT/Tax</strong> &mdash; Value Added Tax (19% in Germany, 20% in UK, varies by country)</li>
+</ul>
+<p>Click <strong>Add Markup</strong> in the toolbar. You can set regional defaults or customize per project. Markups can be percentage-based or fixed amounts, and they compound in order (overhead first, then profit on the overhead-inclusive amount, then VAT on the total).</p>
+
+<h3 id="boq-validation-detail">Running Validation</h3>
+<p>Press <strong>Ctrl+Shift+V</strong> or click the shield icon in the toolbar to run validation. The system checks your BOQ against the selected rule sets and shows results inline:</p>
+<ul>
+<li>Positions with errors get a red dot</li>
+<li>Positions with warnings get a yellow dot</li>
+<li>The validation score (%) appears in the toolbar</li>
+<li>Click any dot to see the specific issue and fix it</li>
+</ul>
+
+<h3 id="boq-import-detail">Importing Data</h3>
+<p>The BOQ editor supports importing from multiple sources:</p>
+<ul>
+<li><strong>Excel/CSV</strong> &mdash; Click Import, select your file. The wizard maps your columns (description, quantity, unit, rate) to BOQ fields. Preview before committing.</li>
+<li><strong>GAEB XML</strong> &mdash; Import German-standard tender files directly. Positions, sections, and rates are preserved.</li>
+<li><strong>Paste from clipboard</strong> &mdash; Copy rows from Excel, click "Paste" in the toolbar. The system detects columns automatically.</li>
+<li><strong>AI Smart Import</strong> &mdash; Upload any PDF, photo, or CAD file. AI extracts BOQ positions with quantities and rates.</li>
+</ul>
+
+<h3 id="boq-shortcuts">Keyboard Shortcuts</h3><table><tr><th>Shortcut</th><th>Action</th></tr><tr><td><code>Ctrl+K</code></td><td>Command palette</td></tr><tr><td><code>Ctrl+N</code></td><td>New project</td></tr><tr><td><code>Ctrl+Shift+V</code></td><td>Run validation</td></tr><tr><td><code>Ctrl+Z / Y</code></td><td>Undo / Redo</td></tr></table></section>
+
+<section id="costs"><h2>Cost Database</h2><p>Access the largest open-source construction cost database in the world. The CWICR database contains 55,000+ cost items with descriptions in up to 9 languages, organized by trade (earthworks, concrete, masonry, steel, roofing, facades, HVAC, electrical, plumbing, finishing, landscaping). Each item includes a unit of measurement, base rate for the specified region, classification codes (DIN 276, NRM, MasterFormat), and component breakdown (materials, labor, equipment) when available.</p><div class="ss"><img src="/doc-03-costs.png" alt="Cost Database"><div class="ss-c">Cost Database with Germany/DACH selected showing 55,719 items with German descriptions, rates, and classification</div></div><div class="ss"><img src="https://raw.githubusercontent.com/datadrivenconstruction/OpenConstructionERP/main/docs/gifs/05_Instant_Search.gif" alt="Instant Search"><div class="ss-c">Instant search across 55K+ priced items in 11 regional databases &mdash; type a keyword, unit or classification and apply directly to a BOQ position</div></div><table><tr><th id="costs-regions">Region</th><th>Currency</th><th>Standard</th><th>Items</th></tr><tr><td>Germany (DACH)</td><td>EUR</td><td>DIN 276</td><td>55,719</td></tr><tr><td>United Kingdom</td><td>GBP</td><td>NRM 1/2</td><td>55,719</td></tr><tr><td>United States</td><td>USD</td><td>MasterFormat</td><td>55,719</td></tr><tr><td>France</td><td>EUR</td><td>DPGF</td><td>55,719</td></tr><tr><td>Russia</td><td>RUB</td><td>GESN</td><td>55,719</td></tr><tr><td>UAE</td><td>AED</td><td>Local</td><td>55,719</td></tr><tr><td>China</td><td>CNY</td><td>GB/T</td><td>55,719</td></tr><tr><td>India</td><td>INR</td><td>CPWD</td><td>55,719</td></tr></table><h3 id="costs-howto">How to Use the Cost Database</h3>
+<p>The cost database is designed for two main workflows:</p>
+
+<h4>Workflow A: Browse and Apply to BOQ</h4>
+<ol>
+<li>Navigate to <strong>Databases &rarr; Cost Database</strong></li>
+<li>Select your region tab (e.g., "Germany / DACH")</li>
+<li>Search for a cost item by typing in the search bar (e.g., "concrete foundation")</li>
+<li>Click the star icon to add frequently used items to your Favorites</li>
+<li>In the BOQ editor, click the database icon next to any position to search and apply a rate</li>
+</ol>
+
+<h4>Workflow B: Import Your Own Database</h4>
+<ol>
+<li>Navigate to <strong>Databases &rarr; Cost Database &rarr; Import Database</strong></li>
+<li>Prepare an Excel or CSV file with columns: Code, Description, Unit, Rate, Currency</li>
+<li>Upload the file and map columns in the import wizard</li>
+<li>Preview the data before committing</li>
+<li>Your imported items appear alongside CWICR data with your custom source tag</li>
+</ol>
+
+<h4>Understanding Cost Item Structure</h4>
+<p>Each cost item contains:</p>
+<ul>
+<li><strong>Code</strong> &mdash; Unique identifier (e.g., KADX_KAME_KAKAME_KAME)</li>
+<li><strong>Description</strong> &mdash; Work item name in up to 9 languages</li>
+<li><strong>Unit</strong> &mdash; Unit of measurement (m2, m3, t, pcs, etc.)</li>
+<li><strong>Rate</strong> &mdash; Price per unit in the regional currency</li>
+<li><strong>Components</strong> &mdash; Breakdown into materials, labor, equipment (when available)</li>
+<li><strong>Classification</strong> &mdash; DIN 276, NRM, MasterFormat codes for cross-referencing</li>
+</ul>
+
+<h3 id="costs-vector">Vector Search</h3><p>Enable semantic search to find cost items by meaning, not just exact keyword matches. When you search for "concrete wall", the system also finds items like "reinforced partition C30/37, 24cm with formwork" — even though the exact words do not appear. This is powered by sentence-transformer embeddings that convert descriptions into numerical vectors and find the closest matches in multi-dimensional space. Two vector database backends are supported: LanceDB (embedded, runs in-process like SQLite, 384-dimensional embeddings) and Qdrant (production server with pre-built 3072-dimensional snapshots downloadable from GitHub).</p></section>
+
+<section id="takeoff"><h2>CAD/BIM &amp; PDF Takeoff</h2><p>Extract quantities directly from your project drawings and models — no manual counting required. Upload RVT, IFC, DWG, or DGN files and the system extracts every building element with volumes, areas, and lengths. For PDF drawings, open them directly in the browser and use calibrated measurement tools to take off distances, areas, and element counts. All extracted quantities can be transferred to a BOQ for pricing.</p>
+<p style="margin:8px 0 16px;font-size:.875rem;color:var(--g500)">🎬 <a href="https://www.youtube.com/watch?v=X06cIaroAeI" target="_blank" rel="noopener"><strong>Watch the BIM &rarr; BOQ bulk-link, DWG layer takeoff and PDF measurement chapters on YouTube</strong></a>.</p><div class="ss"><img src="/doc-05-takeoff.png" alt="CAD/BIM Takeoff"><div class="ss-c">PDF Takeoff with 4-step workflow (Upload, AI Analysis, Review, Add to BOQ), project/BOQ selector, and drag-drop upload zone</div></div><div class="ss"><img src="https://raw.githubusercontent.com/datadrivenconstruction/OpenConstructionERP/main/docs/gifs/03_BIM_to_BOQ.gif" alt="BIM to BOQ"><div class="ss-c">BIM &rarr; BOQ &mdash; pick elements in the 3D viewer, push their geometry &amp; properties straight to a BOQ position</div></div><div class="ss"><img src="https://raw.githubusercontent.com/datadrivenconstruction/OpenConstructionERP/main/docs/gifs/09_Bulk_Link_BIM_Group.gif" alt="Bulk Link BIM Group"><div class="ss-c">Bulk-link 100 BIM walls to one BOQ line &mdash; aggregated area, volume and length, single-click create</div></div><div class="ss"><img src="https://raw.githubusercontent.com/datadrivenconstruction/OpenConstructionERP/main/docs/gifs/10_DWG_Layers.gif" alt="DWG Layers"><div class="ss-c">636 wall entities across 10 DWG layers &mdash; toggle layers, isolate trades, link any entity to the BOQ in place</div></div><div class="ss"><img src="https://raw.githubusercontent.com/datadrivenconstruction/OpenConstructionERP/main/docs/gifs/04_PDF_Takeoff.gif" alt="PDF Takeoff in motion"><div class="ss-c">Drop a floorplan, measure distance / area / count with the on-canvas tools, push numbers into BOQ in seconds</div></div><table><tr><th id="takeoff-formats">Format</th><th>Source</th><th>Converter</th></tr><tr><td>.rvt / .rfa</td><td>BIM model</td><td>DDC RvtExporter</td></tr><tr><td>.ifc</td><td>IFC (any BIM)</td><td>DDC IfcExporter</td></tr><tr><td>.dwg / .dxf</td><td>CAD drawing</td><td>DDC DwgExporter</td></tr><tr><td>.dgn</td><td>CAD drawing</td><td>DDC DgnExporter</td></tr></table><h3 id="takeoff-workflow">CAD/BIM Takeoff: Step by Step</h3>
+<ol>
+<li>Navigate to <strong>Takeoff &rarr; CAD/BIM Takeoff</strong></li>
+<li>Drag and drop your CAD/BIM file (.rvt, .ifc, .dwg, .dgn) onto the upload area</li>
+<li>Wait for the DDC converter to extract elements (30-60 seconds for typical files)</li>
+<li>The system shows available columns and suggests grouping presets:
+  <ul>
+  <li><strong>Standard BIM QTO</strong> &mdash; Group by Category + Type Name, sum Volume/Area/Count</li>
+  <li><strong>Detailed</strong> &mdash; Add Level for per-floor breakdown</li>
+  <li><strong>By Family</strong> &mdash; Group by Family for procurement lists</li>
+  <li><strong>Custom</strong> &mdash; Choose any combination of the 1200+ extracted columns</li>
+  </ul>
+</li>
+<li>Click <strong>Apply Grouping</strong> to see the quantity table</li>
+<li>Review the grouped results &mdash; filter out empty groups, delete irrelevant categories, sort by volume</li>
+<li>Click <strong>Save as BOQ</strong> to transfer quantities to a Bill of Quantities for pricing</li>
+</ol>
+
+<h3 id="takeoff-pdf-workflow">PDF Takeoff: Step by Step</h3>
+<ol>
+<li>Navigate to <strong>Takeoff &rarr; PDF Takeoff</strong></li>
+<li>Upload your PDF construction drawing</li>
+<li>The system extracts text and tables from the PDF automatically</li>
+<li>Click <strong>Analyze with AI</strong> to extract construction elements with quantities</li>
+<li>Or switch to the <strong>Measurements</strong> tab for manual takeoff:
+  <ul>
+  <li>Set the drawing scale (click two known points and enter the real distance, or select a preset like 1:100)</li>
+  <li>Select <strong>Distance</strong> tool and click two points to measure length</li>
+  <li>Select <strong>Area</strong> tool and click corners of a polygon to measure area</li>
+  <li>Select <strong>Count</strong> tool and click on elements to count them</li>
+  </ul>
+</li>
+<li>All measurements are saved and can be exported to a BOQ</li>
+</ol>
+
+<h3 id="takeoff-qto2">QTO Grouping Presets</h3><ul><li><strong>Standard BIM QTO</strong> - Category + Type Name (volume, area, count)</li><li><strong>Detailed + Level</strong> - Per-floor breakdown</li><li><strong>By Family</strong> - For procurement and ordering</li><li><strong>Custom</strong> - Choose any columns</li></ul></section>
+
+<section id="ai"><h2>AI Estimation</h2><p>Connect any LLM provider to generate construction cost estimates from plain text descriptions, building photos, scanned PDFs, Excel spreadsheets, or CAD/BIM models. The AI system creates complete BOQ positions with quantities and market-rate pricing. After generation, you can match each item against the CWICR cost database to replace AI-estimated rates with verified regional market prices. AI features are entirely opt-in — the platform works fully without them.</p>
+<p style="margin:8px 0 16px;font-size:.875rem;color:var(--g500)">🎬 <a href="https://www.youtube.com/watch?v=X06cIaroAeI" target="_blank" rel="noopener"><strong>See "AI estimate from a photo" on YouTube</strong></a> &mdash; upload a construction photo, get a scoped BOQ in seconds.</p><div class="ss"><img src="/doc-04-ai-estimate.png" alt="AI Estimate"><div class="ss-c">AI Estimate page with text input, location/currency/standard selectors, and 5 input modes: Text, Photo, PDF, Excel, Paste</div></div><div class="ss"><img src="https://raw.githubusercontent.com/datadrivenconstruction/OpenConstructionERP/main/docs/gifs/02_AI_Photo_to_Estimate.gif" alt="AI estimate from a photo"><div class="ss-c">Photo &rarr; AI estimate &mdash; upload a construction photo, GPT-4o + YOLO return a scoped BOQ in seconds with confidence scores</div></div><table><tr><th id="ai-providers">Provider</th><th>Models</th><th>Features</th></tr><tr><td>Anthropic</td><td>Claude Sonnet / Opus</td><td>Text, vision, documents</td></tr><tr><td>OpenAI</td><td>GPT-4o</td><td>Text, vision, documents</td></tr><tr><td>Google</td><td>Gemini Pro</td><td>Text, vision</td></tr><tr><td>Mistral / Groq / DeepSeek</td><td>Various</td><td>Text</td></tr></table><div id="ai-quick" class="st"><div class="st-n">1</div><div class="st-c"><h4>Quick Estimate</h4><p>Describe your project in plain text and AI generates 15-30 BOQ items with quantities and market rates.</p></div></div><div class="st"><div class="st-n">2</div><div class="st-c"><h4>Cost DB Matching</h4><p>Match AI estimates against CWICR database to replace guessed rates with real market prices.</p></div></div><div class="st"><div class="st-n">3</div><div class="st-c"><h4>AI Cost Advisor</h4><p>Chat with AI about costs, materials, and pricing using your cost database as context.</p>
+<div class="ss"><img src="/doc-advisor.png" alt="AI Cost Advisor"><div class="ss-c">AI Cost Advisor chat with suggested questions, region selector, and CWICR database integration</div></div>
+<p></p></div></div></section>
+
+<section id="planning"><h2>4D Schedule &amp; 5D Cost Model</h2>
+<p>Plan your construction project timeline and track costs over time with integrated scheduling and financial modeling tools.</p>
+
+<h3 id="schedule-detail">4D Schedule</h3>
+<p>The scheduling module provides a professional Gantt chart for managing your construction timeline. Create activities, set durations, define dependencies, and the system automatically calculates the critical path showing which activities must not be delayed.</p>
+<ul>
+<li><strong>Activity types</strong> &mdash; Tasks, milestones, and summary activities with WBS codes for structured breakdown</li>
+<li><strong>Dependencies</strong> &mdash; Finish-to-Start (FS), Start-to-Start (SS), Finish-to-Finish (FF), and Start-to-Finish (SF) relationships between activities</li>
+<li><strong>Critical path</strong> &mdash; Automatic CPM calculation with visual highlighting. Activities on the critical path are marked with a "CP" badge</li>
+<li><strong>Auto-generate from BOQ</strong> &mdash; Select a BOQ and set total project duration. The system creates one activity per section with cost-proportional durations and sequential dependencies</li>
+<li><strong>Progress tracking</strong> &mdash; Update activity status (completed/in-progress/pending) and track actual vs planned dates</li>
+<li><strong>Monte Carlo simulation</strong> &mdash; Run probabilistic analysis with optimistic/pessimistic ranges to get risk-adjusted completion dates with confidence levels</li>
+</ul>
+
+<h3 id="costmodel-detail">5D Cost Model</h3>
+<p>The cost model connects your BOQ data to the project timeline, giving you a time-phased view of construction costs with Earned Value Management metrics.</p>
+<ul><li>Gantt chart with drag-and-drop, dependencies (FS/FF/SS/SF), critical path</li><li>Auto-generate activities from BOQ sections</li><li>Earned Value Management: SPI, CPI, EAC, VAC</li><li>S-curve (planned vs actual), budget snapshots, cash flow</li><li>Monte Carlo simulation for risk-adjusted scheduling</li></ul></section>
+
+<section id="tendering">
+<h2>Tendering &amp; Bid Management</h2>
+<p>Manage the complete procurement workflow from creating bid packages to comparing proposals and awarding contracts to subcontractors.</p>
+<h3 id="tender-create">Creating a Tender Package</h3>
+<p>Navigate to Procurement, select a project, and click "Create Package". Specify the package name, scope description, submission deadline, and select which BOQ positions to include. You can create multiple packages per project (e.g., structural works, MEP, finishing).</p>
+<h3 id="tender-bids">Managing Bids</h3>
+<p>Add bids from subcontractors with company name, contact details, and quoted prices for each BOQ position. The system supports multiple bids per package for side-by-side comparison.</p>
+<h3 id="tender-compare">Bid Comparison</h3>
+<p>The price mirror shows all bids in a comparison table with unit rates and totals per position. Visual indicators highlight the lowest and highest bids. Export the comparison as CSV for stakeholder review.</p>
+<h3 id="tender-award">Award Process</h3>
+<p>Mark the winning bid with the Award button and add justification notes. Package status tracks through: Draft, Issued, Collecting, Evaluating, Awarded, Closed.</p>
+</section>
+
+<section id="risk-section">
+<h2>Risk Register</h2>
+<p>Identify, assess, and manage project risks using a probability-impact matrix. Quantify risk exposure and plan mitigation strategies for each identified risk.</p>
+<h3 id="risk-matrix">Risk Assessment Matrix</h3>
+<p>The matrix displays all risks on a probability (0.1-0.9) vs impact (low/medium/high/critical) grid with color coding. Each risk shows its calculated exposure score (probability multiplied by impact cost).</p>
+<h3 id="risk-manage">Managing Risks</h3>
+<p>For each risk, document: unique code (R-001), title, category (technical, financial, schedule, regulatory, environmental, safety), mitigation strategy, contingency plan, risk owner, cost impact, and schedule impact in days. Track status through: Identified, Assessed, Mitigating, Closed, or Occurred.</p>
+</section>
+
+<section id="changeorders-section">
+<h2>Change Orders</h2>
+<p>Track scope changes and their impact on project cost and schedule. Change orders provide an audit trail of all modifications made after the initial estimate.</p>
+<h3 id="co-workflow">Change Order Workflow</h3>
+<p>Create a change order with code (CO-001), title, and reason category (client request, design change, unforeseen condition, regulatory). Add line items specifying affected BOQ positions with original and new quantities/rates. The system calculates cost deltas automatically. Status moves through: Draft, Submitted, Under Review, Approved/Rejected.</p>
+</section>
+
+<section id="validation-section">
+<h2>Validation &amp; Quality Checks</h2>
+<div class="ss"><img src="/doc-validation.png" alt="Validation"><div class="ss-c">Validation page - select project and BOQ, run quality checks against configurable rule sets</div></div>
+<p>Run automated quality checks on your BOQs to catch errors before they become problems. The validation engine applies 42 configurable rules against your estimate data.</p>
+<h3 id="val-rules">Rule Sets</h3>
+<ul>
+<li><strong>BOQ Quality</strong> &mdash; Missing quantities, zero prices, duplicate positions, unrealistic unit rates, empty descriptions</li>
+<li><strong>DIN 276 Compliance</strong> &mdash; Cost group hierarchy, required KG codes, completeness per level</li>
+<li><strong>GAEB Format</strong> &mdash; Structure validation for GAEB XML export (X83)</li>
+<li><strong>NRM Compliance</strong> &mdash; NRM 1/2 element structure and measurement rules</li>
+<li><strong>MasterFormat</strong> &mdash; CSI division structure and code format</li>
+</ul>
+<h3 id="val-results">Understanding Results</h3>
+<p>Each validation produces a quality score (0-100%) with color-coded findings: Errors (red, must fix), Warnings (yellow, should review), Info (blue, suggestions). Click any finding to navigate directly to the affected BOQ position.</p>
+</section>
+
+<section id="reports-section">
+<h2>Reports &amp; Export</h2>
+<div class="ss"><img src="/doc-reports.png" alt="Reports"><div class="ss-c">Reports page with 9 export formats: BOQ (PDF/Excel), Cost Report, GAEB XML, Validation, Schedule, 5D Cost, Tendering, Change Orders, Risk Register</div></div><div class="ss"><img src="https://raw.githubusercontent.com/datadrivenconstruction/OpenConstructionERP/main/docs/gifs/13_Data_Explorer_Pivot.gif" alt="Data Explorer Pivot"><div class="ss-c">Data Explorer pivot &rarr; 10 BOQ positions in one click &mdash; charts, data bars and drill-down on every CAD/BIM property</div></div><div class="ss"><img src="https://raw.githubusercontent.com/datadrivenconstruction/OpenConstructionERP/main/docs/gifs/11_Complete_Estimate_6M.gif" alt="Complete Estimate"><div class="ss-c">Complete real BIM estimate &mdash; 215 positions, 88 sections, CWICR-priced, $6.26M total, quality score 99</div></div>
+<p>Generate professional documents from your project data for stakeholders, clients, and regulatory compliance.</p>
+<ul>
+<li><strong>BOQ Report (PDF)</strong> &mdash; Complete Bill of Quantities with sections, positions, subtotals, markups, and grand total</li>
+<li><strong>BOQ Export (Excel)</strong> &mdash; Full data in .xlsx with formulas, formatting, and section grouping</li>
+<li><strong>Cost Report (PDF)</strong> &mdash; Summary by trade, category, or classification standard</li>
+<li><strong>GAEB XML (X83)</strong> &mdash; Standard German/Austrian tender format for electronic submission</li>
+<li><strong>CSV Export</strong> &mdash; Raw data for import into other tools or spreadsheets</li>
+</ul>
+</section>
+
+<section id="documents-section">
+<h2>Document Management</h2>
+<div class="ss"><img src="/doc-documents.png" alt="Documents"><div class="ss-c">Document management with drag-drop upload, category filters (Drawing, Contract, Specification, Photo), tags, and file preview</div></div>
+<p>Centralize all project documents. Upload drawings, contracts, specifications, and photos with automatic categorization and search.</p>
+<ul>
+<li><strong>Upload</strong> &mdash; Drag and drop files up to 100 MB (PDF, images, Office, CAD)</li>
+<li><strong>Categories</strong> &mdash; Drawings, contracts, specifications, photos, correspondence</li>
+<li><strong>Tags</strong> &mdash; Custom tags for flexible filtering</li>
+<li><strong>Preview</strong> &mdash; View PDFs and images directly in the browser</li>
+<li><strong>Version tracking</strong> &mdash; Upload dates, file sizes, uploader identity</li>
+</ul>
+</section>
+
+<section id="analytics-section">
+<h2>Analytics Dashboard</h2>
+<div class="ss"><img src="/doc-analytics.png" alt="Analytics"><div class="ss-c">Cross-project analytics with KPI cards (Total Budget 125.6M, Variance 63.4M), project comparison table with budget/actual/variance per region</div></div><div class="ss"><img src="https://raw.githubusercontent.com/datadrivenconstruction/OpenConstructionERP/main/docs/gifs/14_Projects_Dashboard.gif" alt="Projects Dashboard"><div class="ss-c">Global portfolio dashboard &mdash; 7 projects across 4 continents, $28.3M in active estimates, single map view</div></div>
+<p>View cross-project budget performance. The dashboard aggregates financial data across all projects to identify trends, variances, and at-risk budgets.</p>
+<ul>
+<li><strong>Project table</strong> &mdash; Sortable list: budget, actual spend, variance, percentage, status</li>
+<li><strong>KPI cards</strong> &mdash; Total portfolio value, average variance, projects on/over budget</li>
+<li><strong>Regional filter</strong> &mdash; Compare performance across markets (DACH, UK, US, Gulf)</li>
+<li><strong>Status filter</strong> &mdash; Focus on over-budget projects for attention</li>
+</ul>
+</section>
+
+<section id="contacts">
+<h2>Contacts Directory</h2>
+<p>Manage all project stakeholders in a centralized directory. Track clients, subcontractors, suppliers, architects, and consultants with full contact details, company associations, and role-based categorization. Link contacts to projects, tenders, purchase orders, and correspondence for full traceability.</p>
+<h3>Key Features</h3>
+<ul>
+<li><strong>Contact types</strong> &mdash; Client, Subcontractor, Supplier, Consultant, Architect, Authority, and custom types</li>
+<li><strong>Company management</strong> &mdash; Group contacts under companies with shared address, tax ID, and banking details</li>
+<li><strong>Project linking</strong> &mdash; Associate contacts with specific projects and roles (e.g., "Structural Engineer on Project Berlin-Mitte")</li>
+<li><strong>Import from Excel/CSV</strong> &mdash; Bulk import contacts with column mapping wizard</li>
+<li><strong>Search and filter</strong> &mdash; Find contacts by name, company, type, project, or tag</li>
+</ul>
+<h3>API Endpoints</h3>
+<table><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>GET</td><td><code>/api/v1/contacts/</code></td><td>List all contacts</td></tr>
+<tr><td>POST</td><td><code>/api/v1/contacts/</code></td><td>Create contact</td></tr>
+<tr><td>GET</td><td><code>/api/v1/contacts/{id}</code></td><td>Get contact details</td></tr>
+<tr><td>PUT</td><td><code>/api/v1/contacts/{id}</code></td><td>Update contact</td></tr>
+<tr><td>POST</td><td><code>/api/v1/contacts/import</code></td><td>Bulk import contacts</td></tr>
+</table>
+</section>
+
+<section id="tasks">
+<h2>Tasks</h2>
+<p>Organize project work with a 5-type task taxonomy and visual Kanban board. Tasks can be assigned to team members, linked to specific BOQ positions, documents, or RFIs, and tracked through customizable workflow stages. Each task type has its own color coding and default fields.</p>
+<div class="ss"><img src="https://raw.githubusercontent.com/datadrivenconstruction/OpenConstructionERP/main/docs/gifs/12_Tasks_Linked_To_BIM.gif" alt="Tasks linked to BIM"><div class="ss-c">Tasks tied to exact BIM elements &mdash; click a task, fly the camera to the element it belongs to. Kanban, list and calendar views all share the same model link.</div></div>
+<h3>Key Features</h3>
+<ul>
+<li><strong>5 task types</strong> &mdash; General, Design, Procurement, Construction, and Commissioning &mdash; each with type-specific fields</li>
+<li><strong>Kanban board</strong> &mdash; Drag-and-drop cards across columns (To Do, In Progress, Review, Done) with WIP limits</li>
+<li><strong>List and calendar views</strong> &mdash; Switch between Kanban, table list, and calendar views</li>
+<li><strong>Priority and due dates</strong> &mdash; Critical/High/Medium/Low priority with overdue highlighting</li>
+<li><strong>Entity linking</strong> &mdash; Attach tasks to projects, BOQ positions, RFIs, change orders, or any other entity</li>
+</ul>
+<h3>API Endpoints</h3>
+<table><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>GET</td><td><code>/api/v1/tasks/</code></td><td>List tasks (filterable by project, assignee, status)</td></tr>
+<tr><td>POST</td><td><code>/api/v1/tasks/</code></td><td>Create task</td></tr>
+<tr><td>PATCH</td><td><code>/api/v1/tasks/{id}</code></td><td>Update task (status, assignee, priority)</td></tr>
+<tr><td>GET</td><td><code>/api/v1/tasks/board/{project_id}</code></td><td>Get Kanban board data</td></tr>
+</table>
+</section>
+
+<section id="rfi">
+<h2>RFI &mdash; Requests for Information</h2>
+<p>Track formal information requests between project parties with ball-in-court assignment. RFIs flow through a structured lifecycle from draft to closed, ensuring every question gets a documented answer. Ball-in-court tracking shows who currently owns the action at any time.</p>
+<h3>Key Features</h3>
+<ul>
+<li><strong>Ball-in-court tracking</strong> &mdash; Visual indicator showing which party currently owns the RFI (Contractor, Designer, Client, etc.)</li>
+<li><strong>Lifecycle management</strong> &mdash; Draft, Open, Answered, Closed with full audit trail of state transitions</li>
+<li><strong>Response threading</strong> &mdash; Multiple rounds of questions and answers with timestamps and attachments</li>
+<li><strong>Due date tracking</strong> &mdash; Configurable response deadlines with overdue alerts</li>
+<li><strong>Impact assessment</strong> &mdash; Flag RFIs that affect cost, schedule, or scope with estimated impact values</li>
+</ul>
+<h3>API Endpoints</h3>
+<table><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>GET</td><td><code>/api/v1/rfis/</code></td><td>List RFIs</td></tr>
+<tr><td>POST</td><td><code>/api/v1/rfis/</code></td><td>Create RFI</td></tr>
+<tr><td>POST</td><td><code>/api/v1/rfis/{id}/respond</code></td><td>Submit response</td></tr>
+<tr><td>PATCH</td><td><code>/api/v1/rfis/{id}/status</code></td><td>Update status / ball-in-court</td></tr>
+</table>
+</section>
+
+<section id="finance">
+<h2>Finance</h2>
+<p>Full project financial management covering invoices, budgets, payments, and Earned Value Management (EVM). Track planned vs actual costs, generate payment applications, and monitor budget health with real-time variance analysis. Integrates with BOQ data for automatic cost baseline generation.</p>
+<h3>Key Features</h3>
+<ul>
+<li><strong>Invoices</strong> &mdash; Create, track, and approve invoices linked to BOQ positions or cost codes with multi-currency support</li>
+<li><strong>Budgets</strong> &mdash; Define project budgets by cost code or WBS, import from Excel, track commitments and actuals</li>
+<li><strong>Payments</strong> &mdash; Record payments against invoices, track payment status (Pending, Approved, Paid), generate payment certificates</li>
+<li><strong>Earned Value Management</strong> &mdash; SPI, CPI, EAC, ETC, VAC, TCPI metrics calculated automatically from schedule and cost data</li>
+<li><strong>Cash flow forecasting</strong> &mdash; S-curve visualization of planned vs actual expenditure with monthly/quarterly breakdown</li>
+</ul>
+<h3>API Endpoints</h3>
+<table><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>GET</td><td><code>/api/v1/finance/invoices/</code></td><td>List invoices</td></tr>
+<tr><td>POST</td><td><code>/api/v1/finance/invoices/</code></td><td>Create invoice</td></tr>
+<tr><td>GET</td><td><code>/api/v1/finance/budgets/</code></td><td>List budgets</td></tr>
+<tr><td>POST</td><td><code>/api/v1/finance/budgets/import</code></td><td>Import budget from Excel</td></tr>
+<tr><td>GET</td><td><code>/api/v1/finance/evm/{project_id}</code></td><td>Get EVM metrics</td></tr>
+<tr><td>GET</td><td><code>/api/v1/finance/payments/</code></td><td>List payments</td></tr>
+</table>
+</section>
+
+<section id="procurement">
+<h2>Procurement</h2>
+<p>Manage purchase orders and goods receipts for construction materials and services. Create POs linked to BOQ positions, track delivery status, and record goods receipts with quantity verification. Integrates with the Contacts module for supplier management.</p>
+<h3>Key Features</h3>
+<ul>
+<li><strong>Purchase Orders</strong> &mdash; Create POs with line items linked to BOQ positions or cost codes, automatic total calculation</li>
+<li><strong>Supplier management</strong> &mdash; Select suppliers from the Contacts directory with saved banking and delivery details</li>
+<li><strong>Goods Receipts</strong> &mdash; Record material deliveries with received quantities, quality notes, and photo attachments</li>
+<li><strong>Status tracking</strong> &mdash; PO lifecycle: Draft, Sent, Partially Received, Fully Received, Closed</li>
+<li><strong>Budget integration</strong> &mdash; PO amounts automatically update committed costs in the Finance module</li>
+</ul>
+<h3>API Endpoints</h3>
+<table><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>GET</td><td><code>/api/v1/procurement/orders/</code></td><td>List purchase orders</td></tr>
+<tr><td>POST</td><td><code>/api/v1/procurement/orders/</code></td><td>Create purchase order</td></tr>
+<tr><td>POST</td><td><code>/api/v1/procurement/orders/{id}/receive</code></td><td>Record goods receipt</td></tr>
+<tr><td>GET</td><td><code>/api/v1/procurement/receipts/</code></td><td>List goods receipts</td></tr>
+</table>
+</section>
+
+<section id="safety">
+<h2>Safety</h2>
+<p>Record safety incidents, near-misses, and behavioral observations with a risk scoring system. Track safety performance metrics across projects, identify trends, and ensure compliance with occupational health and safety regulations.</p>
+<h3>Key Features</h3>
+<ul>
+<li><strong>Incident reporting</strong> &mdash; Record incidents with type (injury, near-miss, property damage, environmental), severity, root cause, and corrective actions</li>
+<li><strong>Safety observations</strong> &mdash; Log positive and negative behavioral observations for proactive safety management</li>
+<li><strong>Risk scoring</strong> &mdash; Automatic risk score calculation based on probability and severity, with color-coded risk matrix visualization</li>
+<li><strong>Corrective actions</strong> &mdash; Assign follow-up actions with responsible person, due date, and verification status</li>
+<li><strong>Safety dashboard</strong> &mdash; TRIR (Total Recordable Incident Rate), LTIR (Lost Time Injury Rate), observation trends, and leading/lagging indicators</li>
+</ul>
+<h3>API Endpoints</h3>
+<table><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>GET</td><td><code>/api/v1/safety/incidents/</code></td><td>List incidents</td></tr>
+<tr><td>POST</td><td><code>/api/v1/safety/incidents/</code></td><td>Report incident</td></tr>
+<tr><td>GET</td><td><code>/api/v1/safety/observations/</code></td><td>List observations</td></tr>
+<tr><td>POST</td><td><code>/api/v1/safety/observations/</code></td><td>Record observation</td></tr>
+<tr><td>GET</td><td><code>/api/v1/safety/dashboard/{project_id}</code></td><td>Get safety KPIs</td></tr>
+</table>
+</section>
+
+<section id="meetings">
+<h2>Meetings</h2>
+<p>Manage meeting minutes with structured agendas and tracked action items. Create recurring meeting series (e.g., weekly site meetings), record attendees, capture discussion points, and automatically generate action items that integrate with the Tasks module.</p>
+<h3>Key Features</h3>
+<ul>
+<li><strong>Agenda management</strong> &mdash; Create structured agendas with numbered items, time allocations, and responsible presenters</li>
+<li><strong>Minutes recording</strong> &mdash; Document discussions, decisions, and action items during or after the meeting</li>
+<li><strong>Action items</strong> &mdash; Each action item has an assignee, due date, and status; optionally converts to a Task for tracking</li>
+<li><strong>Attendee tracking</strong> &mdash; Record invited vs actual attendees from the Contacts directory</li>
+<li><strong>Meeting series</strong> &mdash; Set up recurring meetings with automatic agenda templates and previous minutes reference</li>
+</ul>
+<h3>API Endpoints</h3>
+<table><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>GET</td><td><code>/api/v1/meetings/</code></td><td>List meetings</td></tr>
+<tr><td>POST</td><td><code>/api/v1/meetings/</code></td><td>Create meeting</td></tr>
+<tr><td>GET</td><td><code>/api/v1/meetings/{id}/minutes</code></td><td>Get meeting minutes</td></tr>
+<tr><td>POST</td><td><code>/api/v1/meetings/{id}/actions</code></td><td>Add action item</td></tr>
+</table>
+</section>
+
+<section id="inspections">
+<h2>Inspections</h2>
+<p>Conduct quality inspections using configurable checklists. Define inspection templates per trade or activity type, fill them out on-site, attach photos, and track deficiency resolution. Inspection results feed into the project quality score and NCR workflow.</p>
+<h3>Key Features</h3>
+<ul>
+<li><strong>Checklist templates</strong> &mdash; Create reusable inspection checklists with pass/fail/NA items grouped by category</li>
+<li><strong>On-site filling</strong> &mdash; Mobile-friendly interface for completing inspections with photo attachments per item</li>
+<li><strong>Scoring</strong> &mdash; Automatic pass rate calculation based on checklist results</li>
+<li><strong>Deficiency tracking</strong> &mdash; Failed items automatically generate follow-up actions or NCRs</li>
+<li><strong>Inspection history</strong> &mdash; Full audit trail of all inspections per location, trade, or activity with trend analysis</li>
+</ul>
+<h3>API Endpoints</h3>
+<table><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>GET</td><td><code>/api/v1/inspections/</code></td><td>List inspections</td></tr>
+<tr><td>POST</td><td><code>/api/v1/inspections/</code></td><td>Create inspection from template</td></tr>
+<tr><td>GET</td><td><code>/api/v1/inspections/templates/</code></td><td>List checklist templates</td></tr>
+<tr><td>PATCH</td><td><code>/api/v1/inspections/{id}/items</code></td><td>Update checklist item results</td></tr>
+</table>
+</section>
+
+<section id="ncr">
+<h2>Non-Conformance Reports (NCR)</h2>
+<p>Document and track quality non-conformances when work does not meet specifications. NCRs follow a formal lifecycle from identification through root cause analysis to corrective action verification, ensuring all quality deviations are properly resolved and documented.</p>
+<h3>Key Features</h3>
+<ul>
+<li><strong>NCR lifecycle</strong> &mdash; Open, Under Investigation, Corrective Action Planned, Corrective Action Taken, Verified, Closed</li>
+<li><strong>Root cause analysis</strong> &mdash; Structured fields for root cause category (material, workmanship, design, process) and detailed description</li>
+<li><strong>Corrective and preventive actions</strong> &mdash; Define CAPA with responsible person, due date, and verification criteria</li>
+<li><strong>Disposition</strong> &mdash; Record disposition decision: Rework, Repair, Use-as-is, Scrap, Return to supplier</li>
+<li><strong>Cost impact</strong> &mdash; Track cost of non-conformance (rework cost, delay cost) linked to Finance module</li>
+</ul>
+<h3>API Endpoints</h3>
+<table><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>GET</td><td><code>/api/v1/ncr/</code></td><td>List NCRs</td></tr>
+<tr><td>POST</td><td><code>/api/v1/ncr/</code></td><td>Create NCR</td></tr>
+<tr><td>PATCH</td><td><code>/api/v1/ncr/{id}/status</code></td><td>Update NCR status</td></tr>
+<tr><td>POST</td><td><code>/api/v1/ncr/{id}/actions</code></td><td>Add corrective action</td></tr>
+</table>
+</section>
+
+<section id="submittals">
+<h2>Submittals</h2>
+<p>Manage the submittal review process for construction materials, shop drawings, and product data. Track multi-stage review workflows where submittals pass through multiple reviewers before final approval. Maintain a complete audit trail of all review cycles and revision history.</p>
+<h3>Key Features</h3>
+<ul>
+<li><strong>Multi-stage review</strong> &mdash; Configure review workflows with sequential or parallel reviewers (e.g., Contractor, Engineer, Architect)</li>
+<li><strong>Review outcomes</strong> &mdash; Approved, Approved as Noted, Revise and Resubmit, Rejected &mdash; with stamped comments</li>
+<li><strong>Revision tracking</strong> &mdash; Automatic revision numbering (Rev A, Rev B, etc.) with comparison between revisions</li>
+<li><strong>Submittal register</strong> &mdash; Overview table showing all submittals with current status, reviewer, and days outstanding</li>
+<li><strong>Specification linking</strong> &mdash; Link submittals to specification sections and BOQ positions for traceability</li>
+</ul>
+<h3>API Endpoints</h3>
+<table><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>GET</td><td><code>/api/v1/submittals/</code></td><td>List submittals</td></tr>
+<tr><td>POST</td><td><code>/api/v1/submittals/</code></td><td>Create submittal</td></tr>
+<tr><td>POST</td><td><code>/api/v1/submittals/{id}/review</code></td><td>Submit review decision</td></tr>
+<tr><td>POST</td><td><code>/api/v1/submittals/{id}/revise</code></td><td>Upload new revision</td></tr>
+</table>
+</section>
+
+<section id="correspondence">
+<h2>Correspondence</h2>
+<p>Maintain a formal communication register for all project correspondence. Track letters, emails, notices, and instructions between project parties with unique reference numbers, response tracking, and full-text search. Ensures contractual communications are properly documented and traceable.</p>
+<h3>Key Features</h3>
+<ul>
+<li><strong>Communication register</strong> &mdash; Centralized log of all incoming and outgoing correspondence with reference numbers (e.g., COR-2026-001)</li>
+<li><strong>Direction tracking</strong> &mdash; Incoming vs outgoing, with sender/receiver from the Contacts directory</li>
+<li><strong>Response linking</strong> &mdash; Link responses to original correspondence for threaded communication chains</li>
+<li><strong>Category and type</strong> &mdash; Letter, Email, Notice, Instruction, Claim, Extension of Time, and custom types</li>
+<li><strong>Attachment management</strong> &mdash; Attach files (PDFs, drawings, photos) to each correspondence entry</li>
+</ul>
+<h3>API Endpoints</h3>
+<table><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>GET</td><td><code>/api/v1/correspondence/</code></td><td>List correspondence</td></tr>
+<tr><td>POST</td><td><code>/api/v1/correspondence/</code></td><td>Create correspondence entry</td></tr>
+<tr><td>GET</td><td><code>/api/v1/correspondence/{id}</code></td><td>Get details with attachments</td></tr>
+<tr><td>GET</td><td><code>/api/v1/correspondence/{id}/thread</code></td><td>Get linked correspondence chain</td></tr>
+</table>
+</section>
+
+<section id="cde">
+<h2>Common Data Environment (CDE)</h2>
+<p>ISO 19650-compliant Common Data Environment for managing project information with controlled status transitions. Documents move through Work in Progress (WIP), Shared, Published, and Archived states with approval gates. Ensures information management follows BIM standards for collaborative delivery.</p>
+<h3>Key Features</h3>
+<ul>
+<li><strong>ISO 19650 status workflow</strong> &mdash; WIP (S0), Shared (S1-S4), Published (A1-An), Archived &mdash; with configurable approval gates between states</li>
+<li><strong>Naming convention enforcement</strong> &mdash; Automatic validation of file names against project naming standards (e.g., PRJ-ZZZ-XX-DR-A-0001)</li>
+<li><strong>Suitability codes</strong> &mdash; S0 (Work in Progress), S1 (Coordination), S2 (Information), S3 (Review &amp; Comment), S4 (Stage Approval)</li>
+<li><strong>Revision management</strong> &mdash; Controlled revision numbering with superseded version tracking</li>
+<li><strong>Access control</strong> &mdash; Role-based access per CDE state &mdash; authors edit in WIP, reviewers comment in Shared, clients view Published</li>
+</ul>
+<h3>API Endpoints</h3>
+<table><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>GET</td><td><code>/api/v1/cde/documents/</code></td><td>List CDE documents (filterable by status, suitability)</td></tr>
+<tr><td>POST</td><td><code>/api/v1/cde/documents/</code></td><td>Upload document to CDE</td></tr>
+<tr><td>PATCH</td><td><code>/api/v1/cde/documents/{id}/status</code></td><td>Transition document status</td></tr>
+<tr><td>GET</td><td><code>/api/v1/cde/documents/{id}/history</code></td><td>Get revision history</td></tr>
+</table>
+</section>
+
+<section id="transmittals">
+<h2>Transmittals</h2>
+<p>Formally distribute documents to external parties with tracked delivery and acknowledgment. Create transmittal packages containing multiple documents, specify recipients, and track whether each recipient has received and acknowledged the documents. Provides a contractual record of information exchange.</p>
+<h3>Key Features</h3>
+<ul>
+<li><strong>Transmittal packages</strong> &mdash; Bundle multiple documents (drawings, specifications, reports) into a single transmittal with cover sheet</li>
+<li><strong>Recipient management</strong> &mdash; Select recipients from Contacts, specify action required (For Information, For Review, For Approval, For Construction)</li>
+<li><strong>Delivery tracking</strong> &mdash; Track sent date, received date, and acknowledged date per recipient</li>
+<li><strong>PDF cover sheet</strong> &mdash; Auto-generated transmittal cover sheet with document list, purpose, and recipient details</li>
+<li><strong>Revision awareness</strong> &mdash; Automatically detect when transmitting superseded revisions and warn the user</li>
+</ul>
+<h3>API Endpoints</h3>
+<table><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>GET</td><td><code>/api/v1/transmittals/</code></td><td>List transmittals</td></tr>
+<tr><td>POST</td><td><code>/api/v1/transmittals/</code></td><td>Create transmittal</td></tr>
+<tr><td>POST</td><td><code>/api/v1/transmittals/{id}/send</code></td><td>Send transmittal to recipients</td></tr>
+<tr><td>PATCH</td><td><code>/api/v1/transmittals/{id}/acknowledge</code></td><td>Record recipient acknowledgment</td></tr>
+</table>
+</section>
+
+<section id="bimhub">
+<h2>BIM Hub</h2>
+<p>Central hub for BIM model management with element-level data access and direct BOQ linkage. Upload IFC/BIM models, browse building elements with their properties and quantities, and link elements to BOQ positions for 5D cost integration. Provides a bridge between design data and cost estimation.</p>
+<p style="margin:8px 0 16px;font-size:.875rem;color:var(--g500)">🎬 <a href="https://www.youtube.com/watch?v=X06cIaroAeI" target="_blank" rel="noopener"><strong>BIM bulk-link demo on YouTube</strong></a> &mdash; 100 BIM walls &rarr; one BOQ line with aggregated area, volume and length.</p>
+<h3>Key Features</h3>
+<ul>
+<li><strong>Model management</strong> &mdash; Upload and version BIM models (IFC, RVT) with metadata extraction and 3D preview</li>
+<li><strong>Element browser</strong> &mdash; Navigate building elements by category (walls, slabs, columns, etc.) with property sets and quantities</li>
+<li><strong>BOQ linkage</strong> &mdash; Link BIM elements to BOQ positions for automated quantity updates and 5D visualization</li>
+<li><strong>Clash detection results</strong> &mdash; Import and view clash detection results with element highlighting</li>
+<li><strong>Property comparison</strong> &mdash; Compare element properties across model revisions to detect design changes</li>
+</ul>
+<h3>API Endpoints</h3>
+<table><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>GET</td><td><code>/api/v1/bim/models/</code></td><td>List BIM models</td></tr>
+<tr><td>POST</td><td><code>/api/v1/bim/models/</code></td><td>Upload BIM model</td></tr>
+<tr><td>GET</td><td><code>/api/v1/bim/models/{id}/elements</code></td><td>List model elements</td></tr>
+<tr><td>POST</td><td><code>/api/v1/bim/elements/{id}/link-boq</code></td><td>Link element to BOQ position</td></tr>
+</table>
+</section>
+
+<section id="reporting">
+<h2>Reporting &amp; KPI Dashboard</h2>
+<p>Comprehensive reporting engine with a KPI dashboard, customizable report templates, and scheduled report generation. Aggregate data across projects for portfolio-level insights. Create custom report templates combining data from any module (BOQ, Finance, Schedule, Safety, Quality).</p>
+<h3>Key Features</h3>
+<ul>
+<li><strong>KPI dashboard</strong> &mdash; Real-time project KPIs: budget variance, schedule performance (SPI/CPI), safety rates, quality scores, RFI response times</li>
+<li><strong>Report templates</strong> &mdash; Pre-built templates for monthly progress, cost report, safety summary, quality summary; create custom templates with drag-and-drop</li>
+<li><strong>Multi-project portfolio</strong> &mdash; Aggregate view across all projects with drill-down capability</li>
+<li><strong>Export formats</strong> &mdash; PDF, Excel, CSV for all reports with branded headers and company logo</li>
+<li><strong>Scheduled reports</strong> &mdash; Configure automatic report generation on daily/weekly/monthly schedule with email delivery</li>
+</ul>
+<h3>API Endpoints</h3>
+<table><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>GET</td><td><code>/api/v1/reporting/kpi/{project_id}</code></td><td>Get project KPIs</td></tr>
+<tr><td>GET</td><td><code>/api/v1/reporting/templates/</code></td><td>List report templates</td></tr>
+<tr><td>POST</td><td><code>/api/v1/reporting/generate</code></td><td>Generate report from template</td></tr>
+<tr><td>GET</td><td><code>/api/v1/reporting/portfolio/</code></td><td>Get portfolio dashboard data</td></tr>
+</table>
+</section>
+
+<section id="notifications">
+<h2>Notifications</h2>
+<p>In-app notification system that keeps users informed about events relevant to them. Notifications are triggered by actions across all modules &mdash; task assignments, RFI responses, submittal reviews, approval requests, overdue items, and more. Users control their notification preferences per category.</p>
+<h3>Key Features</h3>
+<ul>
+<li><strong>Real-time notifications</strong> &mdash; Bell icon with unread count, dropdown panel with notification list</li>
+<li><strong>Event categories</strong> &mdash; Assignments, mentions, status changes, approvals, due date reminders, system alerts</li>
+<li><strong>Notification preferences</strong> &mdash; Per-category toggle: in-app, email, or both. Configurable quiet hours</li>
+<li><strong>Mark as read/unread</strong> &mdash; Individual and bulk actions. Click notification to navigate to the source entity</li>
+<li><strong>Notification history</strong> &mdash; Full searchable archive of all past notifications</li>
+</ul>
+<h3>API Endpoints</h3>
+<table><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>GET</td><td><code>/api/v1/notifications/</code></td><td>List notifications (unread first)</td></tr>
+<tr><td>PATCH</td><td><code>/api/v1/notifications/{id}/read</code></td><td>Mark notification as read</td></tr>
+<tr><td>POST</td><td><code>/api/v1/notifications/read-all</code></td><td>Mark all as read</td></tr>
+<tr><td>GET</td><td><code>/api/v1/notifications/preferences</code></td><td>Get notification preferences</td></tr>
+</table>
+</section>
+
+<section id="comments">
+<h2>Comments</h2>
+<p>Threaded comment system that can be attached to any entity in the platform &mdash; BOQ positions, tasks, RFIs, submittals, documents, inspections, and more. Supports @mentions to notify team members, file attachments, and resolution tracking for action-oriented discussions.</p>
+<h3>Key Features</h3>
+<ul>
+<li><strong>Universal attachment</strong> &mdash; Add comments to any entity type (BOQ position, task, RFI, submittal, NCR, etc.)</li>
+<li><strong>Threaded replies</strong> &mdash; Nested reply threads for organized discussions with collapse/expand</li>
+<li><strong>@mentions</strong> &mdash; Tag team members by name to trigger notifications and draw attention</li>
+<li><strong>Resolution tracking</strong> &mdash; Mark comment threads as resolved/unresolved for tracking open discussions</li>
+<li><strong>Attachments</strong> &mdash; Attach images, PDFs, and files directly to comments</li>
+</ul>
+<h3>API Endpoints</h3>
+<table><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>GET</td><td><code>/api/v1/comments/?entity_type=task&amp;entity_id=...</code></td><td>List comments for an entity</td></tr>
+<tr><td>POST</td><td><code>/api/v1/comments/</code></td><td>Create comment</td></tr>
+<tr><td>POST</td><td><code>/api/v1/comments/{id}/reply</code></td><td>Reply to comment</td></tr>
+<tr><td>PATCH</td><td><code>/api/v1/comments/{id}/resolve</code></td><td>Mark thread as resolved</td></tr>
+</table>
+</section>
+
+<section id="gantt">
+<h2>Gantt Chart</h2>
+<p>Pure SVG-based Gantt chart for construction schedule visualization. Renders timelines, dependencies, milestones, and critical path directly in the browser without external libraries. Supports zooming from day-level to year-level views and exports to PDF/PNG for reporting.</p>
+<h3>Key Features</h3>
+<ul>
+<li><strong>SVG rendering</strong> &mdash; Crisp, scalable timeline visualization with smooth zoom from day to year level</li>
+<li><strong>Dependency lines</strong> &mdash; Visual arrows showing FS/SS/FF/SF relationships between activities</li>
+<li><strong>Critical path highlighting</strong> &mdash; Activities on the critical path are visually emphasized with distinct styling</li>
+<li><strong>Baseline comparison</strong> &mdash; Overlay planned (baseline) schedule against actual progress for variance analysis</li>
+<li><strong>Export</strong> &mdash; Export Gantt chart as PDF or PNG image for inclusion in reports and presentations</li>
+</ul>
+<h3>API Endpoints</h3>
+<table><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>GET</td><td><code>/api/v1/schedule/gantt/{project_id}</code></td><td>Get Gantt chart data (activities, dependencies)</td></tr>
+<tr><td>PATCH</td><td><code>/api/v1/schedule/activities/{id}</code></td><td>Update activity dates/progress</td></tr>
+<tr><td>POST</td><td><code>/api/v1/schedule/dependencies/</code></td><td>Create dependency</td></tr>
+</table>
+</section>
+
+<section id="regional-settings">
+<h2>Regional Settings</h2>
+<p>Configure timezone, currency, number format, and date format preferences per user and per project. Regional settings cascade from system defaults to project-level overrides to user-level preferences, ensuring each team member sees data formatted according to their locale.</p>
+<h3>Key Features</h3>
+<ul>
+<li><strong>Timezone</strong> &mdash; Set project timezone for schedule dates; user timezone for personal views</li>
+<li><strong>Currency</strong> &mdash; Primary and secondary currencies with configurable exchange rates</li>
+<li><strong>Number format</strong> &mdash; Decimal separator (. or ,), thousands separator, and decimal places for quantities and costs</li>
+<li><strong>Date format</strong> &mdash; DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD, and custom patterns</li>
+<li><strong>Measurement units</strong> &mdash; Metric (m, m2, m3, kg) or Imperial (ft, sf, cy, lb) with automatic conversion</li>
+</ul>
+<h3>API Endpoints</h3>
+<table><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>GET</td><td><code>/api/v1/settings/regional/</code></td><td>Get current regional settings</td></tr>
+<tr><td>PUT</td><td><code>/api/v1/settings/regional/</code></td><td>Update regional settings</td></tr>
+<tr><td>GET</td><td><code>/api/v1/settings/regional/timezones</code></td><td>List available timezones</td></tr>
+<tr><td>GET</td><td><code>/api/v1/settings/regional/currencies</code></td><td>List supported currencies</td></tr>
+</table>
+</section>
+
+<section id="module-system">
+<h2>Module System</h2>
+<p>Enable or disable platform modules to customize OpenConstructionERP for your workflow. Each module can be toggled independently without affecting other modules. Disabled modules are hidden from the UI, their API endpoints return 404, and their database tables remain intact for re-activation.</p>
+<h3>Key Features</h3>
+<ul>
+<li><strong>Toggle modules</strong> &mdash; Enable/disable any non-core module from the admin settings page</li>
+<li><strong>Dependency awareness</strong> &mdash; The system warns when disabling a module that other enabled modules depend on</li>
+<li><strong>UI adaptation</strong> &mdash; Sidebar, navigation, and dashboards automatically adjust to show only enabled modules</li>
+<li><strong>Data preservation</strong> &mdash; Disabling a module does not delete its data; re-enable to restore full access</li>
+<li><strong>Per-project overrides</strong> &mdash; Override system-level module settings for individual projects</li>
+</ul>
+<h3>API Endpoints</h3>
+<table><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>GET</td><td><code>/api/v1/modules/</code></td><td>List all modules with status</td></tr>
+<tr><td>PATCH</td><td><code>/api/v1/modules/{name}/toggle</code></td><td>Enable or disable a module</td></tr>
+<tr><td>GET</td><td><code>/api/v1/modules/{name}/dependencies</code></td><td>Check module dependencies</td></tr>
+</table>
+</section>
+
+<section id="regional-packs">
+<h2>Regional Packs</h2>
+<p>Pre-configured regional packages that set up classification standards, tax rules, cost database defaults, report templates, and regulatory compliance rules for specific markets. Install a regional pack to immediately configure the platform for your country or region.</p>
+<h3>Available Packs</h3>
+<table><tr><th>Pack</th><th>Region</th><th>Standards</th><th>Currency</th></tr>
+<tr><td><strong>US</strong></td><td>United States</td><td>MasterFormat, UniFormat, CSI</td><td>USD</td></tr>
+<tr><td><strong>DACH</strong></td><td>Germany, Austria, Switzerland</td><td>DIN 276, GAEB, VOB, HOAI</td><td>EUR/CHF</td></tr>
+<tr><td><strong>UK</strong></td><td>United Kingdom</td><td>NRM 1/2, BCIS, RICS, JCT</td><td>GBP</td></tr>
+<tr><td><strong>Russia</strong></td><td>Russia, CIS</td><td>GESN, FER, TER, SNIP</td><td>RUB</td></tr>
+<tr><td><strong>Middle East</strong></td><td>UAE, Saudi Arabia, Qatar</td><td>RICS, CESMM, FIDIC</td><td>AED/SAR/QAR</td></tr>
+<tr><td><strong>Asia-Pacific</strong></td><td>China, Japan, Australia</td><td>GB/T, AS 4000, JASS</td><td>CNY/AUD/JPY</td></tr>
+<tr><td><strong>India</strong></td><td>India</td><td>CPWD, IS standards, DSR</td><td>INR</td></tr>
+<tr><td><strong>LatAm</strong></td><td>Brazil, Mexico, Colombia</td><td>SINAPI, CMIC, local norms</td><td>BRL/MXN/COP</td></tr>
+</table>
+<h3>Key Features</h3>
+<ul>
+<li><strong>One-click install</strong> &mdash; Select a regional pack during onboarding or from Settings to configure all regional defaults</li>
+<li><strong>Classification trees</strong> &mdash; Pre-loaded standard classification hierarchies (e.g., DIN 276 cost groups, MasterFormat divisions)</li>
+<li><strong>Tax rules</strong> &mdash; Default VAT/GST rates, withholding tax rules, and retention percentage for the region</li>
+<li><strong>Report templates</strong> &mdash; Region-specific report formats (e.g., GAEB X83 for DACH, NRM-formatted cost plans for UK)</li>
+</ul>
+<h3>API Endpoints</h3>
+<table><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>GET</td><td><code>/api/v1/regional-packs/</code></td><td>List available regional packs</td></tr>
+<tr><td>POST</td><td><code>/api/v1/regional-packs/{name}/install</code></td><td>Install regional pack</td></tr>
+<tr><td>GET</td><td><code>/api/v1/regional-packs/{name}/details</code></td><td>Get pack contents and configuration</td></tr>
+</table>
+</section>
+
+<section id="import-export">
+<h2>Import/Export</h2>
+<p>Comprehensive data import and export capabilities across all modules. Import contacts, budgets, BOQs, and cost databases from Excel and CSV files with intelligent column mapping. Export project data to Excel, PDF, and CSV with customizable templates. All exports preserve formatting and include metadata headers.</p>
+<h3>Key Features</h3>
+<ul>
+<li><strong>Contacts import</strong> &mdash; Bulk import contacts from Excel/CSV with duplicate detection and merge options</li>
+<li><strong>Budget import</strong> &mdash; Import budget line items from Excel with cost code mapping and validation</li>
+<li><strong>BOQ import/export</strong> &mdash; Excel, CSV, GAEB XML (X83), and clipboard paste with column auto-detection</li>
+<li><strong>PDF export</strong> &mdash; Professional PDF reports for BOQs, cost reports, schedules, safety summaries, and meeting minutes</li>
+<li><strong>Excel export</strong> &mdash; Full data export with formulas, formatting, section grouping, and filter-ready headers</li>
+</ul>
+<h3>API Endpoints</h3>
+<table><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>POST</td><td><code>/api/v1/import/contacts</code></td><td>Import contacts from file</td></tr>
+<tr><td>POST</td><td><code>/api/v1/import/budget</code></td><td>Import budget from Excel</td></tr>
+<tr><td>POST</td><td><code>/api/v1/export/boq/{id}</code></td><td>Export BOQ (format: excel, pdf, gaeb, csv)</td></tr>
+<tr><td>POST</td><td><code>/api/v1/export/report</code></td><td>Generate and export report</td></tr>
+</table>
+</section>
+
+<section id="settings"><h2>Configuration</h2><div class="ss"><img src="https://raw.githubusercontent.com/datadrivenconstruction/OpenConstructionERP/main/docs/gifs/07_Role_Based_Onboarding.gif" alt="Role-Based Onboarding"><div class="ss-c">Role-based onboarding wizard &mdash; sign in as Admin / Estimator / Manager and the wizard pre-selects the right 17 of 46 modules for your role</div></div><div class="ss"><img src="https://raw.githubusercontent.com/datadrivenconstruction/OpenConstructionERP/main/docs/gifs/08_New_Project_Global.gif" alt="New Project, Any Region"><div class="ss-c">New project, any region &mdash; pick currency, classification standard, regional factor; map &amp; weather widgets come along automatically</div></div><div class="ss"><img src="/doc-06-settings.png" alt="Settings"><div class="ss-c">Settings page with profile management, Simple/Advanced interface mode toggle, and module configuration</div></div><table><tr><th>Variable</th><th>Default</th><th>Description</th></tr><tr><td><code>DATABASE_URL</code></td><td>sqlite:///./openestimate.db</td><td>Database (SQLite or PostgreSQL)</td></tr><tr><td><code>JWT_SECRET</code></td><td>dev-key</td><td>JWT secret (change in production!)</td></tr><tr><td><code>SEED_DEMO</code></td><td>true</td><td>Create demo accounts</td></tr><tr><td><code>VECTOR_BACKEND</code></td><td>lancedb</td><td>Vector search backend</td></tr></table></section>
+
+<section id="api"><h2>API Reference</h2><p>OpenConstructionERP exposes a comprehensive REST API that powers the frontend and can be used for integrations, automation, and custom workflows. Every action available in the UI — creating projects, editing BOQs, running AI estimates, searching costs — is available as an API endpoint. Interactive Swagger documentation with try-it-out buttons is available at <code>/api/docs</code> when running the backend.</p>
+<h3>Core Endpoints</h3>
+<table><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr><tr><td>POST</td><td><code>/api/v1/users/auth/login</code></td><td>Login</td></tr><tr><td>GET</td><td><code>/api/v1/projects/</code></td><td>List projects</td></tr><tr><td>GET</td><td><code>/api/v1/boq/boqs/?project_id=...</code></td><td>List BOQs</td></tr><tr><td>GET</td><td><code>/api/v1/costs/?q=concrete</code></td><td>Search costs</td></tr><tr><td>POST</td><td><code>/api/v1/ai/quick-estimate</code></td><td>AI estimation</td></tr><tr><td>POST</td><td><code>/api/v1/takeoff/cad-extract</code></td><td>CAD extraction</td></tr><tr><td>GET</td><td><code>/api/health</code></td><td>Health check</td></tr></table>
+<h3>v2.0 modules</h3>
+<table><tr><th>Module</th><th>Prefix</th><th>Description</th></tr>
+<tr><td>Contacts</td><td><code>/api/v1/contacts/</code></td><td>Contacts directory CRUD, import</td></tr>
+<tr><td>Tasks</td><td><code>/api/v1/tasks/</code></td><td>Task management, Kanban board</td></tr>
+<tr><td>RFI</td><td><code>/api/v1/rfis/</code></td><td>Requests for Information</td></tr>
+<tr><td>Finance</td><td><code>/api/v1/finance/</code></td><td>Invoices, budgets, payments, EVM</td></tr>
+<tr><td>Procurement</td><td><code>/api/v1/procurement/</code></td><td>Purchase orders, goods receipts</td></tr>
+<tr><td>Safety</td><td><code>/api/v1/safety/</code></td><td>Incidents, observations, risk scoring</td></tr>
+<tr><td>Meetings</td><td><code>/api/v1/meetings/</code></td><td>Minutes, agenda, action items</td></tr>
+<tr><td>Inspections</td><td><code>/api/v1/inspections/</code></td><td>Quality inspections, checklists</td></tr>
+<tr><td>NCR</td><td><code>/api/v1/ncr/</code></td><td>Non-conformance reports</td></tr>
+<tr><td>Submittals</td><td><code>/api/v1/submittals/</code></td><td>Multi-stage submittal review</td></tr>
+<tr><td>Correspondence</td><td><code>/api/v1/correspondence/</code></td><td>Communication register</td></tr>
+<tr><td>CDE</td><td><code>/api/v1/cde/</code></td><td>ISO 19650 document environment</td></tr>
+<tr><td>Transmittals</td><td><code>/api/v1/transmittals/</code></td><td>Document distribution</td></tr>
+<tr><td>BIM Hub</td><td><code>/api/v1/bim/</code></td><td>BIM models, elements, BOQ linkage</td></tr>
+<tr><td>Reporting</td><td><code>/api/v1/reporting/</code></td><td>KPI dashboard, report templates</td></tr>
+<tr><td>Notifications</td><td><code>/api/v1/notifications/</code></td><td>In-app notification system</td></tr>
+<tr><td>Comments</td><td><code>/api/v1/comments/</code></td><td>Threaded comments on any entity</td></tr>
+<tr><td>Gantt</td><td><code>/api/v1/schedule/gantt/</code></td><td>SVG schedule visualization</td></tr>
+<tr><td>Regional</td><td><code>/api/v1/settings/regional/</code></td><td>Timezone, currency, format prefs</td></tr>
+<tr><td>Modules</td><td><code>/api/v1/modules/</code></td><td>Enable/disable modules</td></tr>
+<tr><td>Regional Packs</td><td><code>/api/v1/regional-packs/</code></td><td>Install regional configurations</td></tr>
+<tr><td>Import/Export</td><td><code>/api/v1/import/</code> / <code>/api/v1/export/</code></td><td>Bulk data import and export</td></tr>
+</table>
+<p>See each module section above for detailed endpoint documentation with parameters and descriptions.</p></section>
+
+<section id="project-intelligence"><h2>Project Intelligence (PCI)</h2>
+<p>AI-powered project analysis that scores your project across <strong>9 weighted domains</strong> and generates a completeness score from 0 to 100 (grades A through F).</p>
+<h3>Domains &amp; Weights</h3>
+<ul>
+<li><strong>BOQ (30%)</strong> &mdash; Bill of Quantities completeness, pricing, resources</li>
+<li><strong>Validation (20%)</strong> &mdash; Quality check results, critical errors</li>
+<li><strong>Schedule (15%)</strong> &mdash; 4D schedule, activities, critical path</li>
+<li><strong>Cost Model (10%)</strong> &mdash; Budget, baseline, earned value</li>
+<li><strong>Takeoff (8%)</strong> &mdash; CAD/BIM files, quantity extraction</li>
+<li><strong>Risk (7%)</strong> &mdash; Risk register, mitigations, contingency</li>
+<li><strong>Tendering (5%)</strong> &mdash; Bid packages, comparisons</li>
+<li><strong>Documents (3%)</strong> &mdash; Uploaded files, categories covered</li>
+<li><strong>Reports (2%)</strong> &mdash; Generated reports, exports</li>
+</ul>
+<h3>Features</h3>
+<ul>
+<li><strong>Critical Gaps</strong> &mdash; Identifies issues sorted by severity (blocker, critical, warning, suggestion) with one-click fix actions</li>
+<li><strong>Achievements</strong> &mdash; Positive reinforcement for milestones reached</li>
+<li><strong>AI Recommendations</strong> &mdash; Connect Anthropic Claude, OpenAI, or Google Gemini in Settings for personalized advice</li>
+<li><strong>Role-based views</strong> &mdash; Estimator, Manager, and Explorer perspectives</li>
+</ul>
+<p><strong>API:</strong> <code>GET /api/v1/project_intelligence/score/?project_id=X</code> &mdash; returns overall score, domain scores, critical gaps, and achievements.</p>
+</section>
+
+<section id="user-management"><h2>User Management</h2>
+<p>Manage team members, roles, and per-module access control.</p>
+<h3>Roles</h3>
+<ul>
+<li><strong>Admin</strong> &mdash; Full access to all features, user management, system configuration</li>
+<li><strong>Manager</strong> &mdash; Project and team management, approvals, lock/unlock estimates</li>
+<li><strong>Editor</strong> &mdash; Create and edit content across all enabled modules</li>
+<li><strong>Viewer</strong> &mdash; Read-only access to all data</li>
+</ul>
+<h3>Module Access Matrix</h3>
+<p>Admins can configure per-user module visibility and access levels (None, View, Edit, Full) via the <strong>/users</strong> page. Custom role names can be assigned (e.g., "Site Engineer", "Cost Manager").</p>
+<h3>Features</h3>
+<ul>
+<li><strong>Invite users</strong> &mdash; Register new team members with role assignment</li>
+<li><strong>Activate/Deactivate</strong> &mdash; Control access without deleting accounts</li>
+<li><strong>Module presets</strong> &mdash; Full Access, View Only, Minimal quick-apply</li>
+</ul>
+</section>
+
+<section id="support"><h2>Support &amp; Contributing</h2><div class="g2"><div class="cd"><h4>Star on GitHub</h4><p><a href="https://adicc-uae.com" target="_blank">Star the repository</a> to help others discover the project.</p></div><div class="cd"><h4>YouTube channel</h4><p><a href="https://www.youtube.com/@datadrivenconstruction" target="_blank" rel="noopener">Subscribe</a> for release walkthroughs and tutorials. Start with the <a href="https://www.youtube.com/watch?v=X06cIaroAeI" target="_blank" rel="noopener">12-min product walkthrough</a>.</p></div><div class="cd"><h4>Report Issues</h4><p><a href="https://adicc-uae.com/issues" target="_blank">Open an issue</a> on GitHub.</p></div><div class="cd"><h4>Discussions</h4><p><a href="https://t.me/datadrivenconstruction" target="_blank">Join Telegram community</a> to ask questions.</p></div><div class="cd"><h4>Consulting</h4><p><a href="https://datadrivenconstruction.io/contact-support/" target="_blank">Contact us</a> for deployment and training.</p></div></div><p><strong>License:</strong> AGPL-3.0. Commercial licensing: <a href="mailto:info@datadrivenconstruction.io">info@datadrivenconstruction.io</a></p></section>
+</div>
+
+<div class="ft"><div class="ctr"><p><strong>OpenConstructionERP</strong></p><p>Created by <a href="https://www.linkedin.com/in/boikoartem/" target="_blank">Artem Boiko</a> / <a href="https://datadrivenconstruction.io" target="_blank">Data Driven Construction</a></p><p style="margin-top:12px;font-size:.75rem;color:#6b7280">2026 Data Driven Construction. AGPL-3.0</p></div></div>
+</body>
+</html>

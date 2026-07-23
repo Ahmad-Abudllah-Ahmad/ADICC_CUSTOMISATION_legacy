@@ -1,0 +1,4 @@
+# This file exists for legacy CI tooling that calls `pip install -r requirements.txt`.
+# The canonical install path is `pip install -e .[server]` from this directory,
+# which resolves dependencies from pyproject.toml. Keep this shim minimal.
+-e .[server]

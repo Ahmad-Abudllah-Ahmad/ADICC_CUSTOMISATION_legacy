@@ -1,0 +1,29 @@
+[package]
+name = "openconstructionerp-desktop"
+version = "11.11.1"
+description = "OpenConstructionERP Desktop, construction cost estimation and BOQ platform"
+authors = ["DataDrivenConstruction <info@datadrivenconstruction.io>"]
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-shell = "2"
+tauri-plugin-process = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+reqwest = { version = "0.12", features = ["json"] }
+portpicker = "0.1"
+
+# Native Win32 MessageBox for the startup-failure fail-safe. windows-sys is
+# already pulled in transitively (e.g. via dirs-sys/errno) at 0.59, so this adds
+# no new major version to the dependency graph.
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.59", features = ["Win32_UI_WindowsAndMessaging"] }
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]

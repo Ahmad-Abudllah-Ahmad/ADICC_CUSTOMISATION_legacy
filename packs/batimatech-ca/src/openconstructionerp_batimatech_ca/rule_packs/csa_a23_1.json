@@ -1,0 +1,27 @@
+{
+  "rule_pack_id": "csa_a23_1",
+  "name": "CSA A23.1 — Concrete Materials and Methods of Concrete Construction",
+  "name_fr-CA": "CSA A23.1 — Béton — Constituants et exécution des travaux",
+  "standard": "CSA A23.1:19",
+  "jurisdiction": "CA",
+  "regulator": "CSA Group",
+  "publication_year": 2019,
+  "applies_to": ["boq", "validation"],
+  "description": "Enforces the CSA A23.1 (materials and construction) clause set on every BOQ position with a concrete cost code: exposure class (C-1, C-2, C-3, C-4, F-1, F-2, N, A-1, A-2, A-3, A-4, S-1, S-2, S-3), compressive strength class, slump range, nominal aggregate size, air-content range, cementitious composition (Type GU/MS/HS/HE/LH) and curing regime must all be specified.",
+  "description_fr-CA": "Applique l'ensemble des clauses CSA A23.1 (constituants et exécution) sur chaque poste BOQ ayant un code de coût « béton » : classe d'exposition (C-1, C-2, C-3, C-4, F-1, F-2, N, A-1, A-2, A-3, A-4, S-1, S-2, S-3), classe de résistance à la compression, plage d'affaissement, calibre nominal du granulat, plage de teneur en air, composition du liant (Type GU/MS/HS/HE/LH) et régime de cure doivent tous être précisés.",
+  "severity_overrides": {
+    "csa_a23_1.exposure_class_required": "ERROR"
+  },
+  "enables_rule_ids": [
+    "csa_a23_1.exposure_class_required",
+    "csa_a23_1.compressive_strength_class_required",
+    "csa_a23_1.slump_range_specified",
+    "csa_a23_1.aggregate_nominal_size_specified",
+    "csa_a23_1.air_content_range_specified",
+    "csa_a23_1.cementitious_type_specified",
+    "csa_a23_1.curing_regime_specified",
+    "csa_a23_1.cold_weather_concreting_clause_documented",
+    "csa_a23_1.hot_weather_concreting_clause_documented",
+    "boq_quality.position_has_unit_rate"
+  ]
+}

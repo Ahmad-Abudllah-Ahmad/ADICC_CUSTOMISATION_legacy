@@ -1,0 +1,35 @@
+{
+  "$schema": "openconstructionerp.partner_pack.rule_pack/v1",
+  "slug": "vob_c_din_18331_concrete_works",
+  "display_name": "VOB/C DIN 18331 — Betonarbeiten (ATV)",
+  "description": "Validiert LV-Positionen für Betonarbeiten gegen die Allgemeinen Technischen Vertragsbedingungen VOB Teil C DIN 18331:2019-09. Prüft Abrechnungseinheiten, Nebenleistungen, Besondere Leistungen und Mengenermittlungsregeln.",
+  "standard": "VOB/C DIN 18331:2019-09",
+  "severity_default": "warning",
+  "category": "compliance",
+  "locale_default": "de",
+  "enables_rule_ids": [
+    "vob.din18331.abrechnungseinheit_correct",
+    "vob.din18331.nebenleistungen_not_separately_billed",
+    "vob.din18331.besondere_leistung_flagged",
+    "vob.din18331.formwork_separately_billed_m2",
+    "vob.din18331.rebar_separately_billed_kg",
+    "vob.din18331.concrete_billed_m3",
+    "vob.din18331.opening_deduction_threshold_2_5m2",
+    "vob.din18331.exposed_concrete_class_specified"
+  ],
+  "parameters": {
+    "concrete_unit": "m3",
+    "formwork_unit": "m2",
+    "rebar_unit": "kg",
+    "opening_deduction_threshold_m2": 2.5,
+    "exposed_concrete_classes": ["SB1", "SB2", "SB3", "SB4"]
+  },
+  "metadata": {
+    "applies_to": ["boq_position", "tender_document"],
+    "references": [
+      "VOB Teil C DIN 18331:2019-09 Betonarbeiten",
+      "VOB Teil C DIN 18299:2019-09 Allgemeine Regelungen für Bauarbeiten jeder Art",
+      "DBV-Merkblatt 'Sichtbeton' (Klassen SB1–SB4)"
+    ]
+  }
+}

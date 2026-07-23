@@ -1,0 +1,20 @@
+{
+  "rule_pack_id": "nrm_2_detailed_measurement",
+  "name": "RICS NRM 2 (2nd ed, 2021) — Detailed Measurement for Building Works",
+  "standard": "NRM 2 (2nd edition, 2021)",
+  "jurisdiction": "GB",
+  "description": "Enables OCERP built-in validation rules that enforce the RICS New Rules of Measurement 2 (2nd edition, 2021) measurement conventions: 41 work-section structure, units of measurement, item description requirements, tabulated rules of measurement per trade, and the treatment of preliminaries, dayworks, provisional sums and contingencies.",
+  "enables_rule_ids": [
+    "nrm2.work_section_code_valid",
+    "nrm2.unit_of_measurement_allowed",
+    "nrm2.item_description_complete",
+    "nrm2.preliminaries_section_a_present",
+    "nrm2.preliminaries_main_contractor_specific",
+    "nrm2.dayworks_section_present",
+    "nrm2.provisional_sums_defined_or_undefined_flagged",
+    "nrm2.contingency_sum_present",
+    "nrm2.quantity_decimal_precision",
+    "nrm2.cesmm_or_method_of_measurement_referenced",
+    "nrm2.work_section_completeness_per_trade"
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "rule_pack_id": "sbc_304_concrete",
+  "name": "SBC 304 — Concrete Structures",
+  "name_ar": "SBC 304 — المنشآت الخرسانية",
+  "standard": "Saudi Building Code 2018 — SBC 304 (Concrete)",
+  "jurisdiction": "SA",
+  "regulator": "Saudi Building Code National Committee (SBCNC)",
+  "publication_year": 2018,
+  "derives_from": ["ACI 318-14"],
+  "applies_to": ["projects", "boq", "validation"],
+  "description": "Enables OCERP built-in validation rules that enforce SBC 304 (Concrete) — KSA-specific durability requirements driven by high temperature, low humidity inland and aggressive sulphate/chloride exposure on the Gulf (Eastern Province) and Red Sea coasts: minimum concrete cover for sabkha/coastal exposure, low-heat cement for mass pours, hot-weather concreting plan (>35 degC), reinforcement detailing per ACI 318, and curing temperature limits.",
+  "description_ar": "تفعيل قواعد التحقق لإنفاذ متطلبات SBC 304 (الخرسانة) — متطلبات الديمومة الخاصة بالمملكة، الحد الأدنى للغطاء الخرساني للسبخات والمناطق الساحلية، خطة الصب في الطقس الحار، وتفاصيل التسليح.",
+  "severity_overrides": {},
+  "enables_rule_ids": [
+    "sbc304.exposure_class_assigned",
+    "sbc304.concrete_grade_min_for_exposure",
+    "sbc304.cover_min_for_sabkha_or_coastal",
+    "sbc304.water_cement_ratio_max_for_exposure",
+    "sbc304.low_heat_cement_for_mass_concrete",
+    "sbc304.hot_weather_concreting_plan_present",
+    "sbc304.curing_temperature_max_documented",
+    "sbc304.reinforcement_detailing_present",
+    "sbc304.chloride_content_max_referenced",
+    "sbc304.sulphate_resistant_cement_for_gulf_coast",
+    "sbc304.curing_duration_min_documented"
+  ]
+}

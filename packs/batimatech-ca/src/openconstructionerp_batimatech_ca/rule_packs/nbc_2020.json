@@ -1,0 +1,34 @@
+{
+  "rule_pack_id": "nbc_2020",
+  "name": "National Building Code of Canada 2020",
+  "name_fr-CA": "Code national du bâtiment du Canada 2020",
+  "standard": "NBC 2020",
+  "jurisdiction": "CA",
+  "regulator": "National Research Council Canada (Canadian Commission on Building and Fire Codes)",
+  "publication_year": 2020,
+  "applies_to": ["projects", "boq", "validation"],
+  "description": "Enables OCERP built-in validation rules that enforce National Building Code of Canada 2020 coverage across the 10 numbered Parts. One rule per major Part: general requirements (Part 1-2), fire protection / occupant safety / accessibility (Part 3), structural design (Part 4), environmental separation (Part 5), HVAC (Part 6), plumbing (Part 7), safety at construction sites (Part 8), housing & small buildings (Part 9) and energy efficiency (Part 10 / NECB reference).",
+  "description_fr-CA": "Active les règles de validation intégrées d'OCERP qui assurent la couverture du Code national du bâtiment du Canada 2020 sur les 10 Parties numérotées. Une règle par Partie majeure : exigences générales (Parties 1-2), protection incendie / sécurité / accessibilité (Partie 3), calcul des structures (Partie 4), séparation environnementale (Partie 5), CVCA (Partie 6), plomberie (Partie 7), sécurité aux chantiers (Partie 8), maisons et petits bâtiments (Partie 9) et efficacité énergétique (Partie 10 / référence CNÉB).",
+  "severity_overrides": {
+    "boq_quality.position_has_unit_rate": "ERROR",
+    "boq_quality.position_has_quantity": "ERROR"
+  },
+  "enables_rule_ids": [
+    "nbc2020.part1_scope_and_objectives_documented",
+    "nbc2020.part3_fire_protection_present",
+    "nbc2020.part3_occupant_safety_present",
+    "nbc2020.part3_accessibility_barrier_free_present",
+    "nbc2020.part4_structural_design_loads_documented",
+    "nbc2020.part4_seismic_category_assigned",
+    "nbc2020.part5_environmental_separation_envelope_present",
+    "nbc2020.part6_hvac_design_present",
+    "nbc2020.part7_plumbing_design_present",
+    "nbc2020.part8_construction_site_safety_plan_present",
+    "nbc2020.part9_housing_small_buildings_classification",
+    "nbc2020.part10_energy_efficiency_necb_reference",
+    "boq_quality.position_has_quantity",
+    "boq_quality.position_has_unit_rate",
+    "boq_quality.no_duplicate_ordinals",
+    "boq_quality.position_has_description"
+  ]
+}

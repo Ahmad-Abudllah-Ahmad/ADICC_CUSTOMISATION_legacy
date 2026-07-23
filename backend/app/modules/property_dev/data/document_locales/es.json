@@ -1,0 +1,144 @@
+{
+  "common": {
+    "page_of": "Página {page} de {total}",
+    "generated_at": "Generado el {timestamp} UTC",
+    "doc_ref": "Ref. doc.",
+    "developer": "Promotor",
+    "unit_code": "Código de Unidad",
+    "watermark_draft": "BORRADOR",
+    "currency": "Moneda",
+    "amount": "Importe",
+    "date": "Fecha",
+    "signature": "Firma",
+    "place": "Lugar",
+    "buyer_signature": "Firma del Comprador",
+    "developer_signature": "Firma del Promotor",
+    "witness": "Testigo"
+  },
+  "reservation_receipt": {
+    "title": "Recibo de Reserva",
+    "intro": "El presente recibo confirma la reserva del inmueble descrito a continuación. La señal ha sido recibida y la unidad se mantiene fuera del mercado hasta que expire el periodo de desistimiento o se firme el contrato de compraventa.",
+    "headings": {
+      "buyer": "Comprador",
+      "property": "Inmueble",
+      "amount_paid": "Importe Pagado",
+      "valid_until": "Válido Hasta",
+      "next_step": "Próximo Paso",
+      "reservation_number": "Nº de Reserva",
+      "cooling_off": "Periodo de Desistimiento",
+      "deposit_status": "Estado de la Señal",
+      "plot_details": "Detalles de la Unidad"
+    },
+    "next_step_text": "Dentro de {days} días, el Comprador debe firmar el contrato de compraventa y abonar el siguiente plazo, o esta reserva expirará.",
+    "cooling_off_text": "{days} días desde la recepción de este documento.",
+    "footer_note": "La señal es totalmente reembolsable únicamente durante el periodo de desistimiento previsto por la jurisdicción. Transcurrido este plazo, se aplican las reglas de pérdida correspondientes."
+  },
+  "sales_contract": {
+    "title": "Contrato de Compraventa",
+    "subtitle": "Contrato Nº {number}",
+    "preamble": "El presente contrato de compraventa (el «Contrato») se celebra en la fecha indicada a continuación entre el Promotor y el/los Comprador(es) listado(s) abajo, para la venta del inmueble identificado en el mismo.",
+    "headings": {
+      "parties": "Partes del Contrato",
+      "property": "El Inmueble",
+      "price": "Precio de Compra",
+      "payment_schedule": "Calendario de Pagos",
+      "clauses": "Condiciones",
+      "instalments": "Plazos",
+      "signatures": "Firmas",
+      "co_ownership": "Copropiedad",
+      "regulatory": "Información Regulatoria",
+      "annexes": "Anexos"
+    },
+    "parties_intro": "Los Compradores adquieren el inmueble conjuntamente en los porcentajes de propiedad indicados a continuación. Todas las partes son solidariamente responsables de las obligaciones del Contrato, salvo indicación expresa en contrario.",
+    "instalment_columns": {
+      "sequence": "Nº",
+      "milestone": "Hito",
+      "due_date": "Vencimiento",
+      "amount": "Importe",
+      "currency": "Moneda"
+    },
+    "party_columns": {
+      "name": "Nombre",
+      "role": "Rol",
+      "ownership_pct": "Propiedad %",
+      "email": "Email"
+    },
+    "property_columns": {
+      "plot_number": "Nº Unidad",
+      "development": "Promoción",
+      "area_m2": "Superficie (m²)",
+      "house_type": "Tipo"
+    },
+    "price_label": "Precio Total",
+    "breakdown_label": "Desglose del Precio",
+    "signature_note": "Firmado en {place} el {date}. Al firmar abajo, el Comprador y el Promotor confirman haber leído, comprendido y aceptado las condiciones del Contrato, incluidos todos los anexos."
+  },
+  "payment_receipt": {
+    "title": "Recibo de Pago",
+    "intro": "El presente recibo acredita el pago de un plazo conforme al contrato de compraventa referenciado a continuación.",
+    "headings": {
+      "spa_ref": "Contrato Nº",
+      "instalment": "Plazo",
+      "milestone": "Hito",
+      "amount_paid": "Importe Pagado",
+      "payment_method": "Método de Pago",
+      "payment_ref": "Referencia",
+      "paid_at": "Fecha de Pago",
+      "outstanding": "Saldo Pendiente"
+    },
+    "footer_note": "Este recibo se genera automáticamente y es válido sin firma manual. Consérvelo para sus registros."
+  },
+  "handover_certificate": {
+    "title": "Acta de Entrega",
+    "intro": "La presente acta documenta la entrega del inmueble por parte del Promotor al/los Comprador(es). El Comprador acepta la unidad sujeta a la lista de incidencias y a las condiciones de garantía adjuntas.",
+    "headings": {
+      "spa_ref": "Contrato Nº",
+      "completed_at": "Fecha de Entrega",
+      "snag_count": "Incidencias Abiertas",
+      "warranty_period": "Periodo de Garantía",
+      "keys_handed_over": "Llaves Entregadas",
+      "buyer_acceptance": "Aceptación del Comprador",
+      "developer_declaration": "Declaración del Promotor"
+    },
+    "developer_declaration_text": "El Promotor confirma por la presente que el inmueble ha sido construido conforme al Contrato de compraventa, que se ha entregado toda la documentación requerida al Comprador, y que las garantías estructural y de acabados comienzan en la fecha de esta acta.",
+    "buyer_acceptance_text": "El Comprador acepta la entrega del inmueble con sujeción a la lista de incidencias adjunta. El Comprador acusa recibo de las llaves, manuales y toda la documentación requerida.",
+    "snag_note": "Las incidencias abiertas serán subsanadas por el Promotor en un plazo razonable, conforme a la cláusula del Contrato de subsanación de defectos."
+  },
+  "warranty_certificate": {
+    "title": "Certificado de Garantía",
+    "intro": "El presente Certificado establece las obligaciones de garantía del Promotor respecto al inmueble entregado al/los Comprador(es) en la fecha indicada a continuación.",
+    "headings": {
+      "spa_ref": "Contrato Nº",
+      "handover_date": "Fecha de Entrega",
+      "structural": "Garantía Estructural",
+      "finishing": "Garantía de Acabados",
+      "structural_period": "Periodo Estructural",
+      "finishing_period": "Periodo de Acabados",
+      "warranty_expiry": "Vencimiento",
+      "scope": "Alcance",
+      "exclusions": "Exclusiones"
+    },
+    "structural_text": "El Promotor garantiza la integridad estructural del inmueble - incluidos los elementos portantes, cimentación e impermeabilización - durante un periodo de {years} años desde la fecha de entrega.",
+    "finishing_text": "El Promotor garantiza los acabados - incluida pintura, sanitarios, electrodomésticos instalados por el Promotor y elementos cosméticos menores - durante un periodo de {years} año(s) desde la entrega.",
+    "exclusions_text": "Quedan excluidos los daños por uso indebido, las modificaciones realizadas por el Comprador o terceros, el desgaste natural, los supuestos de fuerza mayor y los elementos cubiertos por garantías de fabricante separadas.",
+    "claim_procedure": "Para presentar una reclamación, el Comprador debe remitir al Promotor, dentro del periodo de garantía, una notificación escrita describiendo el defecto y aportando pruebas razonables."
+  },
+  "noc": {
+    "title": "Certificado de No Objeción",
+    "subtitle": "Para la Reventa de la Unidad",
+    "intro": "El presente Certificado de No Objeción es emitido por el Promotor y confirma que no existen obligaciones pendientes del Comprador que impidan la reventa de la unidad identificada a continuación.",
+    "headings": {
+      "spa_ref": "Contrato Nº",
+      "requested_by": "Solicitado por",
+      "issued_to": "Emitido a",
+      "purpose": "Finalidad",
+      "validity": "Validez",
+      "outstanding_balance": "Saldo Pendiente",
+      "transfer_fee": "Tasa de Transferencia"
+    },
+    "validity_text": "El presente certificado es válido durante {days} días desde la fecha de emisión. Transcurrido este plazo, deberá solicitarse uno nuevo.",
+    "purpose_text": "Venta de la unidad a un tercer comprador, sujeta a los procedimientos estándar de transferencia del Promotor.",
+    "no_outstanding": "Todos los plazos vencidos a la fecha del presente certificado han sido pagados íntegramente. No constan pagos pendientes en el contrato.",
+    "developer_statement": "El Promotor concede por la presente, con sujeción a la tasa y procedimientos estándar de transferencia, autorización al Comprador para transferir la propiedad de la unidad a un tercero. Este Certificado no implica renuncia a derecho alguno del Promotor en virtud del Contrato de compraventa."
+  }
+}

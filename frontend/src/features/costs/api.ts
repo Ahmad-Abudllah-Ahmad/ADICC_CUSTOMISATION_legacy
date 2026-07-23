@@ -1,0 +1,451 @@
+// DDC-CWICR-OE: DataDrivenConstruction · OpenConstructionERP
+// Copyright (c) 2026 Artem Boiko / DataDrivenConstruction
+
+import { apiDelete, apiGet, apiPatch, apiPost } from '@/shared/lib/api';
+
+/* ── CWICR abstract-resource variant types ─────────────────────────────── */
+
+/**
+ * One concrete price option behind a CWICR rate code.  Imported from the
+ * `price_abstract_resource_*` columns of `*_workitems_costs_resources_DDC_CWICR.parquet`.
+ *
+ * Stored on `CostItem.metadata_['variants']` as a pass-through list - no
+ * dedicated table, no Alembic migration. Surfaced in the Cost Database
+ * browser (variant detail panel) and the BOQ "Apply position" picker.
+ */
+export interface CostVariant {
+  /** Position in the original bullet-separated list (0-based). */
+  index: number;
+  /** Variable-part label only (e.g. "C25/30 delivered"). This is what the
+   *  picker renders per row - the shared common base is shown once as a
+   *  picker header (see ``VariantStats.common_start``). Truncated to 200
+   *  chars upstream. */
+  label: string;
+  /** ``common_start + label`` joined with a space, truncated to 400 chars.
+   *  This is what gets stamped onto the BOQ resource row when the variant
+   *  is applied - it replaces the position's default description so the
+   *  estimator sees the actual chosen material/option, not the abstract
+   *  rate-code description. Optional for backward compatibility with
+   *  pre-v2.6.30 imports that didn't capture ``common_start``. */
+  full_label?: string;
+  /** Variant price in the cost item's currency. */
+  price: number;
+  /** Optional per-unit price (rate normalized by unit). `null` when upstream column missing. */
+  price_per_unit: number | null;
+  /** Optional grouping key - when the catalog mixes 2+ variant families
+   *  (e.g. concrete grade × reinforcement type) the backend stamps a
+   *  per-variant ``group`` so the picker can render an accordion instead
+   *  of a single flat list. Absent for single-group catalogs (the common
+   *  case today), in which case the picker falls back to flat rendering. */
+  group?: string;
+  /** Localized mirror of `group` - same fallback semantics as
+   *  `VariantStats.group_localized`. */
+  group_localized?: string;
+}
+
+/**
+ * Aggregated statistics for the variant set on a single cost item.  Lifted
+ * straight from CWICR's `price_abstract_resource_est_price_*` summary columns;
+ * `count` is the number of valid `CostVariant` entries we kept;
+ * `position_count` is the total number of real estimates that used this rate
+ * code (frequency signal across all variants combined).
+ *
+ * `unit_localized` / `group_localized` are added by the backend translation
+ * layer (`backend/app/modules/costs/translations`) when the request carries
+ * a `?locale=` query param or `Accept-Language` header that maps to a
+ * shipped translation file.  Render with the standard fallback chain:
+ * `unit_localized || unit`.
+ */
+export interface VariantStats {
+  min: number;
+  max: number;
+  mean: number;
+  median: number;
+  unit: string;
+  group: string;
+  count: number;
+  position_count?: number;
+  /** Localized mirror of `unit` - present when the API was called with
+   *  a known locale. Falls back to the German source when the locale is
+   *  unsupported or the token has no translation. */
+  unit_localized?: string;
+  /** Localized mirror of `group`. Same fallback semantics as `unit_localized`. */
+  group_localized?: string;
+  /** Shared base name for the abstract resource (e.g. "Ready-mix concrete").
+   *  Rendered once as a picker header so each variant row can show only
+   *  the distinguishing variable part. Optional - empty for pre-v2.6.30
+   *  imports that didn't capture this column. */
+  common_start?: string;
+}
+
+/**
+ * Frozen copy of the variant choice persisted on a BOQ position so its
+ * unit_rate cannot be silently rewritten by a later cost-database re-import.
+ * Stamped server-side by `_stamp_variant_snapshot` in
+ * `backend/app/modules/boq/service.py`.  Read-only on the client.
+ */
+export interface VariantSnapshot {
+  /** Variant label or "average" / "median" when the user accepted the auto-suggested rate. */
+  label: string;
+  /** Unit rate as it was at the moment of the choice. */
+  rate: number;
+  /** ISO 4217 currency captured alongside the rate. */
+  currency: string;
+  /** UTC ISO-8601 timestamp of the freeze. */
+  captured_at: string;
+  /** Provenance flag: explicit user pick vs auto-suggested mean / median. */
+  source: 'user_pick' | 'default_mean' | 'default_median';
+}
+
+/**
+ * Default-selection strategy hint persisted on the BOQ position when the user
+ * applied an abstract-resource cost item without explicitly opening the
+ * picker.  Drives the softer "default · choose to refine" hint in the BOQ
+ * row marker (vs the bolder "Variant: foo" label for a deliberate pick).
+ */
+export type VariantDefault = 'mean' | 'median';
+
+/**
+ * The shape of `CostItem.metadata_` as it actually flows from the backend.
+ * Numeric cost-breakdown fields (`labor_cost`, ...) ride alongside the
+ * optional variant payload.  Kept open via the index signature so module
+ * extensions can attach extra keys without a type break.
+ */
+export interface CostItemMetadata {
+  labor_cost?: number;
+  equipment_cost?: number;
+  material_cost?: number;
+  labor_hours?: number;
+  workers_per_unit?: number;
+  variants?: CostVariant[];
+  variant_stats?: VariantStats;
+  // Open-ended - module extensions may attach additional keys.
+  [key: string]: unknown;
+}
+
+/* ── User-owned cost catalogs ──────────────────────────────────────────── */
+
+/**
+ * A user-owned cost catalog ("my price book"): a named container with a
+ * REQUIRED currency that imported / manually created cost items belong to.
+ * Mirrors `CostCatalogResponse` in `backend/app/modules/costs/schemas.py`.
+ */
+export interface CostCatalog {
+  id: string;
+  name: string;
+  description: string | null;
+  currency: string;
+  /** Provenance: 'manual' (created in the UI) or 'import' (created inline
+   *  by the file importer). */
+  source: string;
+  created_by: string | null;
+  /** Live count of active items in this catalog. */
+  item_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Body for `POST /v1/costs/catalogs/`. Currency is required (ISO 4217). */
+export interface CostCatalogCreateBody {
+  name: string;
+  currency: string;
+  description?: string | null;
+}
+
+/** Body for `PATCH /v1/costs/catalogs/{id}`. A currency change is rejected
+ *  with 409 while the catalog has items (rates would be silently
+ *  relabelled). */
+export interface CostCatalogUpdateBody {
+  name?: string;
+  description?: string | null;
+  currency?: string;
+}
+
+/** Delete mode for `DELETE /v1/costs/catalogs/{id}`: `keep_items` detaches
+ *  the items (they stay in the global cost table); `delete_items`
+ *  soft-deletes them together with the catalog. */
+export type CatalogDeleteMode = 'keep_items' | 'delete_items';
+
+/** GET /v1/costs/catalogs/ - all catalogs with live item counts. */
+export async function fetchCostCatalogs(): Promise<CostCatalog[]> {
+  return apiGet<CostCatalog[]>('/v1/costs/catalogs/');
+}
+
+/** POST /v1/costs/catalogs/ - create a catalog (name + currency required). */
+export async function createCostCatalog(
+  body: CostCatalogCreateBody,
+): Promise<CostCatalog> {
+  return apiPost<CostCatalog, CostCatalogCreateBody>('/v1/costs/catalogs/', body);
+}
+
+/** PATCH /v1/costs/catalogs/{id} - rename / re-describe / re-currency. */
+export async function updateCostCatalog(
+  id: string,
+  body: CostCatalogUpdateBody,
+): Promise<CostCatalog> {
+  return apiPatch<CostCatalog, CostCatalogUpdateBody>(`/v1/costs/catalogs/${id}`, body);
+}
+
+/** DELETE /v1/costs/catalogs/{id}?mode=... - returns the affected item count. */
+export async function deleteCostCatalog(
+  id: string,
+  mode: CatalogDeleteMode,
+): Promise<{ deleted: string; mode: string; items_affected: number }> {
+  return apiDelete<{ deleted: string; mode: string; items_affected: number }>(
+    `/v1/costs/catalogs/${id}?mode=${mode}`,
+  );
+}
+
+/* ── CWICR matcher types (T12) ─────────────────────────────────────────── */
+
+/** A single ranked CWICR match returned by the matcher API. */
+export interface CwicrMatchResult {
+  cost_item_id: string;
+  code: string;
+  description: string;
+  unit: string;
+  unit_rate: number;
+  currency: string;
+  /** 0..1 - higher is a stronger match. */
+  score: number;
+  /** Channel that produced the score: 'lexical' | 'semantic' | 'hybrid'. */
+  source: string;
+  /**
+   * Optional variant count when the matched CostItem carries
+   * `metadata_.variant_stats.count >= 2`.  Present only when the backend
+   * MatchResult schema is extended to include it; absent until then,
+   * which makes the variant badge in CwicrMatchPanel a no-op.
+   */
+  variant_count?: number;
+  /** Optional min variant price - used for the badge tooltip. */
+  variant_min?: number;
+  /** Optional max variant price - used for the badge tooltip. */
+  variant_max?: number;
+  /**
+   * Set by `CwicrMatchPanel` after the user picks a CWICR variant so the
+   * parent `onApply` handler can write `metadata.variant` on the BOQ
+   * position and append the `(Variant: …)` description suffix.  Absent
+   * when the matched cost item has no variants or the user applied
+   * directly without going through the picker.
+   */
+  applied_variant?: {
+    label: string;
+    price: number;
+    index: number;
+  };
+}
+
+/** Matcher mode - pure-lexical is always available, semantic requires the
+ *  backend `[semantic]` extra.  We default to 'lexical' on the frontend so
+ *  unconfigured deployments don't surface "fell back to lexical" warnings. */
+export type CwicrMatchMode = 'lexical' | 'semantic' | 'hybrid';
+
+export interface CwicrMatchRequest {
+  query: string;
+  unit?: string;
+  lang?: string;
+  top_k?: number;
+  mode?: CwicrMatchMode;
+  region?: string;
+}
+
+export interface CwicrMatchFromPositionRequest {
+  position_id: string;
+  top_k?: number;
+  mode?: CwicrMatchMode;
+  lang?: string;
+  region?: string;
+}
+
+/** POST /api/v1/costs/match/ - ranked CWICR matches for a free-form query. */
+export async function matchCwicr(
+  body: CwicrMatchRequest,
+): Promise<CwicrMatchResult[]> {
+  return apiPost<CwicrMatchResult[], CwicrMatchRequest>(
+    '/v1/costs/match/',
+    body,
+  );
+}
+
+/** POST /api/v1/costs/match-from-position/ - same matcher, resolves the
+ *  query from an existing BOQ position.  Returns 404 if the position id
+ *  does not exist (the api helper raises). */
+export async function matchCwicrFromPosition(
+  body: CwicrMatchFromPositionRequest,
+): Promise<CwicrMatchResult[]> {
+  return apiPost<CwicrMatchResult[], CwicrMatchFromPositionRequest>(
+    '/v1/costs/match-from-position/',
+    body,
+  );
+}
+
+/* ── Cost Intelligence (v3.12.0 - Stream B) ────────────────────────────── */
+
+/** Green / yellow / red confidence band on a cost item.  Mirrors
+ *  ``backend/app/modules/costs/intelligence.py::classify_certainty``. */
+export type CertaintyBand = 'green' | 'yellow' | 'red';
+
+/** Response shape for ``GET /v1/costs/{id}/certainty/``. */
+export interface CertaintyBadge {
+  cost_item_id: string;
+  frequency: number;
+  age_days: number;
+  source: string;
+  confidence_badge: CertaintyBand;
+  /** ISO-8601 timestamp of the most recent use, or null when never used. */
+  last_used_at: string | null;
+  // Price-date freshness (optional; absent when the rate carries no price
+  // date). Mirrors ``service.price_freshness`` on the backend and is
+  // independent of usage: a heavily-used but long-unpriced rate still flags.
+  /** Day the price was last set or verified (ISO date), or null when unknown. */
+  price_as_of?: string | null;
+  /** Whole days since ``price_as_of``, or null when there is no price date. */
+  price_age_days?: number | null;
+  /** True when the price has aged at or past the staleness horizon. */
+  reprice_due?: boolean;
+  /** Green/yellow/red by price age, or null when there is no price date. */
+  price_freshness_band?: CertaintyBand | null;
+  /** The re-price-due horizon in days that was applied. */
+  staleness_horizon_days?: number | null;
+  /** Escalated one-click reprice value (Decimal as string); set only when
+   *  ``reprice_due``. */
+  suggested_reprice_value?: string | null;
+}
+
+/** Response shape for ``GET /v1/costs/regional-adjust/``. */
+export interface RegionalAdjustResponse {
+  region: string;
+  category: string;
+  base_rate: number;
+  factor_applied: number;
+  adjusted_rate: number;
+  source: string;
+  effective_date: string | null;
+}
+
+/** Response shape for ``GET /v1/costs/regional-indices/``. */
+export interface RegionalIndexRow {
+  id: string;
+  region_code: string;
+  category: string;
+  subcategory: string | null;
+  factor: number;
+  source: string;
+  effective_date: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Request body for ``POST /v1/costs/{id}/record-usage/``. */
+export interface RecordUsageRequest {
+  project_id: string;
+  context: 'boq' | 'assembly' | 'tender';
+  unit_rate_at_use: number;
+}
+
+/** Fetch the certainty badge for a cost item.  Returns null on 404 so
+ *  the caller can render an "unknown" pill without throwing. */
+export async function fetchCertainty(
+  costItemId: string,
+): Promise<CertaintyBadge | null> {
+  try {
+    return await apiGet<CertaintyBadge>(`/v1/costs/${costItemId}/certainty/`);
+  } catch (err) {
+    if (err instanceof Error && /404/.test(err.message)) {
+      return null;
+    }
+    throw err;
+  }
+}
+
+/** Preview an adjusted rate for a different region. */
+export async function previewRegionalAdjust(args: {
+  region: string;
+  category: string;
+  baseRate: number;
+  subcategory?: string;
+}): Promise<RegionalAdjustResponse> {
+  const params = new URLSearchParams({
+    region: args.region,
+    category: args.category,
+    base_rate: String(args.baseRate),
+  });
+  if (args.subcategory) params.set('subcategory', args.subcategory);
+  return apiGet<RegionalAdjustResponse>(
+    `/v1/costs/regional-adjust/?${params.toString()}`,
+  );
+}
+
+/** Enumerate every regional index row on file for ``region``. */
+export async function listRegionalIndices(
+  region: string,
+): Promise<RegionalIndexRow[]> {
+  const params = new URLSearchParams({ region });
+  return apiGet<RegionalIndexRow[]>(
+    `/v1/costs/regional-indices/?${params.toString()}`,
+  );
+}
+
+/** Batch-fetch usage counts for a page of cost items in one request.
+ *  Returns ``{cost_item_id: count}``; ids with zero recorded uses are
+ *  omitted by the backend (treat a missing id as 0). Powers the "used in N
+ *  estimates" indicator on the Cost Database browser. */
+export async function fetchUsageCounts(
+  ids: string[],
+): Promise<Record<string, number>> {
+  if (ids.length === 0) return {};
+  return apiPost<Record<string, number>, { ids: string[] }>(
+    '/v1/costs/usage-counts/',
+    { ids },
+  );
+}
+
+/** Record a usage event so the next certainty fetch reflects it. */
+export async function recordCostItemUsage(
+  costItemId: string,
+  body: RecordUsageRequest,
+): Promise<{ id: string; certainty: CertaintyBadge }> {
+  return apiPost<
+    { id: string; certainty: CertaintyBadge },
+    RecordUsageRequest
+  >(`/v1/costs/${costItemId}/record-usage/`, body);
+}
+
+/* ── Cost benchmark: own-portfolio cost-per-m2 distribution ──────────────
+ * POST /v1/costs/benchmark/ positions a cost-per-m2 value against the
+ * tenant's OWN past projects (each project contributes BOQ total / recorded
+ * area). Money figures are decimal strings per the money rule. own_portfolio
+ * and percentile_vs_own are null when the tenant has no project carrying both
+ * a cost and an area - an honest empty state, still a 200. */
+export interface CostBenchmarkRequest {
+  building_type?: string | null;
+  region?: string | null;
+  currency?: string | null;
+  /** Sent as a decimal string so no precision is lost through Number. */
+  cost_per_m2?: string | null;
+}
+
+export interface CostBenchmarkOwnPortfolio {
+  project_count: number;
+  min: string;
+  p25: string;
+  median: string;
+  p75: string;
+  max: string;
+  confidence: 'high' | 'medium' | 'low';
+  note: string;
+}
+
+export interface CostBenchmarkResponse {
+  currency: string;
+  own_portfolio: CostBenchmarkOwnPortfolio | null;
+  /** Where the supplied value sits in the own-portfolio distribution (0-100). */
+  percentile_vs_own: number | null;
+  explanation: string;
+}
+
+export function fetchCostBenchmark(
+  body: CostBenchmarkRequest,
+): Promise<CostBenchmarkResponse> {
+  return apiPost<CostBenchmarkResponse, CostBenchmarkRequest>('/v1/costs/benchmark/', body);
+}

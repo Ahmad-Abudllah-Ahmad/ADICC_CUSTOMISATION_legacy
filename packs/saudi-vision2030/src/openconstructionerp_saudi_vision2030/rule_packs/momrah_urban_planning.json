@@ -1,0 +1,33 @@
+{
+  "rule_pack_id": "momrah_urban_planning",
+  "name": "MoMRAH — Urban Planning & Balady Municipal Permitting",
+  "name_ar": "وزارة الشؤون البلدية والقروية والإسكان — التخطيط العمراني وتراخيص بلدي",
+  "standard": "MoMRAH Urban Planning Regulations + Balady E-Service (issuance of building permits, occupancy certificates, demolition permits)",
+  "jurisdiction": "SA",
+  "regulator": "Ministry of Municipal, Rural Affairs and Housing (MoMRAH) — and the 17 municipal Amanahs (Riyadh / Makkah / Madinah / Jeddah / Eastern / Asir / etc.)",
+  "publication_year": 2023,
+  "applies_to": ["projects", "boq", "validation", "submittals"],
+  "description": "Enables OCERP built-in validation rules that check submittals against MoMRAH municipal urban-planning requirements and the Balady portal building-permit workflow: zoning classification per Amanah master plan, setback compliance, FAR/built-up area ratios, parking provision per use class (residential / commercial / industrial / mixed-use), green-area minimum (Vision 2030 Quality of Life target), required attachments for Balady (architectural drawings, structural drawings, MEP, Civil Defense approval, soil report), and MoMRAH contractor classification grade gate (Grades 1-5 limit contract value eligibility).",
+  "description_ar": "تفعيل قواعد التحقق وفق متطلبات وزارة الشؤون البلدية والقروية والإسكان وبوابة بلدي — التصنيف، الارتدادات، نسبة البناء، مواقف السيارات، والمرفقات المطلوبة لإصدار رخصة البناء.",
+  "severity_overrides": {
+    "momrah.zoning_classification_assigned": "ERROR",
+    "momrah.balady_permit_attachments_complete": "ERROR"
+  },
+  "enables_rule_ids": [
+    "momrah.zoning_classification_assigned",
+    "momrah.setback_front_compliant",
+    "momrah.setback_side_compliant",
+    "momrah.setback_rear_compliant",
+    "momrah.far_within_zone_limit",
+    "momrah.built_up_area_ratio_compliant",
+    "momrah.parking_provision_per_use_class",
+    "momrah.green_area_minimum_pct",
+    "momrah.height_envelope_within_zone_limit",
+    "momrah.balady_permit_attachments_complete",
+    "momrah.civil_defense_approval_referenced",
+    "momrah.contractor_classification_grade_disclosed",
+    "momrah.contractor_grade_meets_contract_value_threshold",
+    "momrah.soil_investigation_report_attached",
+    "momrah.amanah_master_plan_reference_present"
+  ]
+}

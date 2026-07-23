@@ -1,0 +1,33 @@
+{
+  "rule_pack_id": "is_456_concrete",
+  "name": "IS 456:2000 — Plain & Reinforced Concrete (with amendments)",
+  "name_hi": "आईएस 456:2000 — सादा एवं प्रबलित कंक्रीट (संशोधनों सहित)",
+  "standard": "IS 456:2000",
+  "jurisdiction": "IN",
+  "regulator": "Bureau of Indian Standards (BIS)",
+  "publication_year": 2000,
+  "latest_amendment_year": 2021,
+  "applies_to": ["boq", "validation", "structural-design"],
+  "complementary_codes": [
+    "IS 13920:2016 (Ductile Detailing of RCC Subjected to Seismic Forces)",
+    "IS 1893-1:2016 + Parts 2-5 (Seismic Design)",
+    "IS 875 Parts 1-5:1987 (Design Loads — DL/IL/WL/SL/special)",
+    "SP 16 + SP 34 (RCC design aids)"
+  ],
+  "description": "Enables OCERP built-in validation rules that check concrete BOQ items and structural details against IS 456:2000 plus latest amendments — grade designation (M-series), minimum cement content per exposure class, durability requirements, nominal cover, max water/cement ratio, aggregate size, workability slump, curing period, and ductile-detailing prerequisites where IS 13920 applies.",
+  "description_hi": "कंक्रीट बीओक्यू मदों एवं संरचनात्मक विवरण की आईएस 456:2000 + संशोधनों के अनुसार जाँच।",
+  "enables_rule_ids": [
+    "is456.concrete_grade_designation_valid",
+    "is456.minimum_cement_content_met",
+    "is456.exposure_class_specified",
+    "is456.nominal_cover_per_exposure",
+    "is456.max_water_cement_ratio_ok",
+    "is456.aggregate_size_specified",
+    "is456.workability_slump_specified",
+    "is456.curing_period_specified",
+    "is456.amendment_5_2021_referenced",
+    "is456.is_13920_ductile_detailing_when_seismic",
+    "is456.is_1893_seismic_design_basis_present",
+    "is456.is_875_loads_basis_present"
+  ]
+}

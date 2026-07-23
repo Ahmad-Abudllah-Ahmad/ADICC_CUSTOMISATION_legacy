@@ -1,0 +1,1318 @@
+// DDC-CWICR-OE: DataDrivenConstruction · OpenConstructionERP
+// Copyright (c) 2026 Artem Boiko / DataDrivenConstruction
+import type {
+  ColDef,
+  ITooltipParams,
+  ValueFormatterParams,
+  ValueGetterParams,
+  ValueSetterParams,
+} from 'ag-grid-community';
+import {
+  convertToBase,
+  fmtWithCurrency,
+  hasContributingResources,
+  resourceAwareTotalInBase,
+} from '../boqHelpers';
+import type { DisplayQuantityApi } from '@/shared/hooks/useDisplayQuantity';
+import { unitColumnValueSetter } from './cellEditors';
+import {
+  buildFormulaContext,
+  evaluateFormulaStrict,
+  isFormula,
+  type FormulaContext,
+  type FormulaVariable,
+} from './formula';
+import type { Position } from '../api';
+
+/**
+ * How the Material / Labor / Equipment cost-driver split is shown in the BOQ
+ * grid. Driven by one tri-state toolbar button so an estimator who does not
+ * work with the resource breakdown can remove it completely:
+ *  - `pill`    compact inline "55% MAT · 35% LAB · 10% EQU" badge in the
+ *              description cell (default; no extra columns).
+ *  - `columns` three dedicated, sortable percentage columns (the pill is
+ *              hidden so the same figures are not shown twice).
+ *  - `off`     neither pill nor columns.
+ */
+export type ResourceSplitMode = 'pill' | 'columns' | 'off';
+
+/** Toolbar cycle order: pill -> columns -> off -> pill. */
+export function nextResourceSplitMode(mode: ResourceSplitMode): ResourceSplitMode {
+  return mode === 'pill' ? 'columns' : mode === 'columns' ? 'off' : 'pill';
+}
+
+export interface BOQColumnContext {
+  currencySymbol: string;
+  currencyCode: string;
+  locale: string;
+  fmt: Intl.NumberFormat;
+  t: (key: string, opts?: Record<string, string>) => string;
+  /**
+   * Project-level FX rates. Read off the AG Grid ``params.context``
+   * (the same `gridContext` BOQGrid builds). Used by the total column's
+   * `valueGetter` to rebase positions priced in a foreign currency into
+   * the project base before the row is summed (Issue #111).
+   *
+   * Semantics: ``rate`` is "1 unit of `currency` = `rate` units of base".
+   */
+  fxRates?: Array<{ currency: string; rate: number; label?: string }>;
+  /**
+   * ── Display-currency override (Issue #88).
+   * When set, every monetary cell rendered through `totalFormatter` is
+   * shown converted into this currency. The conversion is view-only —
+   * the database keeps base-currency values unchanged. `unit_rate` is
+   * deliberately NOT re-formatted here because each position can have
+   * its own source currency (v2.6.1) and rewriting it would break that
+   * model. Only aggregated totals and subtotals fold through the rate.
+   *
+   * Shape:
+   * - `code` — currency code shown after the value, e.g. "USD"
+   * - `rate` — units of `code` per one base unit. To convert from base
+   *   to display we DIVIDE by `rate` (FX rates store rate-to-base).
+   *
+   * `null` / undefined ⇒ stick with the project base currency.
+   */
+  displayCurrency?: { code: string; rate: number } | null;
+  /**
+   * Resource cost-driver split (Material / Labor / Equipment %) columns.
+   * Off by default - the user turns them on from the BOQ toolbar's Grid
+   * Settings menu. When false the three columns are hidden (kept in the
+   * defs so AG Grid can show/hide them without rebuilding the grid). The
+   * percentages come from each position's
+   * ``metadata.resource_breakdown[type].pct`` rollup.
+   */
+  showResourceSplit?: boolean;
+  /**
+   * Show the compact inline cost-driver split pill in the description cell.
+   * The tri-state toolbar button sets exactly one of `showResourceSplit`
+   * (columns) / `showResourceSplitPill` (pill) / neither (off).
+   */
+  showResourceSplitPill?: boolean;
+  /**
+   * ── Imperial-units display seam (Issue #285).
+   * Carries the measurement-system-aware quantity API (built once by
+   * BOQGrid via ``useDisplayQuantity``). The Qty / Unit-rate value
+   * PARSERS read this off ``params.context`` so that a value the user
+   * typed against the DISPLAYED unit (e.g. 7.58 ft, or 15.24 / ft) is
+   * converted back to metric-canonical storage BEFORE it lands on the
+   * row. Storage stays metric (m / m2 / kg ...); only the human-facing
+   * value is ever imperial. Undefined ⇒ metric pass-through (the
+   * helpers are identity for the metric system / unmapped units, so
+   * callers can use them unconditionally once present).
+   */
+  displayQuantity?: DisplayQuantityApi;
+}
+
+// Note: `currencyFormatter` was previously applied to the unit_rate column
+// but has been superseded by `UnitRateCellRenderer` (which handles both
+// formatting and the inline CWICR variant pill).  Keep this comment as a
+// breadcrumb so a future refactor doesn't reintroduce a duplicate
+// formatter-vs-renderer race.
+
+function totalFormatter(params: ValueFormatterParams): string {
+  const ctx = params.context as BOQColumnContext | undefined;
+  if (params.value == null) return '';
+  const locale = ctx?.locale ?? 'de-DE';
+  // Apply display-currency conversion when set. Footer rows, section
+  // subtotals and per-position totals all flow through this single
+  // formatter, so flipping the display currency reformats the entire
+  // BOQ in one place — no per-cell branching needed downstream.
+  const dc = ctx?.displayCurrency;
+  if (dc && dc.rate > 0) {
+    return fmtWithCurrency(params.value / dc.rate, locale, dc.code);
+  }
+  const currencyCode = ctx?.currencyCode ?? 'EUR';
+  return fmtWithCurrency(params.value, locale, currencyCode);
+}
+
+/**
+ * Plain-language explanation of how a line total was reached, shown as the
+ * Total cell's hover tooltip. The single most-used number in the grid is
+ * otherwise silent: the user sees a figure with no hint of the arithmetic,
+ * the resource roll-up, or the silent FX rebase behind it. This spells all
+ * three out.
+ *
+ * The concrete quantity and rate are expressed in the user's OWN display
+ * units (imperial or metric) via `displayQuantity`, so the numbers match what
+ * the Qty and Unit Rate cells show on the same row. Resource-backed positions
+ * say the rate comes from their resources instead of a hand-typed rate.
+ * Returns undefined for section / footer / empty rows so only real positions
+ * carry the hint.
+ */
+function totalTooltip(params: ITooltipParams): string | undefined {
+  const d = params.data as Record<string, unknown> | undefined;
+  const ctx = params.context as BOQColumnContext | undefined;
+  if (!d || d._isFooter || d._isSection || !ctx) return undefined;
+
+  const t = ctx.t;
+  const locale = ctx.locale ?? 'de-DE';
+  const baseCode = ctx.currencyCode ?? 'EUR';
+  const meta = (d.metadata || d.metadata_ || {}) as Record<string, unknown>;
+  const resources = meta.resources;
+  const hasResources = Array.isArray(resources) && resources.length > 0;
+  const totalBase = typeof params.value === 'number' ? params.value : Number(params.value) || 0;
+
+  const lines: string[] = [];
+
+  if (hasResources) {
+    lines.push(
+      t('boq.total_tip_resources', {
+        defaultValue: "Total is the sum of this position's resources (labour, material, plant).",
+      }),
+    );
+  } else {
+    const q = typeof d.quantity === 'number' ? d.quantity : parseFloat(String(d.quantity)) || 0;
+    const r = typeof d.unit_rate === 'number' ? d.unit_rate : parseFloat(String(d.unit_rate)) || 0;
+    const unit = (d.unit as string | undefined) ?? '';
+    const dq = ctx.displayQuantity;
+    const qDisp = dq ? dq.convert(q, unit) : { value: q, unit };
+    const rDisp = dq ? dq.convertRate(r, unit) : r;
+    const unitLabel = qDisp.unit || unit;
+    const srcCode = (meta.currency as string | undefined) || baseCode;
+    const qtyFmt = new Intl.NumberFormat(locale, { maximumFractionDigits: 3 });
+    lines.push(
+      t('boq.total_tip_formula', {
+        defaultValue: '{{qty}} {{unit}} x {{rate}} per {{unit}}',
+        qty: qtyFmt.format(qDisp.value),
+        unit: unitLabel,
+        rate: fmtWithCurrency(rDisp, locale, srcCode),
+      }),
+    );
+  }
+
+  // Silent FX rebase: the cell converts a foreign-priced line into the base
+  // currency before it is summed. Say so, otherwise the number looks wrong.
+  const srcCurrency = meta.currency as string | undefined;
+  if (srcCurrency && srcCurrency !== baseCode) {
+    lines.push(
+      t('boq.total_tip_fx', {
+        defaultValue: 'Priced in {{cur}}, converted to {{base}} for the project total.',
+        cur: srcCurrency,
+        base: baseCode,
+      }),
+    );
+  }
+
+  // View-only display-currency override applied on top of the base value.
+  const dc = ctx.displayCurrency;
+  if (dc && dc.rate > 0 && dc.code !== baseCode) {
+    lines.push(
+      t('boq.total_tip_display', {
+        defaultValue: 'Shown in {{code}} at the project display rate.',
+        code: dc.code,
+      }),
+    );
+  }
+
+  lines.push(
+    t('boq.total_tip_equals', {
+      defaultValue: '= {{total}}',
+      total: totalFormatter({ value: totalBase, context: ctx } as ValueFormatterParams),
+    }),
+  );
+
+  return lines.join('\n');
+}
+
+/**
+ * Fractional share (0..1) of one resource type (material / labor /
+ * equipment) of a position's cost. Computes the share straight from the LIVE
+ * ``metadata.resources`` array first - that array is recomputed on every
+ * inline resource edit and variant re-pick, so the split stays correct after
+ * the user changes a quantity or rate. When the resources array is absent OR
+ * its totals sum to zero (e.g. zero-rate resources), it falls back to the
+ * pre-rolled ``metadata.resource_breakdown`` (assembly / AI positions and the
+ * server-side rollup carry it). Returns null when the position has no usable
+ * resource data, leaving the cell blank.
+ */
+export function resourceSplitFraction(
+  meta: Record<string, unknown>,
+  resType: string,
+): number | null {
+  const resources = meta.resources;
+  if (Array.isArray(resources) && resources.length > 0) {
+    let subtotal = 0;
+    let typeTotal = 0;
+    for (const r of resources) {
+      if (!r || typeof r !== 'object') continue;
+      const rr = r as { type?: string; total?: number; quantity?: number; unit_rate?: number };
+      const ttl =
+        typeof rr.total === 'number'
+          ? rr.total
+          : (Number(rr.quantity) || 0) * (Number(rr.unit_rate) || 0);
+      if (!Number.isFinite(ttl)) continue;
+      subtotal += ttl;
+      if ((rr.type || 'other') === resType) typeTotal += ttl;
+    }
+    if (subtotal > 0) return typeTotal / subtotal;
+    // subtotal <= 0: defense in depth - fall through to the pre-rolled
+    // breakdown instead of blanking the cell (the live array carried no
+    // usable money, but the server-side rollup may still know the split).
+  }
+  const bd = meta.resource_breakdown as Record<string, { pct?: number }> | undefined;
+  const direct = bd?.[resType]?.pct;
+  if (typeof direct === 'number' && Number.isFinite(direct)) return direct / 100;
+  return null;
+}
+
+/**
+ * Percentage share (rounded integer) of one resource type. Thin wrapper over
+ * {@link resourceSplitFraction} - the split columns render this, while the
+ * footer money rollup uses the exact fraction to avoid rounding drift.
+ */
+export function resourceSplitPct(meta: Record<string, unknown>, resType: string): number | null {
+  const frac = resourceSplitFraction(meta, resType);
+  return frac == null ? null : Math.round(frac * 100);
+}
+
+/**
+ * Estimate-wide money totals per resource type. For each leaf position that
+ * carries a split, the money attributable to a type is
+ * ``share(type) x unit_rate x quantity``, rebased into the project base
+ * currency via ``convertToBase`` when the position is priced in a foreign
+ * ``metadata.currency`` (mirrors the Total column / directCost path for
+ * Issue #111 - without the rebase the M/L/E footer mixed currencies while
+ * the adjacent DIRECT COST was already in base). Sections and positions
+ * without any resource data are skipped. Returns null when NO position
+ * carried a split, so the footer cells stay blank instead of showing a
+ * misleading 0.
+ */
+export function resourceSplitMoneyTotals(
+  positions: Array<Pick<Position, 'quantity' | 'unit_rate' | 'unit'> & {
+    metadata?: Record<string, unknown> | null;
+    metadata_?: Record<string, unknown> | null;
+  }>,
+  resTypes: readonly string[] = ['material', 'labor', 'equipment'],
+  baseCurrency?: string | null,
+  fxRates?: Array<{ currency: string; rate: number }> | null,
+): Record<string, number> | null {
+  const totals: Record<string, number> = {};
+  let any = false;
+  for (const p of positions) {
+    // Sections act as group headers (empty unit) and aggregate children -
+    // counting them would double the money.
+    if (!p.unit || p.unit.trim() === '' || p.unit.trim().toLowerCase() === 'section') continue;
+    const meta = (p.metadata || p.metadata_ || {}) as Record<string, unknown>;
+    const raw = (Number(p.unit_rate) || 0) * (Number(p.quantity) || 0);
+    const sourceCurrency = (meta.currency as string | undefined) || baseCurrency;
+    const money = convertToBase(raw, sourceCurrency, baseCurrency, fxRates);
+    for (const rt of resTypes) {
+      const frac = resourceSplitFraction(meta, rt);
+      if (frac == null) continue;
+      any = true;
+      totals[rt] = (totals[rt] || 0) + frac * money;
+    }
+  }
+  return any ? totals : null;
+}
+
+/** True for a real cost line (not a section header, footer, or resource sub-row). */
+function isCostLine(d: Record<string, unknown> | undefined): boolean {
+  return (
+    !!d && !d._isSection && !d._isFooter && !d._isResource && !d._isAddResource && !d._isVariantHeader
+  );
+}
+
+/**
+ * A cost line with no quantity yet. Zero and missing both count - the line
+ * carries no measured work, so its total is zero and the estimate is
+ * understated until a quantity is set.
+ */
+export function needsQuantity(d: Record<string, unknown> | undefined): boolean {
+  if (!isCostLine(d)) return false;
+  const q = typeof d!.quantity === 'number' ? d!.quantity : parseFloat(String(d!.quantity));
+  return !Number.isFinite(q) || q === 0;
+}
+
+/**
+ * A cost line with no unit rate yet. Positions whose rate is built from
+ * resources are excluded - their rate is computed, never typed - so only a
+ * genuinely unpriced line is flagged.
+ */
+export function needsPrice(d: Record<string, unknown> | undefined): boolean {
+  if (!isCostLine(d)) return false;
+  const meta = (d!.metadata || d!.metadata_ || {}) as Record<string, unknown>;
+  // Only a genuinely resource-DRIVEN line (a resource with a non-zero
+  // quantity) has a computed rate that is never typed. A line carrying only
+  // blank / zero-quantity resource rows is still manually priced, so an unset
+  // rate on it must be flagged (and its cell stays editable — see columnDefs).
+  if (hasContributingResources(meta.resources)) return false;
+  const r = typeof d!.unit_rate === 'number' ? d!.unit_rate : parseFloat(String(d!.unit_rate));
+  return !Number.isFinite(r) || r === 0;
+}
+
+/** Faint amber tint marking a cell that needs a value. Subtle, not alarming. */
+const NEEDS_VALUE_CLASS = 'bg-amber-50/70 dark:bg-amber-950/30';
+
+/** Localised resource-type labels for the unit-rate build-up tooltip. */
+const RATE_BUILDUP_TYPES: ReadonlyArray<readonly [string, string, string]> = [
+  ['labor', 'boq.res_labor', 'Labour'],
+  ['material', 'boq.res_material', 'Material'],
+  ['equipment', 'boq.res_equipment', 'Equipment'],
+  ['operator', 'boq.res_operator', 'Operator'],
+  ['subcontractor', 'boq.res_subcontractor', 'Subcontractor'],
+  ['other', 'boq.res_other', 'Other'],
+];
+
+/**
+ * Plain-language build-up of a resource-priced unit rate, shown as the Unit
+ * Rate cell tooltip so the rate stops being a magic number: the estimator
+ * sees exactly how much of it is labour, material, plant and so on. Each
+ * line is `share(type) x unit_rate`, so the parts sum to the rate by
+ * construction and reconcile with the split pill. The money is shown in the
+ * position's own currency. Returns undefined when there is nothing to break
+ * down, so the caller can fall back to the generic hint.
+ */
+function rateBuildupTooltip(
+  d: Record<string, unknown>,
+  ctx: BOQColumnContext,
+): string | undefined {
+  const meta = (d.metadata || d.metadata_ || {}) as Record<string, unknown>;
+  const resources = meta.resources;
+  if (!Array.isArray(resources) || resources.length === 0) return undefined;
+  const rate = typeof d.unit_rate === 'number' ? d.unit_rate : parseFloat(String(d.unit_rate));
+  if (!Number.isFinite(rate) || rate === 0) return undefined;
+
+  const t = ctx.t;
+  const locale = ctx.locale ?? 'de-DE';
+  const currency = (meta.currency as string | undefined) || ctx.currencyCode || 'EUR';
+
+  const entries: Array<[string, number, number]> = [];
+  for (const [type, key, fallback] of RATE_BUILDUP_TYPES) {
+    const frac = resourceSplitFraction(meta, type);
+    if (frac == null || frac <= 0) continue;
+    const label = t(key, { defaultValue: fallback });
+    entries.push([label, frac * rate, frac]);
+  }
+  if (entries.length === 0) return undefined;
+  entries.sort((a, b) => b[1] - a[1]);
+
+  const lines: string[] = [
+    t('boq.rate_buildup_header', { defaultValue: 'Unit rate is built from:' }),
+  ];
+  for (const [label, money, frac] of entries) {
+    lines.push(`${label}: ${fmtWithCurrency(money, locale, currency)} (${Math.round(frac * 100)}%)`);
+  }
+  lines.push(
+    t('boq.rate_buildup_total', {
+      defaultValue: '= {{total}} per unit',
+      total: fmtWithCurrency(rate, locale, currency),
+    }),
+  );
+  return lines.join('\n');
+}
+
+export function getColumnDefs(context: BOQColumnContext): ColDef[] {
+  const { t } = context;
+
+  return [
+    {
+      headerName: '',
+      colId: '_drag',
+      width: 30,
+      maxWidth: 30,
+      minWidth: 30,
+      suppressHeaderMenuButton: true,
+      editable: false,
+      sortable: false,
+      filter: false,
+      resizable: false,
+      suppressMovable: true,
+      rowDrag: (params) => !params.data?._isFooter,
+      rowDragText: (params) => {
+        if (params.rowNode?.data?._isSection) {
+          return params.rowNode.data.description ?? '';
+        }
+        return params.rowNode?.data?.ordinal
+          ? `${params.rowNode.data.ordinal} - ${params.rowNode.data.description ?? ''}`
+          : params.defaultTextValue ?? '';
+      },
+      cellClass: 'oe-drag-handle-cell',
+      cellRenderer: (params: { data?: { _isFooter?: boolean } }) => {
+        if (params.data?._isFooter) return null;
+        return null; // AG Grid renders the drag handle icon automatically
+      },
+    },
+    {
+      headerName: '',
+      colId: '_checkbox',
+      width: 24,
+      maxWidth: 24,
+      minWidth: 24,
+      suppressHeaderMenuButton: true,
+      editable: false,
+      sortable: false,
+      filter: false,
+      resizable: false,
+      suppressMovable: true,
+      // checkboxSelection moved to rowSelection.checkboxes in GridOptions (AG Grid v32.2+)
+      cellClass: 'flex items-center justify-center',
+    },
+    {
+      headerName: '',
+      colId: '_expand',
+      field: '_expand',
+      width: 32,
+      minWidth: 32,
+      maxWidth: 32,
+      editable: false,
+      sortable: false,
+      filter: false,
+      resizable: false,
+      suppressNavigable: true,
+      suppressHeaderMenuButton: true,
+      cellRenderer: 'expandCellRenderer',
+      cellClass: 'oe-icon-cell',
+    },
+    {
+      headerName: t('boq.ordinal', { defaultValue: 'Pos.' }),
+      field: 'ordinal',
+      width: 88,
+      minWidth: 70,
+      editable: (params) => {
+        if (params.data?._isSection || params.data?._isFooter) return false;
+        return true;
+      },
+      cellClass: (params) => {
+        const base = 'font-mono text-xs text-right !pr-2';
+        const ctx = params.context as { expandedPositions?: Set<string> } | undefined;
+        const isExpanded = !!params.data?.id && (ctx?.expandedPositions?.has(params.data.id) ?? false);
+        return isExpanded ? `${base} font-bold` : base;
+      },
+      headerClass: 'ag-right-aligned-header',
+    },
+    {
+      headerName: '',
+      colId: '_bim_link',
+      field: '_bim_link',
+      width: 90,
+      minWidth: 28,
+      maxWidth: 120,
+      editable: false,
+      sortable: false,
+      filter: false,
+      resizable: false,
+      suppressNavigable: true,
+      suppressHeaderMenuButton: true,
+      cellRenderer: 'bimLinkCellRenderer',
+      cellClass: 'p-0',
+    },
+    {
+      headerName: t('boq.description', { defaultValue: 'Description' }),
+      field: 'description',
+      // Description gets a heavier flex weight so it absorbs ~20% of viewport
+      // even when 6+ regional-preset columns are visible. Keep a non-zero
+      // minWidth so a flood of custom cols doesn't squeeze the BOQ text into
+      // an unreadable sliver — but well below the previous 260 px floor that
+      // forced horizontal overflow once 4–5 custom columns were added.
+      minWidth: 180,
+      flex: 3,
+      editable: true,
+      // Multi-line Langtext editor: a popup textarea so a position description
+      // can hold a full LV-style specification with newlines, not just one
+      // line. The value is the same `description` field (stored as TEXT,
+      // newlines preserved); the grid's density toggle controls how much of it
+      // shows at rest.
+      cellEditor: 'agLargeTextCellEditor',
+      cellEditorPopup: true,
+      cellEditorParams: {
+        maxLength: 5000,
+        rows: 14,
+        cols: 64,
+      },
+      cellRenderer: 'descriptionCellRenderer',
+      // !pl-1 overrides AG Grid's default ~17px cell-horizontal-padding
+      // so the position description sits flush-left within the column
+      // (per UX request: remove the big empty indent on position rows).
+      cellClass: (params) => {
+        if (params.data?._isSection) return 'font-bold uppercase tracking-wide text-xs !pl-1 !pr-1';
+        const ctx = params.context as { expandedPositions?: Set<string> } | undefined;
+        const isExpanded = !!params.data?.id && (ctx?.expandedPositions?.has(params.data.id) ?? false);
+        return isExpanded ? 'text-xs font-bold !pl-1 !pr-1' : 'text-xs !pl-1 !pr-1';
+      },
+      // Issue #136 — positions nested under a SUB-section get a left
+      // indent proportional to their depth so the hierarchy is legible.
+      // depth 0 (ungrouped) and depth 1 (under a top-level section) keep
+      // the flush-left look; each deeper level shifts 18px right.
+      cellStyle: (params) => {
+        const d = params.data as Record<string, unknown> | undefined;
+        if (
+          !d || d._isSection || d._isFooter || d._isResource ||
+          d._isAddResource || d._isVariantHeader
+        ) {
+          return null;
+        }
+        const depth = typeof d._depth === 'number' ? d._depth : 0;
+        return depth > 1 ? { paddingLeft: `${(depth - 1) * 18}px` } : null;
+      },
+    },
+    {
+      headerName: t('boq.classification', { defaultValue: 'Code' }),
+      field: 'classification',
+      width: 100,
+      hide: true,
+      editable: false,
+      valueGetter: (params) => {
+        if (params.data?._isSection || params.data?._isFooter) return '';
+        const cls = params.data?.classification;
+        if (!cls || typeof cls !== 'object') return '';
+        return cls.din276 || cls.nrm || cls.masterformat || '';
+      },
+      cellClass: 'text-xs font-mono text-content-secondary',
+    },
+    {
+      headerName: t('boq.unit', { defaultValue: 'Unit' }),
+      field: 'unit',
+      width: 80,
+      editable: (params) => !params.data?._isSection && !params.data?._isFooter,
+      // Custom combobox: dropdown of standard SI / Cyrillic / labour
+      // tokens + free-text input + auto-memory of custom values via
+      // localStorage (so a unit typed once shows up in the dropdown
+      // next time). Replaces the strict ``agSelectCellEditor`` whose
+      // hard-coded list silently swallowed edits when the existing
+      // value (e.g. "т", "маш.-ч") wasn't in the list.
+      cellEditor: 'unitCellEditor',
+      cellRenderer: 'unitCellRenderer',
+      // StrictMode-proof commit path: the editor remounts up to 8x in
+      // dev and AG Grid's ``getValue()`` may route through a stale
+      // instance whose ``valueRef`` never saw the pick. ``valueSetter``
+      // drains a module-scoped channel that the editor writes to BEFORE
+      // ``stopEditing()`` fires, so the pick survives regardless of
+      // which mount instance AG Grid queries. See ``__unitPickCommitChannel``
+      // and ``unitColumnValueSetter`` in ``cellEditors.tsx``.
+      valueSetter: (params: ValueSetterParams) => unitColumnValueSetter({
+        data: params.data,
+        newValue: params.newValue,
+        oldValue: params.oldValue,
+        node: params.node ? { id: params.node.id } : null,
+        column: params.column ? { getColId: () => params.column!.getColId() } : null,
+      }),
+      // Let the UnitCellEditor's own keyboard handler own Enter / ArrowUp
+      // / ArrowDown when it's editing. AG Grid 32 default would intercept
+      // Enter at the grid level (capture phase) and call ``stopEditing``
+      // before our React ``onKeyDown`` runs — that path reads ``getValue()``
+      // on whatever React instance is current (often a stale StrictMode
+      // mount whose ``valueRef`` never saw ``pick()``), and the user's
+      // selection silently disappears. ``suppressKeyboardEvent`` opts out
+      // of AG Grid's grid-level handling for these keys while editing,
+      // letting our editor commit through ``pick()`` → channel → setter.
+      suppressKeyboardEvent: (params) => {
+        if (!params.editing) return false;
+        const k = params.event.key;
+        return k === 'Enter' || k === 'ArrowUp' || k === 'ArrowDown';
+      },
+      cellClass: 'text-center text-2xs font-mono',
+      cellStyle: { display: 'flex', justifyContent: 'center', alignItems: 'center' },
+    },
+    {
+      headerName: '',
+      colId: '_bim_qty',
+      field: '_bim_qty',
+      width: 28,
+      minWidth: 28,
+      maxWidth: 28,
+      editable: false,
+      sortable: false,
+      filter: false,
+      resizable: false,
+      suppressNavigable: true,
+      suppressHeaderMenuButton: true,
+      cellRenderer: 'bimQtyPickerCellRenderer',
+      cellClass: 'p-0',
+    },
+    {
+      headerName: t('boq.quantity', { defaultValue: 'Qty' }),
+      field: 'quantity',
+      width: 110,
+      editable: (params) => !params.data?._isSection && !params.data?._isFooter && !params.data?._isResource,
+      // Issue #90: Excel-style formulas in Qty (=2*PI()^2*3, =sqrt(144),
+      // 12.5 x 4, …). The editor is CSP-safe (no eval); the resolved
+      // numeric value goes into the column and the source formula is
+      // persisted in metadata.formula via onFormulaApplied.
+      cellEditor: 'formulaCellEditor',
+      cellEditorPopup: true,
+      cellEditorPopupPosition: 'over',
+      cellRenderer: 'quantityCellRenderer',
+      // Issue #285: the Qty cell DISPLAYS the value converted into the
+      // user's measurement system (see ``quantityCellRenderer``), so a
+      // value the user types here is in the displayed unit. Convert it
+      // back to metric-canonical storage BEFORE it lands on the row.
+      // ``toMetric`` is identity for the metric system and for any unit
+      // with no imperial mapping (pcs, %, hr ...), so this is a no-op
+      // unless the user is in imperial AND the unit is convertible.
+      valueParser: (params) => {
+        const val = parseFloat(params.newValue);
+        if (isNaN(val)) return params.oldValue;
+        const ctx = params.context as BOQColumnContext | undefined;
+        const unit = (params.data?.unit as string | undefined) ?? '';
+        return ctx?.displayQuantity ? ctx.displayQuantity.toMetric(val, unit) : val;
+      },
+      // Surface the source formula in the AG Grid tooltip — much easier to
+      // see than a tiny badge alone (Issue #90 follow-up). Also nudge the
+      // estimator when the line has no quantity yet, since that silently
+      // zeroes the line total.
+      tooltipValueGetter: (params) => {
+        const meta = params.data?.metadata as Record<string, unknown> | undefined;
+        const f = meta?.formula;
+        if (typeof f === 'string' && f) {
+          return `Formula: ${f}\nClick to edit.`;
+        }
+        if (needsQuantity(params.data as Record<string, unknown> | undefined)) {
+          return t('boq.flag_no_quantity', {
+            defaultValue: 'No quantity yet - this line adds nothing to the total until you set one.',
+          });
+        }
+        return undefined;
+      },
+      cellClass: (params) => {
+        const base = 'text-right tabular-nums text-xs !pr-2 !pl-2';
+        const ctx = params.context as { expandedPositions?: Set<string> } | undefined;
+        const isExpanded = !!params.data?.id && (ctx?.expandedPositions?.has(params.data.id) ?? false);
+        const flag = needsQuantity(params.data as Record<string, unknown> | undefined)
+          ? ` ${NEEDS_VALUE_CLASS}`
+          : '';
+        return `${isExpanded ? `${base} font-bold` : base}${flag}`;
+      },
+      headerClass: 'ag-right-aligned-header',
+      type: 'numericColumn',
+    },
+    {
+      headerName: t('boq.unit_rate', { defaultValue: 'Unit Rate' }),
+      field: 'unit_rate',
+      width: 130,
+      editable: (params) => {
+        if (params.data?._isSection || params.data?._isFooter) return false;
+        // Position rate is the sum of resource subtotals — never editable
+        // when the position is resource-DRIVEN (carries a resource with a
+        // non-zero quantity). A position with only blank / zero-quantity
+        // resource rows is NOT resource-driven: its rate stays a directly
+        // typed manual value (mirrors the backend derive decision, so we
+        // never lock a cell whose edit the server would accept). Variant
+        // rate edits happen on the synthetic VARIANT row inside the resource
+        // panel and patch ``metadata.variant.price`` only (see
+        // onUpdateVariantHeader in BOQGrid). User design: "если есть ресурсы,
+        // не нужно трогать".
+        if (hasContributingResources(params.data?.metadata?.resources)) return false;
+        return true;
+      },
+      // Issue #287: a display-aware editor so the field OPENS on the same
+      // reciprocal rate the cell shows. The stock number editor opened on the
+      // raw metric rate while the valueParser below converted display->metric
+      // on commit, so opening + committing a cell unchanged double-converted
+      // and corrupted the stored rate for imperial users.
+      cellEditor: 'rateCellEditor',
+      // Issue #285: the rate cell DISPLAYS a reciprocal per-unit rate when
+      // the quantity is shown converted (50/m -> 15.24/ft) so the line
+      // reconciles. A value typed here is therefore against the displayed
+      // unit; convert it back to the metric-canonical per-unit rate before
+      // storing. ``toMetricRate`` is identity for metric / unmapped units.
+      valueParser: (params) => {
+        const val = parseFloat(params.newValue);
+        if (isNaN(val)) return params.oldValue;
+        const ctx = params.context as BOQColumnContext | undefined;
+        const unit = (params.data?.unit as string | undefined) ?? '';
+        return ctx?.displayQuantity ? ctx.displayQuantity.toMetricRate(val, unit) : val;
+      },
+      // Custom renderer surfaces the inline CWICR variant picker pill when
+      // the position carries `metadata.cost_item_variants` (cached at apply
+      // time).  Falls through to a plain numeric span when no variants.
+      cellRenderer: 'unitRateCellRenderer',
+      cellClass: (params) => {
+        let base = 'text-right tabular-nums text-xs !pr-2 !pl-2';
+        // Grey the rate only when it is genuinely derived from resources
+        // (a contributing, non-zero-quantity resource) — a manually typed
+        // rate on a line with only blank resource rows reads as normal.
+        if (hasContributingResources(params.data?.metadata?.resources)) {
+          base = `${base} text-content-tertiary`;
+        }
+        const ctx = params.context as { expandedPositions?: Set<string> } | undefined;
+        const isExpanded = !!params.data?.id && (ctx?.expandedPositions?.has(params.data.id) ?? false);
+        const flag = needsPrice(params.data as Record<string, unknown> | undefined)
+          ? ` ${NEEDS_VALUE_CLASS}`
+          : '';
+        return `${isExpanded ? `${base} font-bold` : base}${flag}`;
+      },
+      headerClass: 'ag-right-aligned-header',
+      type: 'numericColumn',
+      tooltipValueGetter: (params) => {
+        if (hasContributingResources(params.data?.metadata?.resources)) {
+          const buildup = rateBuildupTooltip(
+            params.data as Record<string, unknown>,
+            params.context as BOQColumnContext,
+          );
+          return (
+            buildup ??
+            t('boq.rate_from_resources', {
+              defaultValue: 'Rate is calculated from resources. Edit individual resources to change.',
+            })
+          );
+        }
+        if (needsPrice(params.data as Record<string, unknown> | undefined)) {
+          return t('boq.flag_no_price', {
+            defaultValue: 'No unit rate yet - price this line to include it in the total.',
+          });
+        }
+        return undefined;
+      },
+    },
+    {
+      // Header reflects the active display currency so users glancing
+      // at the column never wonder which currency they're reading. When
+      // displayCurrency is unset we keep the plain "Total" label.
+      headerName: context.displayCurrency
+        ? `${t('boq.total', { defaultValue: 'Total' })} (${context.displayCurrency.code})`
+        : t('boq.total', { defaultValue: 'Total' }),
+      field: 'total',
+      width: 130,
+      editable: false,
+      // Compute total on-the-fly: for positions with resources, use
+      // server-stored total; for positions without resources, always
+      // show quantity × unit_rate so the user sees live updates.
+      //
+      // Issue #111 (multi-currency): when a position is priced in a
+      // non-base currency (``metadata.currency`` set), the raw total is
+      // in that currency. We rebase it into the project base currency
+      // here so the column footer / directCost can sum mixed-currency
+      // positions correctly. ``totalFormatter`` then applies the
+      // optional displayCurrency override on top of the base value.
+      valueGetter: (params) => {
+        const d = params.data;
+        if (!d || d._isFooter || d._isSection) return d?.total ?? 0;
+        const meta = (d.metadata || d.metadata_ || {}) as Record<string, unknown>;
+        const resources = meta.resources;
+        const ctx = params.context as BOQColumnContext | undefined;
+        if (Array.isArray(resources) && resources.length > 0) {
+          // Resource-driven: server-computed total is authoritative.
+          // Issue #111 (skolodi) — when any resource is priced in a
+          // foreign currency the stored total mixes currencies (built
+          // from Σ(r.qty×r.rate) with no FX); rebase per-resource so a
+          // USD resource in an ARS project no longer reads "1 USD = 1 ARS".
+          return resourceAwareTotalInBase(
+            {
+              total: d.total ?? 0,
+              quantity: d.quantity,
+              metadata: meta,
+            },
+            ctx?.currencyCode,
+            ctx?.fxRates,
+          );
+        }
+        // No resources: live compute quantity × unit_rate, then rebase
+        // via the position-level metadata.currency (verified #131 path).
+        const q = typeof d.quantity === 'number' ? d.quantity : parseFloat(d.quantity) || 0;
+        const r = typeof d.unit_rate === 'number' ? d.unit_rate : parseFloat(d.unit_rate) || 0;
+        const raw = q * r;
+        const sourceCurrency = (meta.currency as string | undefined) || ctx?.currencyCode;
+        return convertToBase(raw, sourceCurrency, ctx?.currencyCode, ctx?.fxRates);
+      },
+      valueFormatter: totalFormatter,
+      tooltipValueGetter: totalTooltip,
+      cellClass: (params) => {
+        const base = 'text-right tabular-nums text-xs !pr-2 !pl-2';
+        if (params.data?._isSection) return `${base} font-bold`;
+        if (params.data?._isFooter) return `${base} font-bold`;
+        const ctx = params.context as { expandedPositions?: Set<string> } | undefined;
+        const isExpanded = !!params.data?.id && (ctx?.expandedPositions?.has(params.data.id) ?? false);
+        return isExpanded ? `${base} font-bold` : `${base} font-semibold`;
+      },
+      headerClass: 'ag-right-aligned-header',
+      type: 'numericColumn',
+    },
+    // ── Resource cost-driver split (Material / Labor / Equipment %) ──────
+    // Hidden until the user enables "Resource split" in the Grid Settings
+    // menu. Each reads the per-type ``pct`` from the position's
+    // ``metadata.resource_breakdown`` rollup (the same figures the inline
+    // "55% MAT · 35% LAB · 10% EQU" pill shows), but as sortable columns so
+    // the estimator can scan and order positions by their cost driver.
+    ...(
+      [
+        ['material', t('boq.split_material', { defaultValue: 'Material %' }), t('boq.split_material_tip', { defaultValue: 'Material share of the unit rate' })],
+        ['labor', t('boq.split_labor', { defaultValue: 'Labor %' }), t('boq.split_labor_tip', { defaultValue: 'Labor share of the unit rate' })],
+        ['equipment', t('boq.split_equipment', { defaultValue: 'Equipment %' }), t('boq.split_equipment_tip', { defaultValue: 'Equipment share of the unit rate' })],
+      ] as const
+    ).map(([resType, header, tip]) => ({
+      headerName: header,
+      headerTooltip: tip,
+      colId: `resource_split_${resType}`,
+      width: 92,
+      hide: !context.showResourceSplit,
+      editable: false,
+      sortable: true,
+      filter: 'agNumberColumnFilter',
+      valueGetter: (params: ValueGetterParams) => {
+        const d = params.data;
+        if (!d) return null;
+        // Footer (DIRECT COST row): estimate-wide money attributable to this
+        // resource type, pre-aggregated by BOQEditorPage's footer builder.
+        if (d._isFooter) {
+          const money = d._resourceSplitMoney as Record<string, number> | undefined;
+          const v = money?.[resType];
+          return typeof v === 'number' && Number.isFinite(v) ? v : null;
+        }
+        if (d._isSection) return null;
+        const meta = (d.metadata || d.metadata_ || {}) as Record<string, unknown>;
+        return resourceSplitPct(meta, resType);
+      },
+      valueFormatter: (params: ValueFormatterParams) => {
+        if (params.value == null) return '';
+        // Footer cells carry money (estimate-wide per-type total) and reuse
+        // the grid's currency formatter; position cells stay percentages.
+        if (params.data?._isFooter) return totalFormatter(params);
+        return `${params.value}%`;
+      },
+      cellClass: 'text-right tabular-nums text-xs !pr-2 !pl-2 text-content-secondary',
+      headerClass: 'ag-right-aligned-header',
+      type: 'numericColumn',
+    })),
+    {
+      headerName: '',
+      field: '_actions',
+      width: 44,
+      editable: false,
+      sortable: false,
+      filter: false,
+      cellRenderer: 'actionsCellRenderer',
+      suppressHeaderMenuButton: true,
+      cellClass: 'flex items-center justify-center',
+    },
+  ];
+}
+
+/* ── Custom column definitions from BOQ metadata ──────────────────────── */
+
+export interface CustomColumnDef {
+  name: string;
+  display_name: string;
+  column_type: 'text' | 'number' | 'date' | 'select' | 'calculated';
+  options?: string[];
+  sort_order?: number;
+  /** Formula source for `calculated` columns. e.g. `=quantity * unit_rate * 1.19`. */
+  formula?: string;
+  /** Display decimals for `calculated` columns when result is numeric. */
+  decimals?: number;
+  /**
+   * Semantic hint for region-specific number columns. When set, the column
+   * is rendered read-only and its value is auto-derived from the position
+   * (no manual entry, no `metadata.custom_fields` write).
+   *
+   *   - `resource_sum`  — sum of `metadata.resources[]` whose `type`
+   *                       matches `resource_role`. Used for GAEB EP-split
+   *                       columns (Lohn-EP / Material-EP / Geräte-EP).
+   *
+   *   - `percentage_of_unit_rate` — share of `unit_rate` that comes from
+   *     resources of type `resource_role`, expressed as a percent
+   *     (0–100). Used for ÖNORM "Lohn-Anteil %" etc.
+   *
+   * `column_type` stays `number` so existing AG-Grid number behaviour
+   * (right-align, tabular nums, formatting) applies. The flag is
+   * forwarded through the backend untouched.
+   */
+  derived?: 'resource_sum' | 'percentage_of_unit_rate';
+  /**
+   * Resource type filter for `derived` columns. Matches the `type` field
+   * on `position.metadata.resources[]` (one of: 'material' | 'labor' |
+   * 'equipment' | 'operator' | 'subcontractor' | 'other'). Ignored when
+   * `derived` is unset. Accepts either a single role or a list — the
+   * GAEB Sonstiges-EP preset uses ``['other', 'operator', 'subcontractor']``
+   * to keep Lohn + Material + Geräte + Sonstiges = unit_rate when a
+   * position carries operator / subcontractor resources.
+   */
+  resource_role?:
+    | 'material'
+    | 'labor'
+    | 'equipment'
+    | 'operator'
+    | 'subcontractor'
+    | 'other'
+    | Array<'material' | 'labor' | 'equipment' | 'operator' | 'subcontractor' | 'other'>;
+}
+
+/**
+ * Optional engine context for `calculated` columns. When supplied, the
+ * column's valueGetter evaluates the formula against these positions and
+ * variables; otherwise calculated columns render `''` (no engine = nothing
+ * to evaluate). Text/number/date/select columns ignore this argument and
+ * keep their original behaviour.
+ */
+export interface CustomColumnEngineContext {
+  positions: Position[];
+  variables?: Map<string, FormulaVariable>;
+}
+
+/**
+ * Format a numeric formula result for display. Mirrors the rounding the
+ * engine already applies (4-decimal max via `evaluateFormulaRaw`) but lets
+ * the column author choose presentation precision separately.
+ */
+function formatCalculatedNumber(value: number, decimals: number): string {
+  const safe = Math.max(0, Math.min(6, decimals));
+  return value.toFixed(safe);
+}
+
+/**
+ * Build a `FormulaContext` for the row currently being rendered. Every
+ * calculated cell needs the WHOLE positions list (so `pos("01.001")` can
+ * resolve other rows) plus the row's own field values exposed through
+ * `col("name")` and the bare identifiers `quantity` / `unit_rate` /
+ * `total`. We project the latter into `currentRow` AND inject them as
+ * read-only $variables — `quantity` / `unit_rate` are already valid
+ * identifiers in the engine grammar (no leading `$`), so we wrap them in
+ * a synthetic context shape: bare identifiers go through the `col(...)`
+ * lookup path the engine already supports.
+ *
+ * We deliberately DON'T mutate the shared variables map here; we clone
+ * it and overlay the row-scoped overrides so concurrent renders don't
+ * race.
+ */
+function buildRowFormulaContext(
+  row: Record<string, unknown> | undefined,
+  engineCtx: CustomColumnEngineContext,
+): FormulaContext {
+  const row_ = row ?? {};
+  const variables = new Map<string, FormulaVariable>(engineCtx.variables ?? new Map());
+  // Expose the current row's measure / rate / total as $-variables so the
+  // user can write `=quantity * unit_rate * 1.19` without having to pull
+  // them through `col()`. Names are uppercased to match the engine's
+  // canonical $VAR convention.
+  const q = typeof row_.quantity === 'number' ? row_.quantity : parseFloat(String(row_.quantity ?? ''));
+  const r = typeof row_.unit_rate === 'number' ? row_.unit_rate : parseFloat(String(row_.unit_rate ?? ''));
+  const tot = typeof row_.total === 'number' ? row_.total : parseFloat(String(row_.total ?? ''));
+  if (!isNaN(q)) variables.set('QUANTITY', { type: 'number', value: q });
+  if (!isNaN(r)) variables.set('UNIT_RATE', { type: 'number', value: r });
+  if (!isNaN(tot)) variables.set('TOTAL', { type: 'number', value: tot });
+  return buildFormulaContext({
+    positions: engineCtx.positions,
+    variables,
+    currentPositionId: typeof row_.id === 'string' ? row_.id : undefined,
+    currentRow: row_,
+  });
+}
+
+/**
+ * valueGetter factory for a `calculated` column. Returns the formatted
+ * formula result, or one of the sentinel error markers:
+ *   • `#ERR`   — syntax / runtime error (unknown function, type mismatch, …)
+ *   • `#CYCLE` — formula transitively references its own column
+ *
+ * Cycle detection is best-effort here: the BOQ-level dependency graph
+ * already covers `pos(...)` cycles, but a calculated column that calls
+ * `col("self_name")` would self-loop. We guard that one case explicitly.
+ */
+function makeCalculatedValueGetter(
+  col: CustomColumnDef,
+  engineCtx: CustomColumnEngineContext,
+): (params: ValueGetterParams) => string {
+  const formula = col.formula ?? '';
+  const decimals = col.decimals ?? 2;
+  return (params: ValueGetterParams): string => {
+    const data = params.data as Record<string, unknown> | undefined;
+    if (!data) return '';
+    if (data._isSection || data._isFooter) return '';
+    if (!isFormula(formula)) return '';
+    // Self-reference guard: `col("X")` inside column X's own formula.
+    if (formula.includes(`col("${col.name}")`) || formula.includes(`col('${col.name}')`)) {
+      return '#CYCLE';
+    }
+    try {
+      const ctx = buildRowFormulaContext(data, engineCtx);
+      const result = evaluateFormulaStrict(formula, ctx);
+      if (result === null) return '';
+      if (typeof result === 'number') return formatCalculatedNumber(result, decimals);
+      if (typeof result === 'boolean') return result ? '1' : '0';
+      return String(result);
+    } catch {
+      return '#ERR';
+    }
+  };
+}
+
+export function getCustomColumnDefs(
+  customColumns: CustomColumnDef[],
+  engineCtx?: CustomColumnEngineContext,
+): ColDef[] {
+  // Default empty engine context — calculated columns simply render '' if
+  // no positions / variables are wired in. This keeps the call-site
+  // backwards compatible for callers that don't yet supply context.
+  const ctx: CustomColumnEngineContext = engineCtx ?? { positions: [] };
+  // O(1) parent lookup for resource rows. Resource rows carry
+  // ``_parentPositionId`` but no ``metadata`` of their own — to render
+  // a parent-position custom field on a sub-row we have to grab the
+  // parent's metadata at value-getter time. Built once per column-defs
+  // rebuild, not per cell render.
+  const positionsById = new Map<string, Position>();
+  for (const p of ctx.positions) {
+    if (p.id) positionsById.set(p.id, p);
+  }
+  return customColumns
+    .slice()
+    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+    .map((col) => {
+      // Migration: legacy rows without `column_type` default to 'text'.
+      const colType: CustomColumnDef['column_type'] = col.column_type ?? 'text';
+      const isCalculated = colType === 'calculated';
+      const isNumeric = colType === 'number' || isCalculated;
+
+      // Stable widths so adding 5–10 columns from a regional preset doesn't
+      // explode the grid horizontally. AG Grid still respects the user's
+      // resize via `resizable: true` (set on defaultColDef in BOQGrid).
+      // We keep `field` set to the same string as `colId` purely as an
+      // identifier — the actual data lives at
+      // `data.metadata.custom_fields[col.name]` and is read/written via
+      // the valueGetter / valueSetter below. AG Grid never falls back to
+      // direct field-based access when both getters are present, so the
+      // chosen field string can never collide with anything on `data`.
+      const isDerived = col.derived === 'resource_sum' || col.derived === 'percentage_of_unit_rate';
+      const base: ColDef = {
+        headerName: isCalculated ? `ƒ ${col.display_name}` : col.display_name,
+        field: `custom_${col.name}`,
+        colId: `custom_${col.name}`,
+        // Compact defaults — a regional preset can add up to 6 columns at
+        // once, so each one needs to fit on a normal laptop without
+        // pushing standard columns off-screen. Users can still drag the
+        // column edge wider thanks to `resizable: true` (defaultColDef).
+        // ``flex: 1`` lets sizeColumnsToFit shrink each custom col evenly
+        // when 4-6 of them are added — combined with the heavier flex
+        // weight on the description column the BOQ no longer overflows
+        // horizontally on a normal laptop screen.
+        width: colType === 'text' ? 110 : 90,
+        minWidth: 56,  // ~3 chars header + padding (per UX spec)
+        maxWidth: 320,
+        flex: 1,
+        // Derived columns are computed from position.metadata.resources —
+        // never editable. Marking them readOnly lines them up visually
+        // with the existing read-only "Total" column.
+        // Resource rows are editable for non-derived custom columns —
+        // values flow into ``parent.metadata.resources[i].metadata.custom_fields[name]``
+        // so each resource can carry its own supplier / lead time / QC status
+        // independent of the parent position. Derived (resource_sum /
+        // percentage_of_unit_rate) and calculated (formula) columns stay
+        // read-only because their value is auto-computed.
+        editable: isCalculated || isDerived
+          ? false
+          : (params) =>
+              !params.data?._isSection &&
+              !params.data?._isFooter &&
+              !params.data?._isAddResource,
+        // ``cellClass`` is a function so we can mute the styling on
+        // resource sub-rows — those cells either inherit from the
+        // parent (text/number custom fields) or break a position-level
+        // total down per resource (derived columns). Either way the
+        // value is computed, not user-entered, so we render it with
+        // the same subdued treatment AG Grid already uses for other
+        // read-only derived cells.
+        cellClass: (params) => {
+          const isResourceRow = !!params.data?._isResource;
+          // Resource rows for derived/calculated cells stay muted+italic —
+          // those values are still computed. Non-derived custom cols on
+          // resources are now editable per-resource, so they read like
+          // normal editable cells (no italic, no muted tone).
+          const computedOnResource = isResourceRow && (isCalculated || isDerived);
+          if (isNumeric) {
+            const tone =
+              isCalculated || isDerived || computedOnResource
+                ? 'text-content-secondary'
+                : '';
+            const italic = computedOnResource ? 'italic' : '';
+            return `text-right tabular-nums text-xs ${tone} ${italic}`.trim();
+          }
+          return computedOnResource ? 'text-xs italic text-content-tertiary' : 'text-xs';
+        },
+        headerClass: isNumeric ? 'ag-right-aligned-header' : '',
+      };
+
+      if (isCalculated) {
+        base.valueGetter = makeCalculatedValueGetter(col, ctx);
+        // Formula result IS the display value — no further formatting.
+        base.valueFormatter = (params: ValueFormatterParams) =>
+          typeof params.value === 'string' ? params.value : '';
+        base.tooltipValueGetter = (params) => {
+          const v = params.value;
+          if (v === '#CYCLE') {
+            return 'This calculated column references itself - cycle detected.';
+          }
+          if (v === '#ERR') {
+            return `Formula error in "${col.formula ?? ''}". Open Custom Columns to edit.`;
+          }
+          return col.formula ? `Formula: ${col.formula}` : undefined;
+        };
+        return base;
+      }
+
+      // Derived columns (GAEB Lohn/Material/Geräte EP, ÖNORM
+      // Lohn-Anteil %) auto-compute from `metadata.resources[]` so the
+      // user never has to retype values that already live on the
+      // position. The valueGetter sums or proportions resources of the
+      // declared `resource_role` and the column is marked read-only
+      // above. valueSetter is NOT installed — AG Grid will not fire
+      // edits on a non-editable cell, so the field is simply display.
+      if (isDerived) {
+        const role = col.resource_role;
+        // Normalize role to a Set so single / array forms match identically
+        // (Sonstiges-EP carries ``['other', 'operator', 'subcontractor']``).
+        const roleSet: Set<string> | null = role
+          ? new Set(Array.isArray(role) ? role : [role])
+          : null;
+        const matchesRole = (t: string): boolean => !roleSet || roleSet.has(t);
+        const dec = Math.max(0, Math.min(6, col.decimals ?? 2));
+        base.valueGetter = (params) => {
+          const data = params.data;
+          if (!data || data._isSection || data._isFooter || data._isAddResource) {
+            return '';
+          }
+
+          // Resource sub-row: render the per-resource value (its own
+          // qty × rate contribution, OR its own % of the parent
+          // position's total resource sum). Only resources whose type
+          // matches the column's role filter render a value — others
+          // stay blank so the column visually attributes the
+          // contribution to the right resource.
+          if (data._isResource) {
+            const t = typeof data._resourceType === 'string' ? data._resourceType : 'other';
+            if (!matchesRole(t)) return '';
+            const q = typeof data._resourceQty === 'number'
+              ? data._resourceQty
+              : parseFloat(String(data._resourceQty ?? '0')) || 0;
+            const r = typeof data._resourceRate === 'number'
+              ? data._resourceRate
+              : parseFloat(String(data._resourceRate ?? '0')) || 0;
+            const contribution = q * r;
+            if (col.derived === 'percentage_of_unit_rate') {
+              const parent = data._parentPositionId
+                ? positionsById.get(String(data._parentPositionId))
+                : undefined;
+              const parentResources =
+                ((parent?.metadata as Record<string, unknown> | undefined)
+                  ?.resources as Array<Record<string, unknown>> | undefined) ?? [];
+              let allSum = 0;
+              for (const res of parentResources) {
+                const rq = typeof res.quantity === 'number'
+                  ? res.quantity
+                  : parseFloat(String(res.quantity ?? '0')) || 0;
+                const rr = typeof res.unit_rate === 'number'
+                  ? res.unit_rate
+                  : parseFloat(String(res.unit_rate ?? '0')) || 0;
+                allSum += rq * rr;
+              }
+              if (allSum <= 0) return '';
+              return ((contribution / allSum) * 100).toFixed(dec);
+            }
+            // resource_sum on a resource row = this resource's
+            // contribution to the position unit rate.
+            return contribution.toFixed(dec);
+          }
+
+          // Position row: existing aggregation across the position's
+          // resources. Sums the per-unit subtotal of resources whose
+          // `type` matches the role hint.
+          const meta = (data.metadata as Record<string, unknown> | undefined) ?? {};
+          const resources = (meta.resources as Array<Record<string, unknown>> | undefined) ?? [];
+          if (!Array.isArray(resources) || resources.length === 0) return '';
+          let matched = 0;
+          let allSum = 0;
+          for (const res of resources) {
+            const t = typeof res.type === 'string' ? res.type : 'other';
+            const q = typeof res.quantity === 'number' ? res.quantity : parseFloat(String(res.quantity ?? '0')) || 0;
+            const r = typeof res.unit_rate === 'number' ? res.unit_rate : parseFloat(String(res.unit_rate ?? '0')) || 0;
+            const contribution = q * r;
+            allSum += contribution;
+            if (matchesRole(t)) matched += contribution;
+          }
+          if (col.derived === 'percentage_of_unit_rate') {
+            if (allSum <= 0) return '';
+            const pct = (matched / allSum) * 100;
+            return pct.toFixed(dec);
+          }
+          // resource_sum
+          return matched.toFixed(dec);
+        };
+        const roleLabel = roleSet ? Array.from(roleSet).join(' / ') : 'matching';
+        base.tooltipValueGetter = () => {
+          if (col.derived === 'percentage_of_unit_rate') {
+            return `${col.display_name} - share of unit rate from ${roleLabel} resources (auto-computed; edit resources to change)`;
+          }
+          return `${col.display_name} - sum of ${roleLabel} resources for this position (auto-computed; edit resources to change)`;
+        };
+        return base;
+      }
+
+      // Non-calculated columns read/write through `metadata.custom_fields`
+      // keyed by the column's STORED `name` (captured in closure on
+      // every rebuild — never derived from grid-level identifiers like
+      // `field` / `colId` that the user might rename later). Keeping
+      // these two as the SINGLE source of truth eliminates the
+      // "values jump to a sibling column" class of bugs entirely.
+      //
+      // Resource sub-rows inherit the parent position's custom-field
+      // value — they have no `metadata` of their own, so we look the
+      // parent up by ``_parentPositionId``. This makes the column
+      // visible across all rows of a position; the cell is read-only on
+      // sub-rows (see editable above) so edits still happen at the
+      // position level.
+      base.valueGetter = (params) => {
+        const data = params.data;
+        if (!data) return '';
+        // Resource sub-row — try the per-resource value first
+        // (``parent.metadata.resources[i].metadata.custom_fields[name]``),
+        // fall back to the parent position's value so a "globally true"
+        // value (supplier set on the position) still shows on each
+        // resource row that hasn't been overridden.
+        if (data._isResource && data._parentPositionId) {
+          const parent = positionsById.get(String(data._parentPositionId));
+          const resIdx = typeof data._resourceIndex === 'number' ? data._resourceIndex : -1;
+          if (resIdx >= 0) {
+            const parentMeta = parent?.metadata as Record<string, unknown> | undefined;
+            const resources = (parentMeta?.resources as Array<Record<string, unknown>> | undefined) ?? [];
+            if (resIdx < resources.length) {
+              const resMeta = resources[resIdx]?.metadata as Record<string, unknown> | undefined;
+              const resCf = resMeta?.custom_fields as Record<string, unknown> | undefined;
+              const resVal = resCf?.[col.name];
+              if (resVal !== undefined && resVal !== null && resVal !== '') {
+                return resVal;
+              }
+            }
+          }
+          const parentMeta = parent?.metadata as Record<string, unknown> | undefined;
+          const parentCf = parentMeta?.custom_fields as Record<string, unknown> | undefined;
+          return parentCf?.[col.name] ?? '';
+        }
+        // Position row
+        const meta = data.metadata as Record<string, unknown> | undefined;
+        const cf = meta?.custom_fields as Record<string, unknown> | undefined;
+        return cf?.[col.name] ?? '';
+      };
+      // valueSetter rebuilds `metadata` and `custom_fields` as fresh
+      // objects rather than mutating in place. Mutation worked, but it
+      // made every edit silently mutate the React Query cache, which in
+      // turn caused stale cell renders when a sibling column was
+      // re-evaluated against the same row right after a cell commit.
+      // Immutable updates are how the rest of the grid handles row
+      // edits (see onCellValueChanged in BOQGrid.tsx) — bringing the
+      // setter in line keeps the data flow uniform.
+      base.valueSetter = (params) => {
+        if (!params.data) return false;
+        const meta = (params.data.metadata as Record<string, unknown> | undefined) ?? {};
+        const cf = (meta.custom_fields as Record<string, unknown> | undefined) ?? {};
+        if (cf[col.name] === params.newValue) return false;
+        params.data.metadata = {
+          ...meta,
+          custom_fields: { ...cf, [col.name]: params.newValue },
+        };
+        return true;
+      };
+
+      if (colType === 'number') {
+        base.cellEditor = 'agNumberCellEditor';
+        base.valueParser = (params) => {
+          const val = parseFloat(params.newValue);
+          return isNaN(val) ? '' : val;
+        };
+      } else if (colType === 'select' && col.options?.length) {
+        base.cellEditor = 'agSelectCellEditor';
+        base.cellEditorParams = { values: ['', ...col.options] };
+      } else {
+        base.cellEditor = 'agTextCellEditor';
+      }
+
+      return base;
+    });
+}

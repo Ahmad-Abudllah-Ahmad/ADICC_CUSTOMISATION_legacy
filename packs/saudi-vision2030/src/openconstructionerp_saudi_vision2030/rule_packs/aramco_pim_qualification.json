@@ -1,0 +1,27 @@
+{
+  "rule_pack_id": "aramco_pim_qualification",
+  "name": "Saudi Aramco PIM — Vendor Pre-qualification & Schedule Q",
+  "name_ar": "أرامكو السعودية PIM — التأهيل المسبق للموردين",
+  "standard": "Saudi Aramco Pre-qualification Information Memorandum (PIM) + 9COM Schedule Q + Aramco Approved Vendor List (AVL)",
+  "jurisdiction": "SA-ARAMCO",
+  "regulator": "Saudi Aramco — Contracting Department + Inspection Department",
+  "publication_year": 2024,
+  "applies_to": ["projects", "tendering", "subcontractors", "validation"],
+  "description": "Enables OCERP built-in validation rules that gate every tender response to an Aramco package on the proper PIM / Schedule Q pre-qualification: contractor and major subcontractors must be on the Aramco Approved Vendor List (AVL) for the relevant work category (civil / mechanical / electrical / piping / coatings / instrumentation), Schedule Q safety-management questionnaire completed within validity window, IKTVA local-content score disclosed and meeting the package minimum, Nitaqat band Green or above, and prior-project performance evaluation references attached.",
+  "description_ar": "تفعيل قواعد التحقق للتأهيل المسبق للموردين في أرامكو — قائمة الموردين المعتمدين AVL، استبيان السلامة Schedule Q، درجة IKTVA، ونطاق نطاقات.",
+  "severity_overrides": {
+    "aramco.avl_membership_for_category": "ERROR",
+    "aramco.schedule_q_within_validity": "ERROR"
+  },
+  "enables_rule_ids": [
+    "aramco.avl_membership_for_category",
+    "aramco.schedule_q_within_validity",
+    "aramco.iktva_score_meets_package_minimum",
+    "aramco.nitaqat_band_green_or_above",
+    "aramco.prior_performance_evaluation_attached",
+    "aramco.pim_within_validity_window",
+    "aramco.safety_trir_within_threshold",
+    "aramco.iso_45001_certification_present_or_equivalent",
+    "aramco.subcontractor_chain_avl_compliant"
+  ]
+}

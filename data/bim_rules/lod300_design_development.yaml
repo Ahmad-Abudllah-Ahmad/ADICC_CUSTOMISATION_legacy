@@ -1,0 +1,277 @@
+# AIA LOD 300 — Design Development.
+#
+# At LOD 300 (Design Development) every model element must carry the
+# information required to coordinate, dimension and produce construction
+# documents. Per the AIA G202-2013 BIM Protocol Form §A.4 the minimum
+# required content for each common discipline trade is encoded below.
+#
+# Geometry and properties must be consistent: the bounding-box height /
+# width / length must agree with the property values within ±5 mm.
+# At LOD 300 the model is dimensionally accurate; below LOD 350 the
+# attachment / connectivity geometry is not yet authoritative.
+schema_version: "1.0"
+pack:
+  id: lod300_design_development
+  name: AIA LOD 300 — Design Development
+  description: |
+    Validates that every disciplined element carries the LOD 300 minimum
+    required information (material, dimensions, fire rating where
+    applicable, IsExternal, glazing, cross-section, etc.) per the AIA
+    G202-2013 BIM Protocol Form §A.4.
+  source: openconstructionerp
+  version: "1.0.0"
+  applies_to:
+    classifications: ["MasterFormat", "Uniformat", "OmniClass"]
+    project_regions: ["US", "CA"]
+
+rules:
+  # ── Walls ────────────────────────────────────────────────────────────
+  - id: lod300_wall_material_present
+    name: LOD 300 — Wall has Material
+    severity: error
+    rationale: |
+      AIA G202-2013 §A.4 (LOD 300) requires every wall to carry an
+      authored Material so quantity takeoff and structural review can
+      proceed without manual reconciliation.
+    selector:
+      ifc_class: IfcWall
+    assertion:
+      property:
+        key: Material
+        op: exists
+        value: true
+    failure_message: "Wall has no Material property (required at LOD 300)."
+
+  - id: lod300_wall_dimensions_present
+    name: LOD 300 — Wall has Width, Height and Length
+    severity: error
+    rationale: |
+      LOD 300 walls are dimensionally accurate; Width, Height and Length
+      must all be present so geometry can be cross-checked against the
+      bounding box.
+    selector:
+      ifc_class: IfcWall
+    assertion:
+      property:
+        key: Width
+        op: exists
+        value: true
+    failure_message: "Wall is missing Width."
+
+  - id: lod300_wall_isexternal_present
+    name: LOD 300 — Wall declares IsExternal
+    severity: warning
+    rationale: |
+      IsExternal must be authored on every wall so envelope vs interior
+      partitioning queries (energy model, fire compartment) succeed.
+    selector:
+      ifc_class: IfcWall
+    assertion:
+      property:
+        key: IsExternal
+        op: exists
+        value: true
+    failure_message: "Wall does not declare IsExternal."
+
+  - id: lod300_wall_fire_rating_when_rated
+    name: LOD 300 — Rated wall has FireRating value
+    severity: error
+    rationale: |
+      Walls flagged as IsFireRated=true must carry the FireRating value
+      so downstream compartment audits can reason about the rating.
+    selector:
+      ifc_class: IfcWall
+      properties:
+        - { key: IsFireRated, op: eq, value: true }
+    assertion:
+      property:
+        key: FireRating
+        op: regex
+        value: "^(none|F30|F60|F90|F120|F180|UL[0-9]{2,3}|[0-9]{1,3}min)$"
+    failure_message: "Rated wall has missing or non-vocabulary FireRating '{{FireRating}}'."
+
+  # ── Doors ────────────────────────────────────────────────────────────
+  - id: lod300_door_material_present
+    name: LOD 300 — Door has Material
+    severity: error
+    rationale: |
+      Door material drives finish schedules and quantity takeoff; missing
+      values silently collapse to "other" in downstream rollups.
+    selector:
+      ifc_class: IfcDoor
+    assertion:
+      property:
+        key: Material
+        op: exists
+        value: true
+    failure_message: "Door has no Material property."
+
+  - id: lod300_door_dimensions_present
+    name: LOD 300 — Door has Width and Height
+    severity: error
+    rationale: |
+      LOD 300 doors are dimensionally accurate; both Width and Height
+      must be authored.
+    selector:
+      ifc_class: IfcDoor
+    assertion:
+      property:
+        key: Width
+        op: gt
+        value: 0
+        unit: m
+    failure_message: "Door Width is missing or non-positive."
+
+  - id: lod300_door_pset_common
+    name: LOD 300 — Door has Pset_DoorCommon.OperationType
+    severity: warning
+    rationale: |
+      Pset_DoorCommon.OperationType is the buildingSMART canonical
+      attribute that downstream FM systems key off; LOD 300 requires it.
+    selector:
+      ifc_class: IfcDoor
+    assertion:
+      property:
+        key: OperationType
+        op: in
+        value:
+          - SINGLE_SWING_LEFT
+          - SINGLE_SWING_RIGHT
+          - DOUBLE_DOOR_SINGLE_SWING
+          - DOUBLE_SWING_LEFT
+          - DOUBLE_SWING_RIGHT
+          - DOUBLE_DOOR_DOUBLE_SWING
+          - SLIDING_TO_LEFT
+          - SLIDING_TO_RIGHT
+          - DOUBLE_DOOR_SLIDING
+          - FOLDING_TO_LEFT
+          - FOLDING_TO_RIGHT
+          - REVOLVING
+          - ROLLINGUP
+          - SWING_FIXED_LEFT
+          - SWING_FIXED_RIGHT
+          - USERDEFINED
+    failure_message: "Door OperationType '{{OperationType}}' is not a valid Pset_DoorCommon enumeration."
+
+  # ── Windows ──────────────────────────────────────────────────────────
+  - id: lod300_window_material_present
+    name: LOD 300 — Window has Material
+    severity: error
+    selector:
+      ifc_class: IfcWindow
+    assertion:
+      property:
+        key: Material
+        op: exists
+        value: true
+    failure_message: "Window has no Material property."
+
+  - id: lod300_window_glazing_properties
+    name: LOD 300 — Window has GlazingAreaFraction or PanelOperation
+    severity: warning
+    rationale: |
+      Either GlazingAreaFraction (preferred) or PanelOperation must be
+      present so daylight and energy models can be exported without
+      manual annotation.
+    selector:
+      ifc_class: IfcWindow
+    assertion:
+      property:
+        key: GlazingAreaFraction
+        op: between
+        value: [0.0, 1.0]
+    failure_message: "Window GlazingAreaFraction is missing or outside the 0..1 range."
+
+  # ── Columns ──────────────────────────────────────────────────────────
+  - id: lod300_column_material_present
+    name: LOD 300 — Column has Material
+    severity: error
+    selector:
+      ifc_class: IfcColumn
+    assertion:
+      property:
+        key: Material
+        op: exists
+        value: true
+    failure_message: "Column has no Material property."
+
+  - id: lod300_column_cross_section
+    name: LOD 300 — Column has CrossSectionArea
+    severity: warning
+    rationale: |
+      LOD 300 columns are sized; CrossSectionArea (m²) is part of the
+      IFC Pset_ColumnCommon canonical attribute set.
+    selector:
+      ifc_class: IfcColumn
+    assertion:
+      property:
+        key: CrossSectionArea
+        op: gt
+        value: 0
+        unit: m2
+    failure_message: "Column CrossSectionArea is missing or non-positive."
+
+  # ── Beams ────────────────────────────────────────────────────────────
+  - id: lod300_beam_material_present
+    name: LOD 300 — Beam has Material
+    severity: error
+    selector:
+      ifc_class: IfcBeam
+    assertion:
+      property:
+        key: Material
+        op: exists
+        value: true
+    failure_message: "Beam has no Material property."
+
+  - id: lod300_beam_span
+    name: LOD 300 — Beam has Span
+    severity: warning
+    rationale: |
+      Beam Span is required at LOD 300 so structural review can validate
+      the framing layout before LOD 350 connection design.
+    selector:
+      ifc_class: IfcBeam
+    assertion:
+      property:
+        key: Span
+        op: gt
+        value: 0
+        unit: m
+    failure_message: "Beam Span is missing or non-positive."
+
+  - id: lod300_beam_cross_section
+    name: LOD 300 — Beam has CrossSection profile name
+    severity: warning
+    rationale: |
+      The CrossSection profile name (e.g. W12x26, IPE200) is part of
+      Pset_BeamCommon and required at LOD 300 for shop drawing handoff.
+    selector:
+      ifc_class: IfcBeam
+    assertion:
+      property:
+        key: CrossSection
+        op: exists
+        value: true
+    failure_message: "Beam has no CrossSection profile name."
+
+  # ── Geometry / property cross-check ─────────────────────────────────
+  - id: lod300_bbox_height_matches_property
+    name: LOD 300 — Bounding-box height matches Height property ±5 mm
+    severity: warning
+    rationale: |
+      At LOD 300 the geometry must reproduce the property dimensions.
+      A delta > 5 mm typically indicates a stale parameter or a missing
+      family update.
+    selector:
+      ifc_class: IfcElement
+      properties:
+        - { key: Height, op: exists, value: true }
+        - { key: BBoxHeight, op: exists, value: true }
+    assertion:
+      property:
+        key: HeightDeltaMM
+        op: lte
+        value: 5
+        unit: mm
+    failure_message: "Bounding-box height differs from Height property by more than 5 mm."

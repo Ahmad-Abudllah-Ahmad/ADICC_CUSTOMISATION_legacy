@@ -1,0 +1,35 @@
+{
+  "$schema": "openconstructionerp.partner_pack.rule_pack/v1",
+  "slug": "din_en_12812_falsework",
+  "display_name": "DIN EN 12812 — Traggerüste, Bemessung und konstruktive Anforderungen",
+  "description": "Validiert Traggerüste (Falsework) für Deckenschalung nach DIN EN 12812:2008. Lastklassen A/B1/B2, Durchbiegungsgrenzen, geometrische Toleranzen, Lastannahmen und Sicherheitsbeiwert γ_F.",
+  "standard": "DIN EN 12812:2008",
+  "severity_default": "error",
+  "category": "compliance",
+  "locale_default": "de",
+  "enables_rule_ids": [
+    "falsework.din_en_12812.load_class_required",
+    "falsework.din_en_12812.load_class_valid",
+    "falsework.din_en_12812.deflection_limit_l_over_500",
+    "falsework.din_en_12812.geometric_tolerance_within_h_over_500",
+    "falsework.din_en_12812.safety_factor_gamma_F_min_1_5",
+    "falsework.din_en_12812.live_load_workers_kN_per_m2",
+    "falsework.din_en_12812.lateral_stability_braced",
+    "falsework.din_en_12812.foundation_capacity_documented",
+    "falsework.din_en_12812.design_by_class_b_calculation_referenced"
+  ],
+  "parameters": {
+    "load_classes": ["A", "B1", "B2"],
+    "deflection_limit_ratio": 500,
+    "geometric_tolerance_ratio": 500,
+    "safety_factor_gamma_F_min": 1.5,
+    "live_load_workers_kN_per_m2": 1.5
+  },
+  "metadata": {
+    "applies_to": ["slab_formwork", "beam_formwork", "shoring_tower"],
+    "references": [
+      "DIN EN 12812:2008 Traggerüste — Anforderungen, Bemessung",
+      "DIN EN 12813:2005 Traggerüste — Vorgefertigte Stützen"
+    ]
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "rule_pack_id": "as_1684_timber",
+  "name": "AS 1684 — Residential Timber-Framed Construction (Parts 1-4)",
+  "standard": "AS 1684",
+  "jurisdiction": "AU",
+  "regulator": "Standards Australia",
+  "publication_year": 2010,
+  "current_revision": "AS 1684.2-2010 / AS 1684.3-2010 / AS 1684.4-2010 (Amendments 1+2 incorporated)",
+  "description": "Enables OCERP built-in validation rules that enforce AS 1684 across all four parts: Part 1 (Design Criteria), Part 2 (Non-Cyclonic Span Tables), Part 3 (Cyclonic Areas), Part 4 (Simplified — Non-Cyclonic Span Tables). Selects wind classification, member sizing, bracing, tie-down, stud spacing, roof pitch, timber stress grade and bushfire attack level.",
+  "parts": {
+    "part_1": {
+      "title": "Design Criteria",
+      "scope": "Procedures and design criteria for timber-framing"
+    },
+    "part_2": {
+      "title": "Non-Cyclonic Areas — Span Tables",
+      "scope": "Span tables for wind regions N1-N4"
+    },
+    "part_3": {
+      "title": "Cyclonic Areas",
+      "scope": "Span tables and design for wind regions C1-C3 (Qld/NT/WA cyclonic)"
+    },
+    "part_4": {
+      "title": "Simplified — Non-Cyclonic Span Tables",
+      "scope": "Simplified span tables for typical dwellings in N1-N3"
+    }
+  },
+  "wind_classifications": ["N1", "N2", "N3", "N4", "C1", "C2", "C3"],
+  "bushfire_attack_levels": ["BAL-LOW", "BAL-12.5", "BAL-19", "BAL-29", "BAL-40", "BAL-FZ"],
+  "applies_to": ["projects", "boq", "validation"],
+  "enables_rule_ids": [
+    "as1684.part_selected",
+    "as1684.wind_classification_set",
+    "as1684.cyclonic_part_3_for_c_regions",
+    "as1684.member_size_within_span_table",
+    "as1684.bracing_schedule_present",
+    "as1684.bracing_units_per_storey_satisfied",
+    "as1684.tie_down_compliance",
+    "as1684.tie_down_loadpath_continuous",
+    "as1684.stud_spacing_valid",
+    "as1684.top_bottom_plate_size_correct",
+    "as1684.lintel_span_within_table",
+    "as1684.roof_pitch_within_range",
+    "as1684.rafter_purlin_span_compliant",
+    "as1684.timber_stress_grade_specified",
+    "as1684.timber_durability_class_specified",
+    "as1684.bushfire_attack_level_set",
+    "as1684.bal_fz_external_cladding_compliant",
+    "as1684.subfloor_clearance_minimum"
+  ]
+}

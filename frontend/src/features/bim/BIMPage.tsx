@@ -1,0 +1,4336 @@
+// DDC-CWICR-OE: DataDrivenConstruction · OpenConstructionERP
+// Copyright (c) 2026 Artem Boiko / DataDrivenConstruction
+/**
+ * BIMPage - Premium BIM Hub with immersive 3D viewport and polished light UI.
+ *
+ * Layout:
+ *  - Clean light header with stats + actions
+ *  - Full-height 3D viewport
+ *  - Glass-morphism model filmstrip at the bottom
+ *  - Slide-in upload panel from right
+ *  - Professional landing page when no models exist
+ *
+ * Route: /projects/:projectId/bim  or  /bim
+ */
+
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import clsx from 'clsx';
+import { useTranslation } from 'react-i18next';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  Box,
+  ChevronRight,
+  Loader2,
+  FolderOpen,
+  Link2,
+  Upload,
+  Database,
+  FileBox,
+  FileUp,
+  X,
+  CheckCircle2,
+  AlertCircle,
+  ChevronUp,
+  ChevronDown,
+  CalendarDays,
+  Trash2,
+  RotateCcw,
+  DownloadCloud,
+  Eye,
+  Layers,
+  AlertTriangle,
+  UploadCloud,
+  Sparkles,
+  Building2,
+  Ruler,
+  Globe2,
+  ArrowRight,
+  Plus,
+  Cuboid,
+  SlidersHorizontal,
+  ClipboardList,
+  ShieldCheck,
+  LayoutGrid,
+  Maximize2,
+  Package,
+  GitCompare,
+  Zap,
+  Palette,
+  Footprints,
+} from 'lucide-react';
+import { Badge, EmptyState, Breadcrumb, ConfirmDialog, ModuleHelpButton, ModuleGuideButton, DismissibleInfo, IntroRichText, ErrorBoundary } from '@/shared/ui';
+import { bimGuide } from './bimGuide';
+import { useConfirm } from '@/shared/hooks/useConfirm';
+import { useDisplayQuantity } from '@/shared/hooks/useDisplayQuantity';
+import { BIMViewer } from '@/shared/ui/BIMViewer';
+import type { BIMElementData, BIMModelData } from '@/shared/ui/BIMViewer';
+import {
+  parseBIMUrlState,
+  serializeBIMUrlState,
+  BIM_URL_STATE_KEYS,
+} from '@/shared/ui/BIMViewer/urlState';
+import { metresToModelUnits as unitsToModelScale } from '@/shared/ui/BIMViewer/geoLocate';
+import { buildElementQuestion } from '@/shared/ui/BIMViewer/elementQuestion';
+import { useFloatingChatStore } from '@/features/erp-chat/useFloatingChat';
+import { listAnchors } from '@/features/geo-hub/api';
+import BIMFilterGroupsPanel from './BIMFilterGroupsPanel';
+import BIMRightPanelTabs from './BIMRightPanelTabs';
+import PropertySearchPanel from './PropertySearchPanel';
+import BIMDiffPanel from './BIMDiffPanel';
+import type { DiffChangeType } from './diffGrouping';
+import ElementAssetCard from './ElementAssetCard';
+import BIMSnapshotsPopover from './BIMSnapshotsPopover';
+import { useBIMViewerStore } from '@/stores/useBIMViewerStore';
+import { BIMConverterStatusBanner } from './BIMConverterStatusBanner';
+import { InstallConverterPrompt } from './InstallConverterPrompt';
+import { AutoInstallConverterNotice } from './AutoInstallConverterNotice';
+import { useAutoInstallConverter, converterIdForFile } from './useAutoInstallConverter';
+import AddToBOQModal from './AddToBOQModal';
+import SaveGroupModal from './SaveGroupModal';
+import CreateTaskFromBIMModal from './CreateTaskFromBIMModal';
+import LinkDocumentToBIMModal from './LinkDocumentToBIMModal';
+import LinkActivityToBIMModal from './LinkActivityToBIMModal';
+import LinkRequirementToBIMModal from './LinkRequirementToBIMModal';
+import MeshImportDialog from './meshImport/MeshImportDialog';
+import { isMeshImportFile } from './meshImport/loaders';
+import type { BIMGroupFilterCriteria } from './api';
+import { Filter, Search } from 'lucide-react';
+import { SmartViewsPanel } from '@/features/smart_views/SmartViewsPanel';
+import { useSmartViewState } from '@/features/smart_views/useSmartViewState';
+import { useProjectContextStore } from '@/stores/useProjectContextStore';
+import { useToastStore } from '@/stores/useToastStore';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { useBIMLinkSelectionStore } from '@/stores/useBIMLinkSelectionStore';
+import { useBIMUploadStore, type BIMUploadJob } from '@/stores/useBIMUploadStore';
+import { useDwgUploadStore } from '@/stores/useDwgUploadStore';
+import { apiGet } from '@/shared/lib/api';
+import {
+  fetchBIMModels,
+  fetchBIMModel,
+  fetchBIMElements,
+  fetchBIMElementProgress,
+  fetchBIMConverters,
+  deleteBIMModel,
+  deleteLink,
+  listElementGroups,
+  deleteElementGroup,
+  installBIMConverter,
+  retryBIMModelProcessing,
+  createBimModelFromDocument,
+  isNon3DBimFormat,
+  type BIMElementGroup,
+} from './api';
+
+/* ── Helpers ─────────────────────────────────────────────────────────── */
+
+const CAD_EXTENSIONS = new Set(['.rvt', '.ifc']);
+const DATA_EXTENSIONS = new Set(['.csv', '.xlsx', '.xls']);
+/** Extensions handled by the DWG Takeoff module - not accepted in BIM Hub. */
+const DWG_EXTENSIONS = new Set(['.dwg', '.dxf']);
+/** Mesh geometry formats parsed in-browser by the mesh importer. */
+const MESH_IMPORT_ACCEPT = '.obj,.3ds,.dae,.gltf,.glb,.fbx,.lwo,.stl,.ply,.usd,.usdz';
+/** Geometry formats the backend accepts raw alongside a data file (advanced
+ *  mode). Anything else in the geometry slot is routed to the mesh importer. */
+const RAW_GEOMETRY_EXTENSIONS = new Set(['.dae', '.glb', '.gltf']);
+
+function getFileExtension(filename: string): string {
+  const dot = filename.lastIndexOf('.');
+  return dot >= 0 ? filename.slice(dot).toLowerCase() : '';
+}
+function isCADFile(fn: string): boolean {
+  return CAD_EXTENSIONS.has(getFileExtension(fn));
+}
+function isDataFile(fn: string): boolean {
+  return DATA_EXTENSIONS.has(getFileExtension(fn));
+}
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+}
+
+/* ── Stat Pill ───────────────────────────────────────────────────────── */
+
+function StatPill({ label, value, icon: Icon }: { label: string; value: string | number; icon: React.ElementType }) {
+  return (
+    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-secondary border border-border-light">
+      <Icon size={13} className="text-content-tertiary" />
+      <span className="text-[11px] font-medium text-content-tertiary">{label}</span>
+      <span className="text-[11px] font-bold text-content-primary tabular-nums">{value}</span>
+    </div>
+  );
+}
+
+/* ── Model Card ──────────────────────────────────────────────────────── */
+
+/** Collapsible model filmstrip - shows for 5s on mount, then slides away.
+ *  Click the tab handle to re-expand. */
+function ModelFilmstrip({ models, isLoading, activeModelId, onSelectModel, onDeleteModel, onUpload }: {
+  models: BIMModelData[];
+  isLoading: boolean;
+  activeModelId: string | null;
+  onSelectModel: (id: string) => void;
+  onDeleteModel: (id: string, name: string) => void;
+  onUpload: () => void;
+}) {
+  const { t } = useTranslation();
+  const [expanded, setExpanded] = useState(true);
+
+  // Fully-collapsed state: the entire filmstrip shrinks to a slim tab
+  // pinned to the centre of the bottom edge with a single chevron, mirroring
+  // the left-panel collapse pattern. The tab stays clickable so users can
+  // re-expand without hunting through a hamburger menu.
+  if (!expanded) {
+    return (
+      <div className="shrink-0 bg-transparent">
+        <div className="flex justify-center">
+          <button
+            type="button"
+            onClick={() => setExpanded(true)}
+            aria-expanded={false}
+            aria-label={t('bim.expand_models_filmstrip', {
+              defaultValue: 'Show models filmstrip',
+            })}
+            data-testid="bim-filmstrip-expand"
+            className="group flex items-center gap-1.5 px-3 py-1 rounded-t-md bg-surface-primary/95 backdrop-blur border border-b-0 border-border-light shadow-sm hover:bg-surface-secondary/60 transition-colors"
+            title={t('bim.expand_models_filmstrip', {
+              defaultValue: 'Show models filmstrip',
+            })}
+          >
+            <ChevronUp
+              size={14}
+              className="text-content-tertiary group-hover:text-content-secondary transition-colors"
+            />
+            <Layers size={12} className="text-content-tertiary shrink-0" />
+            <span className="text-[10px] font-medium text-content-secondary">
+              {t('bim.models_label', { defaultValue: 'Models' })}
+            </span>
+            <span className="text-[10px] text-content-tertiary tabular-nums">
+              ({models.length})
+            </span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="shrink-0 bg-surface-primary border-t border-border-light">
+      {/* Header - always visible with drag handle, title, and count */}
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
+        aria-label={t('bim.toggle_models_filmstrip', { defaultValue: 'Toggle models filmstrip' })}
+        data-testid="bim-filmstrip-toggle"
+        className="flex items-center w-full px-4 py-2 cursor-pointer group hover:bg-surface-secondary/30 transition-colors"
+      >
+        {/* Drag handle icon */}
+        <div className="flex flex-col items-center gap-[3px] mr-3 opacity-50 group-hover:opacity-80 transition-opacity">
+          <div className="w-5 h-[2px] rounded-full bg-content-tertiary" />
+          <div className="w-5 h-[2px] rounded-full bg-content-tertiary" />
+          <div className="w-5 h-[2px] rounded-full bg-content-tertiary" />
+        </div>
+
+        {/* Model icon */}
+        <Layers size={16} className="text-content-secondary mr-2 shrink-0" />
+
+        {/* Title */}
+        <span className="text-xs font-semibold text-content-primary">
+          {t('bim.models_label', { defaultValue: 'Models' })}
+        </span>
+        <span className="text-[11px] text-content-tertiary ml-1.5">({models.length})</span>
+
+        {/* Collapse chevron - chevron-down icon rotates so the visual cue
+            (arrow points DOWN to collapse, UP to expand) matches the
+            left-panel collapse pattern.  The previous variant rotated a
+            chevron-up which felt backwards to repeated users. */}
+        <ChevronDown
+          size={16}
+          className="ml-auto text-content-tertiary transition-transform duration-200"
+        />
+      </button>
+
+      {/* Collapsible model cards */}
+      <div
+        className="overflow-hidden transition-all duration-300 ease-in-out"
+        style={{ maxHeight: '120px', opacity: 1 }}
+      >
+        <div className="flex items-center gap-3 px-4 pb-2 overflow-x-auto">
+          {isLoading ? (
+            <Loader2 size={14} className="animate-spin text-content-quaternary" />
+          ) : models.length ? (
+            models.map((m) => (
+              <ModelCard key={m.id} model={m} isActive={m.id === activeModelId}
+                onClick={() => onSelectModel(m.id)}
+                onDelete={() => onDeleteModel(m.id, m.name)} />
+            ))
+          ) : (
+            <span className="text-[11px] text-content-quaternary">
+              {t('bim.no_models_yet', { defaultValue: 'No models uploaded yet' })}
+            </span>
+          )}
+          {/* Add model button */}
+          <button
+            onClick={onUpload}
+            className="flex items-center justify-center shrink-0 w-16 h-16 rounded-xl border-2 border-dashed border-border-medium hover:border-oe-blue/50 hover:bg-oe-blue/5 transition-all group"
+            title={t('bim.upload_model', { defaultValue: 'Upload model' })}
+            aria-label={t('bim.upload_model', { defaultValue: 'Upload model' })}
+          >
+            <Plus size={20} className="text-content-quaternary group-hover:text-oe-blue transition-colors" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ModelCard({ model, isActive, onClick, onDelete }: {
+  model: BIMModelData; isActive: boolean; onClick: () => void; onDelete?: () => void;
+}) {
+  const { t } = useTranslation();
+  const fmt = (model.model_format || model.format || '').toUpperCase();
+  // `empty_model` is a graceful, non-failure outcome (file read fine, no
+  // model objects) - keep it out of the red `isError` bucket (#197).
+  const isError = model.status === 'error' || model.status === 'needs_converter';
+  const isProcessing = model.status === 'processing';
+
+  let statusDot = 'bg-gray-400';
+  if (model.status === 'ready') statusDot = 'bg-emerald-500';
+  else if (model.status === 'degraded') statusDot = 'bg-amber-500';
+  else if (model.status === 'empty_model') statusDot = 'bg-amber-500';
+  else if (isProcessing) statusDot = 'bg-amber-400 animate-pulse';
+  else if (isError) statusDot = 'bg-red-400';
+
+  let statusLabel: string = model.status;
+  if (model.status === 'ready') {
+    statusLabel = t('bim.status_ready', { defaultValue: 'Ready' });
+  } else if (model.status === 'degraded') {
+    statusLabel = t('bim.status_degraded', { defaultValue: 'Imported (no quantities)' });
+  } else if (model.status === 'empty_model') {
+    statusLabel = t('bim.status_empty_model', { defaultValue: 'No elements' });
+  } else if (model.status === 'needs_converter') {
+    statusLabel = t('bim.status_needs_converter', { defaultValue: 'Needs Converter' });
+  } else if (model.status === 'processing') {
+    statusLabel = t('bim.status_processing', { defaultValue: 'Processing' });
+  } else if (model.status === 'error') {
+    statusLabel = t('bim.status_error', { defaultValue: 'Error' });
+  }
+
+  // The card itself acts as a button (click selects the model). We render
+  // it as a <div role="button"> so the inner delete button can stay a real
+  // <button> - nested <button> trips React's DOM validation warning.
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      className={`group relative shrink-0 w-52 text-start rounded-xl border-2 transition-all duration-200 overflow-hidden cursor-pointer focus:outline-none focus:ring-2 focus:ring-oe-blue/50 ${
+        isActive
+          ? 'border-oe-blue bg-oe-blue/5 shadow-lg shadow-oe-blue/8 ring-1 ring-oe-blue/20'
+          : 'border-transparent bg-surface-primary hover:bg-surface-secondary hover:border-border-light shadow-sm'
+      }`}
+    >
+      {/* Top accent */}
+      <div className={`h-[3px] ${isActive ? 'bg-oe-blue' : isError ? 'bg-red-400' : isProcessing ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+
+      {onDelete && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); onDelete?.(); } }}
+          aria-label={t('bim.delete_model', { defaultValue: 'Delete model' })}
+          className="absolute top-2.5 end-2 p-1 rounded-md text-content-quaternary hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all z-10"
+        >
+          <Trash2 size={11} />
+        </button>
+      )}
+
+      <div className="p-3 space-y-2">
+        <div className="flex items-center gap-2.5">
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+            isActive ? 'bg-oe-blue/10' : 'bg-surface-secondary'
+          }`}>
+            <Cuboid size={15} className={isActive ? 'text-oe-blue' : 'text-content-tertiary'} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-semibold text-content-primary truncate">{model.name}</p>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className={`w-1.5 h-1.5 rounded-full ${statusDot}`} />
+              <span className="text-[10px] text-content-tertiary">{statusLabel}</span>
+              {fmt && (
+                <>
+                  <span className="text-content-quaternary">·</span>
+                  <span className="text-[10px] text-content-quaternary font-mono">{fmt}</span>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center justify-between text-[10px]">
+          <div className="flex items-center gap-2 text-content-quaternary tabular-nums">
+            {isProcessing && (model.element_count ?? 0) === 0 ? (
+              <span className="inline-block w-16 h-3 rounded bg-surface-tertiary animate-pulse" />
+            ) : (
+              <>
+                <span>{t('bim.element_count', { defaultValue: '{{count}} elements', count: model.element_count ?? 0 })}</span>
+                {(model.storey_count ?? 0) > 0 && (
+                  <>
+                    <span className="text-content-quaternary">·</span>
+                    <span>{t('bim.storey_count', { defaultValue: '{{count}} levels', count: model.storey_count })}</span>
+                  </>
+                )}
+              </>
+            )}
+          </div>
+          {model.created_at && (
+            <span className="text-content-quaternary">
+              {new Date(model.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+            </span>
+          )}
+        </div>
+        {/* DDC converter version badge - stamped by ifc_processor on a
+            successful DDC pass. Hidden when missing (older imports or
+            text-fallback path). v3.12.0 / Stream D. */}
+        <ConverterVersionBadge metadata={model.metadata} />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Render a small "DDC v{X}" pill on a BIM model card when the model
+ * metadata carries a converter_version stamp. Falls back to nothing when
+ * the field is missing - e.g. older imports that pre-date v3.12.0, or
+ * the text-fallback IFC parser path which doesn't use the DDC binary.
+ */
+function ConverterVersionBadge({
+  metadata,
+}: {
+  metadata?: Record<string, unknown> | null;
+}) {
+  const { t } = useTranslation();
+  if (!metadata) return null;
+  const version = metadata.converter_version;
+  if (typeof version !== 'string' || !version) return null;
+  const source = typeof metadata.converter_source === 'string' ? metadata.converter_source : null;
+  const tooltip = source
+    ? t('bim.converter_version_tooltip', {
+        defaultValue: 'Processed with DDC converter v{{version}} (source: {{source}})',
+        version,
+        source,
+      })
+    : t('bim.converter_version_tooltip_no_source', {
+        defaultValue: 'Processed with DDC converter v{{version}}',
+        version,
+      });
+  return (
+    <div
+      className="flex items-center gap-1 text-[9px] font-medium text-content-tertiary"
+      title={tooltip}
+      data-testid="ddc-converter-version-badge"
+    >
+      <span className="inline-block w-1 h-1 rounded-full bg-emerald-400" />
+      <span>
+        {t('bim.converter_version_label', {
+          defaultValue: 'DDC v{{version}}',
+          version,
+        })}
+      </span>
+    </div>
+  );
+}
+
+/* ── Upload Panel ────────────────────────────────────────────────────── */
+
+/** State used by UploadPanel to remember an upload that was deferred
+ *  because the matching DDC converter was missing.  Once the user
+ *  confirms install via `InstallConverterPrompt`, the saved fields
+ *  are replayed through `uploadCADFile` without a second file pick. */
+interface InstallPromptState {
+  open: boolean;
+  converterId: string;
+  fileName: string;
+  fileSize: number;
+  pendingFile: File;
+  pendingProjectId: string;
+  pendingName: string;
+  pendingDiscipline: string;
+}
+
+function UploadPanel({
+  projectId,
+  onUploadComplete,
+  onClose,
+  initialAdvancedMode,
+  initialModelName,
+}: {
+  projectId: string;
+  onUploadComplete: (modelId: string) => void;
+  onClose: () => void;
+  initialAdvancedMode?: boolean;
+  initialModelName?: string;
+}) {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [file, setFile] = useState<File | null>(null);
+  const [modelName, setModelName] = useState(initialModelName || '');
+  const [discipline, setDiscipline] = useState('architecture');
+  const [conversionDepth, setConversionDepth] = useState<'standard' | 'medium' | 'complete'>('standard');
+  const [generatePdfSheets, setGeneratePdfSheets] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStage, setUploadStage] = useState('');
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [advancedMode, setAdvancedMode] = useState(initialAdvancedMode || false);
+  const [dataFile, setDataFile] = useState<File | null>(null);
+  const [geometryFile, setGeometryFile] = useState<File | null>(null);
+  const [meshImportFile, setMeshImportFile] = useState<File | null>(null);
+  const [installPromptState, setInstallPromptState] =
+    useState<InstallPromptState | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const dataInputRef = useRef<HTMLInputElement>(null);
+  const geoInputRef = useRef<HTMLInputElement>(null);
+  const addToast = useToastStore((s) => s.addToast);
+
+  useEffect(() => { if (initialModelName) setModelName(initialModelName); }, [initialModelName]);
+  useEffect(() => { if (initialAdvancedMode) setAdvancedMode(true); }, [initialAdvancedMode]);
+
+  const handleFileSelect = useCallback((f: File) => {
+    const ext = getFileExtension(f.name);
+    if (DWG_EXTENSIONS.has(ext)) {
+      // DWG/DXF are 2D takeoff drawings, not 3D BIM models. Hand the picked
+      // file straight to the DWG Takeoff module so the user does not have to
+      // re-pick it there, then open that module where the upload is already
+      // running.
+      if (projectId) {
+        useDwgUploadStore.getState().startUpload({
+          file: f,
+          projectId,
+          modelName: f.name.replace(/\.[^.]+$/, ''),
+          discipline,
+        });
+      }
+      addToast({
+        type: 'info',
+        title: t('bim.dwg_redirect_title', { defaultValue: 'DWG files are handled in the DWG Takeoff module' }),
+        message: projectId
+          ? t('bim.dwg_handoff_msg', { defaultValue: 'Sending your drawing to DWG Takeoff...' })
+          : t('bim.dwg_redirect_msg', { defaultValue: 'Opening DWG Takeoff...' }),
+      });
+      navigate('/dwg-takeoff');
+      return;
+    }
+    // Common mesh formats (glTF/GLB/OBJ/DAE/3DS/FBX/LWO/STL/PLY/USD) are parsed
+    // in-browser by the mesh importer, which extracts quantities and hands a
+    // normalized GLB + element table to the same bim_hub upload.
+    if (isMeshImportFile(f.name)) {
+      setUploadError(null);
+      setMeshImportFile(f);
+      if (!modelName) setModelName(f.name.replace(/\.[^.]+$/, ''));
+      return;
+    }
+    // Simple picker accepts native 3D BIM only (RVT/IFC). Tabular data
+    // (CSV/XLSX) lives behind the explicit "Advanced" toggle, which uses its
+    // own file input, so anything else dropped here is rejected up front.
+    if (!CAD_EXTENSIONS.has(ext)) { setUploadError(t('bim.upload_unsupported_format', { defaultValue: 'Unsupported file format. Please upload RVT, IFC or DWG files.' })); return; }
+    setFile(f);
+    setUploadError(ext === '.rvt' ? t('bim.upload_rvt_note') : null);
+    if (!modelName) setModelName(f.name.replace(/\.[^.]+$/, ''));
+  }, [modelName, t, addToast, navigate, projectId, discipline]);
+
+  const resetForm = useCallback(() => {
+    setFile(null); setDataFile(null); setGeometryFile(null); setModelName(''); setUploadError(null);
+    [fileInputRef, dataInputRef, geoInputRef].forEach((r) => { if (r.current) r.current.value = ''; });
+  }, []);
+
+  const startGlobalUpload = useBIMUploadStore((s) => s.startUpload);
+  const globalJobs = useBIMUploadStore((s) => s.jobs);
+  const activeUploads = useMemo(() => {
+    const active: { id: string; fileName: string; status: string; stage: string; progress: number; elementCount: number }[] = [];
+    for (const [id, job] of globalJobs) {
+      if (job.projectId !== projectId) continue;
+      if (job.status === 'uploading' || job.status === 'converting') {
+        active.push({ id, fileName: job.fileName, status: job.status, stage: job.stage, progress: job.progress, elementCount: 0 });
+      } else if (job.status === 'ready') {
+        active.push({ id, fileName: job.fileName, status: 'ready', stage: '', progress: 100, elementCount: job.elementCount });
+      }
+    }
+    return active;
+  }, [globalJobs, projectId]);
+
+  // Auto-install the matching DDC converter the moment a native CAD/BIM file
+  // is selected and its converter is missing - no extra click. The simple
+  // picker only ever holds .rvt / .ifc here (DWG/DXF are handed off to the
+  // DWG Takeoff module above), so this covers exactly the formats that need
+  // a converter on /bim. The notice + progress render inline below the
+  // dropzone; the upload itself is never blocked by the install.
+  const selectedConverterId = file && !advancedMode ? converterIdForFile(file.name) : null;
+  const autoInstall = useAutoInstallConverter(selectedConverterId, Boolean(selectedConverterId));
+
+  const handleUpload = useCallback(async () => {
+    if (!projectId) {
+      // Without a resolved project the upload silently did nothing before,
+      // which read as "the button is dead". Surface the real reason instead.
+      setUploadError(t('bim.upload_no_project', { defaultValue: 'No active project yet. Open a project, then upload again.' }));
+      return;
+    }
+    setUploading(true);
+    setUploadError(null);
+    setUploadProgress(0);
+
+    try {
+      if (advancedMode && dataFile) {
+        // Advanced (data) upload - delegate to global store
+        const name = modelName || 'Imported';
+        startGlobalUpload({
+          file: dataFile,
+          projectId,
+          modelName: name,
+          discipline,
+          uploadType: 'data',
+          geometryFile,
+        });
+        addToast({
+          type: 'info',
+          title: t('bim.upload_started_title', { defaultValue: 'Upload started' }),
+          message: t('bim.upload_background_msg', {
+            defaultValue: 'You can navigate to other pages - the upload will continue in the background.',
+          }),
+        });
+        resetForm();
+      } else if (file) {
+        const name = modelName || file.name.replace(/\.[^.]+$/, '');
+        if (isCADFile(file.name)) {
+          // Converter readiness: the matching converter now auto-installs in
+          // the background the moment the file is picked (see
+          // useAutoInstallConverter above), so we no longer gate the upload
+          // behind a click-required install modal by default. The modal is
+          // kept strictly as a LAST resort: only surface it when the
+          // automatic attempt has already FAILED (``autoInstall.errored``),
+          // so the user still has a manual path. Otherwise we proceed with
+          // the upload and let the background install + the dock's
+          // converter-required handling finish the job.
+          const lowerName = file.name.toLowerCase();
+          const needsConverterMatch = (
+            ['rvt'] as const
+          ).find((c) => lowerName.endsWith('.' + c));
+          if (needsConverterMatch && autoInstall.errored) {
+            try {
+              const status = await queryClient.fetchQuery({
+                queryKey: ['bim-converters'],
+                queryFn: () => fetchBIMConverters(),
+                staleTime: 30_000,
+              });
+              const conv = status.converters.find(
+                (c) => c.id === needsConverterMatch,
+              );
+              if (conv && !conv.installed) {
+                setUploading(false);
+                setUploadProgress(0);
+                setUploadStage('');
+                setInstallPromptState({
+                  open: true,
+                  converterId: needsConverterMatch,
+                  fileName: file.name,
+                  fileSize: file.size,
+                  pendingFile: file,
+                  pendingProjectId: projectId,
+                  pendingName: name,
+                  pendingDiscipline: discipline,
+                });
+                // Don't proceed to upload - prompt will retry on success.
+                return;
+              }
+            } catch (err) {
+              // If the converters endpoint fails, fall through to upload -
+              // the backend will preflight-reject and we'll catch it below.
+              if (import.meta.env.DEV) console.warn('Converter preflight check failed:', err);
+            }
+          }
+
+          // Delegate to global store - upload survives navigation.
+          startGlobalUpload({
+            file,
+            projectId,
+            modelName: name,
+            discipline,
+            uploadType: 'cad',
+            conversionDepth,
+            generatePdfSheets,
+          });
+          addToast({
+            type: 'info',
+            title: t('bim.upload_started_title', { defaultValue: 'Upload started' }),
+            message: t('bim.upload_background_msg', {
+              defaultValue: 'You can navigate to other pages - the upload will continue in the background.',
+            }),
+          });
+          resetForm();
+        } else if (isDataFile(file.name)) {
+          // Data file upload - delegate to global store
+          startGlobalUpload({
+            file,
+            projectId,
+            modelName: name,
+            discipline,
+            uploadType: 'data',
+          });
+          addToast({
+            type: 'info',
+            title: t('bim.upload_started_title', { defaultValue: 'Upload started' }),
+            message: t('bim.upload_background_msg', {
+              defaultValue: 'You can navigate to other pages - the upload will continue in the background.',
+            }),
+          });
+          resetForm();
+        }
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setUploadError(msg);
+      setUploadProgress(0);
+      addToast({ type: 'error', title: t('bim.upload_failed'), message: msg });
+    } finally {
+      setUploading(false);
+      setUploadStage('');
+    }
+  }, [
+    projectId,
+    file,
+    advancedMode,
+    dataFile,
+    geometryFile,
+    modelName,
+    discipline,
+    conversionDepth,
+    generatePdfSheets,
+    onUploadComplete,
+    addToast,
+    resetForm,
+    queryClient,
+    startGlobalUpload,
+    autoInstall.errored,
+    t,
+  ]);
+
+  /** Replay a deferred upload after the user installs a converter from
+   *  the prompt.  Uses the saved `pendingFile` + metadata so the user
+   *  never has to pick the file twice.  Now delegates to the global
+   *  store so the retry also survives navigation. */
+  const retryUploadAfterInstall = useCallback(
+    (pending: InstallPromptState) => {
+      startGlobalUpload({
+        file: pending.pendingFile,
+        projectId: pending.pendingProjectId,
+        modelName: pending.pendingName,
+        discipline: pending.pendingDiscipline,
+        uploadType: 'cad',
+      });
+      addToast({
+        type: 'info',
+        title: t('bim.upload_started_title', { defaultValue: 'Upload started' }),
+        message: t('bim.upload_background_msg', {
+          defaultValue: 'You can navigate to other pages - the upload will continue in the background.',
+        }),
+      });
+    },
+    [addToast, startGlobalUpload, t],
+  );
+
+  const canUpload = advancedMode ? !!dataFile && !uploading : !!file && !uploading;
+  const disciplines = [
+    { v: 'architecture', l: t('bim.disc_architecture') }, { v: 'structural', l: t('bim.disc_structural') },
+    { v: 'mechanical', l: t('bim.disc_mechanical') }, { v: 'electrical', l: t('bim.disc_electrical') },
+    { v: 'plumbing', l: t('bim.disc_plumbing') }, { v: 'fire_protection', l: t('bim.disc_fire') },
+    { v: 'civil', l: t('bim.disc_civil') }, { v: 'mixed', l: t('bim.disc_mixed') },
+  ];
+
+  return (
+    <>
+    <div className="absolute top-0 end-0 h-full w-[380px] bg-surface-primary/95 backdrop-blur-sm border-s border-border-light shadow-lg z-30 flex flex-col animate-in slide-in-from-right duration-200">
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 py-4 border-b border-border-light">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-oe-blue/10 flex items-center justify-center">
+            <Upload size={16} className="text-oe-blue" />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-content-primary">{t('bim.upload_panel_title')}</h2>
+            <p className="text-[10px] text-content-quaternary">{t('bim.upload_panel_subtitle')}</p>
+          </div>
+        </div>
+        <button onClick={onClose} className="p-1.5 rounded-lg text-content-tertiary hover:text-content-primary hover:bg-surface-secondary transition-colors" aria-label={t('common.close', { defaultValue: 'Close' })}>
+          <X size={16} />
+        </button>
+      </div>
+
+      {/* Body */}
+      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+        {/* Active uploads progress */}
+        {activeUploads.length > 0 && (
+          <div className="space-y-2">
+            {activeUploads.map((job) => (
+              <div key={job.id} className={`rounded-xl border p-3 ${job.status === 'ready' ? 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/20' : 'border-oe-blue/30 bg-oe-blue/5'}`}>
+                <div className="flex items-center gap-2 mb-1.5">
+                  {job.status === 'ready' ? (
+                    <CheckCircle2 size={14} className="text-green-500 shrink-0" />
+                  ) : (
+                    <Loader2 size={14} className="text-oe-blue animate-spin shrink-0" />
+                  )}
+                  <span className="text-xs font-medium text-content-primary truncate">{job.fileName}</span>
+                </div>
+                {job.status !== 'ready' ? (
+                  <>
+                    <div className="h-1.5 w-full rounded-full bg-surface-tertiary overflow-hidden">
+                      <div className="h-full rounded-full bg-gradient-to-r from-oe-blue to-blue-400 transition-all duration-500 ease-out" style={{ width: `${job.progress}%` }} />
+                    </div>
+                    <p className="text-[10px] text-content-tertiary mt-1">{t(job.stage, { defaultValue: 'Processing...' })}</p>
+                  </>
+                ) : (
+                  <p className="text-[10px] text-green-600 dark:text-green-400">
+                    {t('bim.upload_complete_count', { defaultValue: '{{count}} elements', count: job.elementCount })}
+                  </p>
+                )}
+              </div>
+            ))}
+            {activeUploads.some((j) => j.status !== 'ready') && (
+              <p className="text-[10px] text-content-tertiary text-center py-1">
+                {t('bim.upload_continue_working', {
+                  defaultValue: 'Processing in background - you can continue working or upload another file.',
+                })}
+              </p>
+            )}
+          </div>
+        )}
+
+        {!advancedMode ? (
+          <label
+            htmlFor="bim-upload-file-input"
+            role="button"
+            tabIndex={0}
+            aria-label={t('bim.upload_dropzone_aria_mesh', { defaultValue: 'Upload BIM or 3D mesh file (RVT, IFC, DWG, glTF, GLB, OBJ, DAE, 3DS, FBX, LWO, STL, PLY, USD)' })}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                fileInputRef.current?.click();
+              }
+            }}
+            onDrop={(e) => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files?.[0]; if (f) handleFileSelect(f); }}
+            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={(e) => { e.preventDefault(); setDragOver(false); }}
+            className={`flex flex-col items-center gap-3 border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-oe-blue focus-visible:ring-offset-2 ${
+              dragOver ? 'border-oe-blue bg-oe-blue/5' : file ? 'border-oe-blue/40 bg-oe-blue/5' : 'border-border-medium hover:border-oe-blue/50 hover:bg-surface-secondary'
+            }`}
+          >
+            {file ? (
+              <>
+                <div className="w-10 h-10 rounded-xl bg-oe-blue/10 flex items-center justify-center"><CheckCircle2 size={20} className="text-oe-blue" /></div>
+                <p className="text-sm font-medium text-content-primary">{file.name}</p>
+                <p className="text-[10px] text-content-quaternary">{formatFileSize(file.size)}</p>
+                <button type="button" onClick={(e) => { e.preventDefault(); setFile(null); setUploadError(null); if (fileInputRef.current) fileInputRef.current.value = ''; }} className="text-[10px] text-content-tertiary hover:text-red-500 underline">{t('bim.upload_remove_file')}</button>
+              </>
+            ) : (
+              <>
+                <div className="w-12 h-12 rounded-xl bg-surface-secondary border border-border-light flex items-center justify-center"><FileUp size={22} className="text-content-quaternary" /></div>
+                <p className="text-sm font-medium text-content-primary">{t('bim.upload_drop_here')}</p>
+                <p className="text-[10px] text-content-quaternary">{t('bim.upload_size_hint')}</p>
+                <div className="flex flex-wrap items-center justify-center gap-1.5 mt-1">
+                  <span className="text-[9px] font-mono px-1 py-0.5 rounded bg-oe-blue/10 text-oe-blue border border-oe-blue/20">.rvt</span>
+                  <span className="text-[9px] font-mono px-1 py-0.5 rounded bg-oe-blue/10 text-oe-blue border border-oe-blue/20">.ifc</span>
+                  <span className="text-[9px] font-mono px-1 py-0.5 rounded bg-oe-blue/10 text-oe-blue border border-oe-blue/20">.dwg</span>
+                  <span className="text-[9px] font-mono px-1 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">.glb</span>
+                  <span className="text-[9px] font-mono px-1 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">.obj</span>
+                  <span className="text-[9px] font-mono px-1 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">.stl</span>
+                  <span className="text-[9px] font-mono px-1 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">{t('bim.mesh_import.more_formats', { defaultValue: '+ more' })}</span>
+                </div>
+              </>
+            )}
+            <input id="bim-upload-file-input" ref={fileInputRef} type="file" accept={`.rvt,.ifc,.dwg,.dxf,${MESH_IMPORT_ACCEPT}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileSelect(f); }} />
+          </label>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            <label className="flex flex-col items-center gap-2 border-2 border-dashed border-border-medium rounded-xl p-4 text-center cursor-pointer hover:border-oe-blue/50 hover:bg-surface-secondary transition-all">
+              <Database size={20} className="text-content-quaternary" />
+              <span className="text-[11px] font-medium text-content-primary">{t('bim.upload_advanced_element_data')}</span>
+              <span className="text-[9px] text-content-quaternary">{t('bim.upload_advanced_element_data_hint')}</span>
+              {dataFile && <Badge variant="blue" size="sm">{dataFile.name}</Badge>}
+              <input ref={dataInputRef} type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={(e) => { setDataFile(e.target.files?.[0] ?? null); if (e.target.files?.[0] && !modelName) setModelName(e.target.files[0].name.replace(/\.\w+$/, '')); }} />
+            </label>
+            <label className="flex flex-col items-center gap-2 border-2 border-dashed border-border-medium rounded-xl p-4 text-center cursor-pointer hover:border-oe-blue/50 hover:bg-surface-secondary transition-all">
+              <FileBox size={20} className="text-content-quaternary" />
+              <span className="text-[11px] font-medium text-content-primary">{t('bim.upload_advanced_geometry')}</span>
+              <span className="text-[9px] text-content-quaternary">{t('bim.upload_advanced_geometry_hint')}</span>
+              {geometryFile && <Badge variant="blue" size="sm">{geometryFile.name}</Badge>}
+              <input ref={geoInputRef} type="file" accept={MESH_IMPORT_ACCEPT} className="hidden" onChange={(e) => {
+                const f = e.target.files?.[0] ?? null;
+                // .dae/.glb/.gltf are accepted raw by the backend as an
+                // accompanying geometry file (existing advanced workflow).
+                // Any other mesh format is routed to the in-browser mesh
+                // importer, which normalizes it before upload.
+                if (f && isMeshImportFile(f.name) && !RAW_GEOMETRY_EXTENSIONS.has(getFileExtension(f.name))) {
+                  setMeshImportFile(f);
+                  if (!modelName) setModelName(f.name.replace(/\.[^.]+$/, ''));
+                  if (geoInputRef.current) geoInputRef.current.value = '';
+                  return;
+                }
+                setGeometryFile(f);
+              }} />
+            </label>
+          </div>
+        )}
+
+        <div>
+          <label className="block text-[10px] font-semibold text-content-tertiary mb-1.5 uppercase tracking-wider">{t('bim.upload_model_name_label')}</label>
+          <input type="text" className="w-full text-sm py-2 px-3 rounded-lg border border-border-light bg-surface-secondary text-content-primary placeholder-content-quaternary focus:outline-none focus:ring-1 focus:ring-oe-blue" placeholder={t('bim.upload_model_name_placeholder')} value={modelName} onChange={(e) => setModelName(e.target.value)} />
+        </div>
+        <div>
+          <label className="block text-[10px] font-semibold text-content-tertiary mb-1.5 uppercase tracking-wider">{t('bim.upload_discipline_label')}</label>
+          <select className="w-full text-sm py-2 px-3 rounded-lg border border-border-light bg-surface-secondary text-content-primary focus:outline-none focus:ring-1 focus:ring-oe-blue" value={discipline} onChange={(e) => setDiscipline(e.target.value)}>
+            {disciplines.map((d) => <option key={d.v} value={d.v}>{d.l}</option>)}
+          </select>
+        </div>
+        {/* Conversion depth and PDF-sheet export are RVT-only - the options
+            control RVT category extraction / sheet export. Hide them for
+            IFC uploads where neither applies. */}
+        {file && getFileExtension(file.name) === '.rvt' && (
+          <>
+            <div>
+              <label className="block text-[10px] font-semibold text-content-tertiary mb-1.5 uppercase tracking-wider">{t('bim.upload_depth_label', { defaultValue: 'Conversion depth' })}</label>
+              <select className="w-full text-sm py-2 px-3 rounded-lg border border-border-light bg-surface-secondary text-content-primary focus:outline-none focus:ring-1 focus:ring-oe-blue" value={conversionDepth} onChange={(e) => setConversionDepth(e.target.value as 'standard' | 'medium' | 'complete')}>
+                <option value="standard">{t('bim.upload_depth_standard', { defaultValue: 'Standard · main categories (fast)' })}</option>
+                <option value="medium">{t('bim.upload_depth_medium', { defaultValue: 'Medium · extended categories (balanced)' })}</option>
+                <option value="complete">{t('bim.upload_depth_complete', { defaultValue: 'Complete · all categories (slow)' })}</option>
+              </select>
+              <p className="mt-1 text-[10px] text-content-quaternary leading-relaxed">{t('bim.upload_depth_help', { defaultValue: 'Controls how many RVT categories are extracted. Element IDs and full properties are always preserved.' })}</p>
+            </div>
+            <div>
+              <label className="flex items-start gap-2 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={generatePdfSheets}
+                  onChange={(e) => setGeneratePdfSheets(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-border-medium text-oe-blue focus:ring-1 focus:ring-oe-blue cursor-pointer"
+                />
+                <div className="flex-1 min-w-0">
+                  <span className="block text-[11px] font-medium text-content-primary group-hover:text-oe-blue transition-colors">
+                    {t('bim.upload_generate_pdf_label', { defaultValue: 'Also export existing project sheets as PDF (background)' })}
+                  </span>
+                  <span className="block text-[10px] text-content-quaternary leading-relaxed mt-0.5">
+                    {t('bim.upload_generate_pdf_help', { defaultValue: 'Exports the sheets the designer prepared inside the model as a single PDF into Documents. Runs after the model is ready - upload is not delayed.' })}
+                  </span>
+                </div>
+              </label>
+            </div>
+          </>
+        )}
+
+        {/* Auto-install of the matching converter (background, no click). The
+            notice only renders while installing or after a failed attempt;
+            on success it disappears and the upload proceeds normally. */}
+        <AutoInstallConverterNotice state={autoInstall} />
+
+        {uploading && (
+          <div className="space-y-2">
+            <div className="flex justify-between text-[11px]"><span className="text-content-secondary">{uploadStage}</span><span className="text-content-quaternary tabular-nums">{uploadProgress}%</span></div>
+            <div className="h-1.5 w-full rounded-full bg-surface-tertiary overflow-hidden"><div className="h-full rounded-full bg-gradient-to-r from-oe-blue to-blue-400 transition-all duration-300" style={{ width: `${uploadProgress}%` }} /></div>
+          </div>
+        )}
+        {uploadError && (
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800">
+            <AlertCircle size={14} className="text-red-500 mt-0.5 shrink-0" />
+            <p className="text-[11px] text-red-700 dark:text-red-300">{uploadError}</p>
+          </div>
+        )}
+        <button type="button" onClick={() => { setAdvancedMode((p) => !p); setFile(null); setDataFile(null); setGeometryFile(null); }} className="flex items-center gap-1.5 text-[11px] text-content-tertiary hover:text-content-secondary transition-colors">
+          {advancedMode ? <ChevronUp size={12} /> : <ChevronRight size={12} />}
+          {advancedMode ? t('bim.upload_simple_mode_toggle') : t('bim.upload_advanced_mode_toggle')}
+        </button>
+      </div>
+
+      {/* Footer */}
+      <div className="px-5 py-4 border-t border-border-light">
+        <button data-testid="bim-upload-submit" onClick={handleUpload} disabled={!canUpload} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-30 disabled:cursor-not-allowed bg-oe-blue text-white hover:bg-oe-blue-dark active:scale-[0.98] shadow-sm hover:shadow-md">
+          {uploading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+          {uploading ? t('bim.uploading') : t('bim.upload_panel_title')}
+        </button>
+      </div>
+    </div>
+
+    {/* Install-converter prompt - shown when a native CAD upload was
+        deferred by the pre-upload guard or rejected by the backend
+        preflight.  On success it replays the saved upload without a
+        second file-picker roundtrip. */}
+    {installPromptState && (
+      <InstallConverterPrompt
+        open={installPromptState.open}
+        converterId={installPromptState.converterId}
+        fileName={installPromptState.fileName}
+        fileSize={installPromptState.fileSize}
+        onClose={() => setInstallPromptState(null)}
+        onInstalledAndRetry={() => {
+          const pending = installPromptState;
+          setInstallPromptState(null);
+          void retryUploadAfterInstall(pending);
+        }}
+      />
+    )}
+    {meshImportFile && projectId && (
+      <MeshImportDialog
+        projectId={projectId}
+        file={meshImportFile}
+        onClose={() => setMeshImportFile(null)}
+        onUploadComplete={(modelId) => {
+          setMeshImportFile(null);
+          onUploadComplete(modelId);
+        }}
+      />
+    )}
+    </>
+  );
+}
+
+/* ── Non-Ready Model Overlay ─────────────────────────────────────────── */
+
+function NonReadyOverlay({ model, onUploadConverted, onDelete, onRetry, onInstallConverter }: {
+  model: BIMModelData | null;
+  onUploadConverted: () => void;
+  onDelete: () => void;
+  onRetry: () => Promise<void>;
+  onInstallConverter: (converterId: string) => Promise<void>;
+}) {
+  const { t } = useTranslation();
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [isInstalling, setIsInstalling] = useState(false);
+  // Collapsed by default - the raw backend error (which can be a multi-line
+  // stderr excerpt) stays hidden behind an accessible toggle so the overlay
+  // leads with a calm, human one-liner instead of a wall of diagnostic text.
+  const [detailsExpanded, setDetailsExpanded] = useState(false);
+
+  // model is null while the models query is still hydrating after a fresh
+  // upload / deep link - render a lightweight "loading" overlay so we don't
+  // flash the empty viewer or trip the elements query into an error state.
+  if (!model) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full bg-surface-secondary" role="status">
+        <div className="text-center max-w-sm px-6">
+          <div className="mx-auto w-20 h-20 rounded-2xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 flex items-center justify-center mb-5">
+            <Loader2 size={32} className="text-blue-500 animate-spin" />
+          </div>
+          <h2 className="text-lg font-bold text-content-primary mb-2">
+            {t('bim.overlay_loading_model_title', { defaultValue: 'Loading model…' })}
+          </h2>
+          <p className="text-sm text-content-secondary">
+            {t('bim.overlay_loading_model_desc', { defaultValue: 'Fetching the model record. This usually takes only a moment.' })}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const fmt = (model.model_format || model.format || '').toUpperCase();
+  const isProcessing = model.status === 'processing';
+
+  // Pull structured error context from the model metadata. The backend
+  // background processor populates these on failure; when missing we fall
+  // back to the generic translated strings.
+  const meta = (model.metadata ?? {}) as Record<string, unknown>;
+  const errorCode = typeof meta.error_code === 'string' ? meta.error_code : null;
+  const converterId = typeof meta.converter_id === 'string' ? meta.converter_id : null;
+  const backendMessage = (model.error_message || '').trim();
+
+  // Status → presentation map. Keyed by every status the backend
+  // bim_hub processor can emit (`processing` / `needs_converter` / `error`
+  // / `degraded`) plus defensive aliases for the broader conversion-status
+  // vocabulary used elsewhere in the pipeline (`failed`, `pending`,
+  // `queued`, `uploading`, `converting`, `no_geometry`, `converter_required`).
+  // Every entry carries a `bg` className - the lookup below NEVER reads
+  // `.bg` off an undefined value (see the belt-and-suspenders fallback),
+  // so an unknown status string can never crash the overlay again.
+  const processingConfig = {
+    icon: <Loader2 size={32} className="text-blue-500 animate-spin" />,
+    bg: 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800',
+    title: t('bim.overlay_processing_title'),
+    desc: t('bim.overlay_processing_desc', { format: fmt }),
+  };
+  const needsConverterConfig = {
+    icon: <AlertTriangle size={32} className="text-amber-500" />,
+    bg: 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800',
+    title: t('bim.overlay_needs_converter_title'),
+    desc: t('bim.overlay_needs_converter_desc', { format: fmt }),
+  };
+  const errorConfig = {
+    icon: <AlertCircle size={32} className="text-red-500" />,
+    bg: 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800',
+    title: t('bim.overlay_error_title'),
+    desc: t('bim.overlay_error_desc'),
+  };
+  // `empty_model` is NOT a failure: the file was read cleanly but carries no
+  // physical building elements (only spatial containers). Render it as a
+  // calm, informational state - amber, not red - so the user understands the
+  // file simply has nothing to convert rather than thinking it broke (#197).
+  const emptyModelConfig = {
+    icon: <AlertTriangle size={32} className="text-amber-500" />,
+    bg: 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800',
+    title: t('bim.overlay_empty_model_title', { defaultValue: 'No model elements found' }),
+    desc: t('bim.overlay_empty_model_desc', {
+      defaultValue:
+        'This file was read successfully but contains no physical building elements - only the spatial structure (project, site, building, storeys). Re-export it with the model objects included, then upload again.',
+    }),
+  };
+  const configs: Record<string, typeof processingConfig> = {
+    processing: processingConfig,
+    pending: processingConfig,
+    queued: processingConfig,
+    uploading: processingConfig,
+    converting: processingConfig,
+    needs_converter: needsConverterConfig,
+    converter_required: needsConverterConfig,
+    no_geometry: needsConverterConfig,
+    degraded: needsConverterConfig,
+    empty_model: emptyModelConfig,
+    error: errorConfig,
+    failed: errorConfig,
+  };
+  // Belt-and-suspenders: explicit entry → the generic `error` config →
+  // a hard-coded neutral fallback. The last clause guarantees `c` is
+  // always a defined object with a `bg` field even if `configs.error`
+  // were ever removed, so `c.bg` below can never read off `undefined`.
+  const c =
+    configs[model.status] ??
+    configs.error ?? {
+      icon: <AlertCircle size={32} className="text-content-tertiary" />,
+      bg: 'bg-surface-secondary border-border-light',
+      title: t('bim.overlay_error_title', { defaultValue: 'Could not load model' }),
+      desc: t('bim.overlay_error_desc', {
+        defaultValue: 'This model could not be opened. Try re-uploading the file.',
+      }),
+    };
+
+  // Render the backend-supplied actionable message when present so users
+  // see *why* their model didn't convert (DDC missing, RVT version
+  // mismatch, etc.) instead of a generic "Error" placeholder.
+  //
+  // For ``converter_outdated``, the backend message helpfully includes a
+  // stderr excerpt ("The following argument was not expected: …") so the
+  // user can paste it into a support ticket - but it's noise for the 95%
+  // case where the user just wants to click Reinstall. Below we replace
+  // it with a clean human sentence and surface the raw message via
+  // disclosure; see `cleanDescription` after `isOutdatedConverter`.
+
+  const handleRetry = async () => {
+    if (isRetrying) return;
+    setIsRetrying(true);
+    try { await onRetry(); }
+    finally { setIsRetrying(false); }
+  };
+  const handleInstall = async () => {
+    if (!converterId || isInstalling) return;
+    setIsInstalling(true);
+    try { await onInstallConverter(converterId); }
+    finally { setIsInstalling(false); }
+  };
+
+  // Show install button when the failure is "converter missing" OR the
+  // installed binary is older than the platform expects (the v4.6.2 RVT
+  // CLI mismatch). In both cases a reinstall is the actionable fix; for
+  // outdated CLI we also override the headline copy so the user sees
+  // *why* they should reinstall instead of the generic guidance.
+  const isOutdatedConverter =
+    !isProcessing && errorCode === 'converter_outdated' && !!converterId;
+
+  // Clean human-friendly description replaces the raw backend stderr for
+  // the "out of date" case (see comment above near `description`).
+  const cleanDescription =
+    isOutdatedConverter
+      ? t('bim.overlay_converter_outdated_clean', {
+          defaultValue:
+            "The installed {{format}} converter is older than this build expects. Click 'Reinstall converter' below - we'll pull the latest version and retry your upload automatically.",
+          format: fmt || 'BIM',
+        })
+      : null;
+
+  // Zero-elements is NOT a converter-availability problem: the file was
+  // read fine, it simply yielded no convertible building elements (empty
+  // model, only spatial containers like project/site/building, or geometry
+  // the converter does not extract). The generic "converter unavailable"
+  // copy below would be actively misleading here (issue #197), so we lead
+  // with a specific, honest explanation and still surface the raw backend
+  // detail through the disclosure toggle.
+  const zeroElementsDescription =
+    !isProcessing && errorCode === 'zero_elements'
+      ? t('bim.overlay_zero_elements_clean', {
+          defaultValue:
+            'We read this {{format}} file but found no building elements to convert. The model may be empty, contain only spatial containers (project, site, building) or hold geometry the converter does not extract. Open it in your authoring tool to confirm it has modelled elements, then re-upload.',
+          format: fmt || 'BIM',
+        })
+      : null;
+
+  // `no_products` (status `empty_model`) is the explicitly-graceful sibling of
+  // `zero_elements`: the file parsed cleanly and only lacks model objects. It
+  // gets its own calm copy so it never borrows the red "conversion failed"
+  // wording (#197).
+  const emptyModelDescription =
+    !isProcessing && errorCode === 'no_products'
+      ? t('bim.overlay_empty_model_clean', {
+          defaultValue:
+            'We read this {{format}} file successfully, but it only carries the spatial structure (project, site, building, storeys) and no physical building elements. Re-export it from your authoring tool with the model objects included (walls, slabs, columns, MEP, and so on), then upload again.',
+          format: fmt || 'BIM',
+        })
+      : null;
+
+  // We deliberately do NOT dump the raw backend error into the headline
+  // paragraph any more. A failed CAD conversion typically means the DDC
+  // cad2data converter is not installed in this environment (it is a
+  // separate, optional download and is legitimately absent on most local
+  // dev machines). We lead with that calm explanation and tuck the raw
+  // backend string - e.g. "CAD conversion failed for .rvt file. Ensure the
+  // converter is properly installed and the file is valid." - behind the
+  // collapsible "Show details" toggle below. This generic copy must never
+  // fire for a code with its own tailored message (e.g. zero_elements).
+  const calmFailureDescription =
+    !isProcessing
+    && errorCode !== 'zero_elements'
+    && errorCode !== 'no_products'
+    && (errorCode === 'ddc_not_found' || !!backendMessage)
+      ? t('bim.overlay_converter_unavailable_calm', {
+          defaultValue:
+            "We couldn't convert this {{format}} file. The CAD converter (DDC cad2data) isn't available in this environment - it's an optional, separate install. Add it, then retry the conversion.",
+          format: fmt || 'CAD',
+        })
+      : null;
+
+  const description =
+    cleanDescription ?? zeroElementsDescription ?? emptyModelDescription ?? calmFailureDescription ?? c.desc;
+  // The raw backend message is now ALWAYS surfaced through the collapsible
+  // disclosure (when present) rather than inline - both for the outdated
+  // case and the generic failure case. For `no_products` (empty_model) the
+  // backend message IS the clean description we already render, and the
+  // disclosure label ("Conversion failed…") would be wrong, so skip it.
+  const technicalDetails =
+    !isProcessing && errorCode !== 'no_products' && backendMessage ? backendMessage : null;
+
+  const showInstallButton =
+    !isProcessing
+    && (errorCode === 'ddc_not_found' || isOutdatedConverter)
+    && !!converterId;
+  const showRetryButton = !isProcessing && !showInstallButton;
+
+  // Localised override for the converter_outdated branch - when the
+  // backend ships ``cause="converter_outdated"`` (i.e. exit-15 from an
+  // old DDC CLI), we replace the generic title with one that names the
+  // specific problem and the specific fix. The body keeps the backend's
+  // composed message because it already includes the file's RVT format,
+  // the installed converter version and a single-line stderr excerpt -
+  // none of which the frontend can synthesise on its own.
+  const headlineTitle = isOutdatedConverter
+    ? t('bim.overlay_converter_outdated_title', {
+        defaultValue: 'Converter is out of date',
+      })
+    : c.title;
+  const installButtonLabel = isOutdatedConverter
+    ? isInstalling
+      ? t('bim.overlay_reinstall_in_progress', { defaultValue: 'Reinstalling…' })
+      : t('bim.overlay_reinstall_converter_btn', {
+          defaultValue: 'Reinstall converter',
+        })
+    : isInstalling
+      ? t('bim.overlay_install_in_progress', { defaultValue: 'Installing…' })
+      : t('bim.overlay_install_converter_btn', {
+          defaultValue: 'Install converter',
+        });
+
+  return (
+    <div className="flex flex-col items-center justify-center h-full bg-surface-secondary" role={isProcessing ? 'status' : 'alert'}>
+      <div className="text-center max-w-md px-6 w-full">
+        <div className={`mx-auto w-20 h-20 rounded-2xl ${c.bg} border flex items-center justify-center mb-5`}>{c.icon}</div>
+        <h2 className="text-lg font-bold text-content-primary mb-2">{headlineTitle}</h2>
+        <p className="text-sm text-content-secondary mb-2 whitespace-pre-line">{description}</p>
+        {technicalDetails && (
+          <div className="mb-3 mx-auto max-w-sm">
+            {/* Collapsed by default: a short "Conversion failed" affordance.
+                Click reveals the full raw backend error below. Real <button>
+                with aria-expanded so it is keyboard- and screen-reader
+                accessible (the previous inline dump showed the stderr to
+                everyone, every time). */}
+            <button
+              type="button"
+              onClick={() => setDetailsExpanded((v) => !v)}
+              aria-expanded={detailsExpanded}
+              data-testid="bim-overlay-error-details-toggle"
+              className="inline-flex items-center gap-1 text-[11px] text-content-tertiary hover:text-content-secondary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-oe-blue/40 rounded"
+            >
+              {detailsExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+              {detailsExpanded
+                ? t('bim.overlay_hide_details', { defaultValue: 'Hide details' })
+                : t('bim.overlay_show_error_details', {
+                    defaultValue: 'Conversion failed · show details',
+                  })}
+            </button>
+            {detailsExpanded && (
+              <pre className="mt-2 p-2 text-left text-[10px] bg-surface-secondary border border-border-light rounded-md text-content-tertiary whitespace-pre-wrap font-mono">
+                {technicalDetails}
+              </pre>
+            )}
+          </div>
+        )}
+        <p className="text-[11px] text-content-quaternary mb-6">{model.name}{model.file_size ? ` · ${formatFileSize(model.file_size)}` : ''}</p>
+
+        {isProcessing && (
+          <div className="mx-auto max-w-xs mb-6">
+            <style>{`
+              @keyframes oeBimIndeterminate {
+                0% { transform: translateX(-100%); }
+                100% { transform: translateX(400%); }
+              }
+            `}</style>
+            <div className="h-1.5 w-full rounded-full bg-blue-100 dark:bg-blue-900/30 overflow-hidden relative">
+              <div
+                className="absolute top-0 left-0 h-full w-1/4 rounded-full bg-gradient-to-r from-blue-400 to-blue-600"
+                style={{ animation: 'oeBimIndeterminate 1.6s ease-in-out infinite' }}
+              />
+            </div>
+            <p className="text-[11px] text-content-tertiary mt-2.5">
+              {t('bim.overlay_processing_hint', {
+                defaultValue: 'Backend is converting the file. This page will update automatically when ready - feel free to navigate away.',
+              })}
+            </p>
+          </div>
+        )}
+
+        {!isProcessing && (
+          <div className="flex items-center justify-center gap-3 flex-wrap">
+            {showInstallButton && (
+              <button
+                onClick={handleInstall}
+                disabled={isInstalling}
+                aria-label={installButtonLabel}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 text-white text-sm font-semibold hover:bg-amber-600 transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {isInstalling ? <Loader2 size={15} className="animate-spin" /> : <DownloadCloud size={15} />}
+                {installButtonLabel}
+              </button>
+            )}
+            {showRetryButton && (
+              <button
+                onClick={handleRetry}
+                disabled={isRetrying}
+                aria-label={t('bim.overlay_retry_btn', { defaultValue: 'Retry conversion' })}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-oe-blue text-white text-sm font-semibold hover:bg-oe-blue-dark transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {isRetrying ? <Loader2 size={15} className="animate-spin" /> : <RotateCcw size={15} />}
+                {isRetrying
+                  ? t('bim.overlay_retry_in_progress', { defaultValue: 'Retrying…' })
+                  : t('bim.overlay_retry_btn', { defaultValue: 'Retry conversion' })}
+              </button>
+            )}
+            <button onClick={onUploadConverted} aria-label={t('bim.overlay_upload_converted_btn')} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surface-primary border border-border-light text-content-secondary text-sm font-medium hover:bg-surface-secondary transition-colors">
+              <UploadCloud size={15} /> {t('bim.overlay_upload_converted_btn')}
+            </button>
+            <button onClick={onDelete} aria-label={t('bim.overlay_delete_btn')} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surface-primary border border-border-light text-content-secondary text-sm font-medium hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors">
+              <Trash2 size={15} /> {t('bim.overlay_delete_btn')}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ── Landing Page ────────────────────────────────────────────────────── */
+
+function LandingPage({ projectId, onUploadComplete: _onUploadComplete, breadcrumbItems, models: landingModels, onSelectModel, onDeleteModel }: {
+  projectId: string; onUploadComplete: (modelId: string) => void; breadcrumbItems: { label: string; to?: string }[];
+  models?: BIMModelData[];
+  onSelectModel?: (id: string) => void;
+  onDeleteModel?: (id: string, name: string) => void;
+}) {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [file, setFile] = useState<File | null>(null);
+  const [meshImportFile, setMeshImportFile] = useState<File | null>(null);
+  const [modelName, setModelName] = useState('');
+  const [conversionDepth, setConversionDepth] = useState<'standard' | 'medium' | 'complete'>('standard');
+  const [generatePdfSheets, setGeneratePdfSheets] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const addToast = useToastStore((s) => s.addToast);
+  const startGlobalUpload = useBIMUploadStore((s) => s.startUpload);
+  const globalJobs = useBIMUploadStore((s) => s.jobs);
+  const activeUploads = useMemo(() => {
+    const active: { id: string; fileName: string; status: string; stage: string; progress: number; elementCount: number }[] = [];
+    for (const [id, job] of globalJobs) {
+      if (job.projectId !== projectId) continue;
+      if (job.status === 'uploading' || job.status === 'converting') {
+        active.push({ id, fileName: job.fileName, status: job.status, stage: job.stage, progress: job.progress, elementCount: 0 });
+      } else if (job.status === 'ready') {
+        active.push({ id, fileName: job.fileName, status: 'ready', stage: '', progress: 100, elementCount: job.elementCount });
+      }
+    }
+    return active;
+  }, [globalJobs, projectId]);
+
+  // Auto-install the matching converter as soon as a native CAD/BIM file is
+  // picked here (landing dropzone holds only .rvt / .ifc; DWG/DXF redirect
+  // to the DWG module). No click required - notice + progress render inline.
+  const landingConverterId = file ? converterIdForFile(file.name) : null;
+  const autoInstall = useAutoInstallConverter(landingConverterId, Boolean(landingConverterId));
+
+  const resetForm = useCallback(() => {
+    setFile(null);
+    setModelName('');
+    setUploadError(null);
+    setUploadProgress(0);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }, []);
+
+  // DWG/DXF are 2D drawings, not 3D BIM. Hand the file to the DWG Takeoff
+  // module so it is not lost on the redirect, then open that module.
+  const handleLandingDwg = useCallback((f: File) => {
+    if (projectId) {
+      useDwgUploadStore.getState().startUpload({
+        file: f,
+        projectId,
+        modelName: f.name.replace(/\.[^.]+$/, ''),
+        discipline: 'architecture',
+      });
+    }
+    addToast({
+      type: 'info',
+      title: t('bim.dwg_redirect_title', { defaultValue: 'DWG files are handled in the DWG Takeoff module' }),
+      message: projectId
+        ? t('bim.dwg_handoff_msg', { defaultValue: 'Sending your drawing to DWG Takeoff...' })
+        : t('bim.dwg_redirect_msg', { defaultValue: 'Opening DWG Takeoff...' }),
+    });
+    navigate('/dwg-takeoff');
+  }, [projectId, addToast, t, navigate]);
+
+  const handleUpload = useCallback(async () => {
+    if (!file || !projectId) return;
+    setUploading(true); setUploadError(null);
+    try {
+      const name = modelName || file.name.replace(/\.[^.]+$/, '');
+      const uploadType = isCADFile(file.name) ? 'cad' as const : 'data' as const;
+      startGlobalUpload({
+        file,
+        projectId,
+        modelName: name,
+        discipline: 'architecture',
+        uploadType,
+        // Both options only have an effect for native CAD uploads; the
+        // store ignores them for the CSV/XLSX path.
+        conversionDepth: uploadType === 'cad' ? conversionDepth : undefined,
+        generatePdfSheets: uploadType === 'cad' ? generatePdfSheets : false,
+      });
+      addToast({
+        type: 'info',
+        title: t('bim.upload_started_title', { defaultValue: 'Upload started' }),
+        message: t('bim.upload_background_msg', {
+          defaultValue: 'You can navigate to other pages - the upload will continue in the background.',
+        }),
+      });
+      resetForm();
+    } catch (err) { setUploadError(err instanceof Error ? err.message : String(err)); }
+    finally { setUploading(false); }
+  }, [file, projectId, modelName, conversionDepth, generatePdfSheets, startGlobalUpload, addToast, t, resetForm]);
+
+  const features = [
+    { icon: Eye, color: 'bg-blue-50 dark:bg-blue-950/20 border-blue-100 dark:border-blue-800', ic: 'text-blue-500', title: t('bim.landing_feat_3d_title'), desc: t('bim.landing_feat_3d_desc') },
+    { icon: Layers, color: 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-800', ic: 'text-emerald-500', title: t('bim.landing_feat_extract_title'), desc: t('bim.landing_feat_extract_desc') },
+    { icon: Link2, color: 'bg-violet-50 dark:bg-violet-950/20 border-violet-100 dark:border-violet-800', ic: 'text-violet-500', title: t('bim.landing_feat_boq_title'), desc: t('bim.landing_feat_boq_desc') },
+    { icon: Ruler, color: 'bg-orange-50 dark:bg-orange-950/20 border-orange-100 dark:border-orange-800', ic: 'text-orange-500', title: t('bim.landing_feat_qty_title'), desc: t('bim.landing_feat_qty_desc') },
+    { icon: Building2, color: 'bg-pink-50 dark:bg-pink-950/20 border-pink-100 dark:border-pink-800', ic: 'text-pink-500', title: t('bim.landing_feat_compare_title'), desc: t('bim.landing_feat_compare_desc') },
+    { icon: Globe2, color: 'bg-cyan-50 dark:bg-cyan-950/20 border-cyan-100 dark:border-cyan-800', ic: 'text-cyan-500', title: t('bim.landing_feat_format_title'), desc: t('bim.landing_feat_format_desc') },
+  ];
+
+  return (
+    <>
+    <div className="flex flex-col -mx-4 sm:-mx-7 -mt-6 -mb-6 border-s border-border-light" style={{ height: 'calc(100vh - 56px)' }}>
+      <div className="px-6 pt-4 pb-3 border-b border-border-light"><Breadcrumb items={breadcrumbItems} /></div>
+      {/* Soft modern background - calm base gradient plus two muted
+          blurred colour blobs (top-left blue, bottom-right violet) for
+          subtle depth.  Restrained on purpose: enough colour to feel
+          "designed" without competing with the foreground content. */}
+      <div className="relative flex-1 overflow-hidden bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-gray-950 dark:via-gray-900 dark:to-slate-900">
+        {/* Decorative cubes - tiled SVG pattern.  Large sparse tile
+            (960×720) so cubes feel airy, not cluttered.  Stroke + fill
+            both near-invisible (0.015 / 0.12) so the layer is pure
+            texture.  Container uses `overflow-hidden` so the scrollbar
+            the user was seeing is gone — the landing content scrolls
+            inside its own inner area instead. */}
+        <svg
+          aria-hidden
+          className="pointer-events-none absolute inset-0 w-full h-full z-0 text-slate-500 dark:text-slate-300"
+          preserveAspectRatio="xMidYMid slice"
+        >
+          <defs>
+            <linearGradient id="bimCubeFadeTop" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="currentColor" stopOpacity="0.012" />
+              <stop offset="100%" stopColor="currentColor" stopOpacity="0.003" />
+            </linearGradient>
+            <linearGradient id="bimCubeFadeLeft" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="currentColor" stopOpacity="0.009" />
+              <stop offset="100%" stopColor="currentColor" stopOpacity="0.002" />
+            </linearGradient>
+            <linearGradient id="bimCubeFadeRight" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="currentColor" stopOpacity="0.002" />
+              <stop offset="100%" stopColor="currentColor" stopOpacity="0.008" />
+            </linearGradient>
+            <symbol id="bimIsoCube" viewBox="-100 -120 200 240">
+              <polygon points="0,-100 90,-50 0,0 -90,-50" fill="url(#bimCubeFadeTop)" stroke="currentColor" strokeWidth="0.5" strokeOpacity="0.12" />
+              <polygon points="-90,-50 0,0 0,100 -90,50" fill="url(#bimCubeFadeLeft)" stroke="currentColor" strokeWidth="0.5" strokeOpacity="0.12" />
+              <polygon points="90,-50 0,0 0,100 90,50" fill="url(#bimCubeFadeRight)" stroke="currentColor" strokeWidth="0.5" strokeOpacity="0.12" />
+              <line x1="0" y1="-100" x2="0" y2="0" stroke="currentColor" strokeWidth="0.25" strokeOpacity="0.1" />
+            </symbol>
+            {/* Smaller denser tile - many small cubes so the page
+                reads as a subtle isometric grid rather than a few
+                big, heavy shapes.  520×400, cubes at scale ≈0.28-0.36. */}
+            <pattern id="bimCubeTile" x="0" y="0" width="520" height="400" patternUnits="userSpaceOnUse">
+              <g transform="translate(90 120) scale(0.32)"><use href="#bimIsoCube" /></g>
+              <g transform="translate(270 90) scale(0.28)"><use href="#bimIsoCube" /></g>
+              <g transform="translate(430 160) scale(0.3)"><use href="#bimIsoCube" /></g>
+              <g transform="translate(180 270) scale(0.36)"><use href="#bimIsoCube" /></g>
+              <g transform="translate(380 330) scale(0.26)"><use href="#bimIsoCube" /></g>
+              <g transform="translate(60 330)" opacity="0.1" stroke="currentColor" strokeWidth="0.4" fill="none">
+                <polygon points="0,-32 27,-16 0,0 -27,-16" />
+                <polygon points="-27,-16 0,0 0,32 -27,16" />
+                <polygon points="27,-16 0,0 0,32 27,16" strokeDasharray="3 3" />
+              </g>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#bimCubeTile)" />
+        </svg>
+        {/* Content wrapper - compact layout + `overflow-y-auto` with
+            hidden scrollbar means scrolling still works on short
+            viewports but the scrollbar is invisible.  Tight padding
+            below so the typical 1080p viewport fits everything without
+            needing to scroll. */}
+        <div className="absolute inset-0 overflow-y-auto overflow-x-hidden scrollbar-none z-10">
+        <div aria-hidden className="pointer-events-none absolute -top-32 -left-32 w-[520px] h-[520px] rounded-full bg-blue-200/25 dark:bg-blue-500/8 blur-[140px]" />
+        <div aria-hidden className="pointer-events-none absolute -bottom-32 -right-32 w-[520px] h-[520px] rounded-full bg-violet-200/20 dark:bg-violet-500/8 blur-[140px]" />
+        <div className="relative max-w-7xl mx-auto px-6 pt-6 pb-4">
+
+          {/* Row 1: Upload card (left) + Hero text (right) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch mb-8">
+
+            {/* LEFT - Upload card */}
+            <div className="flex flex-col">
+              <div className="rounded-2xl bg-white dark:bg-gray-800/60 border border-border-light shadow-lg shadow-black/5 dark:shadow-black/20 p-6 flex flex-col h-full">
+                <label
+                  aria-label={t('bim.landing_dropzone_aria', { defaultValue: 'Drop a BIM model file here or click to browse. Supported formats: .rvt, .ifc, .csv, .xlsx' })}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const f = e.dataTransfer.files?.[0];
+                    if (f) {
+                      const ext = getFileExtension(f.name);
+                      if (DWG_EXTENSIONS.has(ext)) { handleLandingDwg(f); return; }
+                      if (isMeshImportFile(f.name)) {
+                        setMeshImportFile(f);
+                        if (!modelName) setModelName(f.name.replace(/\.[^.]+$/, ''));
+                        return;
+                      }
+                      if (!CAD_EXTENSIONS.has(ext)) {
+                        addToast({ type: 'error', title: t('bim.upload_unsupported_format', { defaultValue: 'Unsupported file format. Please upload RVT, IFC or DWG files.' }) });
+                        return;
+                      }
+                      setFile(f);
+                      if (!modelName) setModelName(f.name.replace(/\.[^.]+$/, ''));
+                    }
+                  }}
+                  onDragOver={(e) => e.preventDefault()}
+                  className={`group/drop flex flex-col items-center justify-center gap-4 rounded-xl p-10 text-center cursor-pointer transition-all flex-1 ${
+                    file
+                      ? 'border-2 border-oe-blue bg-oe-blue/5'
+                      : 'border-2 border-dashed border-border-medium bg-gradient-to-br from-blue-50/60 via-white to-violet-50/40 dark:from-blue-950/20 dark:via-gray-800/40 dark:to-violet-950/20 hover:border-oe-blue/50 hover:shadow-md'
+                  }`}
+                >
+                  {file ? (
+                    <>
+                      <div className="w-14 h-14 rounded-2xl bg-oe-blue/10 flex items-center justify-center"><CheckCircle2 size={26} className="text-oe-blue" /></div>
+                      <p className="text-sm font-semibold text-content-primary">{file.name}</p>
+                      <p className="text-xs text-content-quaternary">{formatFileSize(file.size)}</p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-oe-blue/10 to-violet-500/10 flex items-center justify-center group-hover/drop:scale-110 transition-transform">
+                        <FileUp size={26} className="text-oe-blue" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-content-primary">{t('bim.landing_drop_here')}</p>
+                        <p className="text-xs text-content-tertiary mt-1">{t('bim.landing_size_hint')}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-mono px-2 py-1 rounded-md bg-oe-blue/8 text-oe-blue border border-oe-blue/15 font-semibold">.rvt</span>
+                        <span className="text-[10px] font-mono px-2 py-1 rounded-md bg-oe-blue/8 text-oe-blue border border-oe-blue/15 font-semibold">.ifc</span>
+                      </div>
+                      <p className="text-[10px] text-content-quaternary leading-relaxed mt-1 text-center">
+                        RVT 2015–2026 &middot; IFC 2x3, 4.0, 4.1, 4.3
+                      </p>
+                    </>
+                  )}
+                  <input ref={fileInputRef} type="file" accept={`.rvt,.ifc,.dwg,.dxf,${MESH_IMPORT_ACCEPT}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; if (DWG_EXTENSIONS.has(getFileExtension(f.name))) { handleLandingDwg(f); return; } if (isMeshImportFile(f.name)) { setMeshImportFile(f); if (!modelName) setModelName(f.name.replace(/\.[^.]+$/, '')); return; } setFile(f); if (!modelName) setModelName(f.name.replace(/\.[^.]+$/, '')); }} />
+                </label>
+                {file && (
+                  <div className="mt-4 space-y-3">
+                    <input type="text" className="w-full text-sm py-2.5 px-4 rounded-xl border border-border-light bg-surface-secondary text-content-primary placeholder-content-quaternary focus:outline-none focus:ring-2 focus:ring-oe-blue/30" placeholder={t('bim.model_name')} value={modelName} onChange={(e) => setModelName(e.target.value)} />
+                    {/* RVT-only options - RVT category extraction depth
+                        and sheet-to-PDF export don't apply to IFC uploads. */}
+                    {getFileExtension(file.name) === '.rvt' && (
+                      <>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-content-tertiary mb-1.5 uppercase tracking-wider">
+                            {t('bim.upload_depth_label', { defaultValue: 'Conversion depth' })}
+                          </label>
+                          <select
+                            className="w-full text-sm py-2.5 px-4 rounded-xl border border-border-light bg-surface-secondary text-content-primary focus:outline-none focus:ring-2 focus:ring-oe-blue/30"
+                            value={conversionDepth}
+                            onChange={(e) => setConversionDepth(e.target.value as 'standard' | 'medium' | 'complete')}
+                          >
+                            <option value="standard">{t('bim.upload_depth_standard', { defaultValue: 'Standard · main categories (fast)' })}</option>
+                            <option value="medium">{t('bim.upload_depth_medium', { defaultValue: 'Medium · extended categories (balanced)' })}</option>
+                            <option value="complete">{t('bim.upload_depth_complete', { defaultValue: 'Complete · all categories (slow)' })}</option>
+                          </select>
+                          <p className="mt-1 text-[10px] text-content-quaternary leading-relaxed">
+                            {t('bim.upload_depth_help', { defaultValue: 'Controls how many RVT categories are extracted. Element IDs and full properties are always preserved.' })}
+                          </p>
+                        </div>
+                        <label className="flex items-start gap-2 cursor-pointer group">
+                          <input
+                            type="checkbox"
+                            checked={generatePdfSheets}
+                            onChange={(e) => setGeneratePdfSheets(e.target.checked)}
+                            className="mt-0.5 h-4 w-4 rounded border-border-medium text-oe-blue focus:ring-1 focus:ring-oe-blue cursor-pointer"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <span className="block text-[11px] font-medium text-content-primary group-hover:text-oe-blue transition-colors">
+                              {t('bim.upload_generate_pdf_label', { defaultValue: 'Also export existing project sheets as PDF (background)' })}
+                            </span>
+                            <span className="block text-[10px] text-content-quaternary leading-relaxed mt-0.5">
+                              {t('bim.upload_generate_pdf_help', { defaultValue: 'Exports the sheets the designer prepared inside the model as a single PDF into Documents. Runs after the model is ready - upload is not delayed.' })}
+                            </span>
+                          </div>
+                        </label>
+                      </>
+                    )}
+                    {/* Background converter auto-install (no click). Renders
+                        only while installing or after a failed attempt. */}
+                    <AutoInstallConverterNotice state={autoInstall} />
+                    {uploading && <div className="h-1.5 rounded-full bg-surface-tertiary overflow-hidden"><div className="h-full rounded-full bg-gradient-to-r from-oe-blue to-blue-400 transition-all duration-300" style={{ width: `${uploadProgress}%` }} /></div>}
+                    {uploadError && <p className="text-xs text-red-500">{uploadError}</p>}
+                    <button onClick={handleUpload} disabled={uploading} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-50 bg-oe-blue text-white hover:bg-oe-blue-dark active:scale-[0.98] shadow-md hover:shadow-lg">
+                      {uploading ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
+                      {uploading ? t('bim.landing_processing') : t('bim.landing_upload_process')}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Active upload progress */}
+              {activeUploads.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  {activeUploads.map((job) => (
+                    <div key={job.id} className={`rounded-xl border p-3.5 ${job.status === 'ready' ? 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/20' : 'border-oe-blue/30 bg-white dark:bg-gray-900 shadow-sm'}`}>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        {job.status === 'ready' ? <CheckCircle2 size={14} className="text-green-500 shrink-0" /> : <Loader2 size={14} className="text-oe-blue animate-spin shrink-0" />}
+                        <span className="text-xs font-medium text-content-primary truncate">{job.fileName}</span>
+                      </div>
+                      {job.status !== 'ready' ? (
+                        <>
+                          <div className="h-1.5 w-full rounded-full bg-surface-tertiary overflow-hidden"><div className="h-full rounded-full bg-gradient-to-r from-oe-blue to-blue-400 transition-all duration-500" style={{ width: `${job.progress}%` }} /></div>
+                          <p className="text-[11px] text-content-tertiary mt-1">{t(job.stage, { defaultValue: 'Processing...' })}</p>
+                        </>
+                      ) : (
+                        <p className="text-[11px] text-green-600 dark:text-green-400">{t('bim.upload_complete_count', { defaultValue: '{{count}} elements', count: job.elementCount })}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* RIGHT - Hero text + local-processing badge (chip styled to
+                match /dwg-takeoff so the trust signal reads identically
+                across CAD modules). The decorative animation was
+                removed to keep the page calm and let the modern mesh
+                background carry the visual weight. */}
+            <div className="flex flex-col justify-center gap-4">
+              <div>
+                <h1 className="text-2xl font-bold text-content-primary tracking-tight leading-tight">{t('bim.landing_hero_title')}</h1>
+                <p className="text-base text-content-secondary mt-3 leading-relaxed">
+                  {t('bim.landing_hero_subtitle')}
+                </p>
+                <p className="text-xs text-content-tertiary mt-3 leading-relaxed">
+                  {t('bim.landing_formats_detailed', { defaultValue: 'RVT 2015\u20132026 (.rvt) \u00B7 IFC 2x3, 4.0, 4.1, 4.3 (.ifc) \u00B7 CSV \u00B7 Excel. DWG \u2192 DWG Takeoff.' })}
+                </p>
+                <div className="mt-4 flex items-center justify-start">
+                  <div className="inline-flex flex-wrap items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                    <ShieldCheck size={14} className="text-emerald-500 dark:text-emerald-400 shrink-0" />
+                    <span className="text-xs text-emerald-700 dark:text-emerald-300/90 font-medium">
+                      {t('common.local_processing', { defaultValue: '100% Local Processing \u00B7 Your files never leave your computer' })}
+                    </span>
+                    <span className="text-[10px] text-emerald-500/40">|</span>
+                    <a
+                      href="https://github.com/datadrivenconstruction/cad2data-Revit-IFC-DWG-DGN-pipeline-with-conversion-validation-qto"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] text-emerald-600/80 dark:text-emerald-400/70 hover:text-emerald-700 dark:hover:text-emerald-300 hover:underline whitespace-nowrap"
+                    >
+                      {t('common.powered_by_cad2data', { defaultValue: 'Powered by DDC cad2data' })}
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Row 2: Feature cards - 3x2 grid */}
+          <div>
+            <h2 className="text-xs font-bold text-content-tertiary uppercase tracking-widest mb-3">
+              {t('bim.landing_what_you_get', { defaultValue: 'What you get' })}
+            </h2>
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+              {features.map((f, i) => (
+                <div key={i} className="flex items-start gap-3 rounded-xl p-4 bg-white dark:bg-gray-800/40 border border-border-light/60 hover:border-border-light hover:shadow-sm transition-all">
+                  <div className={`w-8 h-8 rounded-lg ${f.color} border flex items-center justify-center shrink-0`}><f.icon size={15} className={f.ic} /></div>
+                  <div className="min-w-0">
+                    <h3 className="text-xs font-semibold text-content-primary leading-tight">{f.title}</h3>
+                    <p className="text-[11px] text-content-tertiary leading-snug mt-1">{f.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Row 3 removed - models now in fixed bottom filmstrip only */}
+          {false as boolean && (
+            <div className="hidden">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {(landingModels ?? []).map((m) => {
+                  const fmt = (m.model_format || m.format || '').toUpperCase();
+                  const isError = m.status === 'error' || m.status === 'needs_converter';
+                  const isProcessing = m.status === 'processing';
+                  const isReady = m.status === 'ready';
+
+                  const statusColor = isReady
+                    ? 'bg-emerald-500'
+                    : isProcessing
+                      ? 'bg-amber-400 animate-pulse'
+                      : isError
+                        ? 'bg-red-400'
+                        : 'bg-gray-400';
+
+                  const statusLabel = isReady
+                    ? t('bim.status_ready', { defaultValue: 'Ready' })
+                    : m.status === 'needs_converter'
+                      ? t('bim.status_needs_converter', { defaultValue: 'Needs Converter' })
+                      : isProcessing
+                        ? t('bim.status_processing', { defaultValue: 'Processing' })
+                        : isError
+                          ? t('bim.status_error', { defaultValue: 'Error' })
+                          : m.status;
+
+                  const statusTextColor = isReady
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : isProcessing
+                      ? 'text-amber-600 dark:text-amber-400'
+                      : isError
+                        ? 'text-red-600 dark:text-red-400'
+                        : 'text-content-tertiary';
+
+                  const borderAccent = isReady
+                    ? 'border-l-emerald-400'
+                    : isProcessing
+                      ? 'border-l-amber-400'
+                      : isError
+                        ? 'border-l-red-400'
+                        : 'border-l-gray-300 dark:border-l-gray-600';
+
+                  const timeAgo = m.created_at ? (() => {
+                    const diff = Date.now() - new Date(m.created_at!).getTime();
+                    const mins = Math.floor(diff / 60000);
+                    if (mins < 1) return t('bim.just_now', { defaultValue: 'just now' });
+                    if (mins < 60) return t('bim.time_mins_ago', { defaultValue: '{{count}}m ago', count: mins });
+                    const hrs = Math.floor(mins / 60);
+                    if (hrs < 24) return t('bim.time_hours_ago', { defaultValue: '{{count}}h ago', count: hrs });
+                    const days = Math.floor(hrs / 24);
+                    return t('bim.time_days_ago', { defaultValue: '{{count}}d ago', count: days });
+                  })() : '';
+
+                  return (
+                    <button
+                      key={m.id}
+                      onClick={() => onSelectModel?.(m.id)}
+                      className={`group relative w-full text-left rounded-xl border border-border-light border-l-[3px] ${borderAccent} bg-white dark:bg-gray-800/50 p-4 hover:shadow-lg hover:border-oe-blue/30 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer`}
+                    >
+                      {/* Delete button - visible on hover */}
+                      {onDeleteModel && (
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); onDeleteModel(m.id, m.name); }}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); onDeleteModel(m.id, m.name); } }}
+                          aria-label={t('bim.delete_model', { defaultValue: 'Delete model' })}
+                          className="absolute top-3 end-3 p-1.5 rounded-lg text-content-quaternary hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all z-10"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      )}
+
+                      {/* Card content */}
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-oe-blue/10 to-blue-50 dark:to-blue-950/20 border border-oe-blue/15 flex items-center justify-center shrink-0">
+                          <Cuboid size={18} className="text-oe-blue" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-content-primary truncate pe-6" title={m.name}>{m.name}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            {fmt && (
+                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-oe-blue/8 text-oe-blue border border-oe-blue/15 font-semibold leading-none">
+                                .{fmt.toLowerCase()}
+                              </span>
+                            )}
+                            <div className="flex items-center gap-1">
+                              <span className={`w-1.5 h-1.5 rounded-full ${statusColor}`} />
+                              <span className={`text-[10px] font-medium ${statusTextColor}`}>{statusLabel}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Footer stats */}
+                      <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-border-light/60">
+                        <div className="flex items-center gap-3 text-[11px] text-content-quaternary tabular-nums">
+                          {isProcessing && (m.element_count ?? 0) === 0 ? (
+                            <span className="inline-block w-20 h-3 rounded bg-surface-tertiary animate-pulse" />
+                          ) : (
+                            <>
+                              <span className="flex items-center gap-1">
+                                <Layers size={11} className="text-content-quaternary" />
+                                {t('bim.element_count', { defaultValue: '{{count}} elements', count: m.element_count ?? 0 })}
+                              </span>
+                              {(m.storey_count ?? 0) > 0 && (
+                                <span className="flex items-center gap-1">
+                                  <Building2 size={11} className="text-content-quaternary" />
+                                  {t('bim.storey_count', { defaultValue: '{{count}} levels', count: m.storey_count })}
+                                </span>
+                              )}
+                            </>
+                          )}
+                        </div>
+                        {timeAgo && (
+                          <span className="flex items-center gap-1 text-[10px] text-content-quaternary">
+                            <CalendarDays size={10} />
+                            {timeAgo}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+        </div>
+        </div>
+      </div>
+
+      {/* ── Bottom Filmstrip: Your Models - always visible so the user
+           keeps a consistent anchor to switch or upload models.
+           Previously guarded by `landingModels.length > 0` which made the
+           panel appear on first render then vanish when the LandingPage
+           unmounted into the main view.  Keeping it always-rendered with
+           an empty-state string removes that flicker. ── */}
+      <div className="shrink-0 border-t border-border-light bg-surface-primary">
+          <div className="flex items-center px-4 py-1.5">
+            <Database size={14} className="text-content-tertiary mr-2 shrink-0" />
+            <span className="text-xs font-semibold text-content-primary">
+              {t('bim.your_models', { defaultValue: 'Your Models' })}
+            </span>
+            <span className="text-[11px] text-content-quaternary ml-1.5">({(landingModels ?? []).length})</span>
+          </div>
+          <div className="flex items-center gap-2.5 px-4 pb-2.5 overflow-x-auto">
+            {(!landingModels || landingModels.length === 0) && (
+              <span className="text-[11px] text-content-quaternary italic py-1">
+                {t('bim.no_models_yet', { defaultValue: 'No models uploaded yet' })}
+              </span>
+            )}
+            {(landingModels ?? []).map((m) => {
+              const fmt = (m.model_format || m.format || '').toUpperCase();
+              const status = m.status;
+              const isReady = status === 'ready';
+              const isDegraded = status === 'degraded';
+              const isEmptyModel = status === 'empty_model';
+              const isProcessing = status === 'processing';
+              const isError = status === 'error' || status === 'needs_converter';
+              let statusDot = 'bg-gray-400';
+              if (isReady) statusDot = 'bg-emerald-500';
+              else if (isDegraded || isEmptyModel) statusDot = 'bg-amber-500';
+              else if (isProcessing) statusDot = 'bg-amber-400 animate-pulse';
+              else if (isError) statusDot = 'bg-red-400';
+
+              let statusText: string = m.status;
+              if (isReady) statusText = t('bim.status_ready', { defaultValue: 'Ready' });
+              else if (isDegraded) statusText = t('bim.status_degraded', { defaultValue: 'Imported (no quantities)' });
+              else if (isEmptyModel) statusText = t('bim.status_empty_model', { defaultValue: 'No elements' });
+              else if (isProcessing) statusText = t('bim.status_processing', { defaultValue: 'Processing' });
+
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => onSelectModel?.(m.id)}
+                  className="group relative shrink-0 w-52 text-start rounded-lg border border-border-light bg-surface-secondary hover:bg-surface-tertiary hover:border-oe-blue/30 hover:shadow-md transition-all duration-200 overflow-hidden"
+                >
+                  {onDeleteModel && (
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      aria-label={t('bim.delete_model', { defaultValue: 'Delete model' })}
+                      onClick={(e) => { e.stopPropagation(); onDeleteModel(m.id, m.name); }}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); onDeleteModel(m.id, m.name); } }}
+                      className="absolute top-1.5 right-1.5 p-1 rounded text-content-quaternary hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 opacity-0 group-hover:opacity-100 transition-all z-10"
+                    >
+                      <Trash2 size={11} />
+                    </span>
+                  )}
+                  <div className="px-3 py-2.5">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Cuboid size={12} className="shrink-0 text-content-tertiary" />
+                      <span className="text-[11px] font-semibold text-content-primary truncate">{m.name}</span>
+                      {fmt && (
+                        <span className="text-[9px] font-mono font-bold px-1 py-0.5 rounded bg-oe-blue/8 text-oe-blue border border-oe-blue/15 shrink-0">.{fmt.toLowerCase()}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 text-[10px] text-content-quaternary">
+                      <span className="flex items-center gap-1">
+                        <span className={`w-1.5 h-1.5 rounded-full ${statusDot}`} />
+                        {statusText}
+                      </span>
+                      {(m.element_count ?? 0) > 0 && (
+                        <>
+                          <span>&middot;</span>
+                          <span>{m.element_count} {t('bim.elements', { defaultValue: 'elements' })}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+    </div>
+    {meshImportFile && projectId && (
+      <MeshImportDialog
+        projectId={projectId}
+        file={meshImportFile}
+        onClose={() => setMeshImportFile(null)}
+        onUploadComplete={(modelId) => {
+          setMeshImportFile(null);
+          _onUploadComplete(modelId);
+        }}
+      />
+    )}
+    </>
+  );
+}
+
+/* ── Main BIM Page ───────────────────────────────────────────────────── */
+
+export function BIMPage() {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const { projectId: urlProjectId, modelId: urlModelId } = useParams<{ projectId?: string; modelId?: string }>();
+  const contextProjectId = useProjectContextStore((s) => s.activeProjectId);
+  const contextProjectName = useProjectContextStore((s) => s.activeProjectName);
+  // Server-side fallback: same rationale as /dwg-takeoff. If the user
+  // lands on /bim without a URL project param and localStorage was
+  // purged (stale-project cleanup), every BIM query fires with an empty
+  // projectId and models appear "lost" on reload. Fetch the projects
+  // list and use the first as a last resort.
+  const { data: projectsList = [] } = useQuery({
+    queryKey: ['projects'],
+    queryFn: () => apiGet<Array<{ id: string; name: string }>>('/v1/projects/'),
+    staleTime: 5 * 60_000,
+  });
+  const projectId = urlProjectId || contextProjectId || projectsList[0]?.id || '';
+  const { confirm, ...confirmProps } = useConfirm();
+
+  // Decode the JWT ``sub`` claim so the Smart Views panel can scope its
+  // "My views" tab. Mirrors the helper used in
+  // ``features/meetings/AttendanceSection.tsx``.
+  const accessToken = useAuthStore((s) => s.accessToken);
+  const currentUserId = useMemo(() => {
+    if (!accessToken) return null;
+    try {
+      const parts = accessToken.split('.');
+      if (parts.length !== 3) return null;
+      const payload = parts[1]!.replace(/-/g, '+').replace(/_/g, '/');
+      const padded = payload + '='.repeat((4 - (payload.length % 4)) % 4);
+      const json = JSON.parse(atob(padded)) as { sub?: string };
+      return typeof json.sub === 'string' ? json.sub : null;
+    } catch {
+      return null;
+    }
+  }, [accessToken]);
+
+  // BUG-AUTO-PROJECT-SELECT - when /bim is opened cold (no URL project,
+  // no project in the global ProjectContextStore) we silently fall back
+  // to ``projectsList[0]`` for the models query.  That works for the
+  // first paint but leaves the context store empty, so any other page
+  // that reads ``activeProjectId`` (recents, breadcrumb, BOQ landing,
+  // upload dialogs) thinks there is no active project and either dims
+  // its CTA or drops the user back at the picker.  Pinning the resolved
+  // ``projectId`` into the store the first time we resolve one - and
+  // only when nothing else has set it - keeps the rest of the app in
+  // sync without ever overriding an explicit user pick.
+  const setActiveProjectInStore = useProjectContextStore((s) => s.setActiveProject);
+  useEffect(() => {
+    if (!projectId) return;
+    if (contextProjectId) return;
+    const proj = projectsList.find((p) => p.id === projectId);
+    setActiveProjectInStore(projectId, proj?.name ?? '');
+  }, [projectId, contextProjectId, projectsList, setActiveProjectInStore]);
+
+  const [activeModelId, setActiveModelId] = useState<string | null>(urlModelId || null);
+  const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
+  // Full Ctrl+click / Shift+click multi-selection set, fed by the viewer's
+  // onSelectionChange. Echoed back to BIMViewer so every selected mesh stays
+  // highlighted across renders (parent's `[selectedElementId]` would collapse
+  // the highlight to the most recent click only).
+  const [multiSelectedIds, setMultiSelectedIds] = useState<string[]>([]);
+  // Resolved element rows for the current viewer selection - includes
+  // viewer-side stubs (mesh_ref but no DB row yet) so "save as group"
+  // can resolve them to real BIMElement UUIDs before persisting.
+  const [selectedElementData, setSelectedElementData] = useState<BIMElementData[]>([]);
+  const handleViewerSelectionChange = useCallback(
+    (ids: string[], els: BIMElementData[]) => {
+      setMultiSelectedIds(ids);
+      setSelectedElementData(els);
+    },
+    [],
+  );
+
+  // Deep-link auto-select: Cmd+Shift+K global semantic search and the
+  // similar-items panel land here with `?element=<element_id>` - pick
+  // the matching element as soon as the elements list resolves.  Cleared
+  // from the URL after one shot so a refresh doesn't reapply it.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const deepLinkElementId = searchParams.get('element');
+  const deepLinkDocName = searchParams.get('docName');
+  const deepLinkDocId = searchParams.get('docId');
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [uploadConvertedName, setUploadConvertedName] = useState<string | null>(null);
+  const [showUploadOverride, setShowUploadOverride] = useState<boolean | null>(null);
+  const [filterPanelOpen, setFilterPanelOpen] = useState(true);
+  /** Property-search popover toggle (v3.12.0 / Stream D). Renders a small
+   *  panel above the 3D viewport with a column / op / value query builder
+   *  routed to ``POST /models/{id}/dataframe/query/``; results are piped
+   *  into the existing isolation set via ``setIsolatedIds``. */
+  const [propertySearchOpen, setPropertySearchOpen] = useState(false);
+  // Right-panel visibility lives in the shared BIM viewer store so the
+  // keyboard shortcut `S` (RFC 19) can open the Tools tab from anywhere.
+  const boqPanelOpen = useBIMViewerStore((s) => s.rightPanelOpen);
+  const setBoqPanelOpen = useBIMViewerStore((s) => s.setRightPanelOpen);
+  const summaryPanelOpen = useBIMViewerStore((s) => s.summaryPanelOpen);
+  const setSummaryPanelOpen = useBIMViewerStore((s) => s.setSummaryPanelOpen);
+  const dimensionsVisible = useBIMViewerStore((s) => s.dimensionsVisible);
+  const setDimensionsVisible = useBIMViewerStore((s) => s.setDimensionsVisible);
+  // Display-only metric->imperial conversion for the bounding-box card (#270).
+  // The stored bounding_box stays metric-canonical; only what is rendered in
+  // the dimensions card is converted to the user's measurement system.
+  const displayQty = useDisplayQuantity();
+  const assetCardEnabled = useBIMViewerStore((s) => s.assetCardEnabled);
+  const setAssetCardEnabled = useBIMViewerStore((s) => s.setAssetCardEnabled);
+  const qualityMode = useBIMViewerStore((s) => s.qualityMode);
+  const setQualityMode = useBIMViewerStore((s) => s.setQualityMode);
+  const [snapshotsOpen, setSnapshotsOpen] = useState(false);
+  const [filterPredicate, setFilterPredicate] = useState<
+    ((el: BIMElementData) => boolean) | null
+  >(null);
+  const [visibleElementCount, setVisibleElementCount] = useState<number | null>(null);
+  const [colorByMode, setColorByMode] = useState<
+    | 'default'
+    | 'storey'
+    | 'type'
+    | 'validation'
+    | 'boq_coverage'
+    | 'document_coverage'
+    | '5d_cost'
+    | '4d_schedule'
+    | 'by_progress'
+    | 'install_status'
+  >('default');
+  const showBoundingBoxes = false;
+  const [isolatedIds, setIsolatedIds] = useState<string[] | null>(null);
+  /** Clash-review deep-link state. `clashHighlightIds` are the two
+   *  interfering element ids (coloured clash-red on top of the isolation);
+   *  `clashFocusPoint` is the clash world centroid (`cx/cy/cz`) used as the
+   *  reliable camera target even on showcase models whose GLB nodes don't
+   *  match the DB element UUIDs. Both come from the /clash "3D" link. */
+  const [clashHighlightIds, setClashHighlightIds] = useState<string[] | null>(
+    null,
+  );
+  const [clashFocusPoint, setClashFocusPoint] = useState<{
+    x: number;
+    y: number;
+    z: number;
+  } | null>(null);
+  const [meshMatchRatio, setMeshMatchRatio] = useState<number | null>(null);
+  /** Model-version diff review state. `diffPanelOpen` shows the side panel;
+   *  `diffChangeByStableId` drives the BIMViewer change-colour overlay. */
+  const [diffPanelOpen, setDiffPanelOpen] = useState(false);
+  const [diffChangeByStableId, setDiffChangeByStableId] = useState<Map<
+    string,
+    DiffChangeType
+  > | null>(null);
+  /** Smart Views side-panel state. Driven by the toolbar button - the
+   *  evaluator result itself lives in `useSmartViewState`. */
+  const [smartViewsPanelOpen, setSmartViewsPanelOpen] = useState(false);
+  const smartViewEvalStates = useSmartViewState((s) => s.lastEvalResult?.states ?? null);
+  /** Elements queued for linking via the AddToBOQ modal. Single element
+   *  when the user clicks an element; multiple elements when "quick
+   *  takeoff" on a filtered category. */
+  const [linkCandidates, setLinkCandidates] = useState<BIMElementData[] | null>(null);
+  /** Save-as-group modal state - captures the current filter snapshot. */
+  const [saveGroupState, setSaveGroupState] = useState<{
+    filterCriteria: BIMGroupFilterCriteria;
+    elements: BIMElementData[];
+  } | null>(null);
+  /** Inline create-from-element modal targets.  Each one stores the
+   *  elements the user wants to link from - typically [singleClickedElement]. */
+  const [createTaskFor, setCreateTaskFor] = useState<BIMElementData[] | null>(null);
+  const [linkDocumentFor, setLinkDocumentFor] = useState<BIMElementData[] | null>(null);
+  const [linkActivityFor, setLinkActivityFor] = useState<BIMElementData[] | null>(null);
+  const [linkRequirementFor, setLinkRequirementFor] = useState<
+    BIMElementData[] | null
+  >(null);
+  const addToast = useToastStore((s) => s.addToast);
+
+  /* ── Cross-highlight bridge to BOQ editor ───────────────────────── */
+  const highlightedBIMElementIds = useBIMLinkSelectionStore((s) => s.highlightedBIMElementIds);
+  const setBIMSelection = useBIMLinkSelectionStore((s) => s.setBIMSelection);
+  const clearBIMLinkSelection = useBIMLinkSelectionStore((s) => s.clear);
+
+  const modelsQuery = useQuery({ queryKey: ['bim-models', projectId], queryFn: () => fetchBIMModels(projectId), enabled: !!projectId, staleTime: 5 * 60_000 });
+  // Defense in depth: never surface 2D drawing formats (DWG/DXF/DGN) in the
+  // BIM 3D Takeoff filmstrip, picker or deep-link resolver. Those belong to the
+  // DWG Takeoff module and carry no 3D mesh, so the viewer must never try to
+  // load geometry for them. The backend list query already filters these out;
+  // this guard keeps the UI correct even against a stale cache or a backend
+  // that predates the server-side filter.
+  const models = useMemo(
+    () => (modelsQuery.data?.items ?? []).filter((m) => !isNon3DBimFormat(m.model_format || m.format)),
+    [modelsQuery.data],
+  );
+  const hasModels = models.length > 0;
+  const showFullPageUpload = showUploadOverride !== null ? showUploadOverride : !hasModels;
+
+  useEffect(() => { if (hasModels && showUploadOverride === false) setShowUploadOverride(null); }, [hasModels, showUploadOverride]);
+
+  /* ── Deep-link from Documents page ──────────────────────────────────────
+   * When navigating from /documents with ?docId= (plus optional ?docName=):
+   *   - With a docId we convert the already-uploaded document into a BIM
+   *     model on demand and select it (issue #273). The backend is
+   *     idempotent, so a file that already has a model simply returns it
+   *     instead of asking the user to upload the same file a second time.
+   *   - A legacy docName-only link still matches an existing model by
+   *     filename, falling back to the upload panel when nothing matches.
+   * A ref guards one-shot handling so the param cleanup / model refetch this
+   * effect triggers does not re-run it. */
+  const deepLinkHandledRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!deepLinkDocId && !deepLinkDocName) return;
+    if (modelsQuery.isLoading) return;
+    const key = deepLinkDocId || deepLinkDocName || '';
+    if (deepLinkHandledRef.current === key) return;
+    deepLinkHandledRef.current = key;
+
+    const clearParams = () => {
+      const next = new URLSearchParams(searchParams);
+      next.delete('docName');
+      next.delete('docId');
+      setSearchParams(next, { replace: true });
+    };
+
+    if (deepLinkDocId) {
+      clearParams();
+      void (async () => {
+        try {
+          const created = await createBimModelFromDocument(deepLinkDocId, {
+            name: deepLinkDocName ? decodeURIComponent(deepLinkDocName) : undefined,
+          });
+          await queryClient.invalidateQueries({ queryKey: ['bim-models', projectId] });
+          setActiveModelId(created.model_id);
+          setShowUploadOverride(false);
+        } catch {
+          // Not convertible, missing, or no create permission - fall back to
+          // the upload panel so the user still has a path forward.
+          setUploadOpen(true);
+          if (deepLinkDocName) setUploadConvertedName(decodeURIComponent(deepLinkDocName));
+        }
+      })();
+      return;
+    }
+
+    // Legacy docName-only deep link: match an existing model by filename.
+    const targetName = decodeURIComponent(deepLinkDocName as string).toLowerCase();
+    const nameNoExt = targetName.replace(/\.[^.]+$/, '');
+    const match = models.find((m) => {
+      const mLower = (m.name || '').toLowerCase();
+      return mLower === targetName || mLower === nameNoExt || mLower.startsWith(nameNoExt);
+    });
+    if (match) {
+      setActiveModelId(match.id);
+      setShowUploadOverride(false);
+    } else {
+      setUploadOpen(true);
+      setUploadConvertedName(decodeURIComponent(deepLinkDocName as string));
+    }
+    clearParams();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deepLinkDocId, deepLinkDocName, modelsQuery.isLoading, models]);
+
+  const activeModel = useMemo(() => models.find((m) => m.id === activeModelId) ?? null, [models, activeModelId]);
+
+  // Project geo anchor drives the viewer's "locate me" pin. Cheap, shared
+  // cache key with the rest of the geo-hub surface; absent for projects that
+  // were never geolocated (the viewer simply hides the control then).
+  const geoAnchorQuery = useQuery({
+    queryKey: ['geo-hub', 'anchors', projectId],
+    queryFn: () => listAnchors(projectId),
+    enabled: Boolean(projectId),
+    staleTime: 60_000,
+  });
+  const geoAnchor = useMemo(() => {
+    const a = geoAnchorQuery.data?.[0];
+    if (!a) return null;
+    const lat = Number(a.lat);
+    const lon = Number(a.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+    return { lat, lon };
+  }, [geoAnchorQuery.data]);
+  // Model units per metre, read from the canonical metadata (falls back to
+  // metres). Used to scale the GPS offset for the locate-me pin.
+  const modelUnitsScale = useMemo(() => {
+    const meta = (activeModel?.metadata ?? null) as Record<string, unknown> | null;
+    const units =
+      (meta?.units as unknown) ??
+      ((meta?.metadata as Record<string, unknown> | undefined)?.units as unknown);
+    return unitsToModelScale(units);
+  }, [activeModel]);
+
+  const statusPollQuery = useQuery({
+    queryKey: ['bim-model-status', activeModelId],
+    queryFn: () => fetchBIMModel(activeModelId!),
+    enabled: !!activeModelId && activeModel?.status === 'processing',
+    refetchInterval: 8_000,
+  });
+  useEffect(() => {
+    if (statusPollQuery.data && statusPollQuery.data.status !== 'processing' && activeModel?.status === 'processing') {
+      queryClient.invalidateQueries({ queryKey: ['bim-models', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['bim-elements', activeModelId] });
+    }
+  }, [statusPollQuery.data, activeModel, queryClient, projectId, activeModelId]);
+
+  // Auto-detect project when navigating to /bim/:modelId without correct project context.
+  // Runs at most once per urlModelId - never overrides an explicit project switch
+  // from the top selector (which would otherwise snap the user back to this model's project).
+  const setActiveProject = useProjectContextStore((s) => s.setActiveProject);
+  const autoDetectedRef = useRef<string | null>(null);
+  // Set only when auto-detect has CONFIRMED the deep-linked model genuinely
+  // does not exist (404). Until then the model pick effect must not fall back
+  // to models[0] of a (still-resolving, possibly other-project) list - doing so
+  // briefly activates an unrelated model and fires the model-switch reset
+  // effect, which wipes a filter/grouping the user just applied.
+  const urlModelMissingRef = useRef(false);
+  useEffect(() => {
+    if (!urlModelId) return;
+    if (autoDetectedRef.current === urlModelId) return;
+    if (modelsQuery.isLoading) return;
+    const modelInList = models.find((m) => m.id === urlModelId);
+    if (modelInList) {
+      autoDetectedRef.current = urlModelId;
+      urlModelMissingRef.current = false;
+      return;
+    }
+    fetchBIMModel(urlModelId).then((model) => {
+      autoDetectedRef.current = urlModelId;
+      urlModelMissingRef.current = false;
+      if (model?.project_id && model.project_id !== projectId) {
+        setActiveProject(model.project_id, '');
+      }
+    }).catch(async () => {
+      // The path id may actually be a *document* id - e.g. a stale link, or
+      // a BIM file opened before the File Manager routed BIM documents
+      // through the on-demand converter. Try turning it into a model before
+      // giving up, so "Open" on an uploaded-but-unconverted BIM file still
+      // works (issue #273). The backend is idempotent and 404s a non-document
+      // id, so a genuinely missing model still falls through to the toast.
+      try {
+        const created = await createBimModelFromDocument(urlModelId);
+        autoDetectedRef.current = urlModelId;
+        urlModelMissingRef.current = false;
+        await queryClient.invalidateQueries({ queryKey: ['bim-models', projectId] });
+        setActiveModelId(created.model_id);
+        return;
+      } catch {
+        // Not a convertible document either - show the missing-model state.
+      }
+      autoDetectedRef.current = urlModelId;
+      urlModelMissingRef.current = true;
+      // Surface the missing-model state so the user doesn't think the
+      // model is "empty" - previously a 404 here was silent and the UI
+      // fell back to "No elements to display" (audit P1-13).
+      const shortId = urlModelId.slice(0, 8);
+      addToast({
+        type: 'warning',
+        title: t('bim.model_not_found_title', { defaultValue: 'Model not found' }),
+        message: t('bim.model_not_found_msg', {
+          defaultValue: 'Model {{id}} not found in this project.',
+          id: shortId,
+        }),
+      });
+    });
+  }, [urlModelId, models, projectId, setActiveProject, modelsQuery.isLoading, addToast, t, queryClient, setActiveModelId]);
+
+  // Pick a valid active model: handles initial mount, deep links (after auto-detect),
+  // and project switches (when current activeModelId no longer belongs to the project).
+  useEffect(() => {
+    if (!models.length) return;
+    // For deep links, wait until auto-detect has had a chance to run.
+    if (urlModelId && autoDetectedRef.current !== urlModelId) return;
+    const currentInList = activeModelId && models.some((m) => m.id === activeModelId);
+    if (currentInList) return;
+    if (urlModelId) {
+      // Deep link to a specific model. Activate it the moment it appears in the
+      // list. Until then - while its project is still resolving and `models`
+      // may be the wrong project's list - do NOT fall back to models[0]: that
+      // briefly activates an unrelated model and fires the model-switch reset
+      // effect, wiping the user's just-applied filter/grouping (the "grouping
+      // reverts to the whole project a second later" bug). Only fall back once
+      // auto-detect has CONFIRMED the model is genuinely missing (404), so the
+      // user still sees something instead of an empty viewer.
+      if (models.some((m) => m.id === urlModelId)) {
+        setActiveModelId(urlModelId);
+        return;
+      }
+      if (!urlModelMissingRef.current) return;
+    }
+    setActiveModelId(models[0]!.id);
+  }, [models, activeModelId, urlModelId]);
+
+  // Sync URL when active model changes
+  useEffect(() => {
+    if (!activeModelId) return;
+    const basePath = urlProjectId ? `/projects/${urlProjectId}/bim` : '/bim';
+    const targetPath = `${basePath}/${activeModelId}`;
+    if (!window.location.pathname.endsWith(activeModelId)) {
+      navigate(targetPath, { replace: true });
+    }
+  }, [activeModelId, urlProjectId, navigate]);
+
+  // Reset transient viewer state when switching between models - covers the
+  // auto-pick + deep-link paths above which only set activeModelId without
+  // clearing selection (only explicit user clicks do that today).  Without
+  // these clears, stale element ids from the previous model would highlight
+  // (or crash) the new scene.
+  useEffect(() => {
+    setMeshMatchRatio(null);
+    setFilterPredicate(null);
+    setVisibleElementCount(null);
+    setIsolatedIds(null);
+    setClashHighlightIds(null);
+    setClashFocusPoint(null);
+    setColorByMode('default');
+    setFullModelRequested(false);
+    setActiveGroupId(null);
+    setSelectedElementId(null);
+    setMultiSelectedIds([]);
+    setDiffPanelOpen(false);
+    setDiffChangeByStableId(null);
+    clearBIMLinkSelection();
+  }, [activeModelId, clearBIMLinkSelection]);
+
+  // When ?group= is present, load only that group's elements from the
+  // backend (lazy loading).  This makes cross-module navigation instant
+  // for large models (7k+ elements).
+  const groupParam = searchParams.get('group');
+  const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
+  const [fullModelRequested, setFullModelRequested] = useState(false);
+
+  // Sync the URL group param into local state on mount / URL change.
+  useEffect(() => {
+    if (groupParam && !fullModelRequested) {
+      setActiveGroupId(groupParam);
+    }
+  }, [groupParam, fullModelRequested]);
+
+  const effectiveGroupId = fullModelRequested ? null : activeGroupId;
+
+  const elementsQuery = useQuery({
+    // Skeleton mode: ~10× faster list (no boq_links / tasks / docs / activities
+    // / requirements / validation joins). The 3D viewer only needs identity
+    // + bbox for mesh matching; relations are fetched on demand when the user
+    // opens the BOQ-link panel or a validation drawer.
+    queryKey: ['bim-elements', activeModelId, effectiveGroupId ?? 'all', 'skeleton'],
+    queryFn: () =>
+      fetchBIMElements(activeModelId!, {
+        groupId: effectiveGroupId,
+        skeleton: true,
+      }),
+    // Only load elements once we know the model is actually ready.  Firing
+    // earlier (e.g. while the model is still in 'processing' state right after
+    // an upload) used to surface a misleading "Failed to load model elements"
+    // toast - the inline NonReadyOverlay now drives the UI for non-ready
+    // states and the elements query waits its turn.
+    // A 'degraded' model still has its geometry and elements persisted (the
+    // import succeeded but the DDC converter was unavailable, or no quantities
+    // came back), so we load it just like a ready one and let the existing
+    // converter-absent banner explain the missing data.
+    enabled:
+      !!activeModelId &&
+      (activeModel?.status === 'ready' || activeModel?.status === 'degraded'),
+  });
+  const elements: BIMElementData[] = elementsQuery.data?.items ?? [];
+  const elementsTotal: number = elementsQuery.data?.total ?? 0;
+
+  // BOQ progress per element - fetched ONLY while the "By progress" colour
+  // mode is active (the skeleton element list carries no BOQ links, so
+  // progress comes from the enriched listing's `current_pct`). Gated on the
+  // mode so we never pay the extra round trip(s) for users who don't open
+  // the overlay. React Query caches the result, so toggling the mode back
+  // on is instant within the stale window.
+  const progressQuery = useQuery({
+    queryKey: ['bim-element-progress', activeModelId],
+    queryFn: () => fetchBIMElementProgress(activeModelId!),
+    enabled:
+      !!activeModelId &&
+      (colorByMode === 'by_progress' || colorByMode === 'install_status') &&
+      (activeModel?.status === 'ready' || activeModel?.status === 'degraded'),
+    staleTime: 60_000,
+  });
+  const progressByElementId: Record<string, number> = useMemo(() => {
+    const out: Record<string, number> = {};
+    for (const row of progressQuery.data?.items ?? []) {
+      if (row.current_pct != null && Number.isFinite(row.current_pct)) {
+        out[row.id] = row.current_pct;
+      }
+    }
+    return out;
+  }, [progressQuery.data]);
+  // Parallel map of the headline progress entry's recorded ISO date, keyed
+  // by element id - drives the "as of <date>" line in the selected-element
+  // info panel. Kept separate from the numeric map so the 3D colour ramp
+  // stays a pure number lookup.
+  const progressDateByElementId: Record<string, string> = useMemo(() => {
+    const out: Record<string, string> = {};
+    for (const row of progressQuery.data?.items ?? []) {
+      if (row.current_pct_date) {
+        out[row.id] = row.current_pct_date;
+      }
+    }
+    return out;
+  }, [progressQuery.data]);
+
+  // Apply the deep-link element selection as soon as the elements list
+  // resolves.  Strips the query param afterwards so a refresh doesn't
+  // keep re-selecting the same element.
+  useEffect(() => {
+    if (!deepLinkElementId || elements.length === 0) return;
+    const target = elements.find((e) => e.id === deepLinkElementId);
+    if (target) {
+      setSelectedElementId(deepLinkElementId);
+      setBIMSelection([deepLinkElementId]);
+      const next = new URLSearchParams(searchParams);
+      next.delete('element');
+      setSearchParams(next, { replace: true });
+    }
+  }, [deepLinkElementId, elements, searchParams, setSearchParams, setBIMSelection]);
+
+  // Deep-link: ?isolate=id1,id2,...[&clash=1][&focus=cx,cy,cz]
+  //
+  // Used by:
+  //   • BOQ editor "View in BIM" - one or more linked element ids.
+  //   • /clash review "3D" link - the two interfering element ids plus
+  //     `clash=1` (colour them clash-red) and `focus=cx,cy,cz` (the clash
+  //     world centroid). The centroid is the reliable camera target: on
+  //     showcase IFC/RVT models the GLB nodes are numeric RVT ids that
+  //     never equal the DB element UUIDs, so per-element mesh resolution is
+  //     only an approximate positional fallback and framing the matched
+  //     meshes can point the camera at the wrong spot. The centroid is
+  //     exact regardless.
+  //
+  // Stripped after first application so a refresh resets to the full model.
+  const isolateParam = searchParams.get('isolate');
+  const clashParam = searchParams.get('clash');
+  const focusParam = searchParams.get('focus');
+  useEffect(() => {
+    if (!isolateParam || elements.length === 0) return;
+    const ids = isolateParam.split(',').filter((id) => id.length > 0);
+    if (ids.length === 0) return;
+    const isClash = clashParam === '1';
+
+    // Parse the clash centroid (3 finite floats) if supplied.
+    let focus: { x: number; y: number; z: number } | null = null;
+    if (focusParam) {
+      const parts = focusParam.split(',').map((s) => Number.parseFloat(s));
+      if (parts.length === 3 && parts.every((n) => Number.isFinite(n))) {
+        focus = { x: parts[0]!, y: parts[1]!, z: parts[2]! };
+      }
+    }
+
+    // Which of the requested ids actually exist in this model's element
+    // list. The clash backend stores real BIMElement UUIDs, so for a seeded
+    // showcase model these resolve directly. (We do NOT bail when the
+    // intersection is empty for a clash with a centroid - the viewer can
+    // still frame the interference via `focus`.)
+    const elementIdSet = new Set(elements.map((e) => e.id));
+    const validIds = ids.filter((id) => elementIdSet.has(id));
+
+    if (validIds.length === 0 && !(isClash && focus)) {
+      // Non-clash deep-link with no resolvable ids and no centroid - there
+      // is nothing meaningful we can show. Leave the param in place so a
+      // later element page (lazy load) can still satisfy it.
+      return;
+    }
+
+    if (validIds.length > 0) {
+      setIsolatedIds(validIds);
+    }
+    if (isClash) {
+      setClashHighlightIds(validIds.length > 0 ? validIds : null);
+      setClashFocusPoint(focus);
+    } else if (validIds.length === 1) {
+      // BOQ-link single-element deep-link: also select it so the detail
+      // panel opens (unchanged behaviour).
+      setSelectedElementId(validIds[0]!);
+      setBIMSelection(validIds);
+    }
+
+    const next = new URLSearchParams(searchParams);
+    next.delete('isolate');
+    next.delete('clash');
+    next.delete('focus');
+    setSearchParams(next, { replace: true });
+  }, [
+    isolateParam,
+    clashParam,
+    focusParam,
+    elements,
+    searchParams,
+    setSearchParams,
+    setBIMSelection,
+  ]);
+
+  // Saved element groups for the current model - populated by the
+  // /api/v1/bim_hub/element-groups/ endpoint and rendered at the top
+  // of BIMFilterPanel for one-click apply.  Refetch is triggered by
+  // the SaveGroupModal's success path via React Query invalidation.
+  const groupsQuery = useQuery({
+    queryKey: ['bim-element-groups', projectId, activeModelId],
+    queryFn: () => listElementGroups(projectId, activeModelId),
+    enabled: !!projectId && !!activeModelId,
+  });
+  const savedGroups: BIMElementGroup[] = groupsQuery.data ?? [];
+
+  // Resolve the active group name for the lazy-load info bar.
+  const activeGroupMeta = useMemo(() => {
+    if (!activeGroupId) return null;
+    return savedGroups.find((g) => g.id === activeGroupId) ?? null;
+  }, [activeGroupId, savedGroups]);
+
+  // Direct URL for Three.js loaders - no blob intermediary, no race conditions.
+  // The ?token= param authenticates the request (Three.js can't set headers).
+  // Cache-bust with model updated_at to ensure fresh geometry after re-upload.
+  const geometryUrl = useMemo(() => {
+    const status = activeModel?.status;
+    const canRenderModel = status === 'ready' || status === 'degraded';
+    if (
+      !activeModelId ||
+      !canRenderModel ||
+      // No canonical geometry blob exists on the server: the model imported
+      // element data but no native CAD converter produced a GLB/DAE, so
+      // canonical_file_path is null and has_geometry is false. Requesting the
+      // geometry endpoint would 404 - skip it and let the viewer show its
+      // "no 3D geometry" notice instead (Colin #59).
+      activeModel?.has_geometry === false ||
+      ((activeModel?.element_count ?? 0) === 0 && !elements.some((el) => !!el.mesh_ref))
+    ) {
+      return null;
+    }
+    const token = useAuthStore.getState().accessToken;
+    const base = `/api/v1/bim_hub/models/${encodeURIComponent(activeModelId)}/geometry/`;
+    const params = new URLSearchParams();
+    if (token) params.set('token', token);
+    params.set('_t', activeModel?.updated_at || String(Date.now()));
+    return `${base}?${params.toString()}`;
+  }, [activeModelId, activeModel?.status, activeModel?.has_geometry, activeModel?.element_count, activeModel?.updated_at, elements]);
+
+  const handleElementSelect = useCallback(
+    (id: string | null) => {
+      setSelectedElementId(id);
+      // Publish the click to the cross-highlight store so the BOQ editor
+      // can scroll to any linked row.
+      setBIMSelection(id ? [id] : []);
+    },
+    [setBIMSelection],
+  );
+
+  // Clear the cross-highlight store when leaving the BIM page so the BOQ
+  // editor doesn't keep a stale highlight from a previous session.
+  useEffect(() => {
+    return () => clearBIMLinkSelection();
+  }, [clearBIMLinkSelection]);
+
+  /* ── URL deep-link: camera + selection ──────────────────────────────
+   * Writes the current camera position/target and the multi-selection
+   * ID list to the URL so users can copy-paste a link that reopens
+   * /bim with the exact same view.  On mount, once the model has
+   * loaded and the viewer's camera bridge is available, we hydrate
+   * the camera + selection from the URL.
+   *
+   * The write is debounced to 500ms - an OrbitControls drag fires
+   * dozens of change events per second, which would flood the
+   * history stack and create noticeable stutter on 100k-element
+   * models. */
+  const urlStateAppliedRef = useRef(false);
+
+  // Hydrate camera + selection from URL when the model and viewer
+  // bridge are both ready. Runs once per activeModelId - subsequent
+  // camera moves or selection changes are driven by user input.
+  useEffect(() => {
+    if (!activeModelId) return;
+    if (urlStateAppliedRef.current) return;
+    if (elements.length === 0) return; // wait for elements to load
+    const state = parseBIMUrlState(searchParams);
+    if (!state.camera && state.selection.length === 0) {
+      urlStateAppliedRef.current = true;
+      return;
+    }
+    // Try applying via the viewer's camera bridge; back off one frame
+    // if it isn't ready yet (the bridge publishes after the <canvas />
+    // ref populates, which can be 1-2 frames behind the parent render).
+    let cancelled = false;
+    let attempts = 0;
+    const apply = () => {
+      if (cancelled) return;
+      const bridge = (
+        window as unknown as {
+          __oeBim?: {
+            setViewpoint: (
+              pos: { x: number; y: number; z: number },
+              target: { x: number; y: number; z: number },
+            ) => void;
+          };
+        }
+      ).__oeBim;
+      if (!bridge && attempts < 60) {
+        attempts++;
+        requestAnimationFrame(apply);
+        return;
+      }
+      if (state.camera && bridge) {
+        bridge.setViewpoint(state.camera.position, state.camera.target);
+      }
+      if (state.selection.length > 0) {
+        // ``?sel=<id>`` is a focus-and-select deep-link, NOT an isolate
+        // deep-link (the explicit isolate flow uses the dedicated
+        // ``?isolate=...`` param handled below). Defensively clear any
+        // residual isolation set so the user lands on the FULL geometry
+        // with just the requested element highlighted + camera framed.
+        // The dedicated colour-mode reset (line ~1946) already runs on
+        // ``activeModelId`` change, but we re-assert "default" here too so
+        // a stale localStorage-persisted mode from any future build can
+        // never override the deep-link's "show full model" intent.
+        setIsolatedIds(null);
+        setColorByMode('default');
+        setMultiSelectedIds(state.selection);
+        setSelectedElementId(state.selection[state.selection.length - 1] ?? null);
+      }
+      urlStateAppliedRef.current = true;
+    };
+    apply();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeModelId, elements.length, searchParams]);
+
+  // Reset hydration flag when switching models so each /bim/:modelId
+  // can carry its own ?cx=...&sel=... combination.
+  useEffect(() => {
+    urlStateAppliedRef.current = false;
+  }, [activeModelId]);
+
+  // Event-driven writer: camera + selection -> URL. Instead of polling the
+  // camera bridge on a timer (which burns CPU even when the viewer is idle),
+  // we subscribe to the bridge's ``onCameraChange`` (an OrbitControls
+  // 'change' relay) and flush a debounced URL write only when the camera is
+  // actually dirty. Selection changes flush immediately via the effect
+  // re-run. We still go through the public ``window.__oeBim`` bridge rather
+  // than reaching into SceneManager, so this stays scoped to the parent page
+  // and no consumer has to learn three.js internals.
+  //
+  // selectionSignature tracks whatever the current multi/single selection
+  // resolves to - we derive it inside the effect so this hook doesn't
+  // depend on a value declared lower in the component.
+  const selectionSignature = multiSelectedIds.length > 0
+    ? multiSelectedIds.join(',')
+    : (selectedElementId ?? '');
+  useEffect(() => {
+    if (!activeModelId) return;
+    if (!urlStateAppliedRef.current) return;
+
+    let lastSerialized = '';
+    let debounceTimer: number | null = null;
+    let unsubscribe: (() => void) | null = null;
+    let subscribeRaf = 0;
+    let cancelled = false;
+
+    type CameraBridge = {
+      getViewpoint: () => {
+        position: { x: number; y: number; z: number };
+        target: { x: number; y: number; z: number };
+      } | null;
+      onCameraChange?: (cb: () => void) => () => void;
+      sceneManager?: unknown;
+    };
+    const getBridge = (): CameraBridge | undefined =>
+      (window as unknown as { __oeBim?: CameraBridge }).__oeBim;
+
+    // Read the live camera + selection and write to the URL - only when the
+    // serialized payload actually changed, so an idle subscription never
+    // touches history.
+    const flush = () => {
+      const bridge = getBridge();
+      const camera = bridge?.getViewpoint?.() ?? null;
+      const selection: string[] = multiSelectedIds.length > 0
+        ? multiSelectedIds
+        : (selectedElementId ? [selectedElementId] : []);
+      const payload = serializeBIMUrlState({ camera, selection });
+      const serialized = JSON.stringify(payload);
+      if (serialized === lastSerialized) return;
+      lastSerialized = serialized;
+      // Merge into current params so we never clobber unrelated keys
+      // (group, docName, etc.).  Only add sel when non-empty so the URL
+      // stays short when nothing's selected.
+      const next = new URLSearchParams(window.location.search);
+      for (const k of BIM_URL_STATE_KEYS) next.delete(k);
+      for (const [k, v] of Object.entries(payload)) next.set(k, v);
+      setSearchParams(next, { replace: true });
+    };
+
+    // Camera 'change' fires dozens of times per second during an orbit
+    // drag - coalesce them into one URL write 500ms after motion stops.
+    const scheduleFlush = () => {
+      if (debounceTimer !== null) window.clearTimeout(debounceTimer);
+      debounceTimer = window.setTimeout(() => {
+        debounceTimer = null;
+        flush();
+      }, 500);
+    };
+
+    // The bridge (and its SceneManager handle) publishes a frame or two
+    // after this effect runs; retry the subscription on rAF until the
+    // scene is alive, then attach the camera listener once.
+    const trySubscribe = () => {
+      if (cancelled) return;
+      const bridge = getBridge();
+      if (bridge?.onCameraChange && bridge.sceneManager) {
+        unsubscribe = bridge.onCameraChange(scheduleFlush);
+        // Capture the camera as left by the deep-link hydration / model
+        // load so a freshly opened view is reflected in the URL without
+        // requiring the user to nudge the camera first.
+        flush();
+        return;
+      }
+      subscribeRaf = requestAnimationFrame(trySubscribe);
+    };
+    trySubscribe();
+
+    // Selection changes (effect re-run via selectionSignature) write
+    // immediately - the camera may be idle, so we can't wait for a move.
+    flush();
+
+    return () => {
+      cancelled = true;
+      if (subscribeRaf) cancelAnimationFrame(subscribeRaf);
+      if (debounceTimer !== null) window.clearTimeout(debounceTimer);
+      unsubscribe?.();
+    };
+    // selectionSignature is intentional - re-running on selection change
+    // re-subscribes (cheap) and flushes the new selection immediately.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeModelId, selectionSignature]);
+
+  // Stable callback for BIMFilterPanel - uses functional setState so it
+  // doesn't need to track filterPredicate in its dependency list.
+  const handleFilterChange = useCallback(
+    (predicate: (el: BIMElementData) => boolean, visibleCount: number) => {
+      setFilterPredicate(() => predicate);
+      setVisibleElementCount(visibleCount);
+    },
+    [],
+  );
+
+  // Smart-filter chips emitted by BIMViewer's health stats banner.
+  // Each chip applies a one-shot predicate that narrows the viewport
+  // to elements matching a specific cross-module health bucket.
+  const handleSmartFilter = useCallback(
+    (filterId: 'errors' | 'warnings' | 'unlinked_boq' | 'has_tasks' | 'has_docs') => {
+      const predicates: Record<typeof filterId, (el: BIMElementData) => boolean> = {
+        errors: (el) => el.validation_status === 'error',
+        warnings: (el) => el.validation_status === 'warning',
+        unlinked_boq: (el) => (el.boq_links?.length ?? 0) === 0,
+        has_tasks: (el) => (el.linked_tasks?.length ?? 0) > 0,
+        has_docs: (el) => (el.linked_documents?.length ?? 0) > 0,
+      };
+      const predicate = predicates[filterId];
+      const subset = elements.filter(predicate);
+      setFilterPredicate(() => predicate);
+      setVisibleElementCount(subset.length);
+      const labels: Record<typeof filterId, string> = {
+        errors: t('bim.smart_filter_errors', { defaultValue: 'Validation errors' }),
+        warnings: t('bim.smart_filter_warnings', { defaultValue: 'Validation warnings' }),
+        unlinked_boq: t('bim.smart_filter_unlinked_boq', { defaultValue: 'Unlinked to BOQ' }),
+        has_tasks: t('bim.smart_filter_has_tasks', { defaultValue: 'With tasks' }),
+        has_docs: t('bim.smart_filter_has_docs', { defaultValue: 'With documents' }),
+      };
+      addToast({
+        type: subset.length === 0 ? 'info' : 'success',
+        title: labels[filterId],
+        message: t('bim.smart_filter_applied', {
+          count: subset.length,
+          defaultValue: '{{count}} elements match',
+        }),
+      });
+    },
+    [elements, t, addToast],
+  );
+
+  const handleFilterElementClick = useCallback((elementId: string) => {
+    setSelectedElementId(elementId);
+  }, []);
+
+  // Open the AddToBOQ modal for one or more selected elements (bulk link).
+  const handleAddToBOQ = useCallback((elements: BIMElementData[]) => {
+    if (elements.length > 0) setLinkCandidates(elements);
+  }, []);
+
+  // Cross-module navigation handlers - fired when the user clicks a row
+  // in the Linked Documents / Tasks / Activities sections of the
+  // selected-element panel.  Each one takes them to the relevant module
+  // and pre-selects the target.
+  const handleOpenDocument = useCallback(
+    (documentId: string) => {
+      navigate(`/documents?id=${encodeURIComponent(documentId)}`);
+    },
+    [navigate],
+  );
+  const handleOpenTask = useCallback(
+    (taskId: string) => {
+      navigate(`/tasks?id=${encodeURIComponent(taskId)}`);
+    },
+    [navigate],
+  );
+  const handleOpenActivity = useCallback(
+    (activityId: string) => {
+      navigate(`/schedule?activity=${encodeURIComponent(activityId)}`);
+    },
+    [navigate],
+  );
+
+  // Inline-create handlers - fired when the user clicks "+ New" / "+ Link"
+  // in the cross-module sections of the selected-element panel.  These
+  // open the inline modals so the user never has to leave the BIM viewer
+  // to create a task, link a drawing, or attach a schedule activity.
+  const handleCreateTask = useCallback((element: BIMElementData) => {
+    setCreateTaskFor([element]);
+  }, []);
+  const handleLinkDocument = useCallback((element: BIMElementData) => {
+    setLinkDocumentFor([element]);
+  }, []);
+  const handleLinkActivity = useCallback((element: BIMElementData) => {
+    setLinkActivityFor([element]);
+  }, []);
+  const handleLinkRequirement = useCallback((element: BIMElementData) => {
+    setLinkRequirementFor([element]);
+  }, []);
+  const handleOpenRequirement = useCallback(
+    (requirementId: string) => {
+      navigate(`/bim/rules?id=${encodeURIComponent(requirementId)}`);
+    },
+    [navigate],
+  );
+
+  // "Ask AI about this element" - build a full-context prompt from the
+  // (Wave D enriched) element and seed the shared AI assistant with it. We
+  // prefill rather than auto-send, so the user reviews and submits. The panel
+  // is global (mounted in AppLayout), so the user stays in the 3D viewer.
+  const handleAskAiAboutElement = useCallback((element: BIMElementData) => {
+    useFloatingChatStore.getState().seedPrompt(buildElementQuestion(element));
+  }, []);
+
+  // Link a saved group to a BOQ position - looks up every member element
+  // by id from the current `elements` list and opens AddToBOQModal with
+  // the resolved subset.  If some member ids aren't in the loaded element
+  // list (e.g. the group references elements from a different model that
+  // happen to share an id), they're silently dropped.
+  const handleLinkGroupToBOQ = useCallback(
+    (group: BIMElementGroup) => {
+      const memberIds = new Set(
+        Array.isArray(group.member_element_ids) ? group.member_element_ids : [],
+      );
+      const subset = elements.filter((el) => memberIds.has(el.id));
+      if (subset.length === 0) {
+        addToast({
+          type: 'info',
+          title: t('bim.group_empty_title', { defaultValue: 'Empty group' }),
+          message: t('bim.group_empty_msg', {
+            defaultValue: 'This group has no members in the current model.',
+          }),
+        });
+        return;
+      }
+      setLinkCandidates(subset);
+    },
+    [elements, addToast, t],
+  );
+
+  // Delete a saved group via the backend, refresh the list.
+  const handleDeleteGroup = useCallback(
+    async (group: BIMElementGroup) => {
+      const ok = await confirm({
+        title: t('bim.group_delete_confirm_title', { defaultValue: 'Delete group?' }),
+        message: t('bim.group_delete_confirm', {
+          defaultValue: 'Delete the saved group "{{name}}"?',
+          name: group.name,
+        }),
+      });
+      if (!ok) return;
+      try {
+        await deleteElementGroup(group.id);
+        addToast({
+          type: 'success',
+          title: t('bim.group_deleted_title', { defaultValue: 'Group deleted' }),
+          message: group.name,
+        });
+        queryClient.invalidateQueries({
+          queryKey: ['bim-element-groups', projectId, activeModelId],
+        });
+      } catch (err) {
+        addToast({
+          type: 'error',
+          title: t('common.error', { defaultValue: 'Error' }),
+          message: err instanceof Error ? err.message : String(err),
+        });
+      }
+    },
+    [addToast, queryClient, projectId, activeModelId, t],
+  );
+
+  // Convert the filter panel's local state into the backend's
+  // BIMGroupFilterCriteria shape so the SaveGroupModal can persist it.
+  // The filter panel stores set-based selections; the backend takes
+  // arrays.  We deliberately drop the `groupBy` axis (which is purely
+  // a UI grouping choice and not part of the predicate) and the
+  // `buildingsOnly` toggle (which is a viewport-level setting, not a
+  // group definition - saved groups always include their full member
+  // set even if they're noise/annotations).
+  type FilterStateShape = {
+    search: string;
+    storeys: Set<string>;
+    types: Set<string>;
+  };
+  const handleSaveAsGroup = useCallback(
+    (filter: FilterStateShape, visibleElements: BIMElementData[]) => {
+      const criteria: BIMGroupFilterCriteria = {};
+      if (filter.storeys.size > 0) {
+        criteria.storey = Array.from(filter.storeys);
+      }
+      if (filter.types.size > 0) {
+        criteria.element_type = Array.from(filter.types);
+      }
+      const search = filter.search.trim();
+      if (search) criteria.name_contains = search;
+      // Prefer the explicit multi-selection when the user has Ctrl+clicked
+      // a subset - that gesture means "this is what I want", not "every
+      // element matching the current filter".  Falls back to the visible
+      // (filtered + isolated) subset otherwise.  We pass full element rows
+      // (not ids) so SaveGroupModal can resolve viewer stubs to real
+      // BIMElement UUIDs before persisting - storing stub ids verbatim
+      // was the root cause of "group save broken".
+      const targetElements =
+        selectedElementData.length > 0 ? selectedElementData : visibleElements;
+      setSaveGroupState({
+        filterCriteria: criteria,
+        elements: targetElements,
+      });
+    },
+    [selectedElementData],
+  );
+
+  // Isolate a saved group's member elements in the 3D viewport.
+  const handleIsolateGroup = useCallback(
+    (group: BIMElementGroup) => {
+      const ids = Array.isArray(group.member_element_ids) ? group.member_element_ids : [];
+      setIsolatedIds(ids.length > 0 ? ids : null);
+    },
+    [],
+  );
+
+  // Highlight a group's members on hover - set isolatedIds to a temporary
+  // preview without committing.  We use the BIM viewer's highlightedIds
+  // prop instead to avoid flickering the isolation state.
+  const handleHighlightGroup = useCallback(
+    (group: BIMElementGroup | null) => {
+      if (group) {
+        setBIMSelection(
+          Array.isArray(group.member_element_ids) ? group.member_element_ids : [],
+        );
+      } else {
+        setBIMSelection([]);
+      }
+    },
+    [setBIMSelection],
+  );
+
+  // Navigate to the BOQ editor, optionally focusing a specific position.
+  const handleNavigateToBOQ = useCallback(
+    (positionId: string) => {
+      navigate(`/boq?position=${encodeURIComponent(positionId)}`);
+    },
+    [navigate],
+  );
+
+  // Invalidate groups query after a rename or color change.
+  const handleGroupUpdated = useCallback(() => {
+    queryClient.invalidateQueries({
+      queryKey: ['bim-element-groups', projectId, activeModelId],
+    });
+  }, [queryClient, projectId, activeModelId]);
+
+  // Remove a BIM↔BOQ link - fires from the properties panel's unlink button.
+  const handleUnlinkBOQ = useCallback(
+    async (linkId: string) => {
+      try {
+        await deleteLink(linkId);
+        addToast({
+          type: 'success',
+          title: t('bim.link_removed_title', { defaultValue: 'Unlinked' }),
+          message: t('bim.link_removed', { defaultValue: 'BIM ↔ BOQ link removed' }),
+        });
+        queryClient.invalidateQueries({ queryKey: ['bim-elements', activeModelId] });
+      } catch (err) {
+        addToast({
+          type: 'error',
+          title: t('common.error', { defaultValue: 'Error' }),
+          message: err instanceof Error ? err.message : String(err),
+        });
+      }
+    },
+    [activeModelId, addToast, queryClient, t],
+  );
+
+  // Kick a "quick takeoff" from the current filter panel - open AddToBOQ with
+  // the visible subset so the user can generate one BOQ position from e.g.
+  // "all walls on level 1". The panel passes its own `visibleElements`, which
+  // honors element isolation as well as the filter, so the linked set is
+  // exactly what the button counted (and matches Save-as-group / CSV export).
+  // Fall back to recomputing from the predicate for any caller that does not
+  // pass a subset.
+  const handleQuickTakeoff = useCallback((visibleElements?: BIMElementData[]) => {
+    if (!elementsQuery.data || elementsQuery.data.items.length === 0) return;
+    const subset =
+      visibleElements ??
+      (filterPredicate
+        ? elementsQuery.data.items.filter(filterPredicate)
+        : elementsQuery.data.items);
+    if (subset.length === 0) {
+      addToast({
+        type: 'info',
+        title: t('bim.quick_takeoff_empty_title', { defaultValue: 'Nothing to link' }),
+        message: t('bim.quick_takeoff_empty', {
+          defaultValue: 'Current filter has no elements to link',
+        }),
+      });
+      return;
+    }
+    setLinkCandidates(subset);
+  }, [elementsQuery.data, filterPredicate, addToast, t]);
+
+  const handleUploadComplete = useCallback((modelId: string) => {
+    setActiveModelId(modelId); setShowUploadOverride(false); setSelectedElementId(null); setMultiSelectedIds([]);
+    setUploadOpen(false); setUploadConvertedName(null);
+    // Invalidate both model list and elements - the model is ready on the
+    // backend but the list cache may still show 'processing' for a moment.
+    queryClient.invalidateQueries({ queryKey: ['bim-models', projectId] });
+    queryClient.invalidateQueries({ queryKey: ['bim-elements', modelId] });
+    // Retry after a short delay to catch race conditions where the first
+    // refetch arrives before the backend has fully committed the status.
+    setTimeout(() => {
+      queryClient.invalidateQueries({ queryKey: ['bim-models', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['bim-elements', modelId] });
+    }, 2000);
+  }, [queryClient, projectId]);
+
+  // Watch global BIM upload store - when a job for this project finishes
+  // successfully, auto-select the new model and refresh the model list.
+  // Completion / error toasts are user-facing here (not the pill in
+  // GlobalUploadIndicator - that's only a progress indicator).
+  const globalUploadJobs = useBIMUploadStore((s) => s.jobs);
+  const completedJobRef = useRef(new Set<string>());
+  useEffect(() => {
+    for (const [jobId, job] of globalUploadJobs) {
+      if (job.projectId !== projectId) continue;
+      if (job.status === 'ready' && !completedJobRef.current.has(jobId)) {
+        completedJobRef.current.add(jobId);
+        if (job.modelId) handleUploadComplete(job.modelId);
+        addToast({
+          type: 'success',
+          title: t('bim.toast_model_processed_title', { defaultValue: 'Model ready' }),
+          message: t('bim.upload_complete_count', { defaultValue: '{{count}} elements', count: job.elementCount }),
+        });
+      } else if (
+        job.status === 'error' &&
+        !completedJobRef.current.has(jobId)
+      ) {
+        completedJobRef.current.add(jobId);
+        addToast({
+          type: 'error',
+          title: t('bim.toast_processing_failed_title', { defaultValue: 'Processing failed' }),
+          message: job.errorMessage || undefined,
+        });
+      } else if (
+        job.status === 'converter_required' &&
+        !completedJobRef.current.has(jobId)
+      ) {
+        completedJobRef.current.add(jobId);
+      }
+    }
+  }, [globalUploadJobs, projectId, handleUploadComplete, addToast, t]);
+
+  const handleDeleteModel = useCallback(async (modelId: string, name: string) => {
+    const ok = await confirm({
+      title: t('bim.confirm_delete_model_title', { defaultValue: 'Delete model?' }),
+      message: t('bim.confirm_delete_model', { name }),
+    });
+    if (!ok) return;
+    try {
+      await deleteBIMModel(modelId);
+      addToast({ type: 'success', title: t('bim.toast_model_deleted_title'), message: name });
+      if (activeModelId === modelId) { setActiveModelId(null); setSelectedElementId(null); setMultiSelectedIds([]); }
+      queryClient.invalidateQueries({ queryKey: ['bim-models', projectId] });
+    } catch (err) { addToast({ type: 'error', title: t('bim.toast_delete_failed_title'), message: err instanceof Error ? err.message : String(err) }); }
+  }, [activeModelId, addToast, queryClient, projectId, t]);
+
+  const breadcrumbItems = useMemo(() => {
+    const items: { label: string; to?: string }[] = [];
+    if (projectId && contextProjectName) items.push({ label: contextProjectName, to: `/projects/${projectId}` });
+    items.push({ label: t('nav.bim_viewer', { defaultValue: 'BIM Viewer' }) });
+    return items;
+  }, [t, projectId, contextProjectName]);
+
+  // For multi-select: keep the FULL list of selected IDs in parent state so
+  // re-renders never collapse a Ctrl+click multi-selection back to a single
+  // element. The viewer's onSelectionChange callback feeds it; the array is
+  // then echoed back via selectedElementIds so highlights stay in sync.
+  // selectedElementId still tracks the LAST clicked id (for properties panel
+  // and deep-link navigation).
+  const selectedElementIds = multiSelectedIds.length > 0
+    ? multiSelectedIds
+    : (selectedElementId ? [selectedElementId] : []);
+
+  // Bounding-box dimensions of the current single selection. Union bbox
+  // across the whole multi-selection would be possible, but estimators
+  // reported the "what is this one piece?" view as most useful - keep
+  // the card single-selection-only to avoid confusing aggregates.
+  const selectedDimensions = useMemo(() => {
+    if (!selectedElementId || selectedElementIds.length > 1) return null;
+    const el = elements.find((e) => e.id === selectedElementId);
+    const bb = el?.bounding_box;
+    if (!el || !bb) return null;
+    const L = Math.abs(bb.max_x - bb.min_x);
+    const W = Math.abs(bb.max_y - bb.min_y);
+    const H = Math.abs(bb.max_z - bb.min_z);
+    return {
+      name: el.name || el.element_type || 'Element',
+      type: el.element_type,
+      L,
+      W,
+      H,
+      volume: L * W * H,
+    };
+  }, [selectedElementId, selectedElementIds, elements]);
+
+  if (!projectId) {
+    return (
+      <div className="flex items-center justify-center -mx-4 sm:-mx-7 -mt-6 -mb-6 border-s border-border-light" style={{ height: 'calc(100vh - 56px)' }}>
+        <EmptyState icon={<FolderOpen size={32} />} title={t('bim.no_project')} description={t('bim.no_project_desc')} />
+      </div>
+    );
+  }
+
+  if (showFullPageUpload && !modelsQuery.isLoading) {
+    return (
+      <>
+        <LandingPage projectId={projectId} onUploadComplete={handleUploadComplete} breadcrumbItems={breadcrumbItems} models={models} onSelectModel={(id) => { setActiveModelId(id); setShowUploadOverride(false); setSelectedElementId(null); setMultiSelectedIds([]); }} onDeleteModel={handleDeleteModel} />
+        <ConfirmDialog {...confirmProps} />
+      </>
+    );
+  }
+
+  const storeys = new Set(elements.map((e) => e.storey).filter(Boolean));
+  const discips = new Set(elements.map((e) => e.discipline).filter(Boolean));
+  // "Loading by URL": user just uploaded or deep-linked, models query is still
+  // refetching, so activeModel hasn't materialised yet.  We treat this as a
+  // non-ready state so the inline overlay renders instead of the BIMViewer
+  // (which would otherwise fire the elements query and surface an error).
+  const isModelLoadingByUrl =
+    !!urlModelId && !activeModel && (modelsQuery.isLoading || modelsQuery.isFetching);
+  // A model is "non-ready" when the viewer must show the inline empty /
+  // converting state instead of mounting BIMViewer (which would blind-fetch
+  // geometry). Only `ready` and `degraded` carry a 3D mesh on the server
+  // (`degraded` = geometry imported, quantities missing - still viewable),
+  // so every other status is non-ready. We enumerate the known no-geometry /
+  // pending / failed variants and add defensive aliases (pending/queued/
+  // uploading/converting/failed/no_geometry) so an unexpected status string
+  // never causes a 404 geometry fetch for a model that is known-absent (#168).
+  const NON_READY_STATUSES = new Set([
+    'processing',
+    'pending',
+    'queued',
+    'uploading',
+    'converting',
+    'needs_converter',
+    'converter_required',
+    'no_geometry',
+    // `empty_model` carries no elements/geometry: render the inline
+    // informational overlay rather than blind-fetching a 404 mesh (#197).
+    'empty_model',
+    'failed',
+    'error',
+  ]);
+  const isModelNonReady =
+    !!isModelLoadingByUrl ||
+    !!(activeModel && NON_READY_STATUSES.has(activeModel.status));
+
+  return (
+    <div className="flex flex-col -mx-4 sm:-mx-7 -mt-6 -mb-6 border-s border-border-light" style={{ height: 'calc(100vh - 56px)' }}>
+      {/* ── Header ── */}
+      <div className="relative z-20 px-3 py-2.5 flex items-center justify-between border-b border-border-light bg-surface-primary">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-oe-blue/10 to-blue-50 dark:to-blue-950/20 border border-oe-blue/15 flex items-center justify-center">
+              <Cuboid size={18} className="text-oe-blue" />
+            </div>
+            <div>
+              <h1 className="text-sm font-bold text-content-primary">{t('bim.viewer_title', { defaultValue: 'BIM Viewer' })}</h1>
+              {activeModel && (
+                <p
+                  className="text-[10px] text-content-tertiary truncate max-w-[160px] lg:max-w-[280px] cursor-help"
+                  title={(() => {
+                    // Disk-usage info now surfaces here on hover instead of as
+                    // an always-visible chip in the header - chip ate space and
+                    // distracted from the model name. Same data, better tucked.
+                    const data = modelsQuery.data;
+                    if (!hasModels || !data?.storage_root_label) {
+                      return activeModel.name;
+                    }
+                    const fmtMb = (mb: number): string => {
+                      if (mb >= 1024) return `${(mb / 1024).toFixed(2)} GB`;
+                      if (mb >= 1) return `${mb.toFixed(1)} MB`;
+                      if (mb > 0) return `${(mb * 1024).toFixed(0)} KB`;
+                      return '0 B';
+                    };
+                    const artifactMb = data.total_artifact_size_mb ?? 0;
+                    const originalMb = data.total_original_size_mb ?? 0;
+                    const hasOriginals = originalMb > 0.001;
+                    const lines = [
+                      activeModel.name,
+                      '',
+                      t('bim.disk_root', { defaultValue: 'Storage root' }) + `: ${data.storage_root_label}`,
+                      t('bim.disk_models', { defaultValue: 'Models' }) + `: ${models.length}`,
+                      t('bim.disk_artifacts', { defaultValue: 'Conversion artifacts' }) + `: ${fmtMb(artifactMb)}`,
+                      hasOriginals
+                        ? t('bim.disk_originals_kept', { defaultValue: 'Originals (kept)' }) + `: ${fmtMb(originalMb)}`
+                        : t('bim.disk_originals_dropped', {
+                            defaultValue: 'Originals dropped after conversion (production policy)',
+                          }),
+                      t('bim.disk_total', { defaultValue: 'Total on disk' }) + `: ${fmtMb(artifactMb + originalMb)}`,
+                    ];
+                    return lines.join('\n');
+                  })()}
+                  data-testid="bim-active-model-name"
+                >
+                  {activeModel.name}
+                </p>
+              )}
+            </div>
+          </div>
+          {/* Stat pills yield below ~1360px so the two toolbar rows never
+              wrap onto a third line; the same counts live in Summary. */}
+          {elements.length > 0 && (
+            <div className="hidden min-[1360px]:flex items-center gap-2 ms-2">
+              <StatPill icon={Box} label={t('bim.stat_elements', { defaultValue: 'Elements' })} value={elements.length} />
+              {storeys.size > 0 && <StatPill icon={Layers} label={t('bim.stat_storeys', { defaultValue: 'Levels' })} value={storeys.size} />}
+              {discips.size > 0 && <StatPill icon={Sparkles} label={t('bim.stat_disciplines', { defaultValue: 'Disciplines' })} value={discips.size} />}
+            </div>
+          )}
+        </div>
+        {/* Two deliberate toolbar rows (founder ask 2026-06-06): one big
+            flex-wrap broke unevenly onto a third line at common widths.
+            Row 1 = model workflow + cross-module jumps, Row 2 = view
+            controls. Label budget keeps each row to ONE line from 1280px
+            up (verified 1280/1440/1680/1920): the longest labels show only
+            at min-[1900px], medium ones at 2xl; icon + tooltip + aria-label
+            always remain. Header stat pills yield below 1360px. */}
+        <div className="flex min-w-0 flex-col items-end gap-1.5">
+          <div className="flex flex-wrap items-center justify-end gap-2">
+          <button
+            onClick={() => setUploadOpen((p) => !p)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-oe-blue text-white hover:bg-oe-blue-dark transition-colors shadow-sm"
+            data-testid="bim-add-model-top"
+          >
+            <Plus size={13} /> {t('bim.add_model', { defaultValue: 'Add Model' })}
+          </button>
+          <ModuleHelpButton tourId="bim" />
+          <ModuleGuideButton
+            content={bimGuide}
+            onCta={() => setUploadOpen(true)}
+          />
+          {elements.length > 0 && (
+            <a
+              href="/bim/rules?mode=requirements"
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid="bim-rules-link-top"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium text-content-secondary bg-surface-secondary border border-border-light hover:bg-surface-tertiary transition-colors"
+            >
+              <SlidersHorizontal size={13} /> {t('bim.rules_button', { defaultValue: 'Rules' })}
+            </a>
+          )}
+          {elements.length > 0 && (
+            <>
+              <button
+                onClick={() => setFilterPanelOpen((p) => !p)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors border ${
+                  filterPanelOpen
+                    ? 'bg-oe-blue/10 text-oe-blue border-oe-blue/30'
+                    : 'text-content-secondary bg-surface-secondary border-border-light hover:bg-surface-tertiary'
+                }`}
+                title={t('bim.filter_toggle', { defaultValue: 'Toggle filter panel' })}
+                aria-label={t('bim.filter_toggle', { defaultValue: 'Toggle filter panel' })}
+                aria-pressed={filterPanelOpen}
+                data-testid="bim-tour-filter-button"
+              >
+                <Filter size={13} />
+                {t('bim.filter_button', { defaultValue: 'Filter' })}
+                {visibleElementCount !== null && visibleElementCount < elements.length && (
+                  <span className="text-[10px] bg-oe-blue text-white rounded-full px-1.5 py-0 tabular-nums">
+                    {visibleElementCount}
+                  </span>
+                )}
+              </button>
+
+              <button
+                onClick={() => setSummaryPanelOpen(!summaryPanelOpen)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors border ${
+                  summaryPanelOpen
+                    ? 'bg-oe-blue/10 text-oe-blue border-oe-blue/30'
+                    : 'text-content-secondary bg-surface-secondary border-border-light hover:bg-surface-tertiary'
+                }`}
+                title={
+                  summaryPanelOpen
+                    ? t('bim.summary_hide', { defaultValue: 'Hide summary panel' })
+                    : t('bim.summary_show', { defaultValue: 'Show summary panel' })
+                }
+                aria-label={t('bim.summary_toggle', { defaultValue: 'Toggle summary panel' })}
+                aria-pressed={summaryPanelOpen}
+                data-guide="bim-summary-button"
+              >
+                <LayoutGrid size={13} />
+                {t('bim.summary_button', { defaultValue: 'Summary' })}
+              </button>
+
+              {/* Property search - opens a small popover with a column /
+                  operator / value query builder hitting the Parquet via
+                  DuckDB. Matches are piped into the isolation set so the
+                  user sees only the queried elements (v3.12.0 / Stream D). */}
+              <button
+                onClick={() => setPropertySearchOpen((p) => !p)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors border ${
+                  propertySearchOpen
+                    ? 'bg-oe-blue/10 text-oe-blue border-oe-blue/30'
+                    : 'text-content-secondary bg-surface-secondary border-border-light hover:bg-surface-tertiary'
+                }`}
+                title={t('bim.property_search_toggle', {
+                  defaultValue: 'Search element properties',
+                })}
+                aria-label={t('bim.property_search_toggle', {
+                  defaultValue: 'Search element properties',
+                })}
+                aria-pressed={propertySearchOpen}
+                data-testid="bim-property-search-toggle"
+              >
+                <Search size={13} />
+                <span className="hidden min-[1900px]:inline">
+                  {t('bim.property_search_button', { defaultValue: 'Property search' })}
+                </span>
+              </button>
+
+              {projectId && (
+                <button
+                  onClick={() => setSnapshotsOpen((p) => !p)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors border ${
+                    snapshotsOpen
+                      ? 'bg-oe-blue/10 text-oe-blue border-oe-blue/30'
+                      : 'text-content-secondary bg-surface-secondary border-border-light hover:bg-surface-tertiary'
+                  }`}
+                  title={t('bim.snapshots_button_title', {
+                    defaultValue: 'Data snapshots for this project',
+                  })}
+                  aria-label={t('bim.snapshots_toggle', {
+                    defaultValue: 'Toggle snapshots popover',
+                  })}
+                  aria-pressed={snapshotsOpen}
+                  data-testid="bim-snapshots-toggle"
+                >
+                  <Layers size={13} />
+                  <span className="hidden 2xl:inline">{t('bim.snapshots_button', { defaultValue: 'Snapshots' })}</span>
+                </button>
+              )}
+
+              {projectId && (
+                <button
+                  onClick={() => {
+                    // Carry the currently-loaded BIM model id forward so
+                    // the geo page can flyTo() the matching tileset
+                    // instead of leaving the camera at the project anchor.
+                    const url = activeModelId
+                      ? `/projects/${projectId}/geo?model=${encodeURIComponent(activeModelId)}`
+                      : `/projects/${projectId}/geo`;
+                    navigate(url);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors border text-content-secondary bg-surface-secondary border-border-light hover:bg-surface-tertiary"
+                  title={t('geo_hub.view_on_map', { defaultValue: 'View on map' })}
+                  aria-label={t('geo_hub.view_on_map', { defaultValue: 'View on map' })}
+                  data-testid="bim-view-on-map"
+                >
+                  <Globe2 size={13} />
+                  <span className="hidden min-[1900px]:inline">
+                    {t('geo_hub.view_on_map', { defaultValue: 'View on map' })}
+                  </span>
+                </button>
+              )}
+
+              {/* Round-trip with /data-explorer. The `?bimModel=<id>` deeplink
+                  is already handled by CadDataExplorerPage which calls
+                  `sessionFromBimModel` server-side (idempotent — reuses an
+                  existing session for the same model). */}
+              {activeModelId && (
+                <button
+                  onClick={() => {
+                    navigate(`/data-explorer?bimModel=${encodeURIComponent(activeModelId)}`);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors border text-content-secondary bg-surface-secondary border-border-light hover:bg-surface-tertiary"
+                  title={t('bim.open_in_data_explorer_title', {
+                    defaultValue: 'Explore extracted data tables',
+                  })}
+                  aria-label={t('bim.open_in_data_explorer', {
+                    defaultValue: 'Open in Data Explorer',
+                  })}
+                  data-testid="bim-open-in-data-explorer"
+                >
+                  <Database size={13} />
+                  <span className="hidden min-[1900px]:inline">
+                    {t('bim.open_in_data_explorer', {
+                      defaultValue: 'Open in Data Explorer',
+                    })}
+                  </span>
+                </button>
+              )}
+            </>
+          )}
+          </div>
+
+          {/* Row 2: view controls - only meaningful with a loaded model. */}
+          {elements.length > 0 && (
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <button
+                onClick={() => setDimensionsVisible(!dimensionsVisible)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors border ${
+                  dimensionsVisible
+                    ? 'bg-oe-blue/10 text-oe-blue border-oe-blue/30'
+                    : 'text-content-secondary bg-surface-secondary border-border-light hover:bg-surface-tertiary'
+                }`}
+                title={
+                  dimensionsVisible
+                    ? t('bim.dimensions_hide', {
+                        defaultValue: 'Hide bounding-box dimensions on selection',
+                      })
+                    : t('bim.dimensions_show', {
+                        defaultValue: 'Show bounding-box dimensions on selection',
+                      })
+                }
+                aria-label={t('bim.dimensions_toggle', {
+                  defaultValue: 'Toggle bounding-box dimensions',
+                })}
+                aria-pressed={dimensionsVisible}
+              >
+                <Maximize2 size={13} />
+                <span className="hidden min-[1900px]:inline">
+                  {t('bim.dimensions_button', { defaultValue: 'BBox Dimensions' })}
+                </span>
+              </button>
+
+              <button
+                onClick={() => setAssetCardEnabled(!assetCardEnabled)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors border ${
+                  assetCardEnabled
+                    ? 'bg-oe-blue/10 text-oe-blue border-oe-blue/30'
+                    : 'text-content-secondary bg-surface-secondary border-border-light hover:bg-surface-tertiary'
+                }`}
+                title={
+                  assetCardEnabled
+                    ? t('bim.asset_card_hide', {
+                        defaultValue: 'Hide asset-info card on selection',
+                      })
+                    : t('bim.asset_card_show', {
+                        defaultValue: 'Show asset-info card on selection',
+                      })
+                }
+                aria-label={t('bim.asset_card_toggle', {
+                  defaultValue: 'Toggle asset register card',
+                })}
+                aria-pressed={assetCardEnabled}
+                data-testid="bim-asset-card-toggle"
+              >
+                <Package size={13} />
+                <span className="hidden 2xl:inline">{t('bim.asset_card_button', { defaultValue: 'Asset Card' })}</span>
+              </button>
+
+              <button
+                onClick={() => setBoqPanelOpen(!boqPanelOpen)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors border ${
+                  boqPanelOpen
+                    ? 'bg-oe-blue/10 text-oe-blue border-oe-blue/30'
+                    : 'text-content-secondary bg-surface-secondary border-border-light hover:bg-surface-tertiary'
+                }`}
+                title={t('bim.linked_boq_toggle', { defaultValue: 'Toggle linked BOQ panel' })}
+                aria-label={t('bim.linked_boq_toggle', { defaultValue: 'Toggle linked BOQ panel' })}
+                aria-pressed={boqPanelOpen}
+                data-testid="bim-tour-linked-boq-button"
+              >
+                <ClipboardList size={13} />
+                <span className="hidden 2xl:inline">{t('bim.linked_boq_button', { defaultValue: 'Linked BOQ' })}</span>
+              </button>
+
+              <button
+                onClick={() => setDiffPanelOpen((o) => !o)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors border ${
+                  diffPanelOpen
+                    ? 'bg-oe-blue/10 text-oe-blue border-oe-blue/30'
+                    : 'text-content-secondary bg-surface-secondary border-border-light hover:bg-surface-tertiary'
+                }`}
+                title={t('bim.diff_toggle', {
+                  defaultValue: 'Compare model versions',
+                })}
+                aria-label={t('bim.diff_toggle', {
+                  defaultValue: 'Compare model versions',
+                })}
+                aria-pressed={diffPanelOpen}
+                data-testid="bim-diff-toggle"
+              >
+                <GitCompare size={13} />
+                {t('bim.diff_button', { defaultValue: 'Compare' })}
+              </button>
+
+              <button
+                onClick={() => setSmartViewsPanelOpen((o) => !o)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors border ${
+                  smartViewsPanelOpen
+                    ? 'bg-oe-blue/10 text-oe-blue border-oe-blue/30'
+                    : 'text-content-secondary bg-surface-secondary border-border-light hover:bg-surface-tertiary'
+                }`}
+                title={t('smartViews.title', { defaultValue: 'Smart Views' })}
+                aria-label={t('smartViews.title', { defaultValue: 'Smart Views' })}
+                aria-pressed={smartViewsPanelOpen}
+                data-testid="bim-smart-views-toggle"
+              >
+                <Sparkles size={13} />
+                <span className="hidden 2xl:inline">{t('smartViews.title', { defaultValue: 'Smart Views' })}</span>
+              </button>
+
+              {/* Color-by selector - three families:
+                  · Field-based (Storey / Type) use the hash-to-hue palette
+                  · Compliance-based (Validation / BOQ / Documents) use a
+                    fixed red/amber/green palette and turn the 3D viewer
+                    into a live compliance dashboard. */}
+              <select
+                value={colorByMode}
+                onChange={(e) =>
+                  setColorByMode(
+                    e.target.value as
+                      | 'default'
+                      | 'storey'
+                      | 'type'
+                      | 'validation'
+                      | 'boq_coverage'
+                      | 'document_coverage'
+                      | '5d_cost'
+                      | '4d_schedule'
+                      | 'by_progress'
+                      | 'install_status',
+                  )
+                }
+                title={t('bim.color_by', { defaultValue: 'Color by' })}
+                aria-label={t('bim.color_by', { defaultValue: 'Color by' })}
+                data-testid="bim-color-mode-select"
+                className="text-[11px] py-1.5 px-2 rounded-lg border border-border-light bg-surface-secondary text-content-secondary hover:bg-surface-tertiary focus:outline-none focus:ring-1 focus:ring-oe-blue"
+              >
+                <optgroup label={t('bim.color_group_field', { defaultValue: 'By field' })}>
+                  <option value="default">{t('bim.color_default', { defaultValue: 'Default' })}</option>
+                  <option value="storey">{t('bim.color_storey', { defaultValue: 'Storey' })}</option>
+                  <option value="type">{t('bim.color_type', { defaultValue: 'Category' })}</option>
+                </optgroup>
+                <optgroup label={t('bim.color_group_status', { defaultValue: 'By compliance' })}>
+                  <option value="validation">
+                    {t('bim.color_validation', { defaultValue: 'Validation status' })}
+                  </option>
+                  <option value="boq_coverage">
+                    {t('bim.color_boq_coverage', { defaultValue: 'BOQ link coverage' })}
+                  </option>
+                  <option value="document_coverage">
+                    {t('bim.color_doc_coverage', { defaultValue: 'Document coverage' })}
+                  </option>
+                </optgroup>
+                <optgroup label={t('bim.color_group_cost', { defaultValue: 'By cost' })}>
+                  <option value="5d_cost">
+                    {t('bim.color_5d_cost', { defaultValue: '5D unit rate' })}
+                  </option>
+                </optgroup>
+                <optgroup label={t('bim.color_group_schedule', { defaultValue: 'By schedule' })}>
+                  <option value="4d_schedule">
+                    {t('bim.color_4d_schedule', { defaultValue: '4D timeline' })}
+                  </option>
+                  <option value="by_progress">
+                    {t('bim.color_by_progress', { defaultValue: 'By progress' })}
+                  </option>
+                  <option value="install_status">
+                    {t('bim.color_install_status', { defaultValue: 'Install status' })}
+                  </option>
+                </optgroup>
+              </select>
+
+              {/* Render-quality segment - 4 presets controlling pixelRatio,
+                  lighting and per-material transparency. Persisted in
+                  localStorage via useBIMViewerStore. Fast/Walk strip
+                  alpha-blending; Visual keeps glass translucent but flips
+                  walls/slabs opaque (cleaner *and* faster than Default). */}
+              <div
+                role="radiogroup"
+                aria-label={t('bim.quality_mode', { defaultValue: 'Render quality' })}
+                className="inline-flex items-center rounded-lg border border-border-light bg-surface-secondary p-0.5 gap-0.5"
+                data-testid="bim-quality-mode"
+              >
+                {(
+                  [
+                    {
+                      mode: 'fast' as const,
+                      Icon: Zap,
+                      label: t('bim.quality_fast', { defaultValue: 'Fast' }),
+                      tooltip: t('bim.quality_fast_hint', {
+                        defaultValue: 'Fastest - opaque walls, low pixel ratio',
+                      }),
+                    },
+                    {
+                      mode: 'default' as const,
+                      Icon: Eye,
+                      label: t('bim.quality_default', { defaultValue: 'Default' }),
+                      tooltip: t('bim.quality_default_hint', {
+                        defaultValue: 'Translucent - full lighting',
+                      }),
+                    },
+                    {
+                      mode: 'visual' as const,
+                      Icon: Palette,
+                      label: t('bim.quality_visual', { defaultValue: 'Visual' }),
+                      tooltip: t('bim.quality_visual_hint', {
+                        defaultValue: 'Cleanest - opaque + glass transparency only',
+                      }),
+                    },
+                    {
+                      mode: 'walk' as const,
+                      Icon: Footprints,
+                      label: t('bim.quality_walk', { defaultValue: 'Walk' }),
+                      tooltip: t('bim.quality_walk_hint', {
+                        defaultValue: 'Smoothest for walk-mode navigation',
+                      }),
+                    },
+                  ]
+                ).map(({ mode, Icon, label, tooltip }) => {
+                  const isActive = qualityMode === mode;
+                  return (
+                    <button
+                      key={mode}
+                      type="button"
+                      role="radio"
+                      aria-checked={isActive}
+                      aria-label={label}
+                      title={tooltip}
+                      onClick={() => setQualityMode(mode)}
+                      data-testid={`bim-quality-${mode}`}
+                      className={clsx(
+                        'flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-colors',
+                        isActive
+                          ? 'bg-oe-blue text-white shadow-sm'
+                          : 'text-content-secondary hover:bg-surface-tertiary',
+                      )}
+                    >
+                      <Icon size={12} />
+                      <span className="hidden 2xl:inline">{label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Isolate toggle (when an element is selected) */}
+              {selectedElementId && (
+                <button
+                  onClick={() =>
+                    setIsolatedIds((cur) => (cur ? null : [selectedElementId]))
+                  }
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors border ${
+                    isolatedIds
+                      ? 'bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800'
+                      : 'text-content-secondary bg-surface-secondary border-border-light hover:bg-surface-tertiary'
+                  }`}
+                  title={t('bim.isolate_selection', { defaultValue: 'Isolate selection' })}
+                >
+                  {isolatedIds
+                    ? t('bim.show_all', { defaultValue: 'Show all' })
+                    : t('bim.isolate', { defaultValue: 'Isolate' })}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Page intro / help banner - explains what the BIM viewer does and
+            how it ties into BOQ and the canonical model. Collapses to a
+            one-line header (remembered per page in localStorage). ── */}
+      <DismissibleInfo
+        storageKey="bim"
+        className="mx-3 mt-2"
+        title={t('bim.intro_title', { defaultValue: 'Turn the model into priced quantities' })}
+        more={
+          t('bim.intro_more', { defaultValue: '' })
+            ? <IntroRichText text={t('bim.intro_more')} />
+            : undefined
+        }
+        links={[
+          { label: t('bim.intro_link_boq', { defaultValue: 'Open BOQ' }), onClick: () => navigate('/boq') },
+          { label: t('bim.intro_link_explorer', { defaultValue: 'Data Explorer' }), onClick: () => navigate('/data-explorer') },
+          { label: t('bim.intro_link_rules', { defaultValue: 'Quantity rules' }), onClick: () => navigate('/bim/rules') },
+        ]}
+      >
+        {t('bim.intro_body', {
+          defaultValue:
+            'Open a converted CAD or BIM model in 3D, inspect element properties and quantities, and filter by storey, category or discipline. Link elements to BOQ positions so takeoff, cost and schedule all flow from the canonical model, and jump out to the Data Explorer or the map at any point.',
+        })}
+      </DismissibleInfo>
+
+      {/* ── Converter status banner - surfaces any missing DDC
+            converters so the user can one-click install them before
+            dragging a native CAD file onto the upload zone. Starts
+            collapsed once at least one model is ``status="ready"`` so
+            the banner does not push the 3D scene below the fold (audit
+            P2-1). ── */}
+      <BIMConverterStatusBanner
+        className="mx-3 mt-2"
+        dismissible
+        defaultCollapsed={models.some((m) => m.status === 'ready')}
+      />
+
+      {/* Property-search popover. Floats below the toolbar so the user can
+          search the full DDC Parquet without leaving the canvas. We wire
+          onIsolate → setIsolatedIds (the same channel the saved-group and
+          clash deep-link use) so matches highlight via the existing
+          isolation pipeline. v3.12.0 / Stream D. The fixed positioning
+          keeps the popover anchored to the viewport edge regardless of the
+          outer flex layout. */}
+      {propertySearchOpen && activeModelId && (
+        <div
+          className="fixed right-6 z-30 w-72 rounded-xl border border-border-light bg-surface-primary shadow-lg"
+          style={{ top: 116 }}
+          data-testid="property-search-popover"
+        >
+          <PropertySearchPanel
+            modelId={activeModelId}
+            onIsolate={(ids) => setIsolatedIds(ids.length > 0 ? ids : null)}
+            onClear={() => setIsolatedIds(null)}
+          />
+        </div>
+      )}
+
+      {/* ── 3D Viewport with filter sidebar ── */}
+      <div className="flex-1 min-h-0 relative bg-surface-secondary flex">
+        {/* Filter sidebar - only when model has loaded elements */}
+        {activeModelId && !isModelNonReady && elements.length > 0 && filterPanelOpen && (
+          <div className="absolute top-0 start-0 h-full z-20 overflow-y-auto flex flex-col">
+            <BIMFilterGroupsPanel
+              elements={elements}
+              savedGroups={savedGroups}
+              projectId={projectId}
+              modelId={activeModelId ?? undefined}
+              modelFormat={activeModel?.model_format || activeModel?.format}
+              onFilterChange={handleFilterChange}
+              onClose={() => setFilterPanelOpen(false)}
+              onElementClick={handleFilterElementClick}
+              onQuickTakeoff={handleQuickTakeoff}
+              visibleElementCount={visibleElementCount}
+              onSaveAsGroup={handleSaveAsGroup}
+              onLinkGroupToBOQ={handleLinkGroupToBOQ}
+              onDeleteGroup={handleDeleteGroup}
+              onSmartFilter={handleSmartFilter}
+              isolatedIds={isolatedIds}
+              onClearIsolation={() => setIsolatedIds(null)}
+              onIsolateGroup={handleIsolateGroup}
+              onHighlightGroup={handleHighlightGroup}
+              onNavigateToBOQ={handleNavigateToBOQ}
+              onGroupUpdated={handleGroupUpdated}
+            />
+
+          </div>
+        )}
+
+        <div className="flex-1 min-w-0 relative">
+        {/* Selected-element bounding-box dimensions. Top-right, non-
+            blocking, auto-hides when the toggle is off or nothing is
+            selected. Numbers come from the element's canonical
+            bounding_box in metres. */}
+        {dimensionsVisible && selectedDimensions && (
+          <div
+            className="absolute top-[60px] z-30 pointer-events-none select-none
+                       rounded-lg border border-oe-blue/30 bg-surface-primary/95
+                       backdrop-blur-sm shadow-md px-3 py-2 min-w-[180px]
+                       transition-[inset-inline-start] duration-200"
+            style={{ insetInlineStart: filterPanelOpen && elements.length > 0 ? 332 : 12 }}
+            data-testid="bim-dimensions-card"
+          >
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <Maximize2 size={12} className="text-oe-blue shrink-0" />
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-content-tertiary">
+                {t('bim.dimensions_title', { defaultValue: 'BBox dimensions' })}
+              </span>
+            </div>
+            <div className="text-[11px] font-medium text-content-primary truncate mb-1.5" title={selectedDimensions.name}>
+              {selectedDimensions.name}
+              {selectedDimensions.type && (
+                <span className="ml-1 text-content-tertiary text-[10px]">
+                  · {selectedDimensions.type}
+                </span>
+              )}
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-[11px] tabular-nums">
+              {(() => {
+                // Convert L/W/H + BBox volume at the DISPLAY boundary only -
+                // selectedDimensions stays metric-canonical (#270).
+                const dimL = displayQty.convert(selectedDimensions.L, 'm');
+                const dimW = displayQty.convert(selectedDimensions.W, 'm');
+                const dimH = displayQty.convert(selectedDimensions.H, 'm');
+                return (
+                  <>
+                    <div>
+                      <div className="text-[9px] uppercase text-content-tertiary">L</div>
+                      <div className="font-semibold text-content-primary">
+                        {dimL.value.toFixed(2)}<span className="text-[9px] text-content-tertiary ml-0.5">{dimL.unit}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[9px] uppercase text-content-tertiary">W</div>
+                      <div className="font-semibold text-content-primary">
+                        {dimW.value.toFixed(2)}<span className="text-[9px] text-content-tertiary ml-0.5">{dimW.unit}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[9px] uppercase text-content-tertiary">H</div>
+                      <div className="font-semibold text-content-primary">
+                        {dimH.value.toFixed(2)}<span className="text-[9px] text-content-tertiary ml-0.5">{dimH.unit}</span>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+            <div className="mt-1.5 pt-1.5 border-t border-border-light text-[10px] text-content-tertiary flex items-center justify-between">
+              <span>{t('bim.bbox_volume', { defaultValue: 'BBox volume' })}</span>
+              <span className="tabular-nums font-medium text-content-secondary">
+                {(() => {
+                  const v = displayQty.convert(selectedDimensions.volume, 'm³');
+                  return `${v.value.toFixed(2)} ${v.unit}`;
+                })()}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Snapshot registry popover - toolbar button → projects-level list
+            of frozen parquet datasets (replaces the /dashboards page). */}
+        {snapshotsOpen && projectId && (
+          <BIMSnapshotsPopover
+            projectId={projectId}
+            onClose={() => setSnapshotsOpen(false)}
+          />
+        )}
+
+        {/* Asset-info card - anchored bottom-right of the viewport. Hidden
+            when the user toggles the "Asset Card" button off in the top
+            toolbar or dismisses the card directly. */}
+        {(() => {
+          if (!assetCardEnabled) return null;
+          if (!projectId || !selectedElementId || selectedElementIds.length > 1) return null;
+          const el = elements.find((e) => e.id === selectedElementId);
+          if (!el) return null;
+          const activeModel = models.find((m) => m.id === activeModelId);
+          const sidebarOpen = Boolean(activeModelId && !isModelNonReady && elements.length > 0 && boqPanelOpen);
+          return (
+            <ElementAssetCard
+              projectId={projectId}
+              elementId={selectedElementId}
+              element={{
+                id: el.id,
+                stable_id: el.stable_id ?? el.id,
+                name: el.name ?? null,
+                element_type: el.element_type ?? null,
+                model_id: activeModelId ?? '',
+                model_name: activeModel?.name ?? '',
+              }}
+              rightPx={sidebarOpen ? 352 : 12}
+              bottomPx={24}
+              visible
+              onDismiss={() => setAssetCardEnabled(false)}
+            />
+          );
+        })()}
+
+        {/* PDF generation indicator - shown when the upload job for the
+            active model has a deferred PDF export running on the backend.
+            Pure status bar, never blocks interaction with the viewer. */}
+        {(() => {
+          if (!activeModelId) return null;
+          let pdfJob: BIMUploadJob | null = null;
+          for (const j of globalUploadJobs.values()) {
+            if (j.modelId === activeModelId && (j.pdfStatus === 'generating' || j.pdfStatus === 'failed')) {
+              pdfJob = j;
+              break;
+            }
+          }
+          if (!pdfJob) return null;
+          const failed = pdfJob.pdfStatus === 'failed';
+          return (
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
+              <div className={clsx(
+                'flex items-center gap-2.5 px-3.5 py-2 rounded-full border shadow-md backdrop-blur-sm',
+                failed
+                  ? 'bg-red-50/95 dark:bg-red-950/40 border-red-200 dark:border-red-800 text-red-700 dark:text-red-200'
+                  : 'bg-blue-50/95 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-200',
+              )}>
+                {failed ? (
+                  <AlertCircle size={14} className="shrink-0" />
+                ) : (
+                  <Loader2 size={14} className="shrink-0 animate-spin" />
+                )}
+                <span className="text-xs font-medium whitespace-nowrap">
+                  {failed
+                    ? t('bim.pdf_status_failed', { defaultValue: 'PDF sheet export failed' })
+                    : t('bim.pdf_status_generating', { defaultValue: 'Generating PDF sheets in background…' })}
+                </span>
+                {failed && pdfJob.pdfError && (
+                  <span className="text-[10px] text-red-500/80 max-w-xs truncate">
+                    {pdfJob.pdfError}
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })()}
+
+        {isModelNonReady ? (
+          <NonReadyOverlay
+            model={activeModel ?? null}
+            onUploadConverted={() => {
+              if (activeModel) {
+                setUploadConvertedName(activeModel.name);
+                setUploadOpen(true);
+              }
+            }}
+            onDelete={() => {
+              if (activeModel) handleDeleteModel(activeModel.id, activeModel.name);
+            }}
+            onRetry={async () => {
+              if (!activeModel) return;
+              try {
+                await retryBIMModelProcessing(activeModel.id);
+                addToast({
+                  type: 'success',
+                  title: t('bim.retry_scheduled_title', { defaultValue: 'Retry scheduled' }),
+                  message: t('bim.retry_scheduled_desc', { defaultValue: 'The model is being re-processed. This page will update when done.' }),
+                });
+                queryClient.invalidateQueries({ queryKey: ['bim-models', projectId] });
+                queryClient.invalidateQueries({ queryKey: ['bim-model', activeModel.id] });
+              } catch (e) {
+                addToast({
+                  type: 'error',
+                  title: t('bim.retry_failed_title', { defaultValue: 'Retry failed' }),
+                  message: e instanceof Error ? e.message : String(e),
+                });
+              }
+            }}
+            onInstallConverter={async (converterId) => {
+              try {
+                const r = await installBIMConverter(converterId);
+                if (r.installed) {
+                  addToast({
+                    type: 'success',
+                    title: t('bim.converter_installed_title', { defaultValue: 'Converter installed' }),
+                    message: r.message || t('bim.converter_installed_desc', { defaultValue: 'Retrying conversion now…' }),
+                  });
+                  // Auto-retry after a successful install - saves the user
+                  // an extra click and keeps the workflow continuous.
+                  if (activeModel) {
+                    await retryBIMModelProcessing(activeModel.id);
+                    queryClient.invalidateQueries({ queryKey: ['bim-models', projectId] });
+                    queryClient.invalidateQueries({ queryKey: ['bim-model', activeModel.id] });
+                  }
+                } else {
+                  addToast({
+                    type: 'warning',
+                    title: t('bim.converter_install_problem_title', { defaultValue: 'Converter install incomplete' }),
+                    message: r.message || t('bim.converter_install_problem_desc', { defaultValue: 'Install finished but the binary did not pass the smoke test.' }),
+                  });
+                }
+              } catch (e) {
+                addToast({
+                  type: 'error',
+                  title: t('bim.converter_install_failed_title', { defaultValue: 'Converter install failed' }),
+                  message: e instanceof Error ? e.message : String(e),
+                });
+              }
+            }}
+          />
+        ) : activeModelId ? (
+          <>
+          {/* Keep the BIM page shell alive if the WebGL/Three.js viewer
+              throws (e.g. null shader-precision on some Mac GPUs). Without
+              this local boundary the page-level ErrorBoundary replaces the
+              whole /bim route with "Something went wrong". */}
+          <ErrorBoundary
+            fallback={
+              <div
+                data-testid="bim-viewer-crash-fallback"
+                className="flex h-full items-center justify-center p-6"
+              >
+                <div className="max-w-sm text-center space-y-3">
+                  <Cuboid size={40} className="text-content-quaternary mx-auto" />
+                  <h3 className="text-sm font-semibold text-content-primary">
+                    {t('bim.viewer_crash_title', { defaultValue: '3D viewer could not start' })}
+                  </h3>
+                  <p className="text-xs text-content-tertiary leading-relaxed">
+                    {t('bim.viewer_crash_body', {
+                      defaultValue:
+                        'The 3D engine failed to initialise in this browser. Try reloading the page, enable hardware acceleration, or open the model on another device. Element lists and quantities remain available from other panels.',
+                    })}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => window.location.reload()}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-oe-blue px-3 py-1.5 text-xs font-semibold text-white hover:bg-oe-blue-dark"
+                  >
+                    {t('error.try_again', { defaultValue: 'Try again' })}
+                  </button>
+                </div>
+              </div>
+            }
+          >
+          <BIMViewer
+            modelId={activeModelId}
+            projectId={projectId}
+            modelName={activeModel?.name}
+            modelMetadata={activeModel?.metadata ?? null}
+            selectedElementIds={selectedElementIds}
+            onElementSelect={handleElementSelect}
+            onSelectionChange={handleViewerSelectionChange}
+            highlightedIds={highlightedBIMElementIds.length > 0 ? highlightedBIMElementIds : null}
+            elements={elements}
+            isLoading={elementsQuery.isLoading}
+            error={elementsQuery.error ? t('bim.error_load_elements', { defaultValue: 'Failed to load model elements. Check the server connection.' }) : null}
+            geometryUrl={geometryUrl}
+            geoAnchor={geoAnchor}
+            metresToModelUnits={modelUnitsScale}
+            showBoundingBoxes={showBoundingBoxes}
+            filterPredicate={filterPredicate}
+            colorByMode={colorByMode}
+            progressByElementId={progressByElementId}
+            progressDateByElementId={progressDateByElementId}
+            isolatedIds={isolatedIds}
+            onIsolationChange={(ids) => {
+              setIsolatedIds(ids);
+              // Clearing isolation (e.g. viewer "Show all") also drops the
+              // clash review overlay so the red colouring / centroid framing
+              // don't linger over the full model.
+              if (!ids || ids.length === 0) {
+                setClashHighlightIds(null);
+                setClashFocusPoint(null);
+              }
+            }}
+            clashHighlightIds={clashHighlightIds}
+            focusPoint={clashFocusPoint}
+            onGeometryLoaded={setMeshMatchRatio}
+            onAddToBOQ={handleAddToBOQ}
+            onUnlinkBOQ={handleUnlinkBOQ}
+            onOpenDocument={handleOpenDocument}
+            onOpenTask={handleOpenTask}
+            onOpenActivity={handleOpenActivity}
+            onOpenRequirement={handleOpenRequirement}
+            onAskAiAboutElement={handleAskAiAboutElement}
+            onCreateTask={handleCreateTask}
+            onLinkDocument={handleLinkDocument}
+            onLinkActivity={handleLinkActivity}
+            onLinkRequirement={handleLinkRequirement}
+            onSmartFilter={handleSmartFilter}
+            leftPanelOpen={filterPanelOpen && elements.length > 0}
+            diffChangeByStableId={diffChangeByStableId}
+            smartViewEvalResult={smartViewEvalStates}
+            className="h-full"
+          />
+          </ErrorBoundary>
+
+          {/* Lazy-load info bar - shown when viewing a group subset */}
+          {activeGroupId && !fullModelRequested && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm border border-border-light shadow-lg text-sm">
+              <Layers size={16} className="text-oe-blue shrink-0" />
+              <span className="text-content-secondary">
+                {t('bim.group_subset_info', {
+                  defaultValue: 'Showing {{count}} elements from group "{{name}}"',
+                  count: elementsTotal,
+                  name: activeGroupMeta?.name ?? groupParam ?? '...',
+                })}
+              </span>
+              <button
+                onClick={() => {
+                  setFullModelRequested(true);
+                  setActiveGroupId(null);
+                  // Strip group param from URL
+                  const next = new URLSearchParams(searchParams);
+                  next.delete('group');
+                  setSearchParams(next, { replace: true });
+                }}
+                className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-oe-blue/10 hover:bg-oe-blue/20 text-oe-blue font-medium transition-colors"
+              >
+                <Globe2 size={14} />
+                {t('bim.load_full_model', {
+                  defaultValue: 'Load full model ({{total}} elements)',
+                  total: activeModel?.element_count?.toLocaleString() ?? '...',
+                })}
+              </button>
+            </div>
+          )}
+          </>
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <Cuboid size={40} className="text-content-quaternary mx-auto mb-3" />
+              <p className="text-sm text-content-tertiary">{t('bim.select_model_prompt', { defaultValue: 'Select a model to view' })}</p>
+            </div>
+          </div>
+        )}
+
+        {uploadOpen && (
+          <UploadPanel
+            projectId={projectId}
+            onUploadComplete={handleUploadComplete}
+            onClose={() => { setUploadOpen(false); setUploadConvertedName(null); }}
+            initialAdvancedMode={!!uploadConvertedName}
+            initialModelName={uploadConvertedName || undefined}
+          />
+        )}
+
+        {/* In-page progress/completion toasts removed: GlobalUploadIndicator
+            (mounted in AppLayout) is the single source of truth for upload
+            state and survives navigation. Having a second local tracker here
+            caused a zombie "Converting CAD model…" toast when UploadPanel set
+            stage='converting' and no code path later flipped it to 'ready'. */}
+
+        {/* Low mesh-match warning - shown when the loaded DAE has no per-element
+            mapping (e.g. DDC RVT exports with numeric node names), which means
+            element filters can't hide individual objects in the viewport. */}
+        {/* Low mesh-match warning removed - positional fallback always provides
+            workable filtering even when direct name-matching is sparse. */}
+        {false && meshMatchRatio !== null && (
+          <div className="hidden">
+          </div>
+        )}
+        </div>
+
+        {/* Right-panel tab container (RFC 19 §4.5): Properties / Layers /
+            Tools / Groups.
+            z-index 15 keeps it below the upload panel (z-30) when both are open. */}
+        {activeModelId && !isModelNonReady && elements.length > 0 && boqPanelOpen && (
+          <div className="absolute top-0 end-0 h-full z-[25] w-[380px] bg-surface-primary border-s border-border-light flex flex-col">
+            <BIMRightPanelTabs
+              modelId={activeModelId}
+              elements={elements}
+              savedGroups={savedGroups}
+              projectId={projectId}
+              selectedElementId={selectedElementId}
+              onClose={() => setBoqPanelOpen(false)}
+              onIsolateGroup={handleIsolateGroup}
+              onHighlightGroup={handleHighlightGroup}
+              onLinkGroupToBOQ={handleLinkGroupToBOQ}
+              onNavigateToBOQ={handleNavigateToBOQ}
+              onDeleteGroup={handleDeleteGroup}
+              onGroupUpdated={handleGroupUpdated}
+              onHighlightBOQElements={(ids) => {
+                if (ids.length > 0) {
+                  setIsolatedIds(ids);
+                } else {
+                  setIsolatedIds(null);
+                }
+              }}
+            />
+          </div>
+        )}
+
+        {/* Smart Views - rule-based, model-survivable views. Docked on
+            the left next to the diff panel (lower z-index so the diff
+            panel sits in front when both are open). Always available as
+            long as a model is loaded; the panel itself handles the no-
+            project case for the "Project views" tab. */}
+        {activeModelId && smartViewsPanelOpen && currentUserId && (
+          <div className="absolute top-0 start-0 h-full z-[24] w-[360px] bg-surface-primary border-e border-border-light flex flex-col">
+            <SmartViewsPanel
+              modelId={activeModelId}
+              projectId={projectId || null}
+              userId={currentUserId}
+              onClose={() => setSmartViewsPanelOpen(false)}
+            />
+          </div>
+        )}
+
+        {/* Model-version diff review - docked on the left so it never
+            collides with the right-panel tabs.  Read-only consumer of the
+            backend per-element diff. */}
+        {activeModelId && !isModelNonReady && elements.length > 0 && diffPanelOpen && (
+          <div className="absolute top-0 start-0 h-full z-[25] w-[360px] bg-surface-primary border-e border-border-light flex flex-col">
+            <BIMDiffPanel
+              activeModelId={activeModelId}
+              models={models}
+              elements={elements}
+              onDiffChange={setDiffChangeByStableId}
+              onSelectElement={(id) => {
+                setSelectedElementId(id);
+                setMultiSelectedIds([id]);
+                setBIMSelection([id]);
+              }}
+              onClose={() => {
+                setDiffPanelOpen(false);
+                setDiffChangeByStableId(null);
+              }}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* ── Model Filmstrip (collapsible, auto-hides after 5s) ── */}
+      <ModelFilmstrip
+        models={models}
+        isLoading={modelsQuery.isLoading}
+        activeModelId={activeModelId}
+        onSelectModel={(id) => { setActiveModelId(id); setSelectedElementId(null); setMultiSelectedIds([]); }}
+        onDeleteModel={handleDeleteModel}
+        onUpload={() => setUploadOpen(true)}
+      />
+
+      {/* BIM ↔ BOQ linking modal - opened from the properties panel
+          ("Add to BOQ" button) or the filter panel's quick-takeoff
+          action.  Renders a single-element or bulk-element linker. */}
+      {linkCandidates && linkCandidates.length > 0 && projectId && (
+        <AddToBOQModal
+          projectId={projectId}
+          modelId={activeModelId ?? ''}
+          elements={linkCandidates}
+          onClose={() => setLinkCandidates(null)}
+          onLinked={() => {
+            queryClient.invalidateQueries({ queryKey: ['bim-elements', activeModelId] });
+          }}
+        />
+      )}
+
+      {/* Save-as-group modal - opened from the filter panel "Save as group"
+          button.  Captures the current filter criteria + visible element ids
+          and persists them as a BIMElementGroup row. */}
+      {saveGroupState && projectId && (
+        <SaveGroupModal
+          projectId={projectId}
+          modelId={activeModelId}
+          filterCriteria={saveGroupState.filterCriteria}
+          elements={saveGroupState.elements}
+          visibleCount={saveGroupState.elements.length}
+          onClose={() => setSaveGroupState(null)}
+          onSaved={() => {
+            // SavedGroupModal already invalidates the query; nothing extra here
+          }}
+        />
+      )}
+
+      {/* Inline create-from-element modals - opened from the "+ New" /
+          "+ Link" buttons in the cross-module sections of the selected-
+          element panel.  Each one POSTs to the relevant module + invalidates
+          the bim-elements query so the new link badge appears instantly. */}
+      {createTaskFor && projectId && (
+        <CreateTaskFromBIMModal
+          projectId={projectId}
+          elements={createTaskFor}
+          onClose={() => setCreateTaskFor(null)}
+        />
+      )}
+      {linkDocumentFor && projectId && (
+        <LinkDocumentToBIMModal
+          projectId={projectId}
+          elements={linkDocumentFor}
+          onClose={() => setLinkDocumentFor(null)}
+        />
+      )}
+      {linkActivityFor && projectId && (
+        <LinkActivityToBIMModal
+          projectId={projectId}
+          elements={linkActivityFor}
+          onClose={() => setLinkActivityFor(null)}
+        />
+      )}
+      {linkRequirementFor && projectId && (
+        <LinkRequirementToBIMModal
+          projectId={projectId}
+          elements={linkRequirementFor}
+          onClose={() => setLinkRequirementFor(null)}
+        />
+      )}
+      <ConfirmDialog {...confirmProps} />
+    </div>
+  );
+}

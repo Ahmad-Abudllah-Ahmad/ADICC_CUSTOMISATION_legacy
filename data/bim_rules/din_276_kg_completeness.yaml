@@ -1,0 +1,59 @@
+# DIN 276 cost-group completeness audit.
+#
+# Every IfcElement that contributes to the building substance must carry a
+# DIN 276 cost-group code in its classification block. The check fails the
+# element when the `din276` classifier is missing OR does not fall within
+# the building-structure ranges 300 (Bauwerk - Baukonstruktion), 400
+# (Bauwerk - Technische Anlagen) or 500 (Außenanlagen und Freiflächen),
+# matching DIN 276:2018-12 §3.2.
+#
+# Why this matters: cost models built on top of an unclassified BIM model
+# silently aggregate into "other", which is invisible in cost-group
+# rollups and devastating for client reporting.
+schema_version: "1.0"
+pack:
+  id: din_276_kg_completeness
+  name: DIN 276 Cost-Group Completeness
+  description: |
+    Verifies that every building element carries a DIN 276 cost-group
+    code in the 300, 400 or 500 ranges so cost-group rollups are
+    well-defined.
+  source: openconstructionerp
+  version: "1.0.0"
+  applies_to:
+    classifications: ["DIN276"]
+    project_regions: ["DE", "AT", "CH", "LU"]
+
+rules:
+  - id: din276_code_present
+    name: DIN 276 cost-group code present on every element
+    severity: error
+    rationale: |
+      DIN 276:2018-12 §3.2 — every element of the building substance is
+      assigned to a cost group. Missing codes cause silent leakage in
+      cost-group rollups.
+    selector:
+      ifc_class: IfcElement
+    assertion:
+      property:
+        key: din276
+        op: exists
+        value: true
+    failure_message: "Element has no DIN 276 cost-group code."
+
+  - id: din276_code_in_building_range
+    name: DIN 276 code must be in the 300/400/500 series
+    severity: warning
+    rationale: |
+      Cost groups 100/200/600/700 cover land, soft costs and FF&E and
+      should not normally appear on building elements.
+    selector:
+      ifc_class: IfcElement
+      properties:
+        - { key: din276, op: exists, value: true }
+    assertion:
+      property:
+        key: din276
+        op: regex
+        value: "^[345][0-9]{2}$"
+    failure_message: "DIN 276 code '{{din276}}' is outside the building-structure ranges (300/400/500)."

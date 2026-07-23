@@ -1,0 +1,255 @@
+# COBie 2.4 handover subset.
+#
+# COBie (Construction Operations Building Information Exchange,
+# NBIMS-US v3 Chapter 4.2 / BS 1192-4) is the de-facto facility-handover
+# data format. This pack covers the highest-priority Spaces, Types and
+# Components attributes that an FM system needs to bootstrap a building
+# from delivery day one.
+#
+# Spatial structure: COBie expects exactly Site → Building → Storey →
+# Space; we encode this as a 4-level invariant on every IfcSpace, via a
+# computed SpatialDepth property the importer fills in during parsing.
+schema_version: "1.0"
+pack:
+  id: cobie_handover
+  name: COBie 2.4 Handover
+  description: |
+    Validates the COBie 2.4 handover-data subset (Spaces, Types,
+    Components, spatial structure) so the model can be exported to a
+    COBie spreadsheet without post-processing.
+  source: openconstructionerp
+  version: "1.0.0"
+  applies_to:
+    classifications: ["COBie", "Uniformat"]
+    project_regions: ["US", "UK"]
+
+rules:
+  # ── Spaces ───────────────────────────────────────────────────────────
+  - id: cobie_space_name_present
+    name: COBie — Space has SpaceName
+    severity: error
+    rationale: |
+      COBie 2.4 Space.Name is the primary key for the Spaces sheet.
+    selector:
+      ifc_class: IfcSpace
+    assertion:
+      property:
+        key: SpaceName
+        op: exists
+        value: true
+    failure_message: "Space has no SpaceName."
+
+  - id: cobie_space_long_name
+    name: COBie — Space has SpaceLongName
+    severity: warning
+    rationale: |
+      COBie 2.4 Space.LongName is shown to the FM operator and is
+      strongly recommended (NBIMS-US v3 §4.2.4.2 b).
+    selector:
+      ifc_class: IfcSpace
+    assertion:
+      property:
+        key: SpaceLongName
+        op: exists
+        value: true
+    failure_message: "Space has no SpaceLongName."
+
+  - id: cobie_space_usage
+    name: COBie — Space declares SpaceUsage
+    severity: warning
+    selector:
+      ifc_class: IfcSpace
+    assertion:
+      property:
+        key: SpaceUsage
+        op: exists
+        value: true
+    failure_message: "Space has no SpaceUsage."
+
+  - id: cobie_space_occupancy_type
+    name: COBie — Space has OccupancyType
+    severity: warning
+    rationale: |
+      OccupancyType drives life-safety and code lookups in COBie.
+    selector:
+      ifc_class: IfcSpace
+    assertion:
+      property:
+        key: OccupancyType
+        op: exists
+        value: true
+    failure_message: "Space has no OccupancyType."
+
+  - id: cobie_space_area_and_volume
+    name: COBie — Space has Area, NetFloorArea and Volume
+    severity: error
+    rationale: |
+      Area, NetFloorArea and Volume populate the Quantities columns of
+      the COBie Spaces sheet; an exporter that finds them missing will
+      either skip the row or emit zeros, both of which break downstream
+      area-rentable calculations.
+    selector:
+      ifc_class: IfcSpace
+    assertion:
+      property:
+        key: NetFloorArea
+        op: gt
+        value: 0
+        unit: m2
+    failure_message: "Space has no NetFloorArea (or value ≤ 0)."
+
+  # ── Types ────────────────────────────────────────────────────────────
+  - id: cobie_type_manufacturer
+    name: COBie — Type declares Manufacturer
+    severity: error
+    rationale: |
+      COBie 2.4 Type.Manufacturer (NBIMS-US v3 §4.2.4.3 c) is required
+      for procurement and warranty handover.
+    selector:
+      ifc_class: IfcTypeObject
+    assertion:
+      property:
+        key: Manufacturer
+        op: exists
+        value: true
+    failure_message: "Type has no Manufacturer."
+
+  - id: cobie_type_model_label
+    name: COBie — Type declares ModelLabel
+    severity: error
+    selector:
+      ifc_class: IfcTypeObject
+    assertion:
+      property:
+        key: ModelLabel
+        op: exists
+        value: true
+    failure_message: "Type has no ModelLabel."
+
+  - id: cobie_type_production_year
+    name: COBie — Type ProductionYear is plausible
+    severity: warning
+    rationale: |
+      COBie 2.4 Type.ProductionYear bounded at [1900, 2100] to catch
+      placeholders (0, 2, 9999, etc.).
+    selector:
+      ifc_class: IfcTypeObject
+      properties:
+        - { key: ProductionYear, op: exists, value: true }
+    assertion:
+      property:
+        key: ProductionYear
+        op: between
+        value: [1900, 2100]
+    failure_message: "Type ProductionYear {{ProductionYear}} is outside 1900..2100."
+
+  - id: cobie_type_asset_type
+    name: COBie — Type declares AssetType
+    severity: warning
+    rationale: |
+      AssetType partitions Fixed vs Movable on the FM side.
+    selector:
+      ifc_class: IfcTypeObject
+    assertion:
+      property:
+        key: AssetType
+        op: in
+        value: ["Fixed", "Movable", "Both"]
+    failure_message: "AssetType '{{AssetType}}' is not one of Fixed / Movable / Both."
+
+  - id: cobie_type_warranty_and_life
+    name: COBie — Type has WarrantyDuration and ExpectedLife
+    severity: warning
+    rationale: |
+      WarrantyDuration (months) and ExpectedLife (years) drive the FM
+      replacement schedule; missing values become "?" in COBie exports.
+    selector:
+      ifc_class: IfcTypeObject
+    assertion:
+      property:
+        key: ExpectedLife
+        op: gt
+        value: 0
+        unit: yr
+    failure_message: "Type has no ExpectedLife (or value ≤ 0)."
+
+  # ── Components ───────────────────────────────────────────────────────
+  - id: cobie_component_serial_number
+    name: COBie — Component has SerialNumber when serialised
+    severity: warning
+    rationale: |
+      Components flagged IsSerialised must carry a SerialNumber so they
+      can be tracked individually post-handover.
+    selector:
+      ifc_class: IfcElement
+      properties:
+        - { key: IsCOBieComponent, op: eq, value: true }
+        - { key: IsSerialised, op: eq, value: true }
+    assertion:
+      property:
+        key: SerialNumber
+        op: exists
+        value: true
+    failure_message: "Serialised COBie component has no SerialNumber."
+
+  - id: cobie_component_installation_date
+    name: COBie — Component has InstallationDate
+    severity: warning
+    selector:
+      ifc_class: IfcElement
+      properties:
+        - { key: IsCOBieComponent, op: eq, value: true }
+    assertion:
+      property:
+        key: InstallationDate
+        op: exists
+        value: true
+    failure_message: "COBie component has no InstallationDate."
+
+  - id: cobie_component_warranty_start
+    name: COBie — Component WarrantyStartDate present
+    severity: info
+    selector:
+      ifc_class: IfcElement
+      properties:
+        - { key: IsCOBieComponent, op: eq, value: true }
+        - { key: HasWarranty, op: eq, value: true }
+    assertion:
+      property:
+        key: WarrantyStartDate
+        op: exists
+        value: true
+    failure_message: "Warranted COBie component has no WarrantyStartDate."
+
+  - id: cobie_component_barcode_when_applicable
+    name: COBie — Component BarCode when HasBarCode
+    severity: info
+    selector:
+      ifc_class: IfcElement
+      properties:
+        - { key: IsCOBieComponent, op: eq, value: true }
+        - { key: HasBarCode, op: eq, value: true }
+    assertion:
+      property:
+        key: BarCode
+        op: exists
+        value: true
+    failure_message: "COBie component claims HasBarCode=true but has no BarCode."
+
+  # ── Spatial structure ────────────────────────────────────────────────
+  - id: cobie_spatial_depth_is_four
+    name: COBie — Spatial structure is Site → Building → Storey → Space
+    severity: error
+    rationale: |
+      COBie 2.4 NBIMS-US §4.2.4 mandates the four-level spatial
+      structure. A space whose SpatialDepth is not exactly 4 indicates
+      either a flat (no storey) or a deep (extra zone) hierarchy, both
+      of which break COBie exporters.
+    selector:
+      ifc_class: IfcSpace
+    assertion:
+      property:
+        key: SpatialDepth
+        op: eq
+        value: 4
+    failure_message: "Space SpatialDepth is {{SpatialDepth}}, expected exactly 4 (Site → Building → Storey → Space)."

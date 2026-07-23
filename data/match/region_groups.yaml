@@ -1,0 +1,195 @@
+# DDC-CWICR-OE: DataDrivenConstruction · OpenConstructionERP
+# Copyright (c) 2026 Artem Boiko / DataDrivenConstruction
+#
+# Region-group aliases for the match-service region boost.
+#
+# WHAT THIS FILE DOES
+# -------------------
+# Maps a human-friendly macro-region label (DACH, LATAM, ASEAN, ...) to the
+# tuple of CWICR catalogue-id prefixes that should count as a "regional"
+# match for the matcher's region-boost stage. The matcher prefers candidates
+# whose ``region_code`` starts with one of these prefixes when the operator
+# pins a project to the macro-region.
+#
+# HOW TO EXTEND (no code change required)
+# ---------------------------------------
+#   1. Add a new GROUP_NAME entry under ``groups`` below.
+#   2. List the CWICR region-code prefixes or full COUNTRY_CITY codes
+#      that belong to the group. Either form works — the loader appends
+#      a trailing ``_`` only when the value is a bare country head and
+#      doesn't already end in one.
+#   3. Save. The matcher picks up the new group on next backend boot.
+#      No Python edit. No release.
+#
+# CONVENTIONS
+# -----------
+# - Group names are case-insensitive (looked up in lower-case).
+# - Country/region codes follow the existing CWICR convention:
+#     bare alpha-2 ISO code (DE, GB) — matches every catalogue starting
+#       with that head (DE_BERLIN, DE_MUNICH, DE_HAMBURG, ...)
+#     full COUNTRY_CITY (DE_BERLIN) — matches only that exact catalogue
+# - Two flavours of group coexist and are NOT auto-merged:
+#     Geographic     (DACH, UK, Benelux, Iberia, LATAM, Gulf, Scandinavia,
+#                     ASEAN, Andean, Caucasus, Anglo-Caribbean)
+#     Language-family (anglophone, hispanic, lusophone, francophone,
+#                     germanic, slavic, arabic, nordic, turkic, sinic,
+#                     MENA-Arabic, Francophone-Africa, Lusophone-Africa,
+#                     Anglo-Africa, Lusophone-LatAm)
+#   Picking a single ISO code stays single-country. Operators opt into
+#   language-family coupling explicitly by picking the language group.
+#
+# FALLBACK BEHAVIOUR
+# ------------------
+# If this file is missing, malformed, or pyyaml is unavailable, the
+# matcher silently falls back to the hardcoded baseline (the 17 groups
+# below pre-existing the YAML extraction). The boost continues to work;
+# only the post-extraction additions (ASEAN/MENA/Andean/...) are lost.
+# Warnings are logged via ``structlog`` so the operator can spot the
+# regression in production logs.
+
+groups:
+  # ── Geographic (legacy 17) ──────────────────────────────────────────
+  DACH: [DE, AT, CH]
+  UK: [GB, IE]
+  US: [USA, US]
+  USA: [USA, US]
+  BENELUX: [NL, BE, LU]
+  IBERIA: [ES, PT]
+  SCANDINAVIA: [SE, SV, NO, DK, FI]
+  GULF: [AE, SA, QA, KW, BH, OM]
+  LATAM: [MX, BR, AR, CL, CO, PE]
+
+  # ── Language-family (legacy 17) ─────────────────────────────────────
+  ANGLOPHONE: [USA, US, GB, IE, AU, NZ, CA, ZA, IN, NG]
+  HISPANIC:
+    [ES, MX, AR, CL, CO, PE, EC, UY, PY, BO, DO, CR, VE, GT, PA, HN, SV, NI]
+  LUSOPHONE: [PT, BR, AO, MZ, CV, TL]
+  FRANCOPHONE:
+    [FR, BE, CH, CA, MA, TN, DZ, SN, CI, CM, MG, CD, BF, ML, GN, TG, BJ, NE,
+     RW, BI, DJ, GA, LU, MC]
+  GERMANIC: [DE, AT, CH, LI]
+  SLAVIC: [RU, UA, BY, PL, CZ, SK, BG, RS, HR, SI, MK, BA, ME]
+  ARABIC:
+    [AE, SA, QA, KW, BH, OM, EG, MA, TN, DZ, JO, LB, SY, IQ, YE, PS, LY, SD]
+  NORDIC: [SE, SV, NO, DK, FI, IS]
+  TURKIC: [TR, AZ, KZ, UZ, TM, KG, TJ]
+  SINIC: [CN, TW, HK, SG]
+
+  # ── New geographic / macro-regional groups ──────────────────────────
+  ASEAN:
+    - ID
+    - MY
+    - SG
+    - TH
+    - VN
+    - PH
+    - ID_JAKARTA
+    - MY_KL
+    - SG_SINGAPORE
+    - TH_BANGKOK
+    - VN_HANOI
+    - PH_MANILA
+
+  MENA_AR:
+    - AE
+    - SA
+    - QA
+    - EG
+    - MA
+    - DZ
+    - TN
+    - LY
+    - SD
+    - AE_DUBAI
+    - SA_RIYADH
+    - EG_CAIRO
+    - MA_CASABLANCA
+    - DZ_ALGIERS
+    - TN_TUNIS
+    - LY_TRIPOLI
+    - SD_KHARTOUM
+
+  FRANCOPHONE_AFRICA:
+    - SN
+    - CI
+    - CM
+    - BJ
+    - ML
+    - BF
+    - TG
+    - MG
+    - SN_DAKAR
+    - CI_ABIDJAN
+    - CM_DOUALA
+    - BJ_COTONOU
+    - ML_BAMAKO
+    - BF_OUAGADOUGOU
+    - TG_LOME
+    - MG_ANTANANARIVO
+
+  LUSOPHONE_AFRICA:
+    - AO
+    - MZ
+    - AO_LUANDA
+    - MZ_MAPUTO
+
+  ANGLO_AFRICA:
+    - ZA
+    - NG
+    - KE
+    - GH
+    - UG
+    - TZ
+    - RW
+    - BW
+    - ZM
+    - NA
+    - ZW
+    - ZA_JOHANNESBURG
+    - NG_LAGOS
+    - KE_NAIROBI
+    - GH_ACCRA
+    - UG_KAMPALA
+    - TZ_DARESSALAAM
+    - RW_KIGALI
+    - BW_GABORONE
+    - ZM_LUSAKA
+    - NA_WINDHOEK
+    - ZW_HARARE
+
+  ANDEAN:
+    - PE
+    - CO
+    - EC
+    - BO
+    - CL
+    - PE_LIMA
+    - CO_BOGOTA
+    - EC_QUITO
+    - BO_LAPAZ
+    - CL_SANTIAGO
+
+  CAUCASUS:
+    - GE
+    - AM
+    - AZ
+    - GE_TBILISI
+    - AM_YEREVAN
+    - AZ_BAKU
+
+  ANGLO_CARIBBEAN:
+    - JM
+    - BB
+    - TT
+    - BS
+    - JM_KINGSTON
+    - BB_BRIDGETOWN
+    - TT_PORTOFSPAIN
+    - BS_NASSAU
+
+  LUSOPHONE_LATAM:
+    - BR
+    - PT
+    - BR_SAOPAULO
+    - BR_RIO
+    - PT_LISBON

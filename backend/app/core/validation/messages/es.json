@@ -1,0 +1,53 @@
+{
+  "common": {
+    "ok": "OK"
+  },
+  "field_time": {
+    "hours_per_day_max": {
+      "fail": "El trabajador {worker} tiene {hours} h registradas este día, por encima del límite de {max} h",
+      "suggestion": "Reparta las horas en el día o trabajador correcto antes de enviar"
+    },
+    "line_complete": {
+      "fail": "La línea {line} está incompleta: {reason}",
+      "labour_xor_plant": "debe registrar mano de obra o maquinaria, no ambas ni ninguna",
+      "hours_positive": "las horas deben ser mayores que cero",
+      "cost_code_required": "se requiere un código de coste",
+      "suggestion": "Complete la línea antes de enviar el parte de horas"
+    },
+    "cost_code_resolves": {
+      "fail": "El código '{code}' de la línea {line} no coincide con ninguna posición del presupuesto ni WBS del proyecto",
+      "suggestion": "Elija un código de coste o WBS que exista en el presupuesto del proyecto"
+    },
+    "daywork_needs_variation": {
+      "fail": "La línea de trabajos por administración {line} no está vinculada a una modificación abierta",
+      "suggestion": "Vincule los trabajos por administración a la modificación bajo la que se ordenaron"
+    },
+    "plant_needs_equipment": {
+      "fail": "La línea de maquinaria {line} no indica ningún equipo",
+      "suggestion": "Asocie la máquina para poder costear las horas de maquinaria"
+    },
+    "approved_immutable": {
+      "fail": "Este parte de horas está {status} y no se puede editar",
+      "suggestion": "Registre un parte de horas de reversión para corregir las horas aprobadas"
+    }
+  },
+  "mexico": {
+    "apu_completeness": {
+      "fail": "La posición {ordinal} tiene un APU incompleto; faltan componentes del costo: {missing}",
+      "suggestion": "Agregue los componentes faltantes del costo directo (mano de obra, materiales, maquinaria) al análisis de precios unitarios"
+    },
+    "iva_rate_valid": {
+      "fail": "La posición {ordinal} tiene una tasa de IVA inválida {rate}; el IVA en México es 16, 8 (región fronteriza) o 0 por ciento",
+      "suggestion": "Establezca la tasa de IVA en 16 por ciento (general), 8 por ciento (región fronteriza) o 0 por ciento"
+    },
+    "subcontract_retencion": {
+      "fail": "La posición de subcontrato {ordinal} no indica si aplican retenciones de IVA/ISR",
+      "suggestion": "Registre las retenciones de IVA e ISR de la línea de subcontrato, o indique que no aplican"
+    },
+    "cfdi_rfc_present": {
+      "missing": "Los datos del emisor CFDI están incompletos para exportar la licitación; faltan: {missing}",
+      "invalid_rfc": "El RFC '{rfc}' no es un RFC válido de CFDI (12 caracteres para persona moral, 13 para persona física)",
+      "suggestion": "Capture el RFC, régimen fiscal y uso CFDI del emisor en el perfil del proyecto para la facturación CFDI 4.0"
+    }
+  }
+}

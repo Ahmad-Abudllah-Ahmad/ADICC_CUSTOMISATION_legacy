@@ -1,0 +1,21 @@
+{
+  "rule_pack_id": "as_5104_modular",
+  "name": "AS 5104 / ISO 2394 — Structural reliability targets applied to modular buildings",
+  "standard": "AS 5104:2005 / ISO 2394:2015 (General principles on reliability for structures) + NCC Volume One (Australia)",
+  "jurisdiction": "AU/NZ",
+  "description": "AS 5104:2005 is the Australian adoption of ISO 2394 'General principles on reliability for structures' — it is NOT a modular-specific standard. This rule pack uses it to define the target reliability indices (β ≥ 3.8 for ULS, β ≥ 1.5 for SLS, 50-year reference period) that modular structures must demonstrate, and combines it with NCC Volume One provisions for inter-module structural integration, fire separation, services pass-through, and connection certification. For the modular-specific procedural standards (factory inspection, certification of factory-built buildings) see the modular_standards rule pack (ICC/MBI 1200, CSA A277, NEN 9090).",
+  "enables_rule_ids": [
+    "as5104.target_reliability_index_uls_set",
+    "as5104.target_reliability_index_sls_set",
+    "as5104.reference_period_set",
+    "as5104.partial_factor_method_documented",
+    "as5104.module_structural_class_set",
+    "as5104.inter_module_connection_certified",
+    "as5104.fire_separation_between_modules",
+    "as5104.services_pass_through_documented",
+    "as5104.transport_load_case_evaluated",
+    "as5104.installation_load_case_evaluated",
+    "as5104.in_service_load_case_evaluated",
+    "as5104.ncc_volume_one_compliance"
+  ]
+}

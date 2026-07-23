@@ -1,0 +1,233 @@
+# DDC-CWICR-OE: DataDrivenConstruction · OpenConstructionERP
+# Copyright (c) 2026 Artem Boiko / DataDrivenConstruction
+"""Reporting & Dashboards ORM models.
+
+Tables:
+    oe_reporting_kpi_snapshot - periodic KPI snapshots per project
+    oe_reporting_template     - reusable report templates (system + custom)
+    oe_reporting_generated    - generated report instances
+"""
+
+import uuid
+
+from sqlalchemy import JSON, Boolean, Integer, String, Text, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.database import GUID, Base
+
+
+class KPISnapshot(Base):
+    """Periodic KPI snapshot for a project.
+
+    Stores cost, schedule, quality, and risk indicators at a point in time.
+    String types are used for numeric fields to avoid float precision issues
+    across databases; parsing happens at the application layer.
+    """
+
+    __tablename__ = "oe_reporting_kpi_snapshot"
+    __table_args__ = (UniqueConstraint("project_id", "snapshot_date", name="uq_kpi_project_date"),)
+
+    project_id: Mapped[uuid.UUID] = mapped_column(GUID(), nullable=False, index=True)
+    snapshot_date: Mapped[str] = mapped_column(String(40), nullable=False)  # ISO date
+
+    # Earned Value indicators
+    cpi: Mapped[str | None] = mapped_column(String(20), nullable=True, default=None)
+    spi: Mapped[str | None] = mapped_column(String(20), nullable=True, default=None)
+    budget_consumed_pct: Mapped[str | None] = mapped_column(
+        String(20),
+        nullable=True,
+        default=None,
+    )
+
+    # Quality / defects
+    open_defects: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    open_observations: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    # Schedule
+    schedule_progress_pct: Mapped[str | None] = mapped_column(
+        String(20),
+        nullable=True,
+        default=None,
+    )
+
+    # Submittals & RFIs
+    open_rfis: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    open_submittals: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    # Risk
+    risk_score_avg: Mapped[str | None] = mapped_column(
+        String(20),
+        nullable=True,
+        default=None,
+    )
+
+    metadata_: Mapped[dict] = mapped_column(  # type: ignore[assignment]
+        "metadata",
+        JSON,
+        nullable=False,
+        default=dict,
+        server_default="{}",
+    )
+
+    def __repr__(self) -> str:
+        return f"<KPISnapshot project={self.project_id} date={self.snapshot_date}>"
+
+
+class ReportTemplate(Base):
+    """Reusable report template (system or custom).
+
+    System templates (is_system=True) are seeded on first startup and
+    cannot be deleted by users.
+
+    v2.3.0 schedule fields:
+        schedule_cron / recipients / is_scheduled / last_run_at
+        next_run_at / project_id_scope
+    Let the Celery-Beat worker pick up due templates, render them via
+    the reporting service, and email the result to the listed
+    recipients. If ``project_id_scope`` is set, the render is locked to
+    that project; otherwise the template renders a portfolio-wide
+    report.
+    """
+
+    __tablename__ = "oe_reporting_template"
+
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    name_translations: Mapped[dict | None] = mapped_column(  # type: ignore[assignment]
+        JSON,
+        nullable=True,
+        default=None,
+    )
+    report_type: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+    )  # project_status / cost_report / schedule_status / safety_report / inspection_report / portfolio_summary / progress_report
+    description: Mapped[str | None] = mapped_column(Text, nullable=True, default=None)
+    template_data: Mapped[dict] = mapped_column(  # type: ignore[assignment]
+        JSON,
+        nullable=False,
+        default=dict,
+        server_default="{}",
+    )  # sections, fields, layout config
+    is_system: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default="0",
+    )
+    created_by: Mapped[uuid.UUID | None] = mapped_column(
+        GUID(),
+        nullable=True,
+        default=None,
+        index=True,
+    )
+    metadata_: Mapped[dict] = mapped_column(  # type: ignore[assignment]
+        "metadata",
+        JSON,
+        nullable=False,
+        default=dict,
+        server_default="{}",
+    )
+    # ── Schedule fields (v2.3.0) ───────────────────────────────────────
+    # cron expression (5-field standard POSIX: "0 9 * * 1" = 09:00 Mon).
+    # We store the raw string and parse via ``croniter`` at run time so
+    # callers can read back the same expression the user typed.
+    schedule_cron: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
+        default=None,
+    )
+    # List of email addresses or user-ids (JSON-serialised). The worker
+    # resolves user-ids to emails at send time.
+    recipients: Mapped[list] = mapped_column(  # type: ignore[assignment]
+        JSON,
+        nullable=False,
+        default=list,
+        server_default="[]",
+    )
+    is_scheduled: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default="0",
+        index=True,
+    )
+    # ISO-8601 strings for cross-DB portability - matches the rest of
+    # this module's datetime conventions.
+    last_run_at: Mapped[str | None] = mapped_column(
+        String(32),
+        nullable=True,
+        default=None,
+    )
+    next_run_at: Mapped[str | None] = mapped_column(
+        String(32),
+        nullable=True,
+        default=None,
+        index=True,
+    )
+    # Optional scope - when set, the worker renders the report for just
+    # this project. ``None`` = portfolio report across every project the
+    # creator can read.
+    project_id_scope: Mapped[uuid.UUID | None] = mapped_column(
+        GUID(),
+        nullable=True,
+        default=None,
+    )
+
+    def __repr__(self) -> str:
+        return f"<ReportTemplate {self.name} ({self.report_type})>"
+
+
+class GeneratedReport(Base):
+    """A report generated from a template (or ad-hoc) for a project."""
+
+    __tablename__ = "oe_reporting_generated"
+
+    project_id: Mapped[uuid.UUID] = mapped_column(GUID(), nullable=False, index=True)
+    template_id: Mapped[uuid.UUID | None] = mapped_column(
+        GUID(),
+        nullable=True,
+        default=None,
+    )
+    report_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    title: Mapped[str] = mapped_column(String(500), nullable=False)
+    generated_at: Mapped[str] = mapped_column(String(40), nullable=False)
+    generated_by: Mapped[uuid.UUID | None] = mapped_column(
+        GUID(),
+        nullable=True,
+        default=None,
+    )
+    format: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        default="pdf",
+    )  # pdf / excel / html
+    storage_key: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+        default=None,
+    )
+    # Resolved ISO 4217 currency stamped at generation time (override >
+    # project currency > EUR fallback). Persisted so a report's money
+    # figures are forever interpretable in one currency even if the
+    # project's default currency later changes. Nullable for rows created
+    # before this column existed; new rows always carry a 3-letter code.
+    currency: Mapped[str | None] = mapped_column(
+        String(3),
+        nullable=True,
+        default=None,
+    )
+    data_snapshot: Mapped[dict | None] = mapped_column(  # type: ignore[assignment]
+        JSON,
+        nullable=True,
+        default=None,
+    )
+    metadata_: Mapped[dict] = mapped_column(  # type: ignore[assignment]
+        "metadata",
+        JSON,
+        nullable=False,
+        default=dict,
+        server_default="{}",
+    )
+
+    def __repr__(self) -> str:
+        return f"<GeneratedReport {self.title} ({self.report_type})>"

@@ -1,0 +1,30 @@
+{
+  "rule_pack_id": "rps_pdf_generation",
+  "name": "RPS — Recibo Provisorio de Servicos (municipal NFS-e bridge)",
+  "name_pt": "RPS — Recibo Provisorio de Servicos",
+  "standard": "RPS / NFS-e municipal — LC 116/2003",
+  "jurisdiction": "BR — municipal",
+  "regulator": "Each municipio (issuer of the NFS-e schema). Federal frame: Lei Complementar 116/2003.",
+  "publication_year": 2003,
+  "description": "Validates RPS (Recibo Provisorio de Servicos) PDF generation. Ensures all required fields for municipal NFS-e (Nota Fiscal de Servicos Eletronica) conversion are present: serie + numero sequencial, prestador CNPJ + IM, tomador documento (CNPJ or CPF), codigo de servico municipal (LC 116 list), discriminacao detalhada do servico, ISS aliquota within the municipal 2-5% band (LC 116 Art. 8-A), retencoes federais (PIS, COFINS, IRPJ, CSLL, INSS) declared.",
+  "description_pt": "Valida a geracao de PDF do RPS. Garante que todos os campos exigidos para conversao em NFS-e municipal estejam presentes: serie + numero sequencial, CNPJ + IM do prestador, documento do tomador (CNPJ ou CPF), codigo de servico municipal (lista LC 116), discriminacao detalhada do servico, aliquota de ISS dentro da faixa municipal 2-5% (LC 116 Art. 8-A), retencoes federais (PIS, COFINS, IRPJ, CSLL, INSS) declaradas.",
+  "applies_to": ["finance", "service", "validation"],
+  "config": {
+    "iss_min_pct": 2.0,
+    "iss_max_pct": 5.0,
+    "iss_band_basis": "LC 116/2003 Art. 8-A",
+    "retencoes_federais": ["PIS", "COFINS", "IRPJ", "CSLL", "INSS"]
+  },
+  "enables_rule_ids": [
+    "rps.serie_numero_sequencial",
+    "rps.prestador_cnpj_valid",
+    "rps.prestador_inscricao_municipal_present",
+    "rps.tomador_documento_valid",
+    "rps.codigo_servico_municipal_set",
+    "rps.discriminacao_servico_complete",
+    "rps.iss_aliquota_within_lc116_band",
+    "rps.iss_collected_by_municipio",
+    "rps.retencoes_federais_documented",
+    "rps.simples_nacional_anexo_set_when_optante"
+  ]
+}

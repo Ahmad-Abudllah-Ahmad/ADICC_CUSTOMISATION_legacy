@@ -1,0 +1,688 @@
+# DDC-CWICR-OE: DataDrivenConstruction · OpenConstructionERP
+# Copyright (c) 2026 Artem Boiko / DataDrivenConstruction
+"""Integration tests for ``app.core.match_service``.
+
+Uses an isolated, throwaway PostgreSQL database (cloned from a
+schema-loaded template by ``tests._pg.isolated_engine`` - never the
+production database) and monkeypatches the LanceDB cost vector adapter
+to return fixed hits so the suite stays deterministic and fast (no real
+embedding model required).
+"""
+
+from __future__ import annotations
+
+import uuid
+
+import pytest
+import pytest_asyncio
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    async_sessionmaker,
+)
+
+from app.core.match_service import (
+    ElementEnvelope,
+    MatchCandidate,
+    MatchRequest,
+    build_envelope,
+    match_element,
+    match_envelope,
+    rank,
+    record_feedback,
+)
+from app.core.match_service.boosts import classifier as classifier_boost
+from app.core.match_service.boosts import unit as unit_boost
+from app.core.match_service.config import BOOST_WEIGHTS
+from tests._pg import isolated_engine
+
+# ── Fixtures ──────────────────────────────────────────────────────────────
+
+
+@pytest.fixture(autouse=True)
+def _bypass_catalog_gate(monkeypatch):
+    """v2.8.2 — short-circuit the per-project catalogue gate.
+
+    These tests predate the ``cost_database_id`` binding and exercise the
+    ranker's *post-gate* behaviour (translation, vector search, boosts).
+    Stub the resolver to ``ok`` so they keep covering what they were
+    written for; the binding itself is exercised in
+    ``test_match_catalog_binding``.
+    """
+
+    async def _ok(*_args, **_kwargs):
+        return "ok", 1, 1
+
+    monkeypatch.setattr(
+        "app.core.match_service.ranker_qdrant._resolve_catalog_status",
+        _ok,
+        raising=True,
+    )
+
+
+@pytest_asyncio.fixture
+async def temp_engine_and_factory():
+    """Per-test throwaway PostgreSQL database, cloned from the schema-loaded template.
+
+    The ``project_id`` fixture seeds rows through its own session while the
+    test bodies open a separate session from the same factory to run the
+    ranker, so the two connections must see each other's commits - hence a
+    real throwaway database rather than a savepoint-rolled-back shared session.
+    """
+    async with isolated_engine() as engine:
+        factory = async_sessionmaker(
+            engine,
+            class_=AsyncSession,
+            expire_on_commit=False,
+        )
+        yield engine, factory
+
+
+@pytest_asyncio.fixture
+async def project_id(temp_engine_and_factory) -> uuid.UUID:
+    """Create a real Project row so MatchProjectSettings can FK to it."""
+    _engine, factory = temp_engine_and_factory
+
+    from app.modules.projects.models import Project
+    from app.modules.users.models import User
+
+    user = User(
+        id=uuid.uuid4(),
+        email=f"match-{uuid.uuid4().hex[:6]}@test.io",
+        hashed_password="x" * 60,
+        full_name="Match Test",
+        role="estimator",
+        locale="en",
+        is_active=True,
+        metadata_={},
+    )
+    project = Project(
+        id=uuid.uuid4(),
+        name="Match Test Project",
+        owner_id=user.id,
+        region="DACH",
+        status="active",
+    )
+    async with factory() as session:
+        session.add(user)
+        await session.flush()
+        session.add(project)
+        await session.commit()
+    return project.id
+
+
+# ── Mock cost vector adapter ─────────────────────────────────────────────
+
+
+def _fixed_hits() -> list[dict]:
+    """Three deterministic CWICR-shaped hits used across most tests."""
+    return [
+        {
+            "id": "hit-1",
+            "score": 0.82,
+            "text": "Stahlbetonwand C30/37, 24cm",
+            "payload": {
+                "code": "330.10.020",
+                "description": "Stahlbetonwand C30/37, 24cm",
+                "unit": "m2",
+                "unit_cost": 145.0,
+                "currency": "EUR",
+                "region_code": "DE_BERLIN",
+                "source": "cwicr",
+                "language": "de",
+                "classification_din276": "330.10.020",
+                "classification_nrm": "",
+                "classification_masterformat": "",
+            },
+        },
+        {
+            "id": "hit-2",
+            "score": 0.75,
+            "text": "Mauerwerk Kalksandstein 17.5cm",
+            "payload": {
+                "code": "331.20.010",
+                "description": "Mauerwerk Kalksandstein 17.5cm",
+                "unit": "m2",
+                "unit_cost": 88.0,
+                "currency": "EUR",
+                "region_code": "DE_MUNICH",
+                "source": "cwicr",
+                "language": "de",
+                "classification_din276": "331.20.010",
+                "classification_nrm": "",
+                "classification_masterformat": "",
+            },
+        },
+        {
+            "id": "hit-3",
+            "score": 0.71,
+            "text": "Reinforced concrete column",
+            "payload": {
+                "code": "340.10.011",
+                "description": "Reinforced concrete column C30/37",
+                "unit": "m3",
+                "unit_cost": 260.0,
+                "currency": "EUR",
+                "region_code": "GB_LONDON",
+                "source": "cwicr",
+                "language": "en",
+                "classification_din276": "340.10.011",
+                "classification_nrm": "",
+                "classification_masterformat": "",
+            },
+        },
+    ]
+
+
+@pytest.fixture
+def patch_vector_search(monkeypatch):
+    """Replace the Qdrant ranker's vector search with a deterministic stub.
+
+    Returns the list-of-hits handle so tests can mutate it before the
+    matcher runs. The ranker calls ``qdrant_adapter.search_with_fallback``
+    which returns ``(list[QdrantHit], tier_used)`` — we honour that shape.
+
+    Pre-v3 this fixture targeted the LanceDB ``vector_adapter.search``
+    path; that adapter is gone, but the test bodies still drive the
+    ranker via the public ``rank`` entry point (now Qdrant) so the
+    coverage is unchanged in spirit.
+    """
+    state: dict[str, list[dict]] = {"hits": _fixed_hits()}
+
+    from app.modules.costs.qdrant_adapter import QdrantHit
+
+    def _hits_as_qdrant() -> list:
+        out = []
+        for raw in state["hits"]:
+            payload = dict(raw.get("payload", {}))
+            # The Qdrant ranker reads several payload fields the legacy
+            # stub didn't set explicitly; backfill them from the legacy
+            # hit shape so existing tests keep their semantics.
+            payload.setdefault("rate_code", payload.get("code", raw.get("id", "")))
+            # Legacy hits used "unit" — the Qdrant ranker reads "rate_unit"
+            # from the parquet row first, then falls back to payload.
+            # Mirror the legacy unit into the new field names so the
+            # boost stack can find it.
+            payload.setdefault("rate_unit", payload.get("unit", ""))
+            payload.setdefault("country", payload.get("region_code", ""))
+            out.append(
+                QdrantHit(
+                    rate_code=payload["rate_code"],
+                    country=payload.get("country", ""),
+                    score=float(raw.get("score", 0.0)),
+                    payload=payload,
+                )
+            )
+        return out
+
+    async def _stub_search_with_fallback(*, country, limit, **_kwargs):  # noqa: ANN001
+        return _hits_as_qdrant()[:limit], 0
+
+    async def _stub_lookup_full_rows(*_args, **_kwargs):
+        # Return the same payloads keyed by rate_code so the
+        # ``_hit_to_candidate`` helper finds a non-empty row dict.
+        return {hit.rate_code: hit.payload for hit in _hits_as_qdrant()}
+
+    async def _stub_substitute_abstract_parents(*, country, core_query, hits, **_kwargs):  # noqa: ANN001
+        return hits
+
+    # Bypass the catalog gate's Qdrant collection probe — embedded
+    # Qdrant doesn't run in unit-test contexts.
+    async def _ok_status(*_args, **_kwargs):
+        return "ok", 1, 1
+
+    # No-op BGE reranker so the deterministic boost-stack ordering
+    # surfaces unambiguously in the legacy test bodies. Live recall
+    # coverage of the BGE reranker lives in the perf benchmark.
+    # Real signature: rerank(candidates, envelope, *, k, hard_filters_matched,
+    # classification_confidence_by_code) -> list[MatchCandidate].
+    def _noop_bge_rerank(candidates, envelope, **_kwargs):  # noqa: ANN001
+        return list(candidates)
+
+    monkeypatch.setattr(
+        "app.core.match_service.ranker_qdrant.qdrant_search_with_fallback",
+        _stub_search_with_fallback,
+    )
+    monkeypatch.setattr(
+        "app.core.match_service.ranker_qdrant.lookup_full_rows",
+        _stub_lookup_full_rows,
+    )
+    monkeypatch.setattr(
+        "app.core.match_service.ranker_qdrant.substitute_abstract_parents",
+        _stub_substitute_abstract_parents,
+    )
+    monkeypatch.setattr(
+        "app.core.match_service.ranker_qdrant._resolve_catalog_status",
+        _ok_status,
+    )
+    monkeypatch.setattr(
+        "app.core.match_service.reranker_bge.rerank",
+        _noop_bge_rerank,
+    )
+    return state
+
+
+# ── End-to-end ranker tests ───────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_bim_to_envelope_to_ranked_candidates(
+    temp_engine_and_factory,
+    project_id,
+    patch_vector_search,
+    monkeypatch,
+) -> None:
+    """BIM element flows through vector search → boosts → final ranking.
+
+    The legacy LanceDB ranker used a deterministic boost-then-sort with
+    no cross-encoder reranking; the new Qdrant ranker runs an optional
+    BGE reranker (on by default) that re-orders candidates by semantic
+    similarity. This test pins the *boost-stack* invariants — the
+    classifier and unit boosts still fire on the matching hit — without
+    re-pinning the legacy top-1 ordering. End-to-end recall coverage
+    moves to ``tests/perf/test_recall_bge_m3_benchmark.py``.
+    """
+    # Disable the BGE reranker so the deterministic boost-stack
+    # ordering surfaces unambiguously in this unit-style assertion.
+    monkeypatch.setenv("OE_MATCH_USE_BGE_RERANKER", "0")
+
+    _engine, factory = temp_engine_and_factory
+
+    raw = {
+        "category": "wall",
+        "name": "Stahlbetonwand",
+        "properties": {"material": "Concrete C30/37", "fire_rating": "F90"},
+        "geometry": {"thickness_m": 0.24, "area_m2": 37.5},
+        "classification": {"din276": "330.10.020"},
+        "language": "de",
+    }
+    envelope = build_envelope("bim", raw)
+
+    async with factory() as session:
+        # Bootstrap default settings then flip classifier to din276 so
+        # the classifier boost has a non-"none" hint to match against.
+        from app.modules.projects.service import get_or_create_match_settings
+
+        settings = await get_or_create_match_settings(session, project_id)
+        settings.classifier = "din276"
+        settings.target_language = "de"
+        # Disable BGE reranker on the project settings too — the
+        # ranker reads from settings, not env, when the project row
+        # already exists.
+        if hasattr(settings, "match_use_bge_reranker"):
+            settings.match_use_bge_reranker = False
+        await session.commit()
+
+        request = MatchRequest(envelope=envelope, project_id=project_id, top_k=5)
+        response = await rank(request, db=session)
+
+    assert response.candidates, "expected at least one ranked candidate"
+    # Find the exact-classifier candidate amongst the returned set.
+    matched = next(
+        (c for c in response.candidates if c.code == "330.10.020"),
+        None,
+    )
+    assert matched is not None, "expected the din276=330.10.020 candidate to be returned"
+    # The classifier full-match boost actually fired.
+    assert "classifier_match" in matched.boosts_applied
+    # The unit_match boost should have fired (m2 == m2).
+    assert "unit_match" in matched.boosts_applied
+    # vector_score was preserved separately from final score.
+    assert matched.vector_score == pytest.approx(0.82)
+    assert matched.score >= matched.vector_score
+
+
+@pytest.mark.asyncio
+async def test_translation_skipped_when_languages_match(
+    temp_engine_and_factory,
+    project_id,
+    patch_vector_search,
+) -> None:
+    """No translation fires when source_lang == target_language."""
+    _engine, factory = temp_engine_and_factory
+
+    envelope = ElementEnvelope(
+        source="bim",
+        source_lang="en",  # default target_language is "en"
+        category="wall",
+        description="Reinforced concrete wall",
+    )
+
+    async with factory() as session:
+        request = MatchRequest(envelope=envelope, project_id=project_id, top_k=3)
+        response = await rank(request, db=session)
+
+    # ``translation_used`` is None when the cascade didn't run.
+    assert response.translation_used is None
+
+
+@pytest.mark.asyncio
+async def test_auto_link_only_when_threshold_and_enabled(
+    temp_engine_and_factory,
+    project_id,
+    patch_vector_search,
+) -> None:
+    """Auto-link populates only when both gates pass."""
+    _engine, factory = temp_engine_and_factory
+
+    # Boost the best hit's vector score so the boosted final clears 0.85.
+    patch_vector_search["hits"][0]["score"] = 0.95
+
+    envelope = ElementEnvelope(
+        source="bim",
+        source_lang="en",
+        category="wall",
+        description="Reinforced concrete wall, C30/37",
+        classifier_hint={"din276": "330.10.020"},
+    )
+
+    # Default settings: auto_link_enabled=False — auto_linked must be None.
+    async with factory() as session:
+        # Bootstrap settings + enable classifier so the boost stack
+        # actually pushes the top hit above 0.85.
+        from app.modules.projects.service import get_or_create_match_settings
+
+        settings = await get_or_create_match_settings(session, project_id)
+        settings.classifier = "din276"
+        settings.target_language = "en"
+        settings.auto_link_enabled = False
+        settings.auto_link_threshold = 0.85
+        await session.commit()
+
+        request = MatchRequest(envelope=envelope, project_id=project_id, top_k=3)
+        response = await rank(request, db=session)
+        assert response.auto_linked is None
+        assert response.candidates[0].score >= 0.85
+
+        # Flip enabled=True (threshold already 0.85, classifier already set).
+        from sqlalchemy import update
+
+        from app.modules.projects.models import MatchProjectSettings
+
+        await session.execute(
+            update(MatchProjectSettings)
+            .where(MatchProjectSettings.project_id == project_id)
+            .values(auto_link_enabled=True),
+        )
+        await session.commit()
+
+        response2 = await rank(request, db=session)
+        assert response2.auto_linked is not None
+        assert response2.auto_linked.code == response2.candidates[0].code
+
+
+@pytest.mark.asyncio
+async def test_reranker_off_by_default(
+    temp_engine_and_factory,
+    project_id,
+    patch_vector_search,
+    monkeypatch,
+) -> None:
+    """The LLM reranker only runs when use_reranker=True."""
+    _engine, factory = temp_engine_and_factory
+
+    rerank_calls: list[int] = []
+
+    async def _spy(*args, **kwargs):
+        rerank_calls.append(1)
+        # Return inputs unchanged so the rest of the pipeline is sane.
+        return args[0] if args else kwargs.get("candidates", []), 0.0
+
+    monkeypatch.setattr(
+        "app.core.match_service.reranker_ai.rerank_top_k",
+        _spy,
+    )
+
+    envelope = ElementEnvelope(
+        source="bim",
+        source_lang="en",
+        category="wall",
+        description="Reinforced concrete wall",
+    )
+
+    async with factory() as session:
+        # Default — reranker off.
+        request = MatchRequest(envelope=envelope, project_id=project_id, top_k=3)
+        await rank(request, db=session)
+        assert rerank_calls == [], "reranker fired despite use_reranker=False"
+
+        # Opt in — reranker should run.
+        request_on = MatchRequest(envelope=envelope, project_id=project_id, top_k=3, use_reranker=True)
+        await rank(request_on, db=session)
+        assert rerank_calls == [1], "reranker did not fire despite use_reranker=True"
+
+
+# ── Boost unit tests ──────────────────────────────────────────────────────
+
+
+def test_classifier_full_match_returns_full_weight() -> None:
+    envelope = ElementEnvelope(
+        source="bim",
+        category="wall",
+        description="x",
+        classifier_hint={"din276": "330.10.020"},
+    )
+    candidate = MatchCandidate(code="x", classification={"din276": "330.10.020"})
+
+    class _Settings:
+        classifier = "din276"
+
+    deltas = classifier_boost.boost(envelope, candidate, _Settings())
+    assert deltas == {"classifier_match": BOOST_WEIGHTS.classifier_full_match}
+
+
+def test_classifier_group_prefix_match_returns_partial_weight() -> None:
+    envelope = ElementEnvelope(
+        source="bim",
+        category="wall",
+        description="x",
+        classifier_hint={"din276": "330"},
+    )
+    candidate = MatchCandidate(code="x", classification={"din276": "330.10.020"})
+
+    class _Settings:
+        classifier = "din276"
+
+    deltas = classifier_boost.boost(envelope, candidate, _Settings())
+    assert deltas == {"classifier_group_match": BOOST_WEIGHTS.classifier_group_match}
+
+
+def test_unit_mismatch_applies_penalty() -> None:
+    envelope = ElementEnvelope(
+        source="bim",
+        category="wall",
+        description="x",
+        unit_hint="m3",
+    )
+    candidate = MatchCandidate(code="x", unit="m2")
+
+    deltas = unit_boost.boost(envelope, candidate, None)
+    assert deltas == {"unit_mismatch": BOOST_WEIGHTS.unit_mismatch_penalty}
+    assert deltas["unit_mismatch"] < 0
+
+
+def test_unit_match_returns_positive_delta() -> None:
+    envelope = ElementEnvelope(
+        source="bim",
+        category="wall",
+        description="x",
+        unit_hint="m2",
+    )
+    candidate = MatchCandidate(code="x", unit="m²")  # superscript should fold
+    deltas = unit_boost.boost(envelope, candidate, None)
+    assert deltas == {"unit_match": BOOST_WEIGHTS.unit_match}
+
+
+# NOTE: ``lex_boost`` was removed in v3 — sparse / lexical similarity is
+# handled inside the Qdrant ranker via the BAAI/bge-m3 sparse vector and
+# RRF fusion, so the dedicated boost (and the test that pinned its
+# high/low cutoff behaviour) are no longer needed.
+
+
+# ── Source extractor round-trip ───────────────────────────────────────────
+
+
+def test_bim_extractor_round_trip() -> None:
+    raw = {
+        "category": "wall",
+        "name": "Concrete Wall",
+        "properties": {"material": "Concrete C30/37", "fire_rating": "F90"},
+        "geometry": {"area_m2": 37.5, "thickness_m": 0.24},
+        "classification": {"din276": "330"},
+        "language": "en",
+    }
+    envelope = build_envelope("bim", raw)
+    assert envelope.source == "bim"
+    assert envelope.category == "wall"
+    assert envelope.quantities.get("area_m2") == 37.5
+    assert envelope.classifier_hint == {"din276": "330"}
+    assert "Concrete C30/37" in envelope.description
+
+
+def test_pdf_extractor_round_trip() -> None:
+    raw = {
+        "description": "Wall tiles ceramic 30x60 cm",
+        "unit": "m2",
+        "quantity": 65.0,
+        "language": "en",
+    }
+    envelope = build_envelope("pdf", raw)
+    assert envelope.source == "pdf"
+    assert envelope.unit_hint == "m2"
+    # ``quantity`` flows to canonical ``count`` (since unit is m2 it's
+    # mapped to area below).
+    assert envelope.quantities.get("area_m2") == 65.0
+
+
+def test_dwg_extractor_round_trip() -> None:
+    raw = {
+        "description": "Drywall partition, 12.5 mm gypsum",
+        "layer": "A-WALL-PRTN",
+        "language": "en",
+    }
+    envelope = build_envelope("dwg", raw)
+    assert envelope.source == "dwg"
+    assert envelope.category == "wall"  # derived from layer
+    assert envelope.properties.get("layer") == "A-WALL-PRTN"
+
+
+def test_photo_extractor_round_trip() -> None:
+    raw = {
+        "description": "Cast-in-place concrete column visible",
+        "estimated_area_m2": 0.0,
+        "estimated_quantity": 1,
+        "estimated_unit": "pcs",
+        "cv_confidence": 0.78,
+        "language": "en",
+    }
+    envelope = build_envelope("photo", raw)
+    assert envelope.source == "photo"
+    assert envelope.unit_hint == "pcs"
+    assert envelope.quantities.get("quantity") == 1
+    assert envelope.properties.get("cv_confidence") == 0.78
+
+
+def test_unknown_source_raises() -> None:
+    with pytest.raises(ValueError):
+        build_envelope("ifc", {})
+
+
+# ── Eval-harness contract ─────────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_match_element_returns_dicts_with_code_and_unit_rate(
+    temp_engine_and_factory,
+    project_id,
+    patch_vector_search,
+) -> None:
+    """Eval contract: ``async match_element(element_info, top_k) -> list[dict]``."""
+    _engine, factory = temp_engine_and_factory
+    async with factory() as session:
+        results = await match_element(
+            {
+                "source": "bim",
+                "category": "wall",
+                "material": "Concrete C30/37",
+                "thickness_m": 0.24,
+                "language": "en",
+            },
+            top_k=3,
+            project_id=project_id,
+            db=session,
+        )
+    assert isinstance(results, list)
+    assert results, "expected at least one result"
+    for entry in results:
+        assert "code" in entry
+        assert "unit_rate" in entry
+
+
+# ── Feedback loop ─────────────────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_record_feedback_writes_audit_entry(
+    temp_engine_and_factory,
+    project_id,
+) -> None:
+    """Feedback persists an AuditEntry with kind=match_feedback."""
+    _engine, factory = temp_engine_and_factory
+
+    envelope = ElementEnvelope(
+        source="bim",
+        source_lang="en",
+        category="wall",
+        description="Concrete wall",
+    )
+    accepted = MatchCandidate(code="330.10.020", score=0.91)
+    rejected = [MatchCandidate(code="331.20.010", score=0.62)]
+
+    async with factory() as session:
+        await record_feedback(
+            db=session,
+            project_id=project_id,
+            element_envelope=envelope,
+            accepted_candidate=accepted,
+            rejected_candidates=rejected,
+            user_chose_code=None,
+        )
+        await session.commit()
+
+        from sqlalchemy import select
+
+        from app.core.audit import AuditEntry
+
+        rows = (await session.execute(select(AuditEntry).where(AuditEntry.action == "match_feedback"))).scalars().all()
+        assert len(rows) == 1
+        details = rows[0].details
+        assert details["accepted"]["code"] == "330.10.020"
+        assert details["rejected"][0]["code"] == "331.20.010"
+        assert details["envelope"]["category"] == "wall"
+
+
+# ── match_envelope direct entrypoint ─────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_match_envelope_direct_entrypoint(
+    temp_engine_and_factory,
+    project_id,
+    patch_vector_search,
+) -> None:
+    _engine, factory = temp_engine_and_factory
+    envelope = ElementEnvelope(
+        source="bim",
+        source_lang="en",
+        category="wall",
+        description="Concrete wall",
+        classifier_hint={"din276": "330.10.020"},
+    )
+    async with factory() as session:
+        response = await match_envelope(
+            envelope,
+            project_id=project_id,
+            top_k=3,
+            db=session,
+        )
+    assert response.candidates
+    assert response.took_ms >= 0

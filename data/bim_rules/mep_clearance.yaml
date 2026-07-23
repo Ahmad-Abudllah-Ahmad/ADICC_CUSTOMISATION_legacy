@@ -1,0 +1,48 @@
+# MEP-to-structure clearance.
+#
+# Pipe segments must keep at least 100 mm of clearance from structural
+# beams to allow insulation, sleeves and tolerance during installation
+# (cf. VDI 2055 §6.3 — Wärmedämmung an betriebstechnischen Anlagen).
+#
+# This is the canonical *set-vs-set* rule: it pairs every IfcPipeSegment
+# (selector set) with every IfcBeam (other_selector set) and asserts a
+# clearance property. The runtime knows how to handle the rule_type and
+# the YAML carries the clearance metadata so a future geometric engine
+# can swap in a true coordinate-based clearance check without changing
+# the rule file.
+schema_version: "1.0"
+pack:
+  id: mep_clearance
+  name: MEP-to-Structure Clearance
+  description: |
+    Validates that pipe segments maintain a minimum 100 mm clearance
+    from structural beams per VDI 2055.
+  source: openconstructionerp
+  version: "1.0.0"
+  applies_to:
+    classifications: ["DIN276"]
+    project_regions: ["DE", "AT", "CH"]
+
+rules:
+  - id: pipe_to_beam_clearance_100mm
+    name: Pipe segment ≥ 100 mm from structural beam
+    severity: error
+    rule_type: set_vs_set
+    rationale: |
+      VDI 2055 §6.3 requires sufficient clearance around insulated pipe
+      runs for insulation thickness, fastenings and maintenance access.
+      The 100 mm threshold matches DN 80 insulated piping in
+      uncongested service ceilings.
+    selector:
+      ifc_class: IfcPipeSegment
+    assertion:
+      set_vs_set:
+        other_selector:
+          ifc_class: IfcBeam
+        metric: clearance
+        property:
+          key: ClearanceToStructure
+          op: gte
+          value: 0.1
+          unit: m
+    failure_message: "Pipe {{id}} clearance {{ClearanceToStructure}} m is below the 100 mm minimum to nearby beam."

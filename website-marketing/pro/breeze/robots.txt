@@ -1,0 +1,49 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /demo
+Disallow: /demo-register.html
+Disallow: /pro/aerial/
+Disallow: /pro/atelier/
+Disallow: /pro/blueprint/
+Disallow: /pro/brutalist/
+Disallow: /pro/cinematic/
+Disallow: /pro/cloud/
+Disallow: /pro/cobalt/
+Disallow: /pro/daylight/
+Disallow: /pro/editorial/
+Disallow: /pro/focus/
+Disallow: /pro/sky/
+Disallow: /pro/split/
+Disallow: /pro/studio/
+Disallow: /pro/vibrant/
+
+# AI Search Bots — Welcome
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: Anthropic-AI
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+Sitemap: https://adicc-uae.com/sitemap.xml

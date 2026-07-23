@@ -1,0 +1,75 @@
+# OCERP × Australia partner pack — first-login onboarding script.
+#
+# Replaces the default OnboardingWizard when this partner pack is active.
+# Each step is rendered by the frontend OnboardingWizard component.
+
+version: 1
+pack: aus
+locale: en-AU
+estimated_minutes: 8
+title: "Welcome to OpenConstructionERP — Australia Edition"
+subtitle: "Six quick steps to align your workspace with NCC 2022, AS 1684/3600/4100, AS 4000 / AS 4902 and Rawlinsons 2024."
+
+steps:
+  - id: company_profile
+    title: "Company profile"
+    body: "Tell us about your organisation so reports, tenders and BAS exports are correctly attributed."
+    fields:
+      - { key: company_name, label: "Company name", type: text, required: true }
+      - { key: abn, label: "ABN — Australian Business Number (11 digits)", type: text, required: true, pattern: "^\\d{11}$" }
+      - { key: acn, label: "ACN — Australian Company Number (9 digits, optional)", type: text, required: false, pattern: "^\\d{9}$" }
+      - { key: gst_registered, label: "Registered for GST?", type: checkbox, default: true }
+      - { key: head_office_state, label: "Head-office State/Territory", type: select, required: true, options: ["NSW — New South Wales", "VIC — Victoria", "QLD — Queensland", "WA — Western Australia", "SA — South Australia", "TAS — Tasmania", "ACT — Australian Capital Territory", "NT — Northern Territory"] }
+
+  - id: builder_licence
+    title: "Builder licence (varies by State)"
+    body: "Each state has its own builder-licensing regulator. We will pre-fill compliance templates and ASIC/state lookups based on your answer."
+    fields:
+      - { key: licence_regulator, label: "Licensing authority", type: select, required: true, options: ["NSW Fair Trading (NSW)", "VBA — Victorian Building Authority (VIC)", "QBCC — Queensland Building and Construction Commission (QLD)", "Building Commission WA (WA)", "CBS — Consumer and Business Services (SA)", "CBOS — Consumer, Building and Occupational Services (TAS)", "Access Canberra (ACT)", "NT Building Practitioners Board (NT)", "Multi-state — register separately"] }
+      - { key: licence_number, label: "Builder licence number", type: text, required: false }
+      - { key: licence_class, label: "Licence class (e.g. Open Builder, Class A, Residential Restricted)", type: text, required: false }
+
+  - id: ncc_compliance
+    title: "NCC 2022 — National Construction Code"
+    body: "Pick which NCC 2022 volumes apply to your typical projects. These switch on the right validation rules at every BOQ and BIM import."
+    fields:
+      - { key: ncc_vol1, label: "Volume 1 — BCA Class 2-9 (commercial, multi-residential, industrial)", type: checkbox, default: true }
+      - { key: ncc_vol2, label: "Volume 2 — BCA Class 1 + 10 (housing, ancillary)", type: checkbox, default: true }
+      - { key: ncc_vol3, label: "Volume 3 — PCA Plumbing Code of Australia", type: checkbox, default: false }
+      - { key: compliance_path, label: "Default compliance pathway", type: radio, required: true, default: "Deemed-to-Satisfy", options: ["Deemed-to-Satisfy (DTS)", "Performance Solution", "Mixed — choose per project"] }
+      - { key: section_j_uplift, label: "Apply Section J energy-efficiency uplift (NCC 2022)", type: checkbox, default: true }
+
+  - id: framing_standard
+    title: "Timber-framing standard"
+    body: "Confirm the AS 1684 part(s) you typically design to. Wind classification gates which parts are valid."
+    fields:
+      - { key: primary_framing, label: "Primary standard", type: radio, required: true, default: "AS 1684.2 — Non-Cyclonic Span Tables", options: ["AS 1684.2 — Non-Cyclonic Span Tables (N1-N4)", "AS 1684.3 — Cyclonic Areas (C1-C3)", "AS 1684.4 — Simplified Non-Cyclonic", "Engineered design — outside AS 1684 scope"] }
+      - { key: default_wind_class, label: "Default wind classification", type: select, required: true, options: ["N1", "N2", "N3", "N4", "C1", "C2", "C3"] }
+      - { key: default_bal, label: "Default Bushfire Attack Level (BAL)", type: select, required: true, options: ["BAL-LOW", "BAL-12.5", "BAL-19", "BAL-29", "BAL-40", "BAL-FZ — Flame Zone"] }
+
+  - id: contract_suite
+    title: "Default contract framework"
+    body: "Pre-select your usual AS 4000 contract variant. You can override on every project."
+    fields:
+      - { key: default_contract, label: "Default contract", type: select, required: true, default: "AS 4000-1997", options: ["AS 4000-1997 — General Conditions (construct-only)", "AS 4902-2000 — General Conditions for Design & Construct", "AS 4905-2002 — Minor Works (Superintendent-administered)", "AS 4906-2002 — Minor Works (cost-plus)", "AS 2124-1992 — Legacy general conditions", "Master Builders MBA contract suite", "HIA contract suite (residential)"] }
+      - { key: include_whs, label: "Apply WHS Act 2011 safety document templates (SWMS, JSA, toolbox talks)", type: checkbox, default: true }
+      - { key: enterprise_agreement, label: "Subject to an Enterprise Bargaining Agreement (EBA)?", type: checkbox, default: false }
+
+  - id: cost_data
+    title: "Cost data sources"
+    body: "Confirm which AU cost regions and indices should be loaded."
+    fields:
+      - { key: cwicr_regions, label: "CWICR regions to preload", type: multiselect, required: true, default: ["Sydney", "Melbourne"], options: ["Sydney", "Melbourne", "Brisbane", "Perth", "Adelaide", "Hobart", "Darwin", "Canberra"] }
+      - { key: rawlinsons_subscription, label: "I have an active Rawlinsons Australian Construction Handbook 2024 subscription", type: checkbox, default: false }
+      - { key: rlb_subscription, label: "I have a Rider Levett Bucknall (RLB) Riders Digest subscription", type: checkbox, default: false }
+      - { key: confirm_gst_rate, label: "Confirm GST rate", type: select, required: true, default: "10% (Australia)", options: ["10% (Australia)", "0% — Project is GST-free / export"] }
+
+  - id: review
+    title: "Review and finish"
+    body: "We will create your first AU project workspace with NCC 2022, AS 1684/3600/4100 and AS 4000 validation, plus Rawlinsons 2024 benchmarks on the dashboard. You can change everything later in Settings."
+    action:
+      label: "Create my Australia workspace"
+      apply:
+        - set_default_currency: AUD
+        - set_tax_template: au_gst_10
+        - enable_rule_packs: [ncc_2022, as_1684_timber, as_3600_concrete, as_4100_steel, as_4000_contracts, rawlinsons_benchmarks]

@@ -1,0 +1,41 @@
+name: CI (PostgreSQL)
+
+# Runs the dedicated PostgreSQL dialect suite (tests/pg) against a real
+# PostgreSQL 16 cluster booted in-process from the pixeltable-pgserver wheel
+# (bundled PG binaries, NO Docker service container). This is the gate that
+# stops PostgreSQL-only regressions (jsonb[] / dialect DDL, JSONB @> operators,
+# case-sensitive LIKE vs ILIKE, UUID round-trips) from shipping untested while
+# SQLite is still the default runtime. The legacy SQLite suite (149 self-built
+# per-file engine fixtures) is NOT yet ported to PG — that is the documented
+# Phase-2 stretch (template-database clone-per-test).
+# See docs/postgres-migration/MASTER_PLAN_pg_embedded.md.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-postgres:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      OE_TEST_DB: pg
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Create empty frontend dist (hatchling force-include)
+        run: |
+          mkdir -p ../frontend/dist
+          touch ../frontend/dist/.gitkeep
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,server]"
+      - name: Run dedicated PostgreSQL dialect suite (embedded PG, no Docker)
+        run: pytest tests/pg -q -p no:cacheprovider

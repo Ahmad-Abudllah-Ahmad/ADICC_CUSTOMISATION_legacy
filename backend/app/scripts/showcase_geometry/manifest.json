@@ -1,0 +1,74 @@
+{
+  "models": [
+    {
+      "model_id": "6eb959f4-4450-4a45-89fc-753f06ba6dbc",
+      "project_id": "0cefc29a-4e20-4287-be24-8ea0c2e4343b",
+      "glb": "arch"
+    },
+    {
+      "model_id": "cdf074f9-95d2-585a-8323-f329d237bafd",
+      "project_id": "0cefc29a-4e20-4287-be24-8ea0c2e4343b",
+      "glb": "struct"
+    },
+    {
+      "model_id": "ae63bd77-2fe4-4928-b4dd-3e77242092c5",
+      "project_id": "24c3ddfb-00db-44f0-b0b8-9d7ad4078cf2",
+      "glb": "arch"
+    },
+    {
+      "model_id": "c5436288-8f71-5d89-95a4-c2a4372a5cb3",
+      "project_id": "24c3ddfb-00db-44f0-b0b8-9d7ad4078cf2",
+      "glb": "struct"
+    },
+    {
+      "model_id": "d0d8a474-39f0-4f7b-ba78-63cf556062c8",
+      "project_id": "311bcdd8-111e-4d41-9e25-c1bdc953d016",
+      "glb": "arch"
+    },
+    {
+      "model_id": "21be18d0-543f-57dd-8fb6-ef4da4b8d811",
+      "project_id": "311bcdd8-111e-4d41-9e25-c1bdc953d016",
+      "glb": "struct"
+    },
+    {
+      "model_id": "e8ee4829-3221-476c-a1c1-28918f9a64f0",
+      "project_id": "6128e9de-cb94-4278-9fbc-d2eeae77b4a6",
+      "glb": "arch"
+    },
+    {
+      "model_id": "4e6a5e95-8cd3-5312-98b5-8df8f27b7bac",
+      "project_id": "6128e9de-cb94-4278-9fbc-d2eeae77b4a6",
+      "glb": "struct"
+    },
+    {
+      "model_id": "ba71b503-22a8-4769-850e-7aa6d971e833",
+      "project_id": "8646ba9e-257d-477b-a3e0-db05b9b40578",
+      "glb": "arch"
+    },
+    {
+      "model_id": "24d6f9b0-7f26-5a7a-9fd7-11bb145788a6",
+      "project_id": "8646ba9e-257d-477b-a3e0-db05b9b40578",
+      "glb": "struct"
+    },
+    {
+      "model_id": "c2bde81f-efeb-488a-97fe-55a5a15c66c3",
+      "project_id": "afe169f9-0e4a-4b2f-b2a6-344f3a7a79c1",
+      "glb": "arch"
+    },
+    {
+      "model_id": "05a9d452-e3f4-52f7-83d6-9f6239fbd7d7",
+      "project_id": "afe169f9-0e4a-4b2f-b2a6-344f3a7a79c1",
+      "glb": "struct"
+    },
+    {
+      "model_id": "b112faa2-c9ba-4a00-bd20-dd31a1addb60",
+      "project_id": "da481707-a571-4367-a7b7-6b5211a912e1",
+      "glb": "arch"
+    },
+    {
+      "model_id": "c8acb9a5-3fff-5719-a2b0-fe7d62a8a21f",
+      "project_id": "da481707-a571-4367-a7b7-6b5211a912e1",
+      "glb": "struct"
+    }
+  ]
+}

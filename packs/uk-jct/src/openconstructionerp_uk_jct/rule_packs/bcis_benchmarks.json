@@ -1,0 +1,19 @@
+{
+  "rule_pack_id": "bcis_benchmarks",
+  "name": "BCIS Cost Benchmarks & Indices",
+  "standard": "BCIS",
+  "jurisdiction": "GB",
+  "description": "Enables OCERP built-in validation rules that compare project cost-per-m2 (GIFA) and elemental cost ratios against current BCIS (Building Cost Information Service, RICS) averages and apply the BCIS Tender Price Index (TPIRC) and Location Factor for regional adjustment. Flags outliers against the 5th / 95th percentile bands.",
+  "enables_rule_ids": [
+    "bcis.cost_per_m2_within_band",
+    "bcis.element_ratio_within_band",
+    "bcis.location_factor_applied",
+    "bcis.tender_price_index_current",
+    "bcis.general_building_cost_index_applied",
+    "bcis.gifa_method_consistent",
+    "bcis.benchmark_source_referenced",
+    "bcis.outlier_flag_against_percentile_5",
+    "bcis.outlier_flag_against_percentile_95",
+    "bcis.subscription_status_verified"
+  ]
+}

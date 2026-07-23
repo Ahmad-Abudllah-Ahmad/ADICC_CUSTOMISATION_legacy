@@ -1,0 +1,16 @@
+{
+  "bcf": {
+    "topic_not_found": "Тема не найдена",
+    "comment_not_found": "Комментарий не найден",
+    "viewpoint_not_found": "Точка обзора не найдена",
+    "snapshot_not_found": "Снимок не найден",
+    "version_unsupported": "Неподдерживаемая версия BCF '{version}'. Поддерживаются: {supported}.",
+    "upload_read_failed": "Не удалось прочитать загруженный файл",
+    "upload_empty": "Загруженный файл пуст",
+    "upload_too_large": "Загруженный архив слишком большой",
+    "archive_invalid": "Загруженный файл не является корректным архивом .bcfzip",
+    "import_passed": "Импорт успешно завершён",
+    "import_warnings": "Импорт завершён с предупреждениями",
+    "import_errors": "Импорт не выполнен - подробности в списке проблем"
+  }
+}

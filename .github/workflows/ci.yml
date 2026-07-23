@@ -1,0 +1,371 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+jobs:
+  version-sync:
+    name: Version Sync Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Verify backend/frontend version literals match
+        # Catches the drift that silently shipped v1.3.32 → v1.4.2 with
+        # backend/pyproject.toml stuck at 1.3.31 (so /api/health lied
+        # about the running version for 4 minor releases). The script
+        # also flags CHANGELOG.md and the in-app Changelog.tsx if their
+        # top entry doesn't match the source-of-truth backend version.
+        run: python scripts/check_version_sync.py
+
+  brand-check:
+    name: Brand Token Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Verify no competitor or vendor brand token leaked in
+        # Enforces the brand rule automatically so it never depends on a
+        # reviewer remembering: no competitor or vendor product name in
+        # code, UI strings, changelog, or docs. The script stores only
+        # SHA-256 hashes of the brand tokens (the denylist itself is
+        # brand-free) and permits a small reviewed set of functional
+        # interop names via scripts/brand_token_allowlist.txt.
+        run: python scripts/check_no_brand_tokens.py
+
+  backend:
+    name: Backend CI (shard ${{ matrix.shard }}/6)
+    runs-on: ubuntu-latest
+    # The unit tree has ~6300 tests and most of them touch the shared
+    # PostgreSQL, so run serially it blew past even the doubled 120 minute
+    # budget and was cancelled on every push (no green Backend CI since the
+    # unit gate landed). pytest-split fans the collected tree across six matrix
+    # shards, each on its own runner with its own throwaway PostgreSQL service,
+    # so there is no cross-shard database contention and every shard finishes
+    # well inside the cap. The integration tree still runs nightly in
+    # ci-full.yml.
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6]
+    defaults:
+      run:
+        working-directory: backend
+
+    # The app is PostgreSQL-only at runtime, so the test suite runs against a
+    # real PostgreSQL 16 service. conftest honours an already-set DATABASE_URL
+    # (this service) and only boots an embedded cluster when none is provided.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: oe
+          POSTGRES_PASSWORD: oe
+          POSTGRES_DB: openconstructionerp_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U oe -d openconstructionerp_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+
+      - name: Create empty frontend dist (hatchling force-include)
+        # The backend wheel pulls in ../frontend/dist via force-include so a
+        # production install bundles the SPA. CI runs the backend job in
+        # parallel with the frontend job, so the dist directory may not exist
+        # yet - create an empty placeholder so the editable install succeeds.
+        run: |
+          mkdir -p ../frontend/dist
+          touch ../frontend/dist/.gitkeep
+
+      - name: Install dependencies
+        run: pip install -e ".[dev]"
+
+      - name: Lint with ruff
+        run: ruff check .
+
+      - name: Check formatting with ruff
+        run: ruff format --check .
+
+      - name: Run unit tests with pytest
+        # Point the suite at the postgres:16 service. conftest sees DATABASE_URL
+        # is already set and uses it instead of booting an embedded cluster.
+        # Only this shard's slice of tests/unit runs here: pytest-split
+        # partitions the collected tree deterministically across --splits so
+        # every test runs in exactly one shard and the union is the whole unit
+        # tree. The per-test --timeout matches the nightly so a single hung test
+        # becomes a reported failure instead of a silent 90 minute stall. The
+        # full integration tree runs nightly in ci-full.yml.
+        env:
+          DATABASE_URL: postgresql+asyncpg://oe:oe@localhost:5432/openconstructionerp_test
+          DATABASE_SYNC_URL: postgresql+psycopg2://oe:oe@localhost:5432/openconstructionerp_test
+        run: >-
+          pytest tests/unit -q -ra --durations=25
+          --timeout=300 --timeout-method=signal
+          --splits 6 --group ${{ matrix.shard }}
+
+  backend-gate:
+    name: Backend CI
+    # One stable status check that is green only when every backend shard
+    # passed. Keeps a single "Backend CI" check for branch protection and
+    # at-a-glance status while the work is fanned across the shard matrix above.
+    needs: [backend]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require all backend shards to pass
+        run: |
+          if [ "${{ needs.backend.result }}" != "success" ]; then
+            echo "Backend shards did not all pass: ${{ needs.backend.result }}"
+            exit 1
+          fi
+          echo "All backend shards passed."
+
+  tenant-isolation:
+    name: Tenant Isolation / IDOR
+    # Cross-tenant + IDOR (Insecure Direct Object Reference) regressions are the
+    # highest-severity bug class in a multi-tenant app: one missing
+    # verify_project_access / tenant_id filter leaks another customer's data.
+    # The bulk of the isolation suite lives under tests/integration and
+    # tests/modules, which the sharded Backend CI above does NOT run (it runs
+    # only tests/unit) - so until now those tests gated merges only nightly in
+    # ci-full.yml. This dedicated job runs JUST the isolation + IDOR selection on
+    # every PR against a throwaway PostgreSQL 16 service, so a cross-tenant leak
+    # blocks the merge instead of surfacing the next morning. It is fast because
+    # it collects only the security selection, not the whole integration tree.
+    runs-on: ubuntu-latest
+    # The isolation + IDOR selection legitimately runs 28 to 30 minutes on the
+    # shared runners, so a 30 minute cap was cancelling otherwise green runs.
+    # 45 gives headroom as the suite grows with each new module.
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: backend
+
+    # Same postgres:16 service the Backend CI shards use. conftest honours an
+    # already-set DATABASE_URL (this service) and only boots an embedded cluster
+    # when none is provided, so pointing DATABASE_URL here keeps the tests off
+    # the slower embedded-PG path.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: oe
+          POSTGRES_PASSWORD: oe
+          POSTGRES_DB: openconstructionerp_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U oe -d openconstructionerp_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+
+      - name: Create empty frontend dist (hatchling force-include)
+        # Mirrors the Backend CI job: the editable install force-includes
+        # ../frontend/dist, which may not exist yet in this parallel job.
+        run: |
+          mkdir -p ../frontend/dist
+          touch ../frontend/dist/.gitkeep
+
+      - name: Install dependencies
+        run: pip install -e ".[dev]"
+
+      - name: Run tenant-isolation + IDOR suite
+        # Collect ONLY the cross-tenant / IDOR selection from the integration and
+        # module trees (the unit-level *_idor.py / tenant-scope guards already
+        # run in the sharded Backend CI). The -k filter matches the node id, so
+        # the filename keywords (idor / isolation / tenant / authz) pick exactly
+        # the security suite. --timeout matches the nightly so a hung test fails
+        # loud instead of stalling the cap.
+        env:
+          DATABASE_URL: postgresql+asyncpg://oe:oe@localhost:5432/openconstructionerp_test
+          DATABASE_SYNC_URL: postgresql+psycopg2://oe:oe@localhost:5432/openconstructionerp_test
+        run: >-
+          pytest tests/integration tests/modules -q -ra
+          --timeout=300 --timeout-method=signal
+          -k "idor or isolation or tenant or authz"
+
+  zero-width-guard:
+    name: Block zero-width Unicode characters
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Scan frontend/src and marketing-site
+        # Zero-width and bidi-isolate Unicode characters embedded in
+        # i18n defaultValue strings crashed React reconciliation on
+        # /contracts when Google Translate mutated the DOM (task #135 /
+        # R6). The fix stripped 9000+ occurrences across 363 files; this
+        # guard blocks reintroduction. ESLint catches them inside .ts/
+        # .tsx files via no-irregular-whitespace, but ESLint does not
+        # cover U+2066-U+2069 (bidi isolates) and is not run on
+        # .md/.html/.py — so we also grep here.
+        run: |
+          set +e
+          grep -rP '[\x{200B}-\x{200F}\x{2060}-\x{2064}\x{2066}-\x{2069}\x{FEFF}]' \
+            --include='*.ts' --include='*.tsx' --include='*.js' --include='*.jsx' \
+            --include='*.css' --include='*.html' --include='*.md' --include='*.py' \
+            --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=build \
+            frontend/src/ marketing-site/ 2>/dev/null \
+            | grep -v 'frontend/src/app/locales/ar.ts'
+          rc=$?
+          if [ $rc -eq 0 ]; then
+            echo "::error::Zero-width Unicode characters found — strip them with python scripts/strip_zero_width.py"
+            exit 1
+          fi
+          exit 0
+
+  frontend:
+    name: Frontend CI (${{ matrix.os }})
+    # The SPA is developed on Windows, built on Linux for the wheel, and bundled
+    # into desktop installers for all three OSes, so lint, type-check, build and
+    # the unit tests run on every OS. This catches the path-separator,
+    # case-sensitivity and CRLF class of breakage before it reaches a
+    # contributor or a desktop build, instead of only on the Linux runner.
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        # tsc crossed Node's default heap on 2026-06-06 ("Reached heap limit
+        # Allocation failed"), same growth the Build step hit earlier. Give it
+        # the same 6 GB old-space ceiling.
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
+        run: npm run typecheck
+
+      - name: Build
+        # Vite/Rollup now needs more than Node's default ~4 GB heap (exit 134,
+        # "JavaScript heap out of memory"). Lift the old-space ceiling to 6 GB.
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
+        run: npm run build
+
+      - name: Run tests
+        run: npm run test
+
+  backend-cross-os:
+    name: Backend CI (${{ matrix.os }}, embedded PG, shard ${{ matrix.shard }}/3)
+    # GitHub Actions service containers are Linux-only, so the Windows and macOS
+    # runners cannot use the postgres:16 service the Linux shards rely on. They
+    # boot the SAME embedded PostgreSQL the desktop app and self-hosted installs
+    # ship with (pixeltable-pgserver, no Docker) - conftest starts it
+    # automatically when DATABASE_URL is unset. That is exactly the path a
+    # Windows or macOS user runs, so this gates the desktop and self-hosted build
+    # on every push. e2e-cross-os.yml already proves the embedded cluster boots
+    # on these runners.
+    runs-on: ${{ matrix.os }}
+    # Advisory during rollout: the unit tree has never run on Windows or macOS
+    # before, so it reports on every push (that is the point - maximum quality
+    # signal on every change) but does not block while first-time OS-specific
+    # gaps are shaken out. Remove this line to make it a hard gate once it is
+    # consistently green.
+    continue-on-error: true
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+        shard: [1, 2, 3]
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+
+      - name: Create empty frontend dist (hatchling force-include)
+        # mkdir -p / touch are POSIX; force the Git Bash shell so this step
+        # behaves the same on the Windows runner (default there is PowerShell).
+        shell: bash
+        run: |
+          mkdir -p ../frontend/dist
+          touch ../frontend/dist/.gitkeep
+
+      - name: Install dependencies
+        # The embedded PostgreSQL server (pixeltable-pgserver) is a base
+        # dependency, so [dev] alone is enough to boot it and run the suite -
+        # the same install the Linux shards use.
+        run: pip install -e ".[dev]"
+
+      - name: Run unit tests with pytest (embedded PostgreSQL)
+        # No DATABASE_URL is set on purpose: conftest boots the embedded
+        # pixeltable-pgserver cluster, the same one the desktop app uses, instead
+        # of a Docker service. The unit tree is fanned across 3 shards per OS so
+        # each finishes inside the cap. --timeout-method=thread because the
+        # signal method uses SIGALRM, which does not exist on Windows.
+        run: >-
+          pytest tests/unit -q -ra --durations=25
+          --timeout=300 --timeout-method=thread
+          --splits 3 --group ${{ matrix.shard }}

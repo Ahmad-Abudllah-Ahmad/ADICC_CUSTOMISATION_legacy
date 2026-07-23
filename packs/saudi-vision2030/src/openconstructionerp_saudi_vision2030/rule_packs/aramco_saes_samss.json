@@ -1,0 +1,38 @@
+{
+  "rule_pack_id": "aramco_saes_samss",
+  "name": "Saudi Aramco SAES / SAMSS / GES — Engineering & Materials",
+  "name_ar": "أرامكو السعودية SAES / SAMSS / GES — الهندسة والمواد",
+  "standard": "Saudi Aramco Engineering Standards (SAES) + Saudi Aramco Materials System Specifications (SAMSS) + General Engineering Standards (GES)",
+  "jurisdiction": "SA-ARAMCO",
+  "regulator": "Saudi Aramco Engineering Services (Standards Department)",
+  "publication_year": 2024,
+  "applies_to": ["projects", "boq", "validation", "submittals", "materials"],
+  "description": "Enables OCERP built-in validation rules for any Aramco-owned facility project (refineries, gas plants, NGL, GOSPs, RT&D, JCP, JCC, JV ventures). Verifies that BOQ positions and material submittals cite the correct SAES (engineering practices: SAES-A general / B safety / D static equipment / E rotating / G machinery / H instrumentation / J electrical / L piping / M civil-structural / N coatings / O communications / P offsite / Q tanks / S sanitary / T plant utilities / W welding / X painting / Z drawings), SAMSS (Materials System Specifications by family — line pipe 01, valves 005-068, fittings 035, etc.), and GES references (General Engineering Standards). Also enforces 9COM Schedule Q vendor pre-qualification, MIR (Material Inspection Report) workflow, IKTVA (In-Kingdom Total Value Add) score disclosure, and SAP-Ariba PR/PO references where applicable.",
+  "description_ar": "تفعيل قواعد التحقق لمشاريع منشآت أرامكو — الإحالة إلى SAES و SAMSS و GES، ومتطلبات تأهيل المورد 9COM Schedule Q، وتقارير فحص المواد MIR، ودرجة إكتفاء IKTVA.",
+  "severity_overrides": {
+    "aramco.saes_citation_per_discipline": "ERROR",
+    "aramco.samss_material_spec_referenced": "ERROR",
+    "aramco.mir_required_for_critical_material": "ERROR"
+  },
+  "enables_rule_ids": [
+    "aramco.saes_citation_per_discipline",
+    "aramco.saes_a_general_referenced",
+    "aramco.saes_l_piping_referenced",
+    "aramco.saes_m_civil_structural_referenced",
+    "aramco.saes_p_offsite_referenced",
+    "aramco.saes_q_tanks_referenced",
+    "aramco.saes_w_welding_referenced",
+    "aramco.saes_x_painting_referenced",
+    "aramco.samss_material_spec_referenced",
+    "aramco.samss_line_pipe_01_for_pipe_items",
+    "aramco.samss_valves_005_068_for_valve_items",
+    "aramco.ges_general_engineering_referenced",
+    "aramco.9com_schedule_q_complete",
+    "aramco.9cosp_vendor_pre_qualification_present",
+    "aramco.mir_required_for_critical_material",
+    "aramco.iktva_score_disclosed",
+    "aramco.sap_ariba_pr_po_referenced",
+    "aramco.deviation_request_format_compliant",
+    "aramco.welding_procedure_specification_wps_attached"
+  ]
+}

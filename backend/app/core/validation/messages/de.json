@@ -1,0 +1,406 @@
+{
+  "common": {
+    "ok": "OK"
+  },
+  "field_time": {
+    "hours_per_day_max": {
+      "fail": "Arbeiter {worker} ist an diesem Tag mit {hours} h gebucht, über dem Limit von {max} h",
+      "suggestion": "Die Stunden vor dem Einreichen auf den richtigen Tag oder Arbeiter aufteilen"
+    },
+    "line_complete": {
+      "fail": "Zeile {line} ist unvollständig: {reason}",
+      "labour_xor_plant": "muss entweder Lohn oder Gerät buchen, nicht beides und nicht keines",
+      "hours_positive": "Stunden müssen größer als null sein",
+      "cost_code_required": "ein Kostencode ist erforderlich",
+      "suggestion": "Die Zeile vor dem Einreichen des Stundenzettels vervollständigen"
+    },
+    "cost_code_resolves": {
+      "fail": "Zeile {line} Code '{code}' passt zu keiner LV-Position oder WBS in diesem Projekt",
+      "suggestion": "Einen Kostencode oder eine WBS wählen, die im Projekt-LV vorhanden ist"
+    },
+    "daywork_needs_variation": {
+      "fail": "Regiezeile {line} ist keiner offenen Nachtragsanordnung zugeordnet",
+      "suggestion": "Die Regiearbeit mit der beauftragten Nachtragsanordnung verknüpfen"
+    },
+    "plant_needs_equipment": {
+      "fail": "Gerätezeile {line} nennt kein Gerät",
+      "suggestion": "Das Gerät zuordnen, damit Gerätestunden kalkuliert werden können"
+    },
+    "approved_immutable": {
+      "fail": "Dieser Stundenzettel ist {status} und kann nicht bearbeitet werden",
+      "suggestion": "Einen stornierenden Stundenzettel buchen, um genehmigte Stunden zu korrigieren"
+    }
+  },
+  "ai_takeoff": {
+    "scale_sanity": {
+      "fail": "Der von der KI erkannte Maßstab ergibt eine unplausible Blattbreite von {span} m",
+      "suggestion": "Maßstab vor der Nutzung von KI-Flächen manuell neu kalibrieren"
+    },
+    "polygon_self_intersection": {
+      "fail": "Vorgeschlagener Raum '{name}' hat einen sich selbst schneidenden Umriss",
+      "suggestion": "Diesen Raum vor dem Übernehmen als einfaches (nicht kreuzendes) Polygon neu zeichnen"
+    },
+    "low_confidence_review": {
+      "fail": "Vorgeschlagenes Element '{name}' hat eine niedrige Konfidenz ({confidence})",
+      "suggestion": "Diesen KI-Vorschlag sorgfältig prüfen und vor dem Übernehmen mit der Zeichnung abgleichen"
+    }
+  },
+  "boq_quality": {
+    "position_has_quantity": {
+      "fail": "Position {ordinal} darf keine Menge von Null oder fehlende Menge haben",
+      "suggestion": "Bitte eine Menge größer als 0 eintragen"
+    },
+    "position_has_unit_rate": {
+      "fail": "Position {ordinal} sollte einen Einheitspreis zugewiesen bekommen",
+      "suggestion": "Preis aus der Kostendatenbank übernehmen"
+    },
+    "position_has_description": {
+      "fail": "Position {ordinal} darf keine leere Beschreibung haben"
+    },
+    "no_duplicate_ordinals": {
+      "fail": "Doppelte Ordnungszahl '{ordinal}' in {count} Positionen gefunden"
+    },
+    "unit_rate_in_range": {
+      "fail": "Position {ordinal}: Preis {rate} ist >{threshold} (5-facher Median)",
+      "suggestion": "Diesen Einheitspreis prüfen - er ist ungewöhnlich hoch"
+    },
+    "negative_values": {
+      "fail": "Position {ordinal} enthält negative Werte: {details}",
+      "suggestion": "Negative Werte korrigieren - positive Zahlen verwenden"
+    },
+    "unrealistic_rate": {
+      "fail": "Position {ordinal}: {details}",
+      "suggestion": "Diesen Wert prüfen - er wirkt unrealistisch hoch"
+    },
+    "total_mismatch": {
+      "fail": "Position {ordinal}: berechnet {computed} != gespeichert {stored} (Differenz={diff})",
+      "suggestion": "Gesamtbetrag neu berechnen = Menge × Einheitspreis"
+    },
+    "resource_split_mismatch": {
+      "fail": "Position {ordinal}: Ressourcen-Zwischensumme {subtotal} weicht um {diff} vom Einheitspreis {rate} ab",
+      "suggestion": "Mengen und Preise der Ressourcen prüfen - ihre Summe pro Einheit sollte dem Einheitspreis der Position entsprechen"
+    },
+    "empty_unit": {
+      "fail": "Position {ordinal} hat keine oder eine leere Einheit",
+      "suggestion": "Eine Mengeneinheit zuweisen (m, m2, m3, kg, Stk, Pauschale usw.)"
+    },
+    "section_without_items": {
+      "fail": "Abschnitt {ordinal} ({title}) enthält keine untergeordneten Positionen",
+      "suggestion": "Positionen unter diesem Abschnitt ergänzen oder den leeren Abschnitt entfernen"
+    },
+    "rate_vs_benchmark": {
+      "fail": "Position {ordinal}: Einheitspreis {rate}/{unit} überschreitet Benchmark-Schwellenwert {threshold}/{unit} - möglicherweise unrealistisch",
+      "suggestion": "Preis prüfen - übliche Preise für {unit} liegen unter {threshold}. Einheit bzw. Dezimalstellen kontrollieren."
+    },
+    "lump_sum_ratio": {
+      "fail": "{lsum_count} von {total_count} Positionen ({percent}) sind Pauschalen - überschreitet {threshold}-Schwelle",
+      "suggestion": "Pauschalen in messbare Mengen aufteilen (m, m2, m3, kg, Stk) für genauere Kalkulation"
+    },
+    "cost_concentration": {
+      "fail": "Position {ordinal} entspricht {share} der Gesamtkosten ({value} von {grand_total}) - überschreitet {threshold}-Schwelle",
+      "suggestion": "Position in kleinere Elemente aufteilen oder Kosten prüfen - eine einzelne Position sollte den Voranschlag nicht dominieren"
+    },
+    "currency_consistency": {
+      "fail": "Unterschiedliche Währungen gefunden: {currencies}",
+      "suggestion": "Durchgängig eine einheitliche Währung verwenden"
+    },
+    "measurement_consistency": {
+      "fail": "LV vermischt metrische und imperiale Einheiten - einheitliches System verwenden",
+      "suggestion": "Alle Mengen entweder in metrische oder imperiale Einheiten umrechnen"
+    },
+    "revision_cost_impact_review": {
+      "fail": "Die Kostenauswirkung der Revision von {amount} ist noch nicht als Nachtrag erfasst",
+      "suggestion": "Aus diesem Revisionsvergleich einen Nachtragsentwurf erstellen, um die Kostenänderung zu erfassen"
+    }
+  },
+  "din276": {
+    "cost_group_required": {
+      "fail": "Position {ordinal} hat keine DIN 276-Kostengruppe",
+      "suggestion": "Dreistellige DIN 276-Kostengruppe zuweisen (z.B. 330 für Wände)"
+    },
+    "valid_cost_group": {
+      "fail": "Ungültiger DIN 276-Code '{code}' in Position {ordinal}"
+    },
+    "hierarchy": {
+      "fail": "Position {ordinal}: KG {child} liegt nicht unter Eltern-KG {parent} (erwarteter Präfix '{prefix}')",
+      "suggestion": "Position in die korrekte Eltern-KG verschieben oder KG-Code an die Hierarchie anpassen ({prefix}xx)"
+    },
+    "completeness": {
+      "fail": "KG-Gruppe {group} - {group_name} fehlt im LV",
+      "suggestion": "Positionen für KG {group} ({group_name}) ergänzen, um vollständige Abdeckung zu gewährleisten"
+    }
+  },
+  "gaeb": {
+    "ordinal_format": {
+      "fail": "Ordnungszahl '{ordinal}' entspricht nicht der OZ-Maske dieser Datei",
+      "suggestion": "Die OZ-Maske der Datei verwenden, z.B. 001.001.0010 oder 01.02.0030"
+    },
+    "lv_structure": {
+      "fail": "Position {ordinal}: Endposition ohne übergeordneten Abschnitt - GAEB-LV-Hierarchie erfordert eine Leistungsgruppe als Elternteil",
+      "suggestion": "Position einem übergeordneten Abschnitt zuweisen (Leistungsgruppe / Titel)"
+    },
+    "einheitspreis_sanity": {
+      "negative": "Position {ordinal}: Einheitspreis {rate} ist negativ (Einheit='{unit}') - ein negativer Preis kann in GAEB nicht übertragen werden",
+      "zero": "Position {ordinal}: Einheitspreis ist 0,00 (Einheit='{unit}') - bitte bestätigen, dass es sich um einen angebotenen Nullpreis und nicht um einen fehlenden Preis handelt",
+      "suggestion": "Positiven Einheitspreis angeben oder Position als Bedarfsposition (optionaler Umfang) bzw. Pauschale kennzeichnen (Einheit='lsum')"
+    },
+    "trade_section_code": {
+      "fail": "Übergeordneter Abschnitt '{ordinal}' hat keinen GAEB-Leistungsbereich-Code (erwarteter 3-stelliger Gewerkecode, z.B. '012')",
+      "suggestion": "Dem Abschnitt einen 3-stelligen Leistungsbereich-Code hinzufügen - z.B. '012' für Erdarbeiten, '013' für Mauerarbeiten"
+    },
+    "quantity_decimals": {
+      "fail": "Position {ordinal}: Menge {quantity} hat {decimals} Nachkommastellen - GAEB X83 erlaubt maximal 3",
+      "suggestion": "Menge auf maximal 3 Nachkommastellen runden gemäß GAEB X83"
+    }
+  },
+  "nrm": {
+    "classification_required": {
+      "fail": "Position {ordinal} hat keinen NRM-Elementcode",
+      "suggestion": "Einen NRM 1/2-Elementcode zuweisen (z.B. 2.6.1 für Außenwände)"
+    },
+    "valid_element": {
+      "fail": "Ungültiger NRM-Code '{code}' in Position {ordinal}"
+    },
+    "completeness": {
+      "fail": "NRM-Gruppe {group} - {group_name} fehlt im LV",
+      "suggestion": "Positionen für NRM-Gruppe {group} ({group_name}) ergänzen"
+    }
+  },
+  "masterformat": {
+    "classification_required": {
+      "fail": "Position {ordinal} hat keinen MasterFormat-Code",
+      "suggestion": "MasterFormat-Code zuweisen (z.B. 03 30 00 für Ortbeton)"
+    },
+    "valid_division": {
+      "fail": "Ungültiger MasterFormat-Code '{code}' in Position {ordinal}",
+      "suggestion": "6-stelliges MasterFormat-Format verwenden: XX XX XX (z.B. 03 30 00)"
+    },
+    "completeness": {
+      "fail": "Division {division} - {division_name} fehlt im LV",
+      "suggestion": "Positionen für Division {division} ({division_name}) ergänzen"
+    }
+  },
+  "sinapi": {
+    "code_required": {
+      "fail": "Position {ordinal} hat keinen SINAPI-Code",
+      "suggestion": "SINAPI-Kompositionscode zuweisen (z.B. 87878 für Beton C30)"
+    },
+    "valid_code": {
+      "fail": "Ungültiger SINAPI-Code '{code}' in Position {ordinal}"
+    }
+  },
+  "nbr": {
+    "classification_required": {
+      "fail": "Position {ordinal} ohne NBR 12721 Abschnitt",
+      "suggestion": "Position einem NBR 12721 Abschnitt zuordnen (S1..S11)"
+    },
+    "valid_section": {
+      "fail": "NBR 12721 Abschnitt '{code}' in Position {ordinal} ist nicht S1..S11",
+      "suggestion": "Codes S1 bis S11 verwenden (z.B. S3 für Tragwerk)"
+    }
+  },
+  "gesn": {
+    "code_required": {
+      "fail": "Position {ordinal} hat keinen ГЭСН/ФЕР-Code",
+      "suggestion": "ГЭСН-Code zuweisen (z.B. 06-01-001-01 für Beton)"
+    },
+    "valid_code": {
+      "fail": "ГЭСН-Code '{code}' entspricht nicht dem Format XX-XX-XXX-XX",
+      "suggestion": "Format verwenden: NN-NN-NNN-NN (z.B. 06-01-001-01)"
+    }
+  },
+  "dpgf": {
+    "lot_required": {
+      "fail": "Position {ordinal} ist keinem Lot technique zugeordnet",
+      "suggestion": "Ein Lot technique zuweisen (z.B. Lot 01 Gros Œuvre)"
+    },
+    "pricing_complete": {
+      "fail": "Nur {priced}/{total} Positionen ({percent}) sind bepreist - unter 80%-Schwelle",
+      "suggestion": "Bepreisung aller Positionen vor der DPGF-Einreichung abschließen"
+    }
+  },
+  "onorm": {
+    "position_format": {
+      "fail": "Ordnungszahl '{ordinal}' entspricht nicht dem ÖNORM-Format XX.XX.XXXXA",
+      "suggestion": "ÖNORM B 2063-Format verwenden (z.B. 01.02.01A)"
+    },
+    "description_length": {
+      "fail": "Position {ordinal}: Beschreibung zu kurz ({length} Zeichen, min. 20)",
+      "suggestion": "Beschreibung gemäß ÖNORM B 2063 ausführlicher gestalten"
+    }
+  },
+  "gbt50500": {
+    "code_required": {
+      "fail": "Position {ordinal} hat keinen GB/T 50500-Code",
+      "suggestion": "9-stelligen GB/T 50500-Code zuweisen (z.B. 010101001)"
+    },
+    "valid_code": {
+      "fail": "Ungültiger GB/T 50500-Code '{code}' - erwartet 9 oder 12 Stellen"
+    }
+  },
+  "cpwd": {
+    "code_required": {
+      "fail": "Position {ordinal} hat keinen CPWD/DSR-Code",
+      "suggestion": "CPWD-DSR-Positionsreferenz zuweisen (z.B. 4.1.1)"
+    },
+    "measurement_units": {
+      "fail": "Einheit '{unit}' in Position {ordinal} ist nicht IS-1200-konform",
+      "suggestion": "Standard-IS-1200-Einheiten verwenden: m, m2, m3, kg, nos, rm usw."
+    }
+  },
+  "birimfiyat": {
+    "code_required": {
+      "fail": "Position {ordinal} hat keine birim-fiyat-Positionsnummer",
+      "suggestion": "Bayındırlık-Positionsnummer zuweisen (z.B. 04.013/1)"
+    },
+    "valid_poz": {
+      "fail": "Poz '{code}' entspricht nicht dem Format XX.XXX/X",
+      "suggestion": "Format verwenden: NN.NNN oder NN.NNN/N (z.B. 04.013/1)"
+    }
+  },
+  "sekisan": {
+    "code_required": {
+      "fail": "Position {ordinal} hat keinen 積算-Code",
+      "suggestion": "Einen 積算基準-Positionscode zuweisen"
+    },
+    "metric_units": {
+      "fail": "Einheit '{unit}' in Position {ordinal} ist nicht standardkonform",
+      "suggestion": "Standard-Metrikeinheiten verwenden: m, m2, m3, kg, t, 式 usw."
+    }
+  },
+  "bc3": {
+    "code_required": {
+      "fail": "Position {ordinal} ohne FIEBDC-3-Konzeptcode",
+      "suggestion": "FIEBDC-3-Code vergeben (z. B. E04CM040 oder 01.02.01)"
+    },
+    "valid_code": {
+      "fail": "Ungültiger FIEBDC-3-Code '{code}' in Position {ordinal}",
+      "suggestion": "FIEBDC-3-Format verwenden: alphanumerisch (z. B. E04CM040, 01.02.01, CAP01#)"
+    }
+  },
+  "mexico": {
+    "apu_completeness": {
+      "fail": "Position {ordinal} hat eine unvollständige APU; fehlende Kostenbestandteile: {missing}",
+      "suggestion": "Ergänzen Sie die fehlenden Bestandteile der direkten Kosten (mano de obra, materiales, maquinaria) in der Einheitspreisanalyse"
+    },
+    "iva_rate_valid": {
+      "fail": "Position {ordinal} hat einen ungültigen IVA-Satz {rate}; der mexikanische IVA beträgt 16, 8 (Grenzregion) oder 0 Prozent",
+      "suggestion": "Setzen Sie den IVA-Satz auf 16 Prozent (Standard), 8 Prozent (Grenzregion) oder 0 Prozent"
+    },
+    "subcontract_retencion": {
+      "fail": "Die Subunternehmer-Position {ordinal} gibt nicht an, ob IVA/ISR-Einbehalte (retenciones) gelten",
+      "suggestion": "Erfassen Sie die IVA- und ISR-Einbehalte für die Subunternehmer-Zeile oder vermerken Sie, dass keine gelten"
+    },
+    "cfdi_rfc_present": {
+      "missing": "Die CFDI-Ausstellerdaten sind für den Angebotsexport unvollständig; fehlend: {missing}",
+      "invalid_rfc": "RFC '{rfc}' ist kein gültiger CFDI-RFC (12 Zeichen für ein Unternehmen, 13 für eine Einzelperson)",
+      "suggestion": "Hinterlegen Sie RFC, regimen fiscal und uso CFDI des Ausstellers im Projektprofil für die CFDI-4.0-Rechnungsstellung"
+    }
+  },
+  "pipeline": {
+    "side_effecting_requires_gate": {
+      "fail": "Schreibende Knoten ohne Gate: {nodes}",
+      "suggestion": "Füge auf jedem Pfad von einem Trigger-/KI-Knoten zu jedem Schreibknoten ein Validierungs- oder Freigabe-Gate hinzu, bevor du veröffentlichst."
+    }
+  },
+  "property_dev": {
+    "escrow_account_required": {
+      "fail": "Bauträgerprojekt benötigt ein aktives Treuhandkonto für Regulator '{regulator}'",
+      "suggestion": "Eröffne ein Treuhandkonto bei der regulator-lizenzierten Bank unter Compliance → Treuhandkonten"
+    },
+    "escrow_iban_valid": {
+      "fail": "Treuhandkonto {account}: IBAN '{iban}' besteht ISO 13616-Strukturprüfung nicht",
+      "suggestion": "IBAN korrigieren: Ländercode + Länge + Prüfsumme müssen ISO 13616 entsprechen"
+    },
+    "escrow_balance_reconciled": {
+      "fail": "Treuhandkonto {account}: Buchsaldo {ledger} weicht um {drift} von der Transaktionssumme ({transactions} Buchungen) ab",
+      "suggestion": "Treuhandkonto abstimmen - unverbuchte Eingänge oder fehlende Lastschriften prüfen"
+    },
+    "sales_contract_party_ownership_sums_to_100": {
+      "fail": "Vertrag {contract}: Eigentumsanteile summieren sich auf {total}% (Soll: exakt 100%)",
+      "suggestion": "Parteienanteile so anpassen, dass die Summe 100,00% ergibt"
+    },
+    "payment_schedule_instalments_sum_to_contract_value": {
+      "fail": "Vertrag {contract}: Ratensumme {instalments} weicht vom Vertragswert {contract_value} ab (Differenz {drift})",
+      "suggestion": "Zahlungsplan neu ausgleichen, damit Ratensumme dem Vertragstotal entspricht"
+    },
+    "reservation_expiry_in_future": {
+      "fail": "Reservierung {reservation}: expires_at {expires} liegt nicht in der Zukunft",
+      "suggestion": "Reservierung verlängern oder in expired/cancelled überführen"
+    },
+    "broker_commission_rate_within_bounds": {
+      "fail": "Provisionsvereinbarung {agreement}: {issue}",
+      "suggestion": "Prozentsatz zwischen 0,1% und 15%, Pauschalbetrag oder nicht-leere Staffelliste verwenden"
+    },
+    "price_matrix_no_negative_modifier": {
+      "fail": "Preismatrix {matrix}: Regel '{factor}' Multiplikator {multiplier} außerhalb [-0,50; 2,00]",
+      "suggestion": "Modifikatoren auf -50% bis +200% begrenzen, um unrealistische Preise zu vermeiden"
+    }
+  },
+  "schedule_quality": {
+    "open_ends": {
+      "fail": "Vorgang '{activity}' hat keine {ends}-Verknuepfung (offenes Ende / haengender Vorgang)",
+      "both": "Vorgaenger- oder Nachfolger",
+      "predecessor": "Vorgaenger",
+      "successor": "Nachfolger",
+      "suggestion": "Den Vorgang mit Vorgaenger und Nachfolger ins Netz einbinden oder als Start-/Endmeilenstein kennzeichnen"
+    },
+    "negative_lag": {
+      "fail": "Beziehung {predecessor} -> {successor} nutzt negative Pufferzeit ({lag} Tage), also einen Vorlauf, der den kritischen Pfad verzerrt",
+      "suggestion": "Den Vorlauf durch einen eigenen Vorgang oder eine SS/FF-Beziehung ersetzen, damit die Abfolge nachvollziehbar bleibt"
+    },
+    "excessive_lag": {
+      "fail": "Beziehung {predecessor} -> {successor} hat eine Pufferzeit von {lag} Tagen, ueber dem Schwellwert von {threshold} Tagen",
+      "suggestion": "Die Wartezeit als eigenen Vorgang abbilden (Beschaffung, Aushaertung, Freigabe), damit sie einen Status tragen kann"
+    },
+    "hard_constraints": {
+      "fail": "Vorgang '{activity}' hat eine feste Terminvorgabe ({constraint}), die die Netzplanlogik ueberschreibt",
+      "suggestion": "Eine weiche Vorgabe (Anfang-nicht-frueher-als) nutzen oder den Termin ueber Logik steuern, damit der Vorgang bei Verzug mitwandert"
+    },
+    "negative_float": {
+      "fail": "Vorgang '{activity}' hat negativen Gesamtpuffer ({float} Tage), der Terminplan ist so nicht haltbar",
+      "suggestion": "Ablauf neu ordnen, eine feste Vorgabe loesen oder einen dokumentierten Aufholplan ergaenzen, bis der Puffer wieder bei null oder darueber liegt"
+    },
+    "high_float": {
+      "fail": "Vorgang '{activity}' hat sehr hohen Gesamtpuffer ({float} Tage), ueber dem Schwellwert von {threshold} Tagen",
+      "suggestion": "Auf einen fehlenden Nachfolger pruefen - hoher Puffer bedeutet meist, dass der Vorgang nur lose mit dem Netz verbunden ist"
+    },
+    "missing_duration": {
+      "fail": "Vorgang '{activity}' hat eine ungueltige Dauer ({duration} Tage) fuer einen Nicht-Meilenstein",
+      "suggestion": "Eine positive Arbeitstage-Dauer setzen oder die Zeile als Meilenstein kennzeichnen, falls es wirklich ein Ereignis ohne Dauer ist"
+    }
+  },
+  "errors": {
+    "resource_not_found": "Ressource nicht gefunden",
+    "project_not_found": "Projekt nicht gefunden",
+    "vendor_not_found": "Lieferant nicht gefunden",
+    "template_not_found": "Vorlage nicht gefunden",
+    "position_not_found": "Position nicht gefunden",
+    "boq_not_found": "Leistungsverzeichnis nicht gefunden",
+    "session_not_found": "Sitzung nicht gefunden",
+    "document_not_found": "Dokument nicht gefunden",
+    "invitation_not_found": "Einladung nicht gefunden",
+    "agreement_not_found": "Vereinbarung nicht gefunden",
+    "rejection_not_found": "Ablehnung nicht gefunden",
+    "claim_not_found": "Abschlagsrechnung nicht gefunden",
+    "plot_not_found": "Grundstück nicht gefunden",
+    "survey_not_found": "Drohnenvermessung nicht gefunden",
+    "diary_video_not_found": "Bautagebuch-Video nicht gefunden",
+    "diary_photo_not_found": "Bautagebuch-Foto nicht gefunden",
+    "bidder_not_found": "Bieter nicht gefunden",
+    "webhook_not_found": "Webhook nicht gefunden",
+    "submission_not_found": "Angebot nicht gefunden",
+    "measurement_not_found": "Aufmaß nicht gefunden",
+    "salescontract_not_found": "Kaufvertrag nicht gefunden",
+    "prompt_not_found": "Prompt-Vorlage nicht gefunden",
+    "prequalification_not_found": "Präqualifikation nicht gefunden",
+    "purchase_requisition_not_found": "Bestellanforderung nicht gefunden",
+    "purchase_order_not_found": "Bestellung nicht gefunden",
+    "group_not_found": "Gruppe nicht gefunden",
+    "final_account_not_found": "Schlussrechnung nicht gefunden",
+    "estimate_job_not_found": "Kalkulationsauftrag nicht gefunden",
+    "escrow_not_found": "Treuhand-Transaktion nicht gefunden",
+    "commission_accrual_not_found": "Provisions-Abgrenzung nicht gefunden",
+    "baseline_not_found": "Baseline nicht gefunden"
+  }
+}

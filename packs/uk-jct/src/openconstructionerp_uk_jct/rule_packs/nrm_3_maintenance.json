@@ -1,0 +1,21 @@
+{
+  "rule_pack_id": "nrm_3_maintenance",
+  "name": "RICS NRM 3 — Building Maintenance Works",
+  "standard": "NRM 3",
+  "jurisdiction": "GB",
+  "description": "Enables OCERP built-in validation rules for the RICS New Rules of Measurement, Part 3 — Order of Cost Estimating and Cost Planning for Building Maintenance Works (2014). Covers life-cycle cost planning (renewals + maintenance), the NRM 3 element hierarchy aligned with NRM 1, condition-survey-driven prioritisation, planned preventive maintenance schedules and end-of-life renewal allowances.",
+  "enables_rule_ids": [
+    "nrm3.element_hierarchy_aligned_with_nrm1",
+    "nrm3.maintenance_strategy_declared",
+    "nrm3.condition_survey_referenced",
+    "nrm3.renewal_cost_present_per_element",
+    "nrm3.planned_preventive_maintenance_schedule",
+    "nrm3.reactive_maintenance_allowance_present",
+    "nrm3.life_cycle_period_stated",
+    "nrm3.discount_rate_assumption_documented",
+    "nrm3.inflation_assumption_documented",
+    "nrm3.end_of_life_renewal_allowance_present",
+    "nrm3.location_factor_applied",
+    "nrm3.benchmark_against_bcis_running_costs"
+  ]
+}

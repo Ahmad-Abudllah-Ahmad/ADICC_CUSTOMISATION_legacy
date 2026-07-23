@@ -1,0 +1,1864 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Standards in OpenConstructionERP - what's actually wired in</title>
+  <meta name="description" content="The construction standards OpenConstructionERP supports today - IFC, BCF, GAEB X83/X84, DIN 276, NRM 1/2, MasterFormat, DPGF, VOB/B, CWICR. With an honest line on what's read-only vs round-tripped, and what's still on the roadmap." />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+  <meta name="author" content="DataDrivenConstruction" />
+  <link rel="canonical" href="https://adicc-uae.com/standards.html" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="OpenConstructionERP" />
+  <meta property="og:url" content="https://adicc-uae.com/standards.html" />
+  <meta property="og:title" content="Standards in OpenConstructionERP - what's actually wired in" />
+  <meta property="og:description" content="IFC, BCF, GAEB X83/X84, DIN 276, NRM 1/2, MasterFormat, DPGF, VOB/B, CWICR - what's read-only, round-tripped or roadmap." />
+  <meta property="og:image" content="https://adicc-uae.com/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Standards in OpenConstructionERP" />
+  <meta name="twitter:description" content="IFC, BCF, GAEB X83/X84, DIN 276, NRM 1/2, MasterFormat, DPGF, VOB/B, CWICR - what's read-only, round-tripped or roadmap." />
+  <meta name="twitter:image" content="https://adicc-uae.com/og-image.png" />
+
+  <link rel="manifest" href="/site.webmanifest" />
+  <meta name="theme-color" content="#2d5e8e" />
+
+  <link rel="alternate" hreflang="x-default" href="https://adicc-uae.com/standards.html" />
+  <link rel="alternate" hreflang="en" href="https://adicc-uae.com/standards.html?lang=en" />
+  <link rel="alternate" hreflang="de" href="https://adicc-uae.com/standards.html?lang=de" />
+  <link rel="alternate" hreflang="fr" href="https://adicc-uae.com/standards.html?lang=fr" />
+  <link rel="alternate" hreflang="es" href="https://adicc-uae.com/standards.html?lang=es" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Home",      "item": "https://adicc-uae.com/" },
+          { "@type": "ListItem", "position": 2, "name": "Standards", "item": "https://adicc-uae.com/standards.html" }
+        ]
+      },
+      {
+        "@type": "TechArticle",
+        "@id": "https://adicc-uae.com/standards.html#article",
+        "headline": "Construction standards in OpenConstructionERP - what's actually wired in",
+        "description": "IFC, BCF, GAEB X83/X84, DIN 276, NRM 1/2, MasterFormat, DPGF, VOB/B, CWICR - what's read-only, round-tripped or roadmap.",
+        "url": "https://adicc-uae.com/standards.html",
+        "image": "https://adicc-uae.com/og-image.png",
+        "inLanguage": "en",
+        "author":   { "@type": "Organization", "name": "DataDrivenConstruction", "url": "https://datadrivenconstruction.io" },
+        "publisher":{ "@type": "Organization", "name": "OpenConstructionERP", "url": "https://adicc-uae.com" },
+        "about": [
+          { "@type": "Thing", "name": "IFC (Industry Foundation Classes)" },
+          { "@type": "Thing", "name": "BCF (BIM Collaboration Format)" },
+          { "@type": "Thing", "name": "GAEB X83/X84" },
+          { "@type": "Thing", "name": "DIN 276" },
+          { "@type": "Thing", "name": "NRM 1/2" },
+          { "@type": "Thing", "name": "MasterFormat" },
+          { "@type": "Thing", "name": "DPGF" },
+          { "@type": "Thing", "name": "VOB/B" },
+          { "@type": "Thing", "name": "CWICR cost database" }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Inter:wght@400;500&family=Fraunces:ital,opsz,wght@1,9..144,300..500&family=JetBrains+Mono:wght@400;500;600&family=Caveat:wght@500&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg-0: #f1f2f3;
+      --bg-1: #f8f9fa;
+      --bg-2: #e8e9ea;
+      --bg-3: #e9eef5;
+      --ink-0: #0b1220;
+      --ink-1: #1f2937;
+      --ink-2: #475569;
+      --ink-3: #94a3b8;
+      --ink-4: #cbd5e1;
+      --line-0: #ececec;
+      --line-1: #e2e8f0;
+      --line-2: #cbd5e1;
+      --accent: #2d5e8e;
+      --accent-2: #3c6fa0;
+      --accent-3: #244c74;
+      --accent-soft: #e0f2fe;
+      --warn: #f59e0b;
+      --good: #16a34a;
+      --bad: #dc2626;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg-0);
+      color: var(--ink-1);
+      line-height: 1.55;
+      font-size: 15px;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 40px); }
+
+    /* topbar */
+    .topbar {
+      padding: 22px 0;
+      border-bottom: 1px solid var(--line-0);
+      position: sticky; top: 0; z-index: 60;
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      background: color-mix(in oklab, var(--bg-1) 92%, transparent);
+    }
+    .topbar-inner { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .topbar a.brand {
+      font-family: 'Inter Tight', sans-serif; font-weight: 700; font-size: 16px;
+      letter-spacing: -0.02em; color: var(--ink-0); text-decoration: none;
+    }
+    .topbar a.brand b { color: var(--accent); }
+    .topbar nav { display: flex; gap: 22px; font-size: 13.5px; }
+    .topbar nav a { color: var(--ink-2); }
+    .topbar nav a:hover { color: var(--ink-0); text-decoration: none; }
+    .topbar nav a.active { color: var(--ink-0); font-weight: 500; }
+
+    /* hero */
+    .hero { padding: 72px 0 36px; }
+    .eyebrow {
+      font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: 600;
+      letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent);
+      margin: 0 0 16px; display: inline-flex; align-items: center; gap: 10px;
+    }
+    .eyebrow::before {
+      content: ""; display: inline-block; width: 22px; height: 1.5px; background: var(--accent);
+    }
+    h1 {
+      font-family: 'Inter Tight', sans-serif;
+      font-size: clamp(36px, 5.4vw, 64px); font-weight: 700;
+      letter-spacing: -0.035em; line-height: 1.04; color: var(--ink-0); margin: 0 0 22px;
+    }
+    h1 em {
+      font-family: 'Fraunces', serif; font-style: italic; font-weight: 400;
+      letter-spacing: -0.025em;
+      background: linear-gradient(110deg, var(--accent-2) 5%, var(--accent) 45%, var(--accent-3) 95%);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .lede {
+      font-size: 17.5px; line-height: 1.62; color: var(--ink-2);
+      max-width: 64ch; margin: 0 0 28px;
+    }
+    .lede b { color: var(--ink-0); font-weight: 600; }
+    .lede em.handwritten {
+      font-family: 'Caveat', cursive; font-style: normal;
+      font-size: 22px; color: var(--accent); letter-spacing: 0.005em;
+    }
+    .hero-meta {
+      display: flex; gap: 32px; flex-wrap: wrap;
+      font-family: 'JetBrains Mono', monospace; font-size: 12px;
+      color: var(--ink-3); letter-spacing: 0.02em;
+      padding-top: 16px; border-top: 1px dashed var(--line-1);
+    }
+    .hero-meta b { color: var(--ink-1); font-weight: 600; }
+
+    /* ─── DATA-FLOW VISUALIZATION (matches main site hero-flow) ───── */
+    .flow-viz {
+      margin: 48px 0 24px;
+      padding: 36px 32px 32px;
+      border-radius: 20px;
+      background: var(--bg-1);
+      border: 1px solid var(--line-1);
+      position: relative;
+      overflow: hidden;
+    }
+    .flow-viz-eyebrow {
+      font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600;
+      letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 6px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .flow-viz-eyebrow::before {
+      content: ""; width: 22px; height: 1.5px; background: var(--accent);
+    }
+    .flow-viz h3 {
+      font-family: 'Inter Tight', sans-serif; font-size: 22px; font-weight: 700;
+      color: var(--ink-0); margin: 0 0 22px; letter-spacing: -0.022em;
+    }
+    .flow-viz h3 em {
+      font-family: 'Fraunces', serif; font-style: italic; font-weight: 400;
+      background: linear-gradient(110deg, var(--accent-2) 5%, var(--accent) 45%, var(--accent-3) 95%);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .flow-viz-svg {
+      width: 100%; height: 280px; display: block;
+    }
+    .flow-viz-svg .label-text {
+      font-family: 'JetBrains Mono', monospace; font-size: 11px;
+      font-weight: 600; letter-spacing: 0.04em; fill: var(--ink-2);
+    }
+    .flow-viz-svg .label-name {
+      font-family: 'Inter Tight', sans-serif; font-size: 13px;
+      font-weight: 600; fill: var(--ink-0); letter-spacing: -0.005em;
+    }
+    .flow-viz-svg .node-rect {
+      fill: var(--bg-1); stroke: var(--line-2); stroke-width: 1.2;
+    }
+    .flow-viz-svg .node-rect-canon {
+      fill: color-mix(in oklab, var(--accent) 8%, var(--bg-1));
+      stroke: var(--accent); stroke-width: 1.6;
+    }
+    .flow-viz-svg .trace {
+      fill: none; stroke-width: 1.4; stroke-linecap: round;
+      opacity: 0.85;
+    }
+    .flow-viz-svg .pulse {
+      fill: none; stroke-width: 2.4; stroke-linecap: round;
+      stroke-dasharray: 6 220; stroke-dashoffset: 0;
+      opacity: 0.95;
+      animation: tracePulse 3.6s linear infinite;
+    }
+    .flow-viz-svg .pulse-2 { animation-delay: 0.6s; }
+    .flow-viz-svg .pulse-3 { animation-delay: 1.2s; }
+    .flow-viz-svg .pulse-4 { animation-delay: 1.8s; }
+    .flow-viz-svg .pulse-5 { animation-delay: 2.4s; }
+    @keyframes tracePulse {
+      0%   { stroke-dashoffset: 220; }
+      100% { stroke-dashoffset: -220; }
+    }
+    .flow-viz-legend {
+      display: flex; gap: 20px; flex-wrap: wrap;
+      margin-top: 14px; padding-top: 14px;
+      border-top: 1px dashed var(--line-1);
+      font-family: 'JetBrains Mono', monospace; font-size: 10.5px;
+      color: var(--ink-3); letter-spacing: 0.04em;
+    }
+    .flow-viz-legend b { color: var(--ink-1); font-weight: 600; }
+    .legend-dot {
+      display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+      margin-right: 6px; vertical-align: middle;
+    }
+
+    /* status banner - honest framing */
+    .status-banner {
+      margin: 12px 0 56px;
+      padding: 18px 22px;
+      border-radius: 12px;
+      background: color-mix(in oklab, var(--accent) 6%, var(--bg-1));
+      border: 1px solid color-mix(in oklab, var(--accent) 22%, var(--line-1));
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 14px;
+      align-items: start;
+    }
+    .status-banner-icon {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px; color: var(--accent);
+      line-height: 1; padding-top: 2px;
+    }
+    .status-banner p {
+      margin: 0; font-size: 13.5px; line-height: 1.55; color: var(--ink-1);
+    }
+    .status-banner b { color: var(--ink-0); font-weight: 600; }
+
+    /* layout */
+    .layout {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 56px;
+      align-items: start;
+      padding-top: 8px;
+    }
+    @media (max-width: 1000px) {
+      .layout { grid-template-columns: 1fr; gap: 24px; }
+    }
+
+    /* sidenav */
+    .sidenav { position: sticky; top: 88px; padding: 4px 0; }
+    @media (max-width: 1000px) {
+      .sidenav { position: static; padding: 16px 0 0; border-top: 1px solid var(--line-1); }
+    }
+    .sidenav-title {
+      font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600;
+      letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 14px;
+    }
+    .sidenav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+    @media (max-width: 1000px) { .sidenav ul { flex-direction: row; flex-wrap: wrap; gap: 6px; } }
+    .sidenav a {
+      display: block; padding: 7px 10px; border-radius: 6px;
+      font-size: 13px; color: var(--ink-2);
+      border-left: 2px solid transparent; margin-left: -2px;
+      transition: all 0.15s ease;
+    }
+    .sidenav a:hover {
+      color: var(--ink-0); background: var(--bg-2);
+      border-left-color: var(--accent); text-decoration: none;
+    }
+    .sidenav a span {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px; color: var(--ink-3); margin-right: 6px;
+    }
+    @media (max-width: 1000px) {
+      .sidenav a {
+        background: var(--bg-2); padding: 6px 12px;
+        border-left: 0; border: 1px solid var(--line-1); border-radius: 999px;
+      }
+      .sidenav a:hover { border-color: var(--accent); }
+    }
+
+    /* category */
+    .cat { margin-bottom: 64px; }
+    .cat-head { margin-bottom: 24px; padding-bottom: 14px; border-bottom: 1.5px solid var(--line-1); }
+    .cat-num {
+      font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin: 0 0 6px;
+    }
+    .cat-title {
+      font-family: 'Inter Tight', sans-serif;
+      font-size: clamp(24px, 3vw, 32px); font-weight: 700;
+      letter-spacing: -0.025em; line-height: 1.1; color: var(--ink-0); margin: 0 0 8px;
+    }
+    .cat-title em {
+      font-family: 'Fraunces', serif; font-style: italic; font-weight: 400;
+      background: linear-gradient(110deg, var(--accent-2) 5%, var(--accent) 45%, var(--accent-3) 95%);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .cat-blurb { font-size: 14.5px; line-height: 1.6; color: var(--ink-2); max-width: 70ch; margin: 0; }
+
+    /* standard card */
+    .standards-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px;
+    }
+    @media (max-width: 760px) { .standards-grid { grid-template-columns: 1fr; } }
+    .std {
+      padding: 22px 24px; border-radius: 14px;
+      background: var(--bg-1); border: 1px solid var(--line-1);
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
+      display: flex; flex-direction: column;
+    }
+    .std:hover {
+      border-color: color-mix(in oklab, var(--accent) 28%, var(--line-1));
+      box-shadow: 0 6px 18px -10px color-mix(in oklab, var(--accent) 28%, transparent);
+    }
+    .std-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 4px; flex-wrap: wrap; }
+    .std-name {
+      font-family: 'Inter Tight', sans-serif; font-weight: 700; font-size: 16.5px;
+      letter-spacing: -0.012em; color: var(--ink-0); line-height: 1.25;
+    }
+    .std-name code {
+      font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500;
+      color: var(--accent);
+      background: color-mix(in oklab, var(--accent) 8%, transparent);
+      padding: 2px 7px; border-radius: 5px; margin-left: 6px; letter-spacing: 0;
+    }
+    .std-region {
+      font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3);
+      padding: 3px 7px; border-radius: 4px; background: var(--bg-2); white-space: nowrap;
+    }
+    .std-fullname {
+      font-family: 'Inter', sans-serif; font-style: italic;
+      color: var(--ink-2); font-size: 13px; margin: 2px 0 12px; line-height: 1.4;
+    }
+    .std-body { font-size: 13.5px; line-height: 1.6; color: var(--ink-1); margin: 0 0 14px; }
+    .std-body b { color: var(--ink-0); font-weight: 600; }
+    .std-meta {
+      margin-top: auto; padding-top: 12px;
+      border-top: 1px dashed var(--line-1);
+      display: grid; grid-template-columns: 100px 1fr; gap: 6px 14px; font-size: 12px;
+    }
+    .std-meta-label {
+      font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 600;
+      letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); padding-top: 1px;
+    }
+    .std-meta-value { color: var(--ink-1); line-height: 1.5; }
+    .std-meta-value b { color: var(--ink-0); font-weight: 600; }
+    .pill {
+      display: inline-flex; align-items: center;
+      font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 600;
+      letter-spacing: 0.04em; padding: 2px 7px; border-radius: 4px;
+      margin-right: 4px; margin-top: 2px;
+    }
+    .pill-read  { background: color-mix(in oklab, var(--accent-2) 14%, transparent); color: var(--accent-3); }
+    .pill-write { background: color-mix(in oklab, var(--good) 14%, transparent); color: var(--good); }
+    .pill-both  { background: color-mix(in oklab, var(--accent) 14%, transparent); color: var(--accent); }
+    .pill-via   { background: var(--bg-2); color: var(--ink-2); }
+    .pill-rule  { background: color-mix(in oklab, var(--accent-3) 12%, transparent); color: var(--accent-3); }
+    .pill-plan  { background: color-mix(in oklab, var(--warn) 14%, transparent); color: #b45309; }
+
+    /* roadmap card */
+    .roadmap {
+      margin-top: 30px;
+      padding: 24px 28px;
+      border-radius: 14px;
+      background: var(--bg-2);
+      border: 1px dashed var(--line-2);
+    }
+    .roadmap-eyebrow {
+      font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 10px;
+    }
+    .roadmap h4 {
+      font-family: 'Inter Tight', sans-serif; font-weight: 600;
+      font-size: 16px; color: var(--ink-0); margin: 0 0 8px; letter-spacing: -0.01em;
+    }
+    .roadmap p {
+      margin: 0 0 10px; font-size: 13.5px; line-height: 1.55; color: var(--ink-2);
+    }
+    .roadmap-tags {
+      display: flex; gap: 8px; flex-wrap: wrap;
+    }
+    .roadmap-tags span {
+      font-family: 'JetBrains Mono', monospace; font-size: 10.5px;
+      padding: 4px 9px; border-radius: 5px;
+      background: var(--bg-1); color: var(--ink-2); border: 1px solid var(--line-1);
+    }
+
+    /* decision table */
+    .decision { margin: 60px 0 40px; padding: 38px 36px; border-radius: 18px;
+      background: var(--bg-1); border: 1px solid var(--line-1); }
+    .decision-eyebrow {
+      font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600;
+      letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0 0 8px;
+    }
+    .decision h2 {
+      font-family: 'Inter Tight', sans-serif;
+      font-size: clamp(22px, 2.6vw, 30px); font-weight: 700;
+      letter-spacing: -0.022em; line-height: 1.15; color: var(--ink-0); margin: 0 0 6px;
+    }
+    .decision h2 em {
+      font-family: 'Fraunces', serif; font-style: italic; font-weight: 400;
+      background: linear-gradient(110deg, var(--accent-2) 5%, var(--accent) 45%, var(--accent-3) 95%);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .decision-blurb { font-size: 14.5px; color: var(--ink-2); margin: 0 0 24px; max-width: 70ch; line-height: 1.6; }
+    .decision-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .decision-table th {
+      text-align: left;
+      font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3);
+      padding: 10px 12px 10px 0; border-bottom: 1.5px solid var(--line-2); vertical-align: bottom;
+    }
+    .decision-table th:first-child { width: 24%; color: var(--ink-2); }
+    .decision-table td {
+      padding: 13px 12px 13px 0; border-bottom: 1px solid var(--line-1);
+      vertical-align: top; color: var(--ink-1); line-height: 1.55;
+    }
+    .decision-table td:first-child {
+      font-family: 'Inter Tight', sans-serif; font-weight: 600; color: var(--ink-0);
+      letter-spacing: -0.005em; font-size: 13.5px;
+    }
+    .decision-table tr:last-child td { border-bottom: 0; }
+    @media (max-width: 880px) { .decision { padding: 24px 20px; overflow-x: auto; } .decision-table { min-width: 720px; } }
+
+    /* principles */
+    .principles-block {
+      margin: 60px 0 0; padding: 36px 36px; border-radius: 18px;
+      background: linear-gradient(135deg,
+        color-mix(in oklab, var(--accent) 5%, var(--bg-1)) 0%, var(--bg-1) 70%);
+      border: 1px solid var(--line-1);
+    }
+    .principles-eyebrow {
+      font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600;
+      letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0 0 6px;
+    }
+    .principles-block h2 {
+      font-family: 'Inter Tight', sans-serif;
+      font-size: clamp(22px, 2.6vw, 30px); font-weight: 700;
+      letter-spacing: -0.022em; color: var(--ink-0); margin: 0 0 22px; line-height: 1.15;
+    }
+    .principles-block h2 em {
+      font-family: 'Fraunces', serif; font-style: italic; font-weight: 400;
+      background: linear-gradient(110deg, var(--accent-2) 5%, var(--accent) 45%, var(--accent-3) 95%);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .principles-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px 30px; }
+    @media (max-width: 760px) { .principles-list { grid-template-columns: 1fr; } }
+    .principle-item { display: grid; grid-template-columns: 36px 1fr; gap: 14px; align-items: start; }
+    .principle-item-num {
+      font-family: 'Fraunces', serif; font-style: italic;
+      font-size: 28px; font-weight: 400; color: var(--accent);
+      line-height: 1; letter-spacing: -0.02em;
+    }
+    .principle-item-title {
+      font-family: 'Inter Tight', sans-serif; font-weight: 600; font-size: 14.5px;
+      color: var(--ink-0); letter-spacing: -0.005em; margin-bottom: 4px;
+    }
+    .principle-item-body { font-size: 13.5px; color: var(--ink-2); line-height: 1.55; }
+
+    /* CTA band */
+    .cta-band {
+      margin: 64px 0 60px; padding: 48px 44px; border-radius: 20px;
+      background: linear-gradient(135deg, #0b1220 0%, #1e293b 100%);
+      color: #fff; display: grid; grid-template-columns: 1fr auto;
+      gap: 32px; align-items: center;
+      box-shadow: 0 30px 80px -34px rgba(8, 15, 35, 0.5);
+    }
+    @media (max-width: 760px) { .cta-band { grid-template-columns: 1fr; padding: 36px 28px; } }
+    .cta-band-eyebrow {
+      font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600;
+      letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent-2); margin: 0 0 12px;
+    }
+    .cta-band h2 {
+      font-family: 'Inter Tight', sans-serif;
+      font-size: clamp(24px, 3vw, 34px); font-weight: 700;
+      letter-spacing: -0.025em; line-height: 1.1; color: #fff; margin: 0 0 12px;
+    }
+    .cta-band h2 em { font-family: 'Fraunces', serif; font-style: italic; font-weight: 400; color: var(--accent-2); }
+    .cta-band p { font-size: 15.5px; line-height: 1.6; color: #cbd5e1; margin: 0; max-width: 56ch; }
+    .cta-band-actions { display: flex; flex-direction: column; gap: 10px; align-items: stretch; }
+    .btn-primary {
+      display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+      padding: 14px 24px; border-radius: 999px;
+      background: linear-gradient(135deg, var(--accent-2), var(--accent), var(--accent-3));
+      color: #fff;
+      font-family: 'Inter Tight', sans-serif; font-size: 14.5px; font-weight: 600;
+      letter-spacing: -0.005em; border: 0; cursor: pointer;
+      box-shadow: 0 12px 28px -10px color-mix(in oklab, var(--accent) 60%, transparent);
+      transition: transform 0.18s ease, filter 0.18s ease; text-decoration: none;
+    }
+    .btn-primary:hover { transform: translateY(-2px); filter: brightness(1.08); text-decoration: none; }
+    .btn-secondary {
+      display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+      padding: 13px 22px; border-radius: 999px;
+      background: rgba(255,255,255,0.06); color: #fff;
+      border: 1px solid rgba(255,255,255,0.18);
+      font-family: 'Inter Tight', sans-serif; font-size: 14px; font-weight: 500;
+      letter-spacing: -0.005em; cursor: pointer;
+      transition: background 0.18s ease; text-decoration: none;
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.12); text-decoration: none; }
+
+    /* footer */
+    footer {
+      padding: 36px 0 60px; border-top: 1px solid var(--line-0);
+      font-family: 'JetBrains Mono', monospace; font-size: 11.5px;
+      color: var(--ink-3); letter-spacing: 0.02em;
+    }
+    .foot-row { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 18px; }
+    .foot-row a { color: var(--ink-2); margin-right: 16px; }
+    .foot-row a:hover { color: var(--ink-0); text-decoration: none; }
+
+    /* universal scroll-reveal */
+    .reveal-up {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s cubic-bezier(.4,0,.2,1), transform 0.6s cubic-bezier(.4,0,.2,1);
+    }
+    .reveal-up.is-in { opacity: 1; transform: translateY(0); }
+    .reveal-up:nth-child(2) { transition-delay: 0.06s; }
+    .reveal-up:nth-child(3) { transition-delay: 0.12s; }
+    .reveal-up:nth-child(4) { transition-delay: 0.18s; }
+    .reveal-up:nth-child(5) { transition-delay: 0.24s; }
+    .reveal-up:nth-child(6) { transition-delay: 0.30s; }
+
+    /* hero-stats animated banner */
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 24px;
+      padding: 20px 0;
+      border-top: 1px dashed var(--line-1);
+      border-bottom: 1px dashed var(--line-1);
+    }
+    @media (max-width: 760px) { .hero-stats { grid-template-columns: repeat(2, 1fr); } }
+    .hero-stat {
+      padding: 0 18px;
+      border-right: 1px solid var(--line-1);
+    }
+    .hero-stat:last-child { border-right: 0; }
+    .hero-stat-num {
+      font-family: 'Inter Tight', sans-serif;
+      font-weight: 700; font-size: 36px;
+      color: var(--ink-0); letter-spacing: -0.025em;
+      line-height: 1.05;
+      font-variant-numeric: tabular-nums;
+    }
+    .hero-stat-num em {
+      font-family: 'Fraunces', serif; font-style: italic; font-weight: 400;
+      background: linear-gradient(110deg, var(--accent-2) 5%, var(--accent) 45%, var(--accent-3) 95%);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero-stat-num small {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px; color: var(--ink-3); font-weight: 500;
+      margin-left: 2px;
+    }
+    .hero-stat-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; color: var(--ink-3);
+      letter-spacing: 0.06em; margin-top: 6px;
+      text-transform: uppercase;
+    }
+
+    /* gentle pulse on flow legend dots */
+    .legend-dot {
+      animation: legendPulse 2.6s ease-in-out infinite;
+    }
+    .flow-viz-legend span:nth-child(2) .legend-dot { animation-delay: 0.4s; }
+    .flow-viz-legend span:nth-child(3) .legend-dot { animation-delay: 0.8s; }
+    @keyframes legendPulse {
+      0%, 100% { transform: scale(1); }
+      50%      { transform: scale(1.4); box-shadow: 0 0 0 4px rgba(45,94,142,0.15); }
+    }
+
+    /* ─── EXAMPLE PAYLOADS (real code snippets) ──────────────── */
+    .examples {
+      margin: 60px 0 40px;
+      padding: 38px 36px 32px;
+      border-radius: 18px;
+      background: var(--bg-1);
+      border: 1px solid var(--line-1);
+    }
+    .examples-eyebrow {
+      font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600;
+      letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0 0 8px;
+    }
+    .examples h2 {
+      font-family: 'Inter Tight', sans-serif;
+      font-size: clamp(22px, 2.6vw, 30px); font-weight: 700;
+      letter-spacing: -0.022em; line-height: 1.15;
+      color: var(--ink-0); margin: 0 0 8px;
+    }
+    .examples h2 em {
+      font-family: 'Fraunces', serif; font-style: italic; font-weight: 400;
+      background: linear-gradient(110deg, var(--accent-2) 5%, var(--accent) 45%, var(--accent-3) 95%);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .examples-blurb {
+      font-size: 14px; line-height: 1.6;
+      color: var(--ink-2); margin: 0 0 28px; max-width: 70ch;
+    }
+    .examples-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;
+    }
+    @media (max-width: 880px) { .examples-grid { grid-template-columns: 1fr; } }
+    .example-card {
+      display: flex; flex-direction: column;
+      background: #0b1220;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #1e293b;
+      transition: border-color 0.22s ease, transform 0.22s ease;
+    }
+    .example-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+    .example-head {
+      padding: 14px 18px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; border-bottom: 1px solid #1e293b;
+      background: #0a111e;
+    }
+    .example-head-name {
+      font-family: 'Inter Tight', sans-serif; font-weight: 700;
+      font-size: 13.5px; color: #e2e8f0;
+      letter-spacing: -0.005em;
+    }
+    .example-head-name code {
+      font-family: 'JetBrains Mono', monospace; font-size: 10.5px;
+      color: #6ba2d8; background: rgba(107, 162, 216, 0.09);
+      padding: 1.5px 6px; border-radius: 4px;
+      margin-left: 6px; letter-spacing: 0;
+    }
+    .example-head-tag {
+      font-family: 'JetBrains Mono', monospace; font-size: 10px;
+      font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 4px;
+      background: rgba(107, 162, 216, 0.09); color: #6ba2d8;
+    }
+    .example-head-tag.is-rule {
+      background: rgba(34,197,94,0.12); color: #4ade80;
+    }
+    .example-head-tag.is-canon {
+      background: rgba(192,132,252,0.14); color: #c084fc;
+    }
+    .example-body {
+      padding: 16px 18px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px; line-height: 1.6;
+      color: #cbd5e1;
+      overflow-x: auto;
+      white-space: pre;
+      tab-size: 2;
+    }
+    .example-body .kw   { color: #c084fc; }
+    .example-body .str  { color: #fde68a; }
+    .example-body .num  { color: #6ba2d8; }
+    .example-body .com  { color: #64748b; font-style: italic; }
+    .example-body .tag  { color: #6ba2d8; }
+    .example-body .attr { color: #fde68a; }
+
+    .example-foot {
+      padding: 12px 18px;
+      border-top: 1px solid #1e293b;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; flex-wrap: wrap;
+    }
+    .example-foot a {
+      font-family: 'JetBrains Mono', monospace; font-size: 11px;
+      color: #6ba2d8; letter-spacing: 0.02em;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .example-foot a:hover { color: #84b3e2; text-decoration: underline; }
+    .example-foot-meta {
+      font-family: 'JetBrains Mono', monospace; font-size: 10.5px;
+      color: #64748b; letter-spacing: 0.04em;
+    }
+
+    /* ─── AUTHORITY LINKS ROW ─────────────────────────────────── */
+    .authorities {
+      margin: 36px 0 0;
+      padding: 28px 32px;
+      border-radius: 14px;
+      background: var(--bg-2);
+      border: 1px dashed var(--line-2);
+    }
+    .authorities-eyebrow {
+      font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 14px;
+    }
+    .authorities-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px 18px;
+    }
+    @media (max-width: 760px) { .authorities-grid { grid-template-columns: repeat(2, 1fr); } }
+    .auth-item {
+      display: block; padding: 12px 14px;
+      border-radius: 10px;
+      background: var(--bg-1); border: 1px solid var(--line-1);
+      transition: all 0.18s ease;
+      text-decoration: none;
+    }
+    .auth-item:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      text-decoration: none;
+    }
+    .auth-item-name {
+      font-family: 'Inter Tight', sans-serif; font-weight: 600;
+      font-size: 13.5px; color: var(--ink-0);
+      letter-spacing: -0.005em; margin-bottom: 2px;
+    }
+    .auth-item-domain {
+      font-family: 'JetBrains Mono', monospace; font-size: 10.5px;
+      color: var(--accent); letter-spacing: 0.02em;
+    }
+    .auth-item-scope {
+      font-size: 11.5px; color: var(--ink-2); line-height: 1.4;
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="/"><b>OC</b>ERP</a>
+      <nav>
+        <a href="/services" data-i18n="page.standards.nav_practices">Practices</a>
+        <a href="/industries" data-i18n="page.standards.nav_industries">Industries</a>
+        <a href="/standards" class="active" data-i18n="page.standards.nav_standards">Standards</a>
+        <a href="/maturity" data-i18n="page.standards.nav_maturity">Maturity</a>
+        <a href="/partners" data-i18n="page.standards.nav_partners">Partners</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="wrap">
+      <p class="eyebrow" data-i18n="page.standards.hero_eyebrow">Standards · what's wired in today</p>
+      <h1 data-i18n-html="page.standards.hero_title">The construction standards we actually <em>support today</em>.</h1>
+      <p class="lede" data-i18n-html="page.standards.hero_lede">
+        This page is honest. <b>Below: every standard with a code-level integration in OpenConstructionERP v7.3.0</b> -
+        a reader, a writer, or a registered validation rule pack. Anything still on the roadmap is
+        called out in its own row, not dressed up as “native”. <em class="handwritten">no
+        marketing fiction. read code, then ship.</em>
+      </p>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="hero-stat-num"><em><span class="count-up" data-count="46">0</span></em></div>
+          <div class="hero-stat-label" data-i18n="page.standards.stat_validation_rules">Validation rules</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-num"><em><span class="count-up" data-count="55">0</span></em><small>K</small></div>
+          <div class="hero-stat-label" data-i18n="page.standards.stat_cwicr_positions">CWICR positions</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-num"><em><span class="count-up" data-count="4">0</span></em></div>
+          <div class="hero-stat-label" data-i18n="page.standards.stat_cad_bim_formats">CAD/BIM formats</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-num"><em><span class="count-up" data-count="6">0</span></em></div>
+          <div class="hero-stat-label" data-i18n="page.standards.stat_standards_categories">Standards categories</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <main class="wrap">
+
+    <!-- ─── DATA-FLOW VISUALIZATION ─────────────────────────────── -->
+    <section class="flow-viz">
+      <p class="flow-viz-eyebrow" data-i18n="page.standards.flow_eyebrow">Data flow · concept → priced BOQ → tender pack</p>
+      <h3 data-i18n-html="page.standards.flow_title">How standards <em>actually move</em> through the platform.</h3>
+      <svg class="flow-viz-svg" viewBox="0 0 1100 280" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+        <defs>
+          <linearGradient id="gradIn" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%"   stop-color="#3c6fa0" stop-opacity="0"/>
+            <stop offset="50%"  stop-color="#3c6fa0" stop-opacity="0.95"/>
+            <stop offset="100%" stop-color="#2d5e8e" stop-opacity="0"/>
+          </linearGradient>
+          <linearGradient id="gradMid" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%"   stop-color="#2d5e8e" stop-opacity="0"/>
+            <stop offset="50%"  stop-color="#2d5e8e" stop-opacity="0.95"/>
+            <stop offset="100%" stop-color="#244c74" stop-opacity="0"/>
+          </linearGradient>
+          <linearGradient id="gradOut" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%"   stop-color="#244c74" stop-opacity="0"/>
+            <stop offset="50%"  stop-color="#244c74" stop-opacity="0.95"/>
+            <stop offset="100%" stop-color="#3c6fa0" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+
+        <!-- input column -->
+        <g>
+          <rect class="node-rect" x="20"  y="22"  width="148" height="36" rx="8"/>
+          <text class="label-name" x="36" y="45">RVT · BIM</text>
+          <rect class="node-rect" x="20"  y="68"  width="148" height="36" rx="8"/>
+          <text class="label-name" x="36" y="91">IFC 4 · 4.3</text>
+          <rect class="node-rect" x="20"  y="114" width="148" height="36" rx="8"/>
+          <text class="label-name" x="36" y="137">DWG / DGN</text>
+          <rect class="node-rect" x="20"  y="160" width="148" height="36" rx="8"/>
+          <text class="label-name" x="36" y="183">PDF (takeoff)</text>
+          <rect class="node-rect" x="20"  y="206" width="148" height="36" rx="8"/>
+          <text class="label-name" x="36" y="229">GAEB X83 / X84</text>
+          <text class="label-text" x="20" y="14">▸ INPUT (read)</text>
+        </g>
+
+        <!-- middle: DDC + canonical -->
+        <rect class="node-rect-canon" x="380" y="60" width="180" height="160" rx="12"/>
+        <text class="label-name" x="408" y="106" style="font-size:14px;">DDC cad2data</text>
+        <text class="label-text" x="408" y="126" style="font-size:10.5px;">extraction</text>
+        <line x1="395" y1="142" x2="545" y2="142" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="3 3"/>
+        <text class="label-name" x="408" y="166" style="font-size:14px;">Canonical</text>
+        <text class="label-text" x="408" y="184" style="font-size:10.5px;">JSON · Parquet</text>
+        <text class="label-text" x="380" y="50">▸ NORMALISE</text>
+
+        <!-- BOQ + validation hub -->
+        <rect class="node-rect-canon" x="700" y="80" width="170" height="120" rx="12"/>
+        <text class="label-name" x="724" y="120" style="font-size:14px;">BOQ + rules</text>
+        <text class="label-text" x="724" y="140" style="font-size:10.5px;">DIN 276 · NRM</text>
+        <text class="label-text" x="724" y="156" style="font-size:10.5px;">MasterFormat</text>
+        <text class="label-text" x="724" y="172" style="font-size:10.5px;">GAEB · DPGF</text>
+        <text class="label-text" x="700" y="70">▸ PRICE + VALIDATE</text>
+
+        <!-- output column -->
+        <g>
+          <rect class="node-rect" x="980" y="40"  width="100" height="36" rx="8"/>
+          <text class="label-name" x="996" y="63">GAEB X83</text>
+          <rect class="node-rect" x="980" y="86"  width="100" height="36" rx="8"/>
+          <text class="label-name" x="996" y="109">XLSX · CSV</text>
+          <rect class="node-rect" x="980" y="132" width="100" height="36" rx="8"/>
+          <text class="label-name" x="996" y="155">PDF report</text>
+          <rect class="node-rect" x="980" y="178" width="100" height="36" rx="8"/>
+          <text class="label-name" x="996" y="201">BCF issues</text>
+          <text class="label-text" x="980" y="32">▸ OUTPUT</text>
+        </g>
+
+        <!-- traces (static) -->
+        <g class="trace" stroke="#cbd5e1">
+          <path d="M 168 40  C 260 40,  300 100, 380 100"/>
+          <path d="M 168 86  C 260 86,  310 110, 380 110"/>
+          <path d="M 168 132 C 260 132, 320 130, 380 130"/>
+          <path d="M 168 178 C 260 178, 320 160, 380 160"/>
+          <path d="M 168 224 C 260 224, 330 200, 380 190"/>
+          <path d="M 560 140 C 620 140, 660 140, 700 140"/>
+          <path d="M 870 110 C 920 110, 950 58,  980 58"/>
+          <path d="M 870 130 C 920 130, 950 104, 980 104"/>
+          <path d="M 870 150 C 920 150, 950 150, 980 150"/>
+          <path d="M 870 170 C 920 170, 950 196, 980 196"/>
+        </g>
+        <!-- pulses (animated) -->
+        <path class="pulse"   d="M 168 40  C 260 40,  300 100, 380 100" stroke="url(#gradIn)"/>
+        <path class="pulse pulse-2" d="M 168 132 C 260 132, 320 130, 380 130" stroke="url(#gradIn)"/>
+        <path class="pulse pulse-3" d="M 168 224 C 260 224, 330 200, 380 190" stroke="url(#gradIn)"/>
+        <path class="pulse pulse-2" d="M 560 140 C 620 140, 660 140, 700 140" stroke="url(#gradMid)"/>
+        <path class="pulse pulse-4" d="M 870 130 C 920 130, 950 104, 980 104" stroke="url(#gradOut)"/>
+        <path class="pulse pulse-5" d="M 870 170 C 920 170, 950 196, 980 196" stroke="url(#gradOut)"/>
+      </svg>
+      <div class="flow-viz-legend">
+        <span data-i18n-html="page.standards.flow_legend_read"><span class="legend-dot" style="background:#3c6fa0"></span><b>read</b> in (RVT, IFC, DWG, DGN, PDF, GAEB X83/X84)</span>
+        <span data-i18n-html="page.standards.flow_legend_canonical"><span class="legend-dot" style="background:#2d5e8e"></span><b>canonical</b> JSON + Parquet (DDC cad2data)</span>
+        <span data-i18n-html="page.standards.flow_legend_write"><span class="legend-dot" style="background:#244c74"></span><b>write</b> out (GAEB X83, XLSX, PDF, BCF)</span>
+      </div>
+    </section>
+
+    <!-- HONEST STATUS BANNER -->
+    <div class="status-banner">
+      <span class="status-banner-icon">✓</span>
+      <p data-i18n-html="page.standards.status_banner">
+        <b>How to read the cards below.</b> Each standard shows
+        <span class="pill pill-both">Read · Write</span> when round‑trip is wired,
+        <span class="pill pill-read">Read</span> for import‑only,
+        <span class="pill pill-rule">Rule pack</span> when only validation is registered (no file format),
+        and <span class="pill pill-plan">Planned</span> for items with a clear roadmap entry but no merged code.
+        If a standard has none of these, it isn't on this page - even if it's industry‑famous.
+      </p>
+    </div>
+
+    <div class="layout">
+
+      <aside class="sidenav">
+        <p class="sidenav-title" data-i18n="page.standards.sidenav_title">Categories</p>
+        <ul>
+          <li><a href="#openbim" data-i18n-html="page.standards.sidenav_openbim"><span>01</span>Open BIM</a></li>
+          <li><a href="#cost" data-i18n-html="page.standards.sidenav_cost"><span>02</span>Cost classification</a></li>
+          <li><a href="#tender" data-i18n-html="page.standards.sidenav_tender"><span>03</span>Tender exchange</a></li>
+          <li><a href="#contracts" data-i18n-html="page.standards.sidenav_contracts"><span>04</span>Contract templates</a></li>
+          <li><a href="#data" data-i18n-html="page.standards.sidenav_data"><span>05</span>Cost data</a></li>
+          <li><a href="#roadmap" data-i18n-html="page.standards.sidenav_roadmap"><span>06</span>On the roadmap</a></li>
+          <li><a href="#examples" data-i18n-html="page.standards.sidenav_examples"><span>▸</span>Format examples</a></li>
+          <li><a href="#decision" data-i18n-html="page.standards.sidenav_decision"><span>▸</span>Pick the right one</a></li>
+          <li><a href="#principles" data-i18n-html="page.standards.sidenav_principles"><span>▸</span>How we treat them</a></li>
+        </ul>
+      </aside>
+
+      <div>
+
+      <!-- 01 OPEN BIM -->
+      <section class="cat" id="openbim">
+        <div class="cat-head">
+          <p class="cat-num" data-i18n="page.standards.cat01_num">Category 01</p>
+          <h2 class="cat-title" data-i18n-html="page.standards.cat01_title">Open BIM &amp; <em>geometry exchange</em></h2>
+          <p class="cat-blurb" data-i18n-html="page.standards.cat01_blurb">
+            CAD/BIM intake is handled by our in‑house DDC cad2data pipeline.
+            Four formats currently extract into the canonical JSON+Parquet structure that drives the BOQ. <b>BCF is a recent addition</b> for issue exchange.
+          </p>
+        </div>
+
+        <div class="standards-grid">
+          <article class="std">
+            <div class="std-head">
+              <div class="std-name" data-i18n-html="page.standards.ifc_name">IFC<code>4 · 4.3</code></div>
+              <span class="std-region" data-i18n="page.standards.region_global">Global</span>
+            </div>
+            <p class="std-fullname" data-i18n="page.standards.ifc_fullname">Industry Foundation Classes - buildingSMART · ISO 16739‑1</p>
+            <p class="std-body" data-i18n-html="page.standards.ifc_body">
+              We read IFC through DDC cad2data into canonical JSON. <b>IFC 4.3 brings native infrastructure</b> alignment, road, rail extensions -
+              we extract them like any other element category. <em>We do not use IfcOpenShell at runtime</em> by design.
+            </p>
+            <div class="std-meta">
+              <span class="std-meta-label" data-i18n="page.standards.meta_status">Status</span>
+              <span class="std-meta-value" data-i18n-html="page.standards.ifc_status_value"><span class="pill pill-read">Read</span><span class="pill pill-via">via DDC cad2data</span></span>
+              <span class="std-meta-label" data-i18n="page.standards.meta_surfaces_in">Surfaces in</span>
+              <span class="std-meta-value" data-i18n="page.standards.ifc_surfaces_value">BIM hub · BOQ · 3D element browser</span>
+            </div>
+          </article>
+
+          <article class="std">
+            <div class="std-head">
+              <div class="std-name">RVT</div>
+              <span class="std-region" data-i18n="page.standards.region_global">Global</span>
+            </div>
+            <p class="std-fullname" data-i18n="page.standards.rvt_fullname">RVT native - DDC RvtConverter</p>
+            <p class="std-body" data-i18n-html="page.standards.rvt_body">
+              Native RVT handled the same way as IFC - DDC extracts elements, parameters and quantities into canonical
+              JSON without round‑tripping through IFC. The Linux <code>ddc-rvtconverter</code> .deb is a packaged binary on our VPS apt repo.
+            </p>
+            <div class="std-meta">
+              <span class="std-meta-label" data-i18n="page.standards.meta_status">Status</span>
+              <span class="std-meta-value" data-i18n-html="page.standards.rvt_status_value"><span class="pill pill-read">Read</span><span class="pill pill-via">via DDC cad2data</span></span>
+              <span class="std-meta-label" data-i18n="page.standards.meta_surfaces_in">Surfaces in</span>
+              <span class="std-meta-value" data-i18n="page.standards.rvt_surfaces_value">CAD explorer · BIM hub · BOQ binding</span>
+            </div>
+          </article>
+
+          <article class="std">
+            <div class="std-head">
+              <div class="std-name">DWG · DGN</div>
+              <span class="std-region" data-i18n="page.standards.region_global">Global</span>
+            </div>
+            <p class="std-fullname" data-i18n="page.standards.dwg_fullname">DWG and DGN - 2D/3D geometry</p>
+            <p class="std-body" data-i18n="page.standards.dwg_body">
+              The 2D world. DDC reads DWG and DGN for geometry, layers, blocks, and dimension strings.
+              On vector‑clean files we extract quantities; on raster scans we route to the PDF takeoff path.
+            </p>
+            <div class="std-meta">
+              <span class="std-meta-label" data-i18n="page.standards.meta_status">Status</span>
+              <span class="std-meta-value" data-i18n-html="page.standards.dwg_status_value"><span class="pill pill-read">Read</span><span class="pill pill-via">via DDC cad2data</span></span>
+              <span class="std-meta-label" data-i18n="page.standards.meta_surfaces_in">Surfaces in</span>
+              <span class="std-meta-value" data-i18n="page.standards.dwg_surfaces_value">CAD explorer · DWG takeoff module</span>
+            </div>
+          </article>
+
+          <article class="std">
+            <div class="std-head">
+              <div class="std-name" data-i18n-html="page.standards.bcf_name">BCF<code>2.1 · 3.0</code></div>
+              <span class="std-region" data-i18n="page.standards.region_global">Global</span>
+            </div>
+            <p class="std-fullname" data-i18n="page.standards.bcf_fullname">BIM Collaboration Format - buildingSMART</p>
+            <p class="std-body" data-i18n-html="page.standards.bcf_body">
+              BCF travels issues, viewpoints and validation findings between OCERP and external coordination tools.
+              Pure XML over data - <b>recently re‑allowed in 2026‑04</b> after the IfcOpenShell ban was clarified to BCF being separately implementable.
+            </p>
+            <div class="std-meta">
+              <span class="std-meta-label" data-i18n="page.standards.meta_status">Status</span>
+              <span class="std-meta-value" data-i18n-html="page.standards.bcf_status_value"><span class="pill pill-both">Read · Write</span><span class="pill pill-via">native, no IfcOpenShell</span></span>
+              <span class="std-meta-label" data-i18n="page.standards.meta_surfaces_in">Surfaces in</span>
+              <span class="std-meta-value" data-i18n-html="page.standards.bcf_surfaces_value">Validation reports · clash &amp; issue exchange</span>
+            </div>
+          </article>
+
+          <article class="std">
+            <div class="std-head">
+              <div class="std-name" data-i18n="page.standards.pdf_name">PDF takeoff</div>
+              <span class="std-region" data-i18n="page.standards.region_global">Global</span>
+            </div>
+            <p class="std-fullname" data-i18n="page.standards.pdf_fullname">PDF.js + canvas overlay + 5 annotation types</p>
+            <p class="std-body" data-i18n-html="page.standards.pdf_body">
+              Drawings as PDFs go through a takeoff viewer with five measurement primitives:
+              <b>distance, area, count, polyline, volume</b> - each with a 500‑char annotation field
+              that persists per quantity. Defensible audit trail per measurement.
+            </p>
+            <div class="std-meta">
+              <span class="std-meta-label" data-i18n="page.standards.meta_status">Status</span>
+              <span class="std-meta-value" data-i18n-html="page.standards.pdf_status_value"><span class="pill pill-read">Read</span><span class="pill pill-via">5 annotation types</span></span>
+              <span class="std-meta-label" data-i18n="page.standards.meta_surfaces_in">Surfaces in</span>
+              <span class="std-meta-value" data-i18n="page.standards.pdf_surfaces_value">Takeoff module · BOQ binding · audit trail</span>
+            </div>
+          </article>
+
+          <article class="std">
+            <div class="std-head">
+              <div class="std-name">DDC cad2data</div>
+              <span class="std-region" data-i18n="page.standards.region_inhouse">In‑house</span>
+            </div>
+            <p class="std-fullname" data-i18n="page.standards.ddc_fullname">Canonical CAD/BIM conversion pipeline - DataDrivenConstruction</p>
+            <p class="std-body" data-i18n-html="page.standards.ddc_body">
+              Not a public standard - our own pipeline. Reads <b>RVT, IFC, DWG, DGN</b> and emits the OCERP canonical JSON+Parquet.
+              Linux .deb packages on signed apt repo (<code>pkg.datadrivenconstruction.io</code>); same binary set runs on Windows.
+            </p>
+            <div class="std-meta">
+              <span class="std-meta-label" data-i18n="page.standards.meta_status">Status</span>
+              <span class="std-meta-value" data-i18n-html="page.standards.ddc_status_value"><span class="pill pill-both">Read</span><span class="pill pill-via">→ canonical JSON</span></span>
+              <span class="std-meta-label" data-i18n="page.standards.meta_authority">Authority</span>
+              <span class="std-meta-value" data-i18n="page.standards.ddc_authority_value">DataDrivenConstruction (in‑house)</span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+
+      <!-- 02 COST CLASSIFICATION -->
+      <section class="cat" id="cost">
+        <div class="cat-head">
+          <p class="cat-num" data-i18n="page.standards.cat02_num">Category 02</p>
+          <h2 class="cat-title" data-i18n-html="page.standards.cat02_title">Cost classification &amp; <em>validation rule packs</em></h2>
+          <p class="cat-blurb" data-i18n-html="page.standards.cat02_blurb">
+            Validation pipeline registers <b>46 rules total</b> across these classification systems. Rule packs aren't
+            just labels - each ships executable validators that run on import and on BOQ release.
+          </p>
+        </div>
+
+        <div class="standards-grid">
+          <article class="std">
+            <div class="std-head">
+              <div class="std-name" data-i18n-html="page.standards.din_name">DIN 276<code>2018‑12</code></div>
+              <span class="std-region">DACH</span>
+            </div>
+            <p class="std-fullname" data-i18n="page.standards.din_fullname">Kosten im Bauwesen - cost groups in construction</p>
+            <p class="std-body" data-i18n-html="page.standards.din_body">
+              The cost backbone of every German project. Rule pack covers <b>cost group required, valid KG code,
+              hierarchy correctness, completeness per stage</b>. KG 100-700 with three drill‑down levels supported.
+            </p>
+            <div class="std-meta">
+              <span class="std-meta-label" data-i18n="page.standards.meta_status">Status</span>
+              <span class="std-meta-value" data-i18n-html="page.standards.din_status_value"><span class="pill pill-rule">Rule pack · 4 rules</span></span>
+              <span class="std-meta-label" data-i18n="page.standards.meta_authority">Authority</span>
+              <span class="std-meta-value" data-i18n="page.standards.din_authority_value">DIN Deutsches Institut für Normung</span>
+            </div>
+          </article>
+
+          <article class="std">
+            <div class="std-head">
+              <div class="std-name">NRM 1 + NRM 2</div>
+              <span class="std-region">UK · RICS</span>
+            </div>
+            <p class="std-fullname" data-i18n-html="page.standards.nrm_fullname">New Rules of Measurement - order of cost estimating &amp; detailed measurement</p>
+            <p class="std-body" data-i18n-html="page.standards.nrm_body">
+              UK pre‑contract cost planning (NRM 1) plus post‑contract BoQ (NRM 2). Rule pack covers
+              <b>classification required, valid element code, completeness</b>. Element groups 1.x - 7.x of NRM 1 are taxonomy‑native.
+            </p>
+            <div class="std-meta">
+              <span class="std-meta-label" data-i18n="page.standards.meta_status">Status</span>
+              <span class="std-meta-value" data-i18n-html="page.standards.nrm_status_value"><span class="pill pill-rule">Rule pack · 3 rules</span></span>
+              <span class="std-meta-label" data-i18n="page.standards.meta_authority">Authority</span>
+              <span class="std-meta-value" data-i18n="page.standards.nrm_authority_value">RICS - Royal Institution of Chartered Surveyors</span>
+            </div>
+          </article>
+
+          <article class="std">
+            <div class="std-head">
+              <div class="std-name" data-i18n-html="page.standards.masterformat_name">MasterFormat<code>CSI</code></div>
+              <span class="std-region" data-i18n="page.standards.region_north_america">North America</span>
+            </div>
+            <p class="std-fullname" data-i18n="page.standards.masterformat_fullname">Master list of construction work sections - CSI / CSC</p>
+            <p class="std-body" data-i18n-html="page.standards.masterformat_body">
+              <b>50 divisions</b>, Div 00 (Procurement) through Div 49. Rule pack covers
+              classification required, valid division code, completeness per project stage. Trade‑shaped procurement
+              language - pairs naturally with NRM 1 elemental for cross‑border bids.
+            </p>
+            <div class="std-meta">
+              <span class="std-meta-label" data-i18n="page.standards.meta_status">Status</span>
+              <span class="std-meta-value" data-i18n-html="page.standards.masterformat_status_value"><span class="pill pill-rule">Rule pack · 3 rules</span></span>
+              <span class="std-meta-label" data-i18n="page.standards.meta_authority">Authority</span>
+              <span class="std-meta-value" data-i18n="page.standards.masterformat_authority_value">CSI (US) · CSC (Canada)</span>
+            </div>
+          </article>
+
+          <article class="std">
+            <div class="std-head">
+              <div class="std-name">DPGF</div>
+              <span class="std-region" data-i18n="page.standards.region_france">France</span>
+            </div>
+            <p class="std-fullname" data-i18n="page.standards.dpgf_fullname">Décomposition du Prix Global et Forfaitaire - French BoQ structure</p>
+            <p class="std-body" data-i18n-html="page.standards.dpgf_body">
+              French marchés‑publics BoQ. Rule pack covers <b>lot required and pricing complete</b> - runs as a
+              validation pass on imported French tender data. <em>We don't currently emit DPGF as a native file format</em>;
+              export goes through the generic XLSX path with DPGF column structure.
+            </p>
+            <div class="std-meta">
+              <span class="std-meta-label" data-i18n="page.standards.meta_status">Status</span>
+              <span class="std-meta-value" data-i18n-html="page.standards.dpgf_status_value"><span class="pill pill-rule">Rule pack · 2 rules</span><span class="pill pill-via">XLSX export only</span></span>
+              <span class="std-meta-label" data-i18n="page.standards.meta_authority">Authority</span>
+              <span class="std-meta-value" data-i18n="page.standards.dpgf_authority_value">Code de la commande publique</span>
+            </div>
+          </article>
+
+          <article class="std">
+            <div class="std-head">
+              <div class="std-name" data-i18n="page.standards.gaeb_rulepack_name">GAEB rule pack</div>
+              <span class="std-region">DACH</span>
+            </div>
+            <p class="std-fullname" data-i18n-html="page.standards.gaeb_rulepack_fullname">GAEB structural &amp; pricing validators</p>
+            <p class="std-body" data-i18n-html="page.standards.gaeb_rulepack_body">
+              Even before file export, the BOQ must pass the GAEB rule pack: <b>ordinal format, LV section
+              structure, trade section codes, Einheitspreis sanity, quantity decimal rules</b>. Public works rejects malformed bids - these gates catch it before it leaves.
+            </p>
+            <div class="std-meta">
+              <span class="std-meta-label" data-i18n="page.standards.meta_status">Status</span>
+              <span class="std-meta-value" data-i18n-html="page.standards.gaeb_rulepack_status_value"><span class="pill pill-rule">Rule pack · 5 rules</span></span>
+              <span class="std-meta-label" data-i18n="page.standards.meta_authority">Authority</span>
+              <span class="std-meta-value">GAEB e.V. / DIN</span>
+            </div>
+          </article>
+
+          <article class="std">
+            <div class="std-head">
+              <div class="std-name" data-i18n="page.standards.boqquality_name">BOQ quality (universal)</div>
+              <span class="std-region" data-i18n="page.standards.region_all">All regions</span>
+            </div>
+            <p class="std-fullname" data-i18n-html="page.standards.boqquality_fullname">Universal BOQ structural &amp; pricing validators</p>
+            <p class="std-body" data-i18n-html="page.standards.boqquality_body">
+              The 20 universal rules that run regardless of regional pack: <b>missing quantities, zero prices,
+              duplicate ordinals, invalid units, scope completeness, classification consistency</b>.
+              Every project passes through this set on every BOQ release.
+            </p>
+            <div class="std-meta">
+              <span class="std-meta-label" data-i18n="page.standards.meta_status">Status</span>
+              <span class="std-meta-value" data-i18n-html="page.standards.boqquality_status_value"><span class="pill pill-rule">Rule pack · ~20 rules</span></span>
+              <span class="std-meta-label" data-i18n="page.standards.meta_authority">Authority</span>
+              <span class="std-meta-value" data-i18n="page.standards.boqquality_authority_value">In‑house · OCERP core</span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+
+      <!-- 03 TENDER EXCHANGE -->
+      <section class="cat" id="tender">
+        <div class="cat-head">
+          <p class="cat-num" data-i18n="page.standards.cat03_num">Category 03</p>
+          <h2 class="cat-title" data-i18n-html="page.standards.cat03_title">Tender exchange &amp; <em>BoQ formats</em></h2>
+          <p class="cat-blurb" data-i18n-html="page.standards.cat03_blurb">
+            <b>GAEB is the only structured tender exchange format we ship today.</b> Other regions
+            (Spain, France) export through generic XLSX templates that match the destination structure;
+            see the roadmap for native BC3 / DPGF on the way.
+          </p>
+        </div>
+
+        <div class="standards-grid">
+          <article class="std">
+            <div class="std-head">
+              <div class="std-name">GAEB X83</div>
+              <span class="std-region">DACH</span>
+            </div>
+            <p class="std-fullname" data-i18n="page.standards.gaebx83_fullname">Angebotsabgabe - bid submission · DA XML 3.3</p>
+            <p class="std-body" data-i18n-html="page.standards.gaebx83_body">
+              The big one in German‑speaking public works. <b>Read and write</b> - round‑trip a tender from
+              import through pricing through export, with the GAEB rule pack as a gate. Validates structurally
+              against the published schema before allowing export.
+            </p>
+            <div class="std-meta">
+              <span class="std-meta-label" data-i18n="page.standards.meta_status">Status</span>
+              <span class="std-meta-value" data-i18n-html="page.standards.gaebx83_status_value"><span class="pill pill-both">Read · Write</span></span>
+              <span class="std-meta-label" data-i18n="page.standards.meta_authority">Authority</span>
+              <span class="std-meta-value">GAEB e.V. / DIN</span>
+            </div>
+          </article>
+
+          <article class="std">
+            <div class="std-head">
+              <div class="std-name">GAEB X84</div>
+              <span class="std-region">DACH</span>
+            </div>
+            <p class="std-fullname" data-i18n="page.standards.gaebx84_fullname">Nebenangebote - alternative bid handling</p>
+            <p class="std-body" data-i18n-html="page.standards.gaebx84_body">
+              Read‑only today. Lets the platform consume X84 alternative bids alongside X83 main bids
+              for comparison. <em>Write side is on the roadmap</em> - most workflows submit alternatives back
+              as X83 with a metadata flag, which already works.
+            </p>
+            <div class="std-meta">
+              <span class="std-meta-label" data-i18n="page.standards.meta_status">Status</span>
+              <span class="std-meta-value" data-i18n-html="page.standards.gaebx84_status_value"><span class="pill pill-read">Read</span></span>
+              <span class="std-meta-label" data-i18n="page.standards.meta_authority">Authority</span>
+              <span class="std-meta-value">GAEB e.V. / DIN</span>
+            </div>
+          </article>
+
+          <article class="std">
+            <div class="std-head">
+              <div class="std-name" data-i18n="page.standards.daxml_name">DA XML legacy</div>
+              <span class="std-region">DACH</span>
+            </div>
+            <p class="std-fullname" data-i18n="page.standards.daxml_fullname">Legacy GAEB DA XML import - pre‑3.3</p>
+            <p class="std-body" data-i18n="page.standards.daxml_body">
+              Some firms still send tender data in older GAEB DA XML structure. Read‑only path keeps
+              ingestion working without forcing the customer to upgrade their export pipeline.
+            </p>
+            <div class="std-meta">
+              <span class="std-meta-label" data-i18n="page.standards.meta_status">Status</span>
+              <span class="std-meta-value" data-i18n-html="page.standards.daxml_status_value"><span class="pill pill-read">Read · legacy</span></span>
+              <span class="std-meta-label" data-i18n="page.standards.meta_authority">Authority</span>
+              <span class="std-meta-value" data-i18n="page.standards.daxml_authority_value">GAEB e.V. (legacy schema)</span>
+            </div>
+          </article>
+
+          <article class="std">
+            <div class="std-head">
+              <div class="std-name">XLSX · CSV</div>
+              <span class="std-region" data-i18n="page.standards.region_all">All regions</span>
+            </div>
+            <p class="std-fullname" data-i18n="page.standards.xlsxcsv_fullname">Generic spreadsheet export - region‑shaped column profiles</p>
+            <p class="std-body" data-i18n-html="page.standards.xlsxcsv_body">
+              For regions without a structured native format wired in, OCERP exports XLSX/CSV with
+              column profiles that match local conventions: <b>NRM 2 (UK), DPGF (FR), CSI section
+              (US), Pliego template (ES)</b>. Honest answer: it's spreadsheet‑shaped, not a parsed exchange schema.
+            </p>
+            <div class="std-meta">
+              <span class="std-meta-label" data-i18n="page.standards.meta_status">Status</span>
+              <span class="std-meta-value" data-i18n-html="page.standards.xlsxcsv_status_value"><span class="pill pill-write">Write</span><span class="pill pill-via">column profile only</span></span>
+              <span class="std-meta-label" data-i18n="page.standards.meta_authority">Authority</span>
+              <span class="std-meta-value" data-i18n="page.standards.xlsxcsv_authority_value">In‑house templates</span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+
+      <!-- 04 CONTRACT TEMPLATES -->
+      <section class="cat" id="contracts">
+        <div class="cat-head">
+          <p class="cat-num" data-i18n="page.standards.cat04_num">Category 04</p>
+          <h2 class="cat-title" data-i18n-html="page.standards.cat04_title">Contract templates &amp; <em>commercial structure</em></h2>
+          <p class="cat-blurb" data-i18n-html="page.standards.cat04_blurb">
+            What ships today: VOB‑family contract templates inside the DACH regional pack. Other contract
+            forms (FIDIC, NEC4, JCT, AIA) <b>are not currently provided as platform templates</b> - partners
+            bring those in as customer‑specific wrappers.
+          </p>
+        </div>
+
+        <div class="standards-grid">
+          <article class="std">
+            <div class="std-head">
+              <div class="std-name" data-i18n-html="page.standards.vobb_name">VOB/B<code>DACH pack</code></div>
+              <span class="std-region">DACH</span>
+            </div>
+            <p class="std-fullname" data-i18n="page.standards.vobb_fullname">Vergabe‑ und Vertragsordnung für Bauleistungen - Teil B</p>
+            <p class="std-body" data-i18n-html="page.standards.vobb_body">
+              The general contract conditions side of the VOB. DACH regional pack ships templates for
+              <b>Einheitspreisvertrag, Pauschalvertrag and Stundenlohn</b> - three contract forms covering most
+              German construction work. Validation rules align with VOB/B claim windows.
+            </p>
+            <div class="std-meta">
+              <span class="std-meta-label" data-i18n="page.standards.meta_status">Status</span>
+              <span class="std-meta-value" data-i18n-html="page.standards.vobb_status_value"><span class="pill pill-write">Templates · 3</span></span>
+              <span class="std-meta-label" data-i18n="page.standards.meta_authority">Authority</span>
+              <span class="std-meta-value" data-i18n="page.standards.vobb_authority_value">DVA - Deutscher Vergabe‑ und Vertragsausschuss</span>
+            </div>
+          </article>
+
+          <article class="std">
+            <div class="std-head">
+              <div class="std-name" data-i18n-html="page.standards.vobc_name">VOB/C<code>DACH pack</code></div>
+              <span class="std-region">DACH</span>
+            </div>
+            <p class="std-fullname" data-i18n="page.standards.vobc_fullname">VOB Teil C - Allgemeine Technische Vertragsbedingungen (ATV)</p>
+            <p class="std-body" data-i18n="page.standards.vobc_body">
+              The technical specifications side of VOB - DIN 18299 through 18459. Referenced by the DACH pack
+              templates for trade‑specific spec wording. Lets customers point to the right ATV without re‑typing
+              the clause every time.
+            </p>
+            <div class="std-meta">
+              <span class="std-meta-label" data-i18n="page.standards.meta_status">Status</span>
+              <span class="std-meta-value" data-i18n-html="page.standards.vobc_status_value"><span class="pill pill-via">Reference catalogue</span></span>
+              <span class="std-meta-label" data-i18n="page.standards.meta_authority">Authority</span>
+              <span class="std-meta-value">DIN · DVA</span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+
+      <!-- 05 COST DATA -->
+      <section class="cat" id="data">
+        <div class="cat-head">
+          <p class="cat-num" data-i18n="page.standards.cat05_num">Category 05</p>
+          <h2 class="cat-title" data-i18n-html="page.standards.cat05_title">Cost data &amp; <em>seed catalogues</em></h2>
+          <p class="cat-blurb" data-i18n-html="page.standards.cat05_blurb">
+            What ships: <b>CWICR open core, ~55,000 priced positions</b> spanning UK and DACH catalogues.
+            <b>Honest:</b> we do not have live API connectors to UK cost indices, Destatis or commercial price books. Customers bring those in as XLSX/CSV imports today.
+          </p>
+        </div>
+
+        <div class="standards-grid">
+          <article class="std">
+            <div class="std-head">
+              <div class="std-name" data-i18n-html="page.standards.cwicr_name">CWICR<code>open core</code></div>
+              <span class="std-region" data-i18n="page.standards.region_open">Open</span>
+            </div>
+            <p class="std-fullname" data-i18n="page.standards.cwicr_fullname">Construction Works Index of Composed Rates - DataDrivenConstruction</p>
+            <p class="std-body" data-i18n-html="page.standards.cwicr_body">
+              The open foundation. <b>~55,000 priced items in total</b>, covering both
+              UK (NRM‑aligned, with regional cost indices baked in) and DACH (DIN 276‑aligned,
+              with regional benchmarks) classifications. Multi‑language; ships as the seed
+              catalogue on every fresh OCERP install. Author: Artem Boiko.
+            </p>
+            <div class="std-meta">
+              <span class="std-meta-label" data-i18n="page.standards.meta_status">Status</span>
+              <span class="std-meta-value" data-i18n-html="page.standards.cwicr_status_value"><span class="pill pill-both">Native seed</span></span>
+              <span class="std-meta-label" data-i18n="page.standards.meta_surfaces_in">Surfaces in</span>
+              <span class="std-meta-value" data-i18n="page.standards.cwicr_surfaces_value">Costs module · BOQ unit‑rate suggestions · per‑project catalogue binding (v7.3.0)</span>
+            </div>
+          </article>
+
+          <article class="std">
+            <div class="std-head">
+              <div class="std-name" data-i18n="page.standards.pricebook_name">External pricebook import</div>
+              <span class="std-region" data-i18n="page.standards.region_all">All regions</span>
+            </div>
+            <p class="std-fullname" data-i18n="page.standards.pricebook_fullname">XLSX / CSV / GAEB X81 import path</p>
+            <p class="std-body" data-i18n-html="page.standards.pricebook_body">
+              No API connectors today. <b>Customers import their UK cost index and price-book
+              extracts as XLSX / CSV / GAEB X81 STLB.</b> Rates land in the per‑project catalogue with
+              source provenance preserved on every line. See roadmap for native API integrations.
+            </p>
+            <div class="std-meta">
+              <span class="std-meta-label" data-i18n="page.standards.meta_status">Status</span>
+              <span class="std-meta-value" data-i18n-html="page.standards.pricebook_status_value"><span class="pill pill-read">Read</span><span class="pill pill-via">XLSX · CSV · GAEB X81</span></span>
+              <span class="std-meta-label" data-i18n="page.standards.meta_surfaces_in">Surfaces in</span>
+              <span class="std-meta-value" data-i18n="page.standards.pricebook_surfaces_value">Costs module · per‑project catalogue · vectorised search</span>
+            </div>
+          </article>
+
+          <article class="std">
+            <div class="std-head">
+              <div class="std-name" data-i18n="page.standards.catbinding_name">Per‑project catalogue binding</div>
+              <span class="std-region" data-i18n="page.standards.region_all">All regions</span>
+            </div>
+            <p class="std-fullname" data-i18n="page.standards.catbinding_fullname">v7.3.0 feature - region‑aware catalogue selection</p>
+            <p class="std-body" data-i18n-html="page.standards.catbinding_body">
+              Each project binds to one or more cost catalogues with <b>provenance, currency code, vectorisation flag</b>.
+              The platform auto‑picks a region‑matching catalogue on fresh installs (v7.3.0).
+              <em>Every rate keeps its source ID</em> - an imported price book keeps its own ID; CWICR stays CWICR.
+            </p>
+            <div class="std-meta">
+              <span class="std-meta-label" data-i18n="page.standards.meta_status">Status</span>
+              <span class="std-meta-value" data-i18n-html="page.standards.catbinding_status_value"><span class="pill pill-both">Native</span></span>
+              <span class="std-meta-label" data-i18n="page.standards.meta_surfaces_in">Surfaces in</span>
+              <span class="std-meta-value" data-i18n="page.standards.catbinding_surfaces_value">Costs module · Project settings</span>
+            </div>
+          </article>
+
+          <article class="std">
+            <div class="std-head">
+              <div class="std-name" data-i18n-html="page.standards.multicurrency_name">Multi‑currency<code>per region</code></div>
+              <span class="std-region" data-i18n="page.standards.region_all">All regions</span>
+            </div>
+            <p class="std-fullname" data-i18n="page.standards.multicurrency_fullname">Single‑currency per project - region‑defaulted</p>
+            <p class="std-body" data-i18n-html="page.standards.multicurrency_body">
+              <b>Honest framing:</b> projects today carry a single currency code (EUR / GBP / USD typical, region‑defaulted).
+              <em>Live FX conversion and multi‑currency aggregation are not currently shipped</em> - converting between currencies happens manually at import time.
+            </p>
+            <div class="std-meta">
+              <span class="std-meta-label" data-i18n="page.standards.meta_status">Status</span>
+              <span class="std-meta-value" data-i18n-html="page.standards.multicurrency_status_value"><span class="pill pill-via">Single currency per project</span></span>
+              <span class="std-meta-label" data-i18n="page.standards.meta_surfaces_in">Surfaces in</span>
+              <span class="std-meta-value" data-i18n="page.standards.multicurrency_surfaces_value">ProjectBudget · BOQ totals</span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+
+      <!-- 06 ROADMAP -->
+      <section class="cat" id="roadmap">
+        <div class="cat-head">
+          <p class="cat-num" data-i18n="page.standards.cat06_num">Category 06</p>
+          <h2 class="cat-title" data-i18n-html="page.standards.cat06_title">On the roadmap, <em>not in the codebase yet</em></h2>
+          <p class="cat-blurb" data-i18n-html="page.standards.cat06_blurb">
+            The standards customers ask for that <b>haven't been merged yet</b>. Listed openly so nobody
+            buys on a promise. Issues track on GitHub at <code>datadrivenconstruction/OpenConstructionERP</code>.
+          </p>
+        </div>
+
+        <div class="roadmap">
+          <p class="roadmap-eyebrow" data-i18n="page.standards.roadmap1_eyebrow">Tender formats - planned, not shipped</p>
+          <h4 data-i18n="page.standards.roadmap1_title">BC3 (FIEBDC‑3) · DPGF native · GAEB X85 · X86 · X87</h4>
+          <p data-i18n="page.standards.roadmap1_body">
+            BC3 (Spain) and a native DPGF reader/writer (France) are the most‑requested missing tender formats.
+            GAEB X85 (Auftragserteilung) and X86/X87 (Schlussrechnung) round out the GAEB family.
+            Today these route through XLSX templates; native parsing is roadmap.
+          </p>
+          <div class="roadmap-tags">
+            <span data-i18n="page.standards.roadmap1_tag1">BC3 · FIEBDC‑3</span><span data-i18n="page.standards.roadmap1_tag2">DPGF native</span><span>GAEB X85</span><span>GAEB X86</span><span>ÖNORM B 2063</span>
+          </div>
+        </div>
+
+        <div class="roadmap" style="margin-top:14px;">
+          <p class="roadmap-eyebrow" data-i18n="page.standards.roadmap2_eyebrow">Sustainability - planned</p>
+          <h4>BREEAM · LEED · DGNB · Level(s) · EU Taxonomy · EN 16627 · COBie · IDS</h4>
+          <p data-i18n-html="page.standards.roadmap2_body">
+            Demo projects reference BREEAM/LEED at the docs level. <b>None of these have validation rule packs
+            or evidence exports today.</b> COBie write and IDS validation are tracked but not merged. ISO 19650 CDE
+            state machine is partial. We won't claim "native support" on these until the rules are registered.
+          </p>
+          <div class="roadmap-tags">
+            <span data-i18n="page.standards.roadmap2_tag1">BREEAM rule pack</span><span data-i18n="page.standards.roadmap2_tag2">LEED rule pack</span><span data-i18n="page.standards.roadmap2_tag3">DGNB rule pack</span><span>EU Taxonomy</span><span data-i18n="page.standards.roadmap2_tag5">COBie write</span><span data-i18n="page.standards.roadmap2_tag6">IDS validation</span><span>ISO 19650 CDE</span>
+          </div>
+        </div>
+
+        <div class="roadmap" style="margin-top:14px;">
+          <p class="roadmap-eyebrow" data-i18n="page.standards.roadmap3_eyebrow">Cost data connectors - planned</p>
+          <h4 data-i18n="page.standards.roadmap3_title">UK cost index and price-book live API integrations</h4>
+          <p data-i18n="page.standards.roadmap3_body">
+            Today: customers import as XLSX/CSV/GAEB X81. Roadmap: live API connectors so updates flow continuously.
+            national cost index / Destatis BAU‑Index time series for indexation clauses are also tracked, not shipped.
+          </p>
+          <div class="roadmap-tags">
+            <span>Cost data API</span><span>UK cost index API</span><span data-i18n="page.standards.roadmap3_tag3">regional cost index live</span><span data-i18n="page.standards.roadmap3_tag4">Price book live</span><span data-i18n="page.standards.roadmap3_tag5">national cost index series</span><span>Destatis BAU</span>
+          </div>
+        </div>
+
+        <div class="roadmap" style="margin-top:14px;">
+          <p class="roadmap-eyebrow" data-i18n="page.standards.roadmap4_eyebrow">Contract forms - partner‑provided today</p>
+          <h4>FIDIC · NEC4 · JCT · AIA</h4>
+          <p data-i18n-html="page.standards.roadmap4_body">
+            <b>Not shipped as platform templates</b> - partners working on international, UK, US private projects
+            bring these as customer‑specific wrappers. We don't pretend they're native, and we'd rather ship VOB
+            properly than half‑ship five contract forms.
+          </p>
+          <div class="roadmap-tags">
+            <span data-i18n="page.standards.roadmap4_tag1">FIDIC profile</span><span data-i18n="page.standards.roadmap4_tag2">NEC4 profile</span><span data-i18n="page.standards.roadmap4_tag3">JCT profile</span><span>AIA SoV</span>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ─── EXAMPLE PAYLOADS ───────────────────────────────── -->
+      <section class="examples" id="examples">
+        <p class="examples-eyebrow" data-i18n="page.standards.examples_eyebrow">Concrete examples</p>
+        <h2 data-i18n-html="page.standards.examples_title">What these formats <em>actually look like</em>.</h2>
+        <p class="examples-blurb" data-i18n="page.standards.examples_blurb">
+          The four formats below are what a developer or estimator will actually see when integrating with OCERP.
+          Real shapes, real codes, real DA XML 3.3 / canonical / IFC structures - not pseudocode.
+        </p>
+
+        <div class="examples-grid">
+
+          <!-- GAEB X83 -->
+          <article class="example-card">
+            <div class="example-head">
+              <div class="example-head-name" data-i18n-html="page.standards.ex_gaeb_name">GAEB X83 <code>DA XML 3.3</code></div>
+              <span class="example-head-tag" data-i18n="page.standards.tag_read_write">Read · Write</span>
+            </div>
+            <pre class="example-body"><span class="com">&lt;!-- A priced position inside an LV section --&gt;</span>
+<span class="tag">&lt;Award&gt;</span>
+  <span class="tag">&lt;BoQBody&gt;</span>
+    <span class="tag">&lt;BoQCtgy</span> <span class="attr">RNoPart</span>=<span class="str">"01"</span><span class="tag">&gt;</span>
+      <span class="tag">&lt;LblTx&gt;</span>Erdarbeiten<span class="tag">&lt;/LblTx&gt;</span>
+      <span class="tag">&lt;Itemlist&gt;</span>
+        <span class="tag">&lt;Item</span> <span class="attr">RNoPart</span>=<span class="str">"0010"</span><span class="tag">&gt;</span>
+          <span class="tag">&lt;Qty&gt;</span><span class="num">120.500</span><span class="tag">&lt;/Qty&gt;</span>
+          <span class="tag">&lt;QU&gt;</span>m3<span class="tag">&lt;/QU&gt;</span>
+          <span class="tag">&lt;Description&gt;</span>
+            <span class="tag">&lt;CompleteText&gt;</span>
+              Mutterboden abtragen, lagern
+            <span class="tag">&lt;/CompleteText&gt;</span>
+          <span class="tag">&lt;/Description&gt;</span>
+          <span class="tag">&lt;UP&gt;</span><span class="num">8.45</span><span class="tag">&lt;/UP&gt;</span>
+          <span class="tag">&lt;ItemAmount&gt;</span><span class="num">1018.23</span><span class="tag">&lt;/ItemAmount&gt;</span>
+        <span class="tag">&lt;/Item&gt;</span>
+      <span class="tag">&lt;/Itemlist&gt;</span>
+    <span class="tag">&lt;/BoQCtgy&gt;</span>
+  <span class="tag">&lt;/BoQBody&gt;</span>
+<span class="tag">&lt;/Award&gt;</span></pre>
+            <div class="example-foot">
+              <a href="https://www.gaeb.de/en/data-exchange/" target="_blank" rel="noopener" data-i18n="page.standards.ex_gaeb_link">▸ gaeb.de · DA XML 3.3 spec</a>
+              <span class="example-foot-meta" data-i18n="page.standards.ex_gaeb_meta">DACH · public works statutory</span>
+            </div>
+          </article>
+
+          <!-- Canonical JSON (DDC cad2data) -->
+          <article class="example-card">
+            <div class="example-head">
+              <div class="example-head-name" data-i18n-html="page.standards.ex_canon_name">Canonical JSON <code>DDC cad2data</code></div>
+              <span class="example-head-tag is-canon" data-i18n="page.standards.ex_canon_tag">Pipeline output</span>
+            </div>
+            <pre class="example-body"><span class="com">// Output from RVT/IFC/DWG/DGN → DDC pipeline</span>
+{
+  <span class="attr">"format_version"</span>: <span class="str">"1.0"</span>,
+  <span class="attr">"source"</span>: {
+    <span class="attr">"type"</span>: <span class="str">"rvt"</span>,
+    <span class="attr">"converter"</span>: <span class="str">"ddc-rvt-converter/1.x"</span>
+  },
+  <span class="attr">"elements"</span>: [
+    {
+      <span class="attr">"id"</span>: <span class="str">"elem_001"</span>,
+      <span class="attr">"category"</span>: <span class="str">"wall"</span>,
+      <span class="attr">"classification"</span>: {
+        <span class="attr">"din276"</span>: <span class="str">"331"</span>,
+        <span class="attr">"masterformat"</span>: <span class="str">"04 20 00"</span>
+      },
+      <span class="attr">"geometry"</span>: {
+        <span class="attr">"length_m"</span>: <span class="num">12.5</span>,
+        <span class="attr">"height_m"</span>: <span class="num">3.0</span>,
+        <span class="attr">"thickness_m"</span>: <span class="num">0.24</span>,
+        <span class="attr">"area_m2"</span>: <span class="num">37.5</span>,
+        <span class="attr">"volume_m3"</span>: <span class="num">9.0</span>
+      },
+      <span class="attr">"properties"</span>: {
+        <span class="attr">"material"</span>: <span class="str">"concrete_c30_37"</span>
+      }
+    }
+  ]
+}</pre>
+            <div class="example-foot">
+              <a href="https://datadrivenconstruction.io" target="_blank" rel="noopener" data-i18n="page.standards.ex_canon_link">▸ datadrivenconstruction.io · cad2data</a>
+              <span class="example-foot-meta" data-i18n="page.standards.ex_canon_meta">In‑house · canonical for all CAD/BIM intake</span>
+            </div>
+          </article>
+
+          <!-- DIN 276 KG codes -->
+          <article class="example-card">
+            <div class="example-head">
+              <div class="example-head-name" data-i18n-html="page.standards.ex_din_name">DIN 276 <code>KG codes</code></div>
+              <span class="example-head-tag is-rule" data-i18n="page.standards.ex_din_tag">Rule pack · 4</span>
+            </div>
+            <pre class="example-body"><span class="com"># Real KG hierarchy - Bauwerk Baukonstruktionen</span>
+<span class="kw">300</span>   Bauwerk Baukonstruktionen
+<span class="kw">310</span>   ├─ Baugrube
+<span class="kw">320</span>   ├─ Gründung
+<span class="kw">330</span>   ├─ Außenwände
+  <span class="kw">331</span>     ├─ Tragende Außenwände
+  <span class="kw">332</span>     ├─ Nichttragende Außenwände
+  <span class="kw">333</span>     ├─ Außenstützen
+  <span class="kw">334</span>     ├─ Außentüren und ‑fenster
+  <span class="kw">335</span>     ├─ Außenwandbekleidungen
+<span class="kw">340</span>   ├─ Innenwände
+<span class="kw">350</span>   ├─ Decken
+<span class="kw">360</span>   ├─ Dächer
+<span class="kw">370</span>   ├─ Baukonstruktive Einbauten
+<span class="kw">390</span>   └─ Sonstige Maßnahmen
+
+<span class="com"># Validation rules (registered in core)</span>
+✓ <span class="str">din276.cost_group_required</span>
+✓ <span class="str">din276.valid_cost_group</span>
+✓ <span class="str">din276.hierarchy_correct</span>
+✓ <span class="str">din276.completeness_per_stage</span></pre>
+            <div class="example-foot">
+              <a href="https://www.din.de/en/getting-involved/standards-committees/nabau/standards/wdc-beuth:din21:284203797" target="_blank" rel="noopener" data-i18n="page.standards.ex_din_link">▸ din.de · DIN 276:2018‑12</a>
+              <span class="example-foot-meta" data-i18n="page.standards.ex_din_meta">DACH · cost backbone</span>
+            </div>
+          </article>
+
+          <!-- BCF -->
+          <article class="example-card">
+            <div class="example-head">
+              <div class="example-head-name" data-i18n-html="page.standards.ex_bcf_name">BCF <code>3.0 markup</code></div>
+              <span class="example-head-tag" data-i18n="page.standards.tag_read_write">Read · Write</span>
+            </div>
+            <pre class="example-body"><span class="com">&lt;!-- A single issue (markup.bcf) --&gt;</span>
+<span class="tag">&lt;Markup&gt;</span>
+  <span class="tag">&lt;Topic</span>
+    <span class="attr">Guid</span>=<span class="str">"a3c1..."</span>
+    <span class="attr">TopicType</span>=<span class="str">"Clash"</span>
+    <span class="attr">TopicStatus</span>=<span class="str">"Open"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;Title&gt;</span>
+      Pipe runs through structural slab
+    <span class="tag">&lt;/Title&gt;</span>
+    <span class="tag">&lt;Priority&gt;</span>High<span class="tag">&lt;/Priority&gt;</span>
+    <span class="tag">&lt;CreationAuthor&gt;</span>
+      OCERP validation pipeline
+    <span class="tag">&lt;/CreationAuthor&gt;</span>
+    <span class="tag">&lt;CreationDate&gt;</span>
+      2026-05-07T09:14:22Z
+    <span class="tag">&lt;/CreationDate&gt;</span>
+    <span class="tag">&lt;Labels&gt;</span>
+      <span class="tag">&lt;Label&gt;</span>MEP-vs-STRUCT<span class="tag">&lt;/Label&gt;</span>
+    <span class="tag">&lt;/Labels&gt;</span>
+  <span class="tag">&lt;/Topic&gt;</span>
+  <span class="tag">&lt;Comment</span> <span class="attr">Guid</span>=<span class="str">"b4d2..."</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;Comment&gt;</span>
+      Reroute east of grid line C
+    <span class="tag">&lt;/Comment&gt;</span>
+  <span class="tag">&lt;/Comment&gt;</span>
+<span class="tag">&lt;/Markup&gt;</span></pre>
+            <div class="example-foot">
+              <a href="https://www.buildingsmart.org/standards/bsi-standards/bim-collaboration-format-bcf/" target="_blank" rel="noopener" data-i18n="page.standards.ex_bcf_link">▸ buildingsmart.org · BCF</a>
+              <span class="example-foot-meta" data-i18n="page.standards.ex_bcf_meta">Global · issue exchange</span>
+            </div>
+          </article>
+
+        </div>
+
+        <!-- AUTHORITIES -->
+        <div class="authorities">
+          <p class="authorities-eyebrow" data-i18n="page.standards.authorities_eyebrow">▸ Source authorities - go straight to the publisher</p>
+          <div class="authorities-grid">
+            <a class="auth-item" href="https://www.buildingsmart.org/" target="_blank" rel="noopener">
+              <div class="auth-item-name">buildingSMART</div>
+              <div class="auth-item-domain">buildingsmart.org</div>
+              <div class="auth-item-scope">IFC · BCF · COBie · IDS</div>
+            </a>
+            <a class="auth-item" href="https://www.gaeb.de/" target="_blank" rel="noopener">
+              <div class="auth-item-name">GAEB e.V.</div>
+              <div class="auth-item-domain">gaeb.de</div>
+              <div class="auth-item-scope">GAEB X81 / X83 / X84 / X85</div>
+            </a>
+            <a class="auth-item" href="https://www.din.de/" target="_blank" rel="noopener">
+              <div class="auth-item-name">DIN</div>
+              <div class="auth-item-domain">din.de</div>
+              <div class="auth-item-scope">DIN 276 · DIN 277 · ATV (VOB/C)</div>
+            </a>
+            <a class="auth-item" href="https://www.rics.org/" target="_blank" rel="noopener">
+              <div class="auth-item-name">RICS</div>
+              <div class="auth-item-domain">rics.org</div>
+              <div class="auth-item-scope">NRM 1 / NRM 2 / NRM 3 · RICS</div>
+            </a>
+            <a class="auth-item" href="https://www.csiresources.org/standards/masterformat" target="_blank" rel="noopener">
+              <div class="auth-item-name">CSI</div>
+              <div class="auth-item-domain">csiresources.org</div>
+              <div class="auth-item-scope">MasterFormat · UniFormat II · OmniClass</div>
+            </a>
+            <a class="auth-item" href="https://www.dva.de/" target="_blank" rel="noopener">
+              <div class="auth-item-name">DVA</div>
+              <div class="auth-item-domain">dva.de</div>
+              <div class="auth-item-scope">VOB/A · VOB/B · VOB/C</div>
+            </a>
+            <a class="auth-item" href="https://www.fiebdc.es/" target="_blank" rel="noopener">
+              <div class="auth-item-name">FIEBDC</div>
+              <div class="auth-item-domain">fiebdc.es</div>
+              <div class="auth-item-scope" data-i18n="page.standards.auth_fiebdc_scope">BC3 (FIEBDC‑3) · ES tender exchange</div>
+            </a>
+            <a class="auth-item" href="https://adicc-uae.com/issues" target="_blank" rel="noopener">
+              <div class="auth-item-name" data-i18n="page.standards.auth_ocerp_name">OCERP roadmap</div>
+              <div class="auth-item-domain">github · issues</div>
+              <div class="auth-item-scope" data-i18n="page.standards.auth_ocerp_scope">Track planned format / rule‑pack work</div>
+            </a>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- DECISION TABLE -->
+      <section class="decision" id="decision">
+        <p class="decision-eyebrow" data-i18n="page.standards.decision_eyebrow">Decision aid</p>
+        <h2 data-i18n-html="page.standards.decision_title">Which standard <em>do I actually need?</em></h2>
+        <p class="decision-blurb" data-i18n="page.standards.decision_blurb">
+          Pragmatic shortlist by job. Reflects what's wired today - not aspirational.
+        </p>
+        <table class="decision-table">
+          <thead>
+            <tr>
+              <th data-i18n="page.standards.decision_th_job">If your job is…</th>
+              <th data-i18n="page.standards.decision_th_reach">Reach for first (shipping)</th>
+              <th data-i18n="page.standards.decision_th_gap">Honest gap</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td data-i18n="page.standards.decision_r1_job">UK private building</td>
+              <td data-i18n="page.standards.decision_r1_reach">NRM 1 + NRM 2 rule packs · CWICR seed (~55K total, UK + DACH)</td>
+              <td data-i18n="page.standards.decision_r1_gap">UK cost index live feed not wired - extracts via XLSX</td>
+            </tr>
+            <tr>
+              <td data-i18n="page.standards.decision_r2_job">German Hochbau public</td>
+              <td data-i18n="page.standards.decision_r2_reach">DIN 276 · GAEB X83 round‑trip · VOB/B templates · CWICR seed (~55K total, UK + DACH)</td>
+              <td data-i18n="page.standards.decision_r2_gap">regional cost index live feed not wired - extracts via XLSX</td>
+            </tr>
+            <tr>
+              <td data-i18n="page.standards.decision_r3_job">US commercial new‑build</td>
+              <td data-i18n="page.standards.decision_r3_reach">MasterFormat rule pack · XLSX export with CSI columns</td>
+              <td data-i18n="page.standards.decision_r3_gap">commercial cost data connector not wired; AIA SoV not native</td>
+            </tr>
+            <tr>
+              <td data-i18n="page.standards.decision_r4_job">Spanish public works</td>
+              <td data-i18n="page.standards.decision_r4_reach">BOQ quality rules · XLSX export with Pliego columns</td>
+              <td data-i18n="page.standards.decision_r4_gap">BC3 native - on roadmap, not shipped</td>
+            </tr>
+            <tr>
+              <td data-i18n="page.standards.decision_r5_job">French marchés publics</td>
+              <td data-i18n="page.standards.decision_r5_reach">DPGF rule pack · XLSX export with DPGF columns</td>
+              <td data-i18n="page.standards.decision_r5_gap">Native DPGF reader/writer - on roadmap</td>
+            </tr>
+            <tr>
+              <td data-i18n="page.standards.decision_r6_job">Cross‑border bid</td>
+              <td data-i18n="page.standards.decision_r6_reach">IFC 4 · DDC cad2data · canonical JSON · BCF for clash</td>
+              <td data-i18n="page.standards.decision_r6_gap">Per‑country contract template - partner brings</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+
+      <!-- PRINCIPLES -->
+      <section class="principles-block" id="principles">
+        <p class="principles-eyebrow" data-i18n="page.standards.principles_eyebrow">How we treat standards</p>
+        <h2 data-i18n-html="page.standards.principles_title">Five rules we won't <em>compromise on</em>.</h2>
+        <div class="principles-list">
+          <div class="principle-item">
+            <span class="principle-item-num">i.</span>
+            <div>
+              <div class="principle-item-title" data-i18n="page.standards.principle1_title">If it's not in the codebase, it's not on the page</div>
+              <div class="principle-item-body" data-i18n="page.standards.principle1_body">Every standard listed has a registered validator, a reader, a writer or a template that ships in v7.3.0. Roadmap items live in their own section, clearly marked.</div>
+            </div>
+          </div>
+          <div class="principle-item">
+            <span class="principle-item-num">ii.</span>
+            <div>
+              <div class="principle-item-title" data-i18n="page.standards.principle2_title">Round‑trip beats one‑way</div>
+              <div class="principle-item-body" data-i18n="page.standards.principle2_body">If we read it, we aim to write it back identically. GAEB X83 is the gold standard - same shape going out as came in.</div>
+            </div>
+          </div>
+          <div class="principle-item">
+            <span class="principle-item-num">iii.</span>
+            <div>
+              <div class="principle-item-title" data-i18n="page.standards.principle3_title">Provenance over neatness</div>
+              <div class="principle-item-body" data-i18n="page.standards.principle3_body">Every imported rate keeps its source ID. CWICR stays CWICR; a customer's imported price-book extract keeps its own source ID. We don't melt them into one anonymous library.</div>
+            </div>
+          </div>
+          <div class="principle-item">
+            <span class="principle-item-num">iv.</span>
+            <div>
+              <div class="principle-item-title" data-i18n="page.standards.principle4_title">A standard isn't supported until it's validated</div>
+              <div class="principle-item-body" data-i18n="page.standards.principle4_body">Saying "we read X" without a rule pack is not support - it's hope. Every standard above ships either rules or a tested reader/writer.</div>
+            </div>
+          </div>
+          <div class="principle-item">
+            <span class="principle-item-num">v.</span>
+            <div>
+              <div class="principle-item-title" data-i18n="page.standards.principle5_title">No vendor lock - by clause</div>
+              <div class="principle-item-body" data-i18n="page.standards.principle5_body">Customer can leave at any time and walk away with their data in IFC, GAEB X83, BCF, CSV and Parquet. AGPL community licence, dual‑licensed commercial - same code path.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      </div>
+    </div>
+
+
+    <section class="cta-band">
+      <div>
+        <p class="cta-band-eyebrow" data-i18n="page.standards.cta_eyebrow">Where this lands in your firm</p>
+        <h2 data-i18n-html="page.standards.cta_title">Standards are the rulebook. <em>Practices are the work.</em></h2>
+        <p data-i18n="page.standards.cta_body">The standards above are how OCERP speaks to the rest of construction. Practice areas describe how a partner takes those standards into a real customer engagement.</p>
+      </div>
+      <div class="cta-band-actions">
+        <a class="btn-primary" href="/services" data-i18n-html="page.standards.cta_primary_btn">
+          See the practice areas
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M3 8h10M9 4l4 4-4 4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+        <a class="btn-secondary" href="/maturity" data-i18n="page.standards.cta_secondary_btn">Take the maturity assessment</a>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="wrap foot-row">
+      <div>
+        <a href="/" data-i18n="page.standards.foot_home">Home</a>
+        <a href="/services" data-i18n="page.standards.nav_practices">Practices</a>
+        <a href="/industries" data-i18n="page.standards.nav_industries">Industries</a>
+        <a href="/standards" data-i18n="page.standards.nav_standards">Standards</a>
+        <a href="/maturity" data-i18n="page.standards.nav_maturity">Maturity</a>
+        <a href="/partners" data-i18n="page.standards.nav_partners">Partners</a>
+      </div>
+      <div>OpenConstructionERP · v7.3.0 · code‑level audit 2026-06-08</div>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      // scroll reveal for major sections
+      const reveals = document.querySelectorAll('.flow-viz, .status-banner, .cat, .decision, .principles-block, .cta-band, .std, .examples, .example-card, .auth-item');
+      reveals.forEach(el => el.classList.add('reveal-up'));
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            e.target.classList.add('is-in');
+            io.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+      reveals.forEach(el => io.observe(el));
+
+      // count-up
+      function countUp(el, target, duration = 1200) {
+        const startTime = performance.now();
+        const step = (now) => {
+          const t = Math.min(1, (now - startTime) / duration);
+          const eased = 1 - Math.pow(1 - t, 3);
+          el.textContent = Math.round(target * eased);
+          if (t < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+      }
+      const numIo = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            countUp(e.target, parseInt(e.target.dataset.count, 10));
+            numIo.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.6 });
+      document.querySelectorAll('.count-up').forEach(el => numIo.observe(el));
+    })();
+  </script>
+
+  <script src="/i18n/i18n.js" defer></script>
+</body>
+</html>

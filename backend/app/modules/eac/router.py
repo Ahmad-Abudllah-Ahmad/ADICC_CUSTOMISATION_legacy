@@ -1,0 +1,1229 @@
+# DDC-CWICR-OE: DataDrivenConstruction · OpenConstructionERP
+# Copyright (c) 2026 Artem Boiko / DataDrivenConstruction
+"""EAC v2 CRUD API router.
+
+Endpoints for EAC-1.1 + EAC-1.2:
+
+* ``POST   /rules``               - create rule
+* ``GET    /rules/{id}``          - fetch rule
+* ``GET    /rules``               - list rules (filters)
+* ``PUT    /rules/{id}``          - update rule (auto-bumps version)
+* ``DELETE /rules/{id}``          - soft-delete (sets is_active=False)
+* ``POST   /rules:validate``      - stub validator (real impl in EAC-1.3)
+* ``POST   /rulesets``            - create ruleset
+* ``GET    /rulesets/{id}``       - fetch ruleset
+* ``GET    /rulesets``            - list rulesets
+* ``PUT    /rulesets/{id}``       - update ruleset
+* ``DELETE /rulesets/{id}``       - hard-delete (rules cascade by FK SET NULL)
+
+The module loader auto-mounts this router at ``/api/v1/eac/``. The canonical
+``/api/v2/eac/`` surface (RFC 35 L15) is wired up by the parent task in
+``app/main.py`` outside this ticket's scope.
+"""
+
+from __future__ import annotations
+
+import logging
+import uuid
+from typing import Annotated, Any
+
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
+from sqlalchemy import or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.audit_log import log_activity
+from app.dependencies import (
+    CurrentUserId,
+    RequirePermission,
+    SessionDep,
+    verify_project_access,
+)
+from app.modules.eac.models import (
+    GLOBAL_VARIABLE_VALUE_TYPES,
+    OUTPUT_MODES,
+    RULESET_KINDS,
+    EacRule,
+    EacRuleset,
+    EacRuleVersion,
+    EacRun,
+    EacRunResultItem,
+)
+from app.modules.eac.schemas_api import (
+    EacCompileRequest,
+    EacCompileResponse,
+    EacDryRunRequest,
+    EacDryRunResponse,
+    EacRuleCreate,
+    EacRuleListFilters,
+    EacRuleRead,
+    EacRulesetCreate,
+    EacRulesetRead,
+    EacRulesetUpdate,
+    EacRuleUpdate,
+    EacRuleValidateRequest,
+    EacRuleValidateResponse,
+    EacRuleValidationError,
+    EacRunAggregateResult,
+    EacRunCancelResponse,
+    EacRunDiffResponse,
+    EacRunElementResult,
+    EacRunIssueResult,
+    EacRunRead,
+    EacRunRerunRequest,
+    EacRunResultItemRead,
+    EacRunRulesetRequest,
+    EacRunStatusResponse,
+)
+
+logger = logging.getLogger(__name__)
+
+router = APIRouter(tags=["EAC v2"])
+
+# Mount the EAC-2 aliases sub-router (RFC 35 §6).
+from app.modules.eac.aliases.router import router as _aliases_router  # noqa: E402
+
+router.include_router(_aliases_router)
+
+
+# ── Tenant resolution ────────────────────────────────────────────────────
+
+
+async def _resolve_tenant_id(session: AsyncSession, user_id: str) -> uuid.UUID:
+    """Resolve the tenant for the current user.
+
+    W0.4 (RLS) hasn't shipped yet; until then, each user is treated as
+    its own single-row tenant. This shim keeps tests deterministic and
+    is replaced when the tenant table lands.
+    """
+    from app.modules.users.models import User
+
+    try:
+        user_uuid = uuid.UUID(user_id)
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid user identifier",
+        ) from exc
+    user = await session.get(User, user_uuid)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User not found",
+        )
+    tenant_attr = getattr(user, "tenant_id", None)
+    if tenant_attr is not None:
+        try:
+            return uuid.UUID(str(tenant_attr))
+        except (TypeError, ValueError) as exc:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Invalid tenant for current user",
+            ) from exc
+    return user.id
+
+
+# ── Validate helpers ─────────────────────────────────────────────────────
+
+
+def _check_output_mode(value: str | None) -> None:
+    if value is None:
+        return
+    if value not in OUTPUT_MODES:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"output_mode must be one of {OUTPUT_MODES}, got '{value}'",
+        )
+
+
+def _check_ruleset_kind(value: str | None) -> None:
+    if value is None:
+        return
+    if value not in RULESET_KINDS:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"kind must be one of {RULESET_KINDS}, got '{value}'",
+        )
+
+
+# ── Rules: create ────────────────────────────────────────────────────────
+
+
+@router.post(
+    "/rules",
+    response_model=EacRuleRead,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(RequirePermission("eac.write"))],
+)
+async def create_rule(
+    payload: EacRuleCreate,
+    user_id: CurrentUserId,
+    session: SessionDep,
+) -> EacRuleRead:
+    """Create a new EAC rule.
+
+    Saves a row in ``oe_eac_rule`` and a corresponding ``oe_eac_rule_version``
+    history entry with ``version_number=1``.
+    """
+    _check_output_mode(payload.output_mode)
+    tenant_id = await _resolve_tenant_id(session, user_id)
+    if payload.project_id is not None:
+        await verify_project_access(payload.project_id, user_id, session)
+
+    rule = EacRule(
+        ruleset_id=payload.ruleset_id,
+        name=payload.name,
+        description=payload.description,
+        output_mode=payload.output_mode,
+        definition_json=payload.definition_json or {},
+        formula=payload.formula,
+        result_unit=payload.result_unit,
+        tags=list(payload.tags or []),
+        version=1,
+        is_active=True,
+        tenant_id=tenant_id,
+        project_id=payload.project_id,
+        created_by_user_id=uuid.UUID(user_id),
+        updated_by_user_id=uuid.UUID(user_id),
+    )
+    session.add(rule)
+    await session.flush()
+
+    version_row = EacRuleVersion(
+        rule_id=rule.id,
+        version_number=1,
+        definition_json=rule.definition_json,
+        formula=rule.formula,
+        changed_by_user_id=uuid.UUID(user_id),
+        change_reason="initial",
+        tenant_id=tenant_id,
+    )
+    session.add(version_row)
+    await session.flush()
+
+    return EacRuleRead.model_validate(rule)
+
+
+# ── Rules: get ──────────────────────────────────────────────────────────
+
+
+@router.get(
+    "/rules/{rule_id}",
+    response_model=EacRuleRead,
+    dependencies=[Depends(RequirePermission("eac.read"))],
+)
+async def get_rule(
+    rule_id: uuid.UUID,
+    user_id: CurrentUserId,
+    session: SessionDep,
+) -> EacRuleRead:
+    """Fetch a single rule by ID."""
+    tenant_id = await _resolve_tenant_id(session, user_id)
+    rule = await session.get(EacRule, rule_id)
+    if rule is None or rule.tenant_id != tenant_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Rule {rule_id} not found",
+        )
+    return EacRuleRead.model_validate(rule)
+
+
+# ── Rules: list ─────────────────────────────────────────────────────────
+
+
+@router.get(
+    "/rules",
+    response_model=list[EacRuleRead],
+    dependencies=[Depends(RequirePermission("eac.read"))],
+)
+async def list_rules(
+    user_id: CurrentUserId,
+    session: SessionDep,
+    ruleset_id: uuid.UUID | None = Query(default=None),
+    project_id: uuid.UUID | None = Query(default=None),
+    output_mode: str | None = Query(default=None),
+    is_active: bool | None = Query(default=None),
+    tag: str | None = Query(default=None),
+    search: str | None = Query(default=None),
+    limit: int = Query(default=100, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
+) -> list[EacRuleRead]:
+    """List rules visible to the current tenant, with optional filters."""
+    _check_output_mode(output_mode)
+    tenant_id = await _resolve_tenant_id(session, user_id)
+    if project_id is not None:
+        await verify_project_access(project_id, user_id, session)
+
+    filters = EacRuleListFilters(
+        ruleset_id=ruleset_id,
+        project_id=project_id,
+        output_mode=output_mode,
+        is_active=is_active,
+        tag=tag,
+        search=search,
+        limit=limit,
+        offset=offset,
+    )
+
+    stmt = select(EacRule).where(EacRule.tenant_id == tenant_id)
+    if filters.ruleset_id is not None:
+        stmt = stmt.where(EacRule.ruleset_id == filters.ruleset_id)
+    if filters.project_id is not None:
+        stmt = stmt.where(EacRule.project_id == filters.project_id)
+    if filters.output_mode is not None:
+        stmt = stmt.where(EacRule.output_mode == filters.output_mode)
+    if filters.is_active is not None:
+        stmt = stmt.where(EacRule.is_active.is_(filters.is_active))
+    if filters.search:
+        like = f"%{filters.search}%"
+        stmt = stmt.where(
+            or_(
+                EacRule.name.ilike(like),
+                EacRule.description.ilike(like),
+            )
+        )
+    stmt = stmt.order_by(EacRule.created_at.desc())
+
+    # Tag membership lives in a JSON array column. It MUST be applied before
+    # ``limit``/``offset`` or pagination breaks: SQL paginates first, then a
+    # post-fetch Python filter drops some of those rows, so the page comes back
+    # short of ``limit`` even when more matching rows exist. On PostgreSQL the
+    # column is physically JSONB, so push the predicate into SQL via ``@>``
+    # containment (mirrors ``requirements.service``). On other dialects (the
+    # SQLite test lane) we cannot express array containment portably, so fetch
+    # the filtered set in Python and slice the page afterwards.
+    bind = session.get_bind()
+    dialect_name = getattr(getattr(bind, "dialect", None), "name", "") or ""
+
+    if filters.tag and dialect_name == "postgresql":
+        from sqlalchemy import cast
+        from sqlalchemy.dialects.postgresql import JSONB
+
+        stmt = stmt.where(cast(EacRule.tags, JSONB).contains([filters.tag]))
+
+    if not filters.tag or dialect_name == "postgresql":
+        stmt = stmt.limit(filters.limit).offset(filters.offset)
+        result = await session.execute(stmt)
+        rules = list(result.scalars().all())
+    else:
+        # Non-PostgreSQL with a tag filter: filter in Python, then paginate so
+        # the page still honours ``limit``/``offset`` against the filtered set.
+        result = await session.execute(stmt)
+        matched = [r for r in result.scalars().all() if filters.tag in (r.tags or [])]
+        rules = matched[filters.offset : filters.offset + filters.limit]
+
+    return [EacRuleRead.model_validate(r) for r in rules]
+
+
+# ── Rules: update ───────────────────────────────────────────────────────
+
+
+@router.put(
+    "/rules/{rule_id}",
+    response_model=EacRuleRead,
+    dependencies=[Depends(RequirePermission("eac.write"))],
+)
+async def update_rule(
+    rule_id: uuid.UUID,
+    payload: EacRuleUpdate,
+    user_id: CurrentUserId,
+    session: SessionDep,
+) -> EacRuleRead:
+    """Update a rule, recording a new version row in the history table."""
+    _check_output_mode(payload.output_mode)
+    tenant_id = await _resolve_tenant_id(session, user_id)
+    rule = await session.get(EacRule, rule_id)
+    if rule is None or rule.tenant_id != tenant_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Rule {rule_id} not found",
+        )
+
+    data = payload.model_dump(exclude_unset=True)
+    change_reason = data.pop("change_reason", None)
+
+    definition_changed = "definition_json" in data and data["definition_json"] != rule.definition_json
+    formula_changed = "formula" in data and data["formula"] != rule.formula
+
+    for field, value in data.items():
+        setattr(rule, field, value)
+    rule.updated_by_user_id = uuid.UUID(user_id)
+
+    if definition_changed or formula_changed:
+        rule.version = (rule.version or 1) + 1
+        version_row = EacRuleVersion(
+            rule_id=rule.id,
+            version_number=rule.version,
+            definition_json=rule.definition_json,
+            formula=rule.formula,
+            changed_by_user_id=uuid.UUID(user_id),
+            change_reason=change_reason,
+            tenant_id=tenant_id,
+        )
+        session.add(version_row)
+
+    await session.flush()
+    return EacRuleRead.model_validate(rule)
+
+
+# ── Rules: delete (soft) ────────────────────────────────────────────────
+
+
+@router.delete(
+    "/rules/{rule_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(RequirePermission("eac.delete"))],
+)
+async def delete_rule(
+    rule_id: uuid.UUID,
+    user_id: CurrentUserId,
+    session: SessionDep,
+) -> None:
+    """Soft-delete a rule by flipping ``is_active`` to ``False``."""
+    tenant_id = await _resolve_tenant_id(session, user_id)
+    rule = await session.get(EacRule, rule_id)
+    if rule is None or rule.tenant_id != tenant_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Rule {rule_id} not found",
+        )
+    rule.is_active = False
+    rule.updated_by_user_id = uuid.UUID(user_id)
+    await session.flush()
+
+
+# ── Rules: validate (stub) ──────────────────────────────────────────────
+
+
+@router.post(
+    "/rules:validate",
+    response_model=EacRuleValidateResponse,
+    dependencies=[Depends(RequirePermission("eac.run"))],
+)
+async def validate_rule(
+    payload: EacRuleValidateRequest,
+    user_id: CurrentUserId,
+    session: SessionDep,
+) -> EacRuleValidateResponse:
+    """Validate a rule definition (schema + semantics, EAC-1.3).
+
+    Pipeline:
+
+    1. Pydantic shape check - catches malformed payloads before any
+       DB work.
+    2. Semantic validator - alias / global-var existence, formula
+       syntax, ReDoS reject, ``between`` ordering, local-var cycle
+       detection (FR-1.10).
+    """
+    errors: list[EacRuleValidationError] = []
+
+    # 1. Schema-level shape check.
+    from pydantic import ValidationError
+
+    from app.modules.eac.engine.validator import validate_rule as _semantic_validate
+    from app.modules.eac.schemas import EacRuleDefinition
+
+    try:
+        parsed_def = EacRuleDefinition.model_validate(payload.definition_json)
+    except ValidationError as exc:
+        for err in exc.errors():
+            errors.append(
+                EacRuleValidationError(
+                    code="schema." + str(err.get("type", "invalid")),
+                    path=".".join(str(p) for p in err.get("loc", ())),
+                    message=str(err.get("msg", "Invalid")),
+                    message_i18n_key=None,
+                )
+            )
+        # Shape failures short-circuit semantic checks: the validator
+        # operates on a well-formed Pydantic model.
+        return EacRuleValidateResponse(valid=False, errors=errors)
+
+    # 2. Semantic validator.
+    try:
+        tenant_id = await _resolve_tenant_id(session, user_id)
+    except HTTPException:
+        raise
+    except Exception:  # noqa: BLE001 - soft fallback when tenant can't resolve
+        tenant_id = None
+
+    try:
+        result = await _semantic_validate(
+            parsed_def,
+            session=session,
+            tenant_id=tenant_id,
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("Semantic validator raised unexpectedly")
+        errors.append(
+            EacRuleValidationError(
+                code="validator.internal_error",
+                path="$",
+                message=f"Validator error: {exc}",
+                message_i18n_key=None,
+            )
+        )
+        return EacRuleValidateResponse(valid=False, errors=errors)
+
+    for issue in result.issues:
+        errors.append(
+            EacRuleValidationError(
+                code=issue.code,
+                path=issue.path,
+                message=issue.message_i18n_key,
+                message_i18n_key=issue.message_i18n_key,
+            )
+        )
+
+    return EacRuleValidateResponse(valid=result.valid, errors=errors)
+
+
+# ── Rulesets ────────────────────────────────────────────────────────────
+
+
+@router.post(
+    "/rulesets",
+    response_model=EacRulesetRead,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(RequirePermission("eac.write"))],
+)
+async def create_ruleset(
+    payload: EacRulesetCreate,
+    user_id: CurrentUserId,
+    session: SessionDep,
+) -> EacRulesetRead:
+    """Create a new ruleset."""
+    _check_ruleset_kind(payload.kind)
+    tenant_id = await _resolve_tenant_id(session, user_id)
+    if payload.project_id is not None:
+        await verify_project_access(payload.project_id, user_id, session)
+
+    ruleset = EacRuleset(
+        name=payload.name,
+        description=payload.description,
+        kind=payload.kind,
+        classifier_id=payload.classifier_id,
+        parent_ruleset_id=payload.parent_ruleset_id,
+        tenant_id=tenant_id,
+        project_id=payload.project_id,
+        is_template=payload.is_template,
+        is_public_in_marketplace=payload.is_public_in_marketplace,
+        tags=list(payload.tags or []),
+    )
+    session.add(ruleset)
+    await session.flush()
+    return EacRulesetRead.model_validate(ruleset)
+
+
+@router.get(
+    "/rulesets/{ruleset_id}",
+    response_model=EacRulesetRead,
+    dependencies=[Depends(RequirePermission("eac.read"))],
+)
+async def get_ruleset(
+    ruleset_id: uuid.UUID,
+    user_id: CurrentUserId,
+    session: SessionDep,
+) -> EacRulesetRead:
+    """Fetch a single ruleset by ID."""
+    tenant_id = await _resolve_tenant_id(session, user_id)
+    ruleset = await session.get(EacRuleset, ruleset_id)
+    if ruleset is None or ruleset.tenant_id != tenant_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Ruleset {ruleset_id} not found",
+        )
+    return EacRulesetRead.model_validate(ruleset)
+
+
+@router.get(
+    "/rulesets",
+    response_model=list[EacRulesetRead],
+    dependencies=[Depends(RequirePermission("eac.read"))],
+)
+async def list_rulesets(
+    user_id: CurrentUserId,
+    session: SessionDep,
+    project_id: uuid.UUID | None = Query(default=None),
+    kind: str | None = Query(default=None),
+    is_template: bool | None = Query(default=None),
+    is_public_in_marketplace: bool | None = Query(default=None),
+    limit: int = Query(default=100, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
+) -> list[EacRulesetRead]:
+    """List rulesets visible to the current tenant."""
+    _check_ruleset_kind(kind)
+    tenant_id = await _resolve_tenant_id(session, user_id)
+    if project_id is not None:
+        await verify_project_access(project_id, user_id, session)
+
+    stmt = select(EacRuleset).where(EacRuleset.tenant_id == tenant_id)
+    if project_id is not None:
+        stmt = stmt.where(EacRuleset.project_id == project_id)
+    if kind is not None:
+        stmt = stmt.where(EacRuleset.kind == kind)
+    if is_template is not None:
+        stmt = stmt.where(EacRuleset.is_template.is_(is_template))
+    if is_public_in_marketplace is not None:
+        stmt = stmt.where(EacRuleset.is_public_in_marketplace.is_(is_public_in_marketplace))
+    stmt = stmt.order_by(EacRuleset.created_at.desc()).limit(limit).offset(offset)
+
+    result = await session.execute(stmt)
+    rulesets = list(result.scalars().all())
+    return [EacRulesetRead.model_validate(r) for r in rulesets]
+
+
+@router.put(
+    "/rulesets/{ruleset_id}",
+    response_model=EacRulesetRead,
+    dependencies=[Depends(RequirePermission("eac.write"))],
+)
+async def update_ruleset(
+    ruleset_id: uuid.UUID,
+    payload: EacRulesetUpdate,
+    user_id: CurrentUserId,
+    session: SessionDep,
+) -> EacRulesetRead:
+    """Update a ruleset."""
+    _check_ruleset_kind(payload.kind)
+    tenant_id = await _resolve_tenant_id(session, user_id)
+    ruleset = await session.get(EacRuleset, ruleset_id)
+    if ruleset is None or ruleset.tenant_id != tenant_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Ruleset {ruleset_id} not found",
+        )
+
+    data = payload.model_dump(exclude_unset=True)
+    for field, value in data.items():
+        setattr(ruleset, field, value)
+    await session.flush()
+    return EacRulesetRead.model_validate(ruleset)
+
+
+@router.delete(
+    "/rulesets/{ruleset_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(RequirePermission("eac.delete"))],
+)
+async def delete_ruleset(
+    ruleset_id: uuid.UUID,
+    user_id: CurrentUserId,
+    session: SessionDep,
+) -> None:
+    """Hard-delete a ruleset.
+
+    Child rules' ``ruleset_id`` is set to NULL (FK ``ON DELETE SET NULL``).
+    """
+    tenant_id = await _resolve_tenant_id(session, user_id)
+    ruleset = await session.get(EacRuleset, ruleset_id)
+    if ruleset is None or ruleset.tenant_id != tenant_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Ruleset {ruleset_id} not found",
+        )
+    await session.delete(ruleset)
+    await session.flush()
+
+
+# ── Runs (EAC-1.4 / RFC 35 §1.7) ────────────────────────────────────────
+
+
+@router.post(
+    "/rules:dry-run",
+    response_model=EacDryRunResponse,
+    dependencies=[Depends(RequirePermission("eac.run"))],
+)
+async def dry_run_rule_endpoint(
+    payload: EacDryRunRequest,
+    user_id: CurrentUserId,
+    session: SessionDep,
+) -> EacDryRunResponse:
+    """Run a draft rule definition against ad-hoc elements without persisting.
+
+    Used by the rule editor's "Test" panel: the user supplies the rule
+    body they're editing plus a few canonical element rows; we return
+    the executor's verdict so they can see green/red ticks before
+    saving.
+    """
+    # Reuse the validator to short-circuit malformed payloads with
+    # a 422 instead of a 500.
+    from app.modules.eac.engine.executor import (
+        ExecutionError,
+        UnsupportedOutputModeError,
+    )
+    from app.modules.eac.engine.runner import dry_run_rule
+
+    try:
+        tenant_id = await _resolve_tenant_id(session, user_id)
+    except HTTPException:
+        raise
+    except Exception:  # noqa: BLE001
+        tenant_id = None
+
+    try:
+        result = await dry_run_rule(
+            payload.definition_json,
+            payload.elements,
+            session=session,
+            tenant_id=tenant_id,
+        )
+    except UnsupportedOutputModeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail=str(exc),
+        ) from exc
+    except ExecutionError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        ) from exc
+
+    return EacDryRunResponse(
+        output_mode=result.output_mode,
+        elements_evaluated=result.elements_evaluated,
+        elements_matched=result.elements_matched,
+        elements_passed=result.elements_passed,
+        boolean_results=[
+            EacRunElementResult(
+                element_id=r.element_id,
+                passed=r.passed,
+                attribute_snapshot=dict(r.attribute_snapshot),
+                error=r.error,
+            )
+            for r in result.boolean_results
+        ],
+        issue_results=[
+            EacRunIssueResult(
+                element_id=i.element_id,
+                title=i.title,
+                description=i.description,
+                topic_type=i.topic_type,
+                priority=i.priority,
+                stage=i.stage,
+                labels=list(i.labels),
+                attribute_snapshot=dict(i.attribute_snapshot),
+            )
+            for i in result.issue_results
+        ],
+        aggregate_result=(
+            EacRunAggregateResult(
+                value=result.aggregate_result.value,
+                result_unit=result.aggregate_result.result_unit,
+                elements_evaluated=result.aggregate_result.elements_evaluated,
+            )
+            if result.aggregate_result is not None
+            else None
+        ),
+        errors=list(result.errors),
+    )
+
+
+@router.post(
+    "/rulesets/{ruleset_id}:run",
+    response_model=EacRunRead,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(RequirePermission("eac.run"))],
+)
+async def run_ruleset_endpoint(
+    ruleset_id: uuid.UUID,
+    payload: EacRunRulesetRequest,
+    user_id: CurrentUserId,
+    session: SessionDep,
+    idempotency_key_header: str | None = Header(
+        default=None,
+        alias="Idempotency-Key",
+        description=(
+            "RFC 9110 idempotency key. Re-posting the same key for this "
+            "ruleset returns the prior run row instead of starting a "
+            "duplicate execution. Auto-derived from the input hash when "
+            "omitted."
+        ),
+    ),
+) -> EacRunRead:
+    """Execute every active rule in a ruleset and persist an EacRun.
+
+    The caller may either supply ``elements`` inline (small models,
+    tests) or a ``model_id`` - in the latter case the runner loads
+    BIMElement rows and converts them to canonical dicts via
+    :func:`bim_element_to_canonical`.
+
+    **Idempotency** (RFC 36 W1.1): when the ``Idempotency-Key`` header
+    is set or when ``elements`` are supplied inline we compute a stable
+    key from ``ruleset_id + ruleset.updated_at + sorted element hash``.
+    A prior run with the same key for this ``(tenant, ruleset)`` is
+    returned verbatim - protecting against webhook retries, double-
+    click submits, and client retries on transient errors.
+
+    **Audit log**: each accepted trigger writes one ``ActivityLog`` row
+    keyed on the new run id (``entity_type='eac_run'``).
+    """
+    from app.modules.eac.engine.executor import ExecutionError
+    from app.modules.eac.engine.idempotency import compute_idempotency_key
+    from app.modules.eac.engine.runner import (
+        bim_element_to_canonical,
+        run_ruleset,
+    )
+
+    tenant_id = await _resolve_tenant_id(session, user_id)
+    ruleset = await session.get(EacRuleset, ruleset_id)
+    if ruleset is None or ruleset.tenant_id != tenant_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Ruleset {ruleset_id} not found",
+        )
+
+    elements: list[dict[str, Any]]
+    if payload.elements is not None:
+        elements = payload.elements
+    elif payload.model_id is not None:
+        from app.modules.bim_hub.models import BIMElement, BIMModel
+
+        # IDOR guard: a ruleset run can read every element of the model, so the
+        # caller must have access to the model's project - otherwise model_id
+        # is a cross-tenant read of another project's BIM data.
+        model = await session.get(BIMModel, payload.model_id)
+        if model is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"BIM model {payload.model_id} not found",
+            )
+        await verify_project_access(model.project_id, user_id, session)
+
+        stmt = select(BIMElement).where(BIMElement.model_id == payload.model_id)
+        rows = (await session.scalars(stmt)).all()
+        elements = [bim_element_to_canonical(r) for r in rows]
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Either elements or model_id must be supplied",
+        )
+
+    # Derive an idempotency key. ``updated_at`` may be None on freshly
+    # created rulesets - fall back to ``created_at`` then to the epoch
+    # so the hash input is always defined.
+    ruleset_ts = getattr(ruleset, "updated_at", None) or getattr(ruleset, "created_at", None)
+    if ruleset_ts is None:
+        from datetime import UTC as _UTC
+        from datetime import datetime as _dt
+
+        ruleset_ts = _dt(1970, 1, 1, tzinfo=_UTC)
+
+    idempotency_key = compute_idempotency_key(
+        ruleset_id=ruleset_id,
+        ruleset_updated_at=ruleset_ts,
+        elements=elements,
+        client_supplied=idempotency_key_header,
+    )
+
+    # Dedup: prior run with the same key for this (tenant, ruleset) wins.
+    dedup_stmt = (
+        select(EacRun)
+        .where(EacRun.tenant_id == tenant_id)
+        .where(EacRun.ruleset_id == ruleset_id)
+        .where(EacRun.idempotency_key == idempotency_key)
+        .order_by(EacRun.started_at.desc())
+        .limit(1)
+    )
+    existing = (await session.scalars(dedup_stmt)).first()
+    if existing is not None:
+        return EacRunRead.model_validate(existing)
+
+    try:
+        run = await run_ruleset(
+            session=session,
+            ruleset_id=ruleset_id,
+            tenant_id=tenant_id,
+            elements=elements,
+            model_version_id=payload.model_version_id,
+            triggered_by=payload.triggered_by,
+            idempotency_key=idempotency_key,
+        )
+    except ExecutionError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        ) from exc
+
+    # Audit log - best effort. A failed audit-write must not roll back
+    # the run row: the work succeeded either way.
+    try:
+        await log_activity(
+            session,
+            actor_id=user_id,
+            tenant_id=tenant_id,
+            entity_type="eac_run",
+            entity_id=run.id,
+            action="run_triggered",
+            to_status=run.status,
+            metadata={
+                "ruleset_id": str(ruleset_id),
+                "triggered_by": run.triggered_by,
+                "elements_evaluated": run.elements_evaluated,
+                "idempotency_key": idempotency_key,
+                "client_supplied_key": idempotency_key_header is not None,
+            },
+        )
+    except Exception:  # noqa: BLE001
+        logger.exception("Failed to write eac_run audit log for run %s", run.id)
+
+    return EacRunRead.model_validate(run)
+
+
+@router.get(
+    "/runs/{run_id}",
+    response_model=EacRunRead,
+    dependencies=[Depends(RequirePermission("eac.read"))],
+)
+async def get_run(
+    run_id: uuid.UUID,
+    user_id: CurrentUserId,
+    session: SessionDep,
+) -> EacRunRead:
+    """Fetch a single run record."""
+    tenant_id = await _resolve_tenant_id(session, user_id)
+    run = await session.get(EacRun, run_id)
+    if run is None or run.tenant_id != tenant_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Run {run_id} not found",
+        )
+    return EacRunRead.model_validate(run)
+
+
+@router.get(
+    "/runs",
+    response_model=list[EacRunRead],
+    dependencies=[Depends(RequirePermission("eac.read"))],
+)
+async def list_runs(
+    user_id: CurrentUserId,
+    session: SessionDep,
+    ruleset_id: uuid.UUID | None = Query(default=None),
+    run_status: str | None = Query(default=None, alias="status"),
+    triggered_by: str | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
+) -> list[EacRunRead]:
+    """List runs filtered by ruleset / status / trigger."""
+    tenant_id = await _resolve_tenant_id(session, user_id)
+    stmt = (
+        select(EacRun)
+        .where(EacRun.tenant_id == tenant_id)
+        .order_by(EacRun.started_at.desc())
+        .limit(limit)
+        .offset(offset)
+    )
+    if ruleset_id is not None:
+        stmt = stmt.where(EacRun.ruleset_id == ruleset_id)
+    if run_status is not None:
+        stmt = stmt.where(EacRun.status == run_status)
+    if triggered_by is not None:
+        stmt = stmt.where(EacRun.triggered_by == triggered_by)
+    rows = (await session.scalars(stmt)).all()
+    return [EacRunRead.model_validate(r) for r in rows]
+
+
+@router.get(
+    "/runs/{run_id}/results",
+    response_model=list[EacRunResultItemRead],
+    dependencies=[Depends(RequirePermission("eac.read"))],
+)
+async def list_run_results(
+    run_id: uuid.UUID,
+    user_id: CurrentUserId,
+    session: SessionDep,
+    rule_id: uuid.UUID | None = Query(default=None),
+    only_failures: bool | None = Query(default=None),
+    has_error: bool | None = Query(default=None),
+    limit: int = Query(default=200, ge=1, le=2000),
+    offset: int = Query(default=0, ge=0),
+) -> list[EacRunResultItemRead]:
+    """Paginate the per-element result rows for a run.
+
+    ``only_failures`` filters to rows where ``pass_=False`` - used by
+    the run-detail view's "show what failed" tab.
+    """
+    tenant_id = await _resolve_tenant_id(session, user_id)
+    run = await session.get(EacRun, run_id)
+    if run is None or run.tenant_id != tenant_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Run {run_id} not found",
+        )
+
+    stmt = (
+        select(EacRunResultItem)
+        .where(EacRunResultItem.run_id == run_id)
+        .order_by(EacRunResultItem.id.asc())
+        .limit(limit)
+        .offset(offset)
+    )
+    if rule_id is not None:
+        stmt = stmt.where(EacRunResultItem.rule_id == rule_id)
+    if only_failures is True:
+        stmt = stmt.where(EacRunResultItem.pass_.is_(False))
+    if has_error is True:
+        stmt = stmt.where(EacRunResultItem.error.is_not(None))
+    elif has_error is False:
+        stmt = stmt.where(EacRunResultItem.error.is_(None))
+
+    rows = (await session.scalars(stmt)).all()
+    return [EacRunResultItemRead.model_validate(r) for r in rows]
+
+
+# ── Engine API completeness (RFC 35 §1.7 / task #221) ───────────────────
+
+
+@router.post(
+    "/rules:compile",
+    response_model=EacCompileResponse,
+    dependencies=[Depends(RequirePermission("eac.run"))],
+)
+async def compile_rule_endpoint(
+    payload: EacCompileRequest,
+    user_id: CurrentUserId,
+    session: SessionDep,
+) -> EacCompileResponse:
+    """Validate + compile a rule body to an executable plan.
+
+    Returns a structured plan (SQL skeleton, parameters, projection)
+    plus the validator's verdict so the editor can show issues alongside
+    the compiled plan. A malformed payload surfaces as 422; a
+    well-formed but semantically wrong payload returns 200 with
+    ``valid=false`` so the UI can render the partial plan.
+    """
+    from pydantic import ValidationError
+
+    from app.modules.eac.engine.api import compile_plan, describe_plan
+
+    try:
+        tenant_id = await _resolve_tenant_id(session, user_id)
+    except HTTPException:
+        raise
+    except Exception:  # noqa: BLE001
+        tenant_id = None
+
+    try:
+        compiled = await compile_plan(
+            payload.definition_json,
+            session=session,
+            tenant_id=tenant_id,
+        )
+    except ValidationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"invalid rule definition: {exc.errors()[:3]}",
+        ) from exc
+
+    described = describe_plan(compiled.plan)
+    return EacCompileResponse(
+        valid=compiled.valid,
+        duckdb_sql=described["duckdb_sql"],
+        projection_columns=described["projection_columns"],
+        parameters=described["parameters"],
+        post_python_step=described["post_python_step"],
+        estimated_cost=described["estimated_cost"],
+        issues=list(compiled.issues),
+    )
+
+
+@router.get(
+    "/runs/{run_id}/status",
+    response_model=EacRunStatusResponse,
+    dependencies=[Depends(RequirePermission("eac.read"))],
+)
+async def get_run_status_endpoint(
+    run_id: uuid.UUID,
+    user_id: CurrentUserId,
+    session: SessionDep,
+) -> EacRunStatusResponse:
+    """Return progress + state for ``run_id``.
+
+    Designed for the run-detail header: progress percentage, error
+    summary, and status are all the UI needs to drive the live polling
+    loop. 404 when the run does not exist or belongs to another tenant.
+    """
+    from app.modules.eac.service import get_run_status
+
+    tenant_id = await _resolve_tenant_id(session, user_id)
+    snapshot = await get_run_status(session, run_id, tenant_id=tenant_id)
+    if snapshot is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Run {run_id} not found",
+        )
+    return EacRunStatusResponse(
+        run_id=snapshot.run_id,
+        status=snapshot.status,
+        progress=snapshot.progress,
+        elements_evaluated=snapshot.elements_evaluated,
+        elements_matched=snapshot.elements_matched,
+        error_count=snapshot.error_count,
+        started_at=snapshot.started_at,
+        finished_at=snapshot.finished_at,
+        errors=list(snapshot.errors),
+    )
+
+
+@router.post(
+    "/runs/{run_id}:cancel",
+    response_model=EacRunCancelResponse,
+    dependencies=[Depends(RequirePermission("eac.run"))],
+)
+async def cancel_run_endpoint(
+    run_id: uuid.UUID,
+    user_id: CurrentUserId,
+    session: SessionDep,
+) -> EacRunCancelResponse:
+    """Request graceful cancellation of ``run_id``.
+
+    Returns 200 with ``cancelled=true`` when the request was accepted
+    (run is pending/running, or already cancelled - idempotent).
+    Returns 404 when the run does not exist for the current tenant.
+    Returns 409 when the run is in a terminal non-cancelled state
+    (success/failed/partial) - cancel is meaningless there.
+    """
+    from app.modules.eac.service import cancel_run
+
+    tenant_id = await _resolve_tenant_id(session, user_id)
+    pre = await session.get(EacRun, run_id)
+    if pre is None or pre.tenant_id != tenant_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Run {run_id} not found",
+        )
+    if pre.status in {"success", "failed", "partial"}:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Run {run_id} is already in terminal state '{pre.status}'",
+        )
+
+    accepted = await cancel_run(
+        session,
+        run_id,
+        tenant_id=tenant_id,
+        user_id=user_id,
+    )
+    refreshed = await session.get(EacRun, run_id)
+    if accepted:
+        try:
+            await log_activity(
+                session,
+                actor_id=user_id,
+                tenant_id=tenant_id,
+                entity_type="eac_run",
+                entity_id=run_id,
+                action="run_cancelled",
+                from_status=pre.status,
+                to_status=refreshed.status if refreshed is not None else "cancelled",
+                metadata={"ruleset_id": str(pre.ruleset_id)},
+            )
+        except Exception:  # noqa: BLE001
+            logger.exception("Failed to write eac_run cancel audit log")
+    return EacRunCancelResponse(
+        run_id=run_id,
+        cancelled=accepted,
+        status=refreshed.status if refreshed is not None else "unknown",
+    )
+
+
+@router.post(
+    "/runs/{run_id}:rerun",
+    response_model=EacRunRead,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(RequirePermission("eac.run"))],
+)
+async def rerun_run_endpoint(
+    run_id: uuid.UUID,
+    payload: EacRunRerunRequest,
+    user_id: CurrentUserId,
+    session: SessionDep,
+) -> EacRunRead:
+    """Replay a prior run and persist a fresh ``EacRun`` row."""
+    from app.modules.eac.engine.executor import ExecutionError
+    from app.modules.eac.service import rerun
+
+    tenant_id = await _resolve_tenant_id(session, user_id)
+    try:
+        new_run = await rerun(
+            session,
+            run_id,
+            tenant_id=tenant_id,
+            elements=payload.elements,
+            triggered_by=payload.triggered_by,
+            user_id=user_id,
+        )
+    except ExecutionError as exc:
+        # Source run not found / tenant mismatch - surface as 404 so the
+        # caller doesn't conflate it with a malformed payload (422).
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
+
+    try:
+        await log_activity(
+            session,
+            actor_id=user_id,
+            tenant_id=tenant_id,
+            entity_type="eac_run",
+            entity_id=new_run.id,
+            action="run_rerun",
+            to_status=new_run.status,
+            metadata={
+                "source_run_id": str(run_id),
+                "ruleset_id": str(new_run.ruleset_id),
+                "elements_evaluated": new_run.elements_evaluated,
+            },
+        )
+    except Exception:  # noqa: BLE001
+        logger.exception("Failed to write eac_run rerun audit log")
+    return EacRunRead.model_validate(new_run)
+
+
+@router.get(
+    "/runs/{run_id_a}:diff/{run_id_b}",
+    response_model=EacRunDiffResponse,
+    dependencies=[Depends(RequirePermission("eac.read"))],
+)
+async def diff_runs_endpoint(
+    run_id_a: uuid.UUID,
+    run_id_b: uuid.UUID,
+    user_id: CurrentUserId,
+    session: SessionDep,
+) -> EacRunDiffResponse:
+    """Compare two runs of the same ruleset.
+
+    422 when the runs belong to different rulesets (diff is not
+    meaningful) or when one of them is missing.
+    """
+    from app.modules.eac.engine.executor import ExecutionError
+    from app.modules.eac.service import diff_runs
+
+    tenant_id = await _resolve_tenant_id(session, user_id)
+    try:
+        result = await diff_runs(session, run_id_a, run_id_b, tenant_id=tenant_id)
+    except ExecutionError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        ) from exc
+    return EacRunDiffResponse(
+        run_id_a=result.run_id_a,
+        run_id_b=result.run_id_b,
+        elements_only_in_a=list(result.elements_only_in_a),
+        elements_only_in_b=list(result.elements_only_in_b),
+        flipped_pass_to_fail=list(result.flipped_pass_to_fail),
+        flipped_fail_to_pass=list(result.flipped_fail_to_pass),
+        unchanged_count=result.unchanged_count,
+    )
+
+
+# ── Module exports ──────────────────────────────────────────────────────
+
+# The ``OUTPUT_MODES``, ``RULESET_KINDS``, ``GLOBAL_VARIABLE_VALUE_TYPES``
+# imports keep tooling/IDEs aware these constants belong to the public
+# router contract even though they aren't referenced as runtime values
+# above (used by E2E suites and OpenAPI examples).
+_PUBLIC_ENUMS = (OUTPUT_MODES, RULESET_KINDS, GLOBAL_VARIABLE_VALUE_TYPES)
+_RouterDeps = Annotated[Any, Depends(lambda: None)]  # placeholder for future deps

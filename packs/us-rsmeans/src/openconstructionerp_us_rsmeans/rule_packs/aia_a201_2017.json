@@ -1,0 +1,33 @@
+{
+  "rule_pack_id": "aia_a201_2017",
+  "name": "AIA A201-2017 General Conditions",
+  "standard": "AIA A201-2017",
+  "jurisdiction": "US",
+  "edition": "2017 (replaces 2007; next revision expected ~2027)",
+  "description": "Enables OCERP built-in validation rules that check tender packs and contract documents for the mandatory AIA A201-2017 General Conditions — all 15 articles plus the supporting G702/G703 Application & Certificate for Payment schedule.",
+  "issuer": "American Institute of Architects (AIA)",
+  "article_count": 15,
+  "enables_rule_ids": [
+    "aia.a201.article_1_general_provisions",
+    "aia.a201.article_2_owner",
+    "aia.a201.article_3_contractor_present",
+    "aia.a201.article_4_architect_present",
+    "aia.a201.article_5_subcontractors",
+    "aia.a201.article_6_separate_contractors",
+    "aia.a201.article_7_changes_in_work",
+    "aia.a201.article_8_time",
+    "aia.a201.article_9_payments_completion",
+    "aia.a201.article_10_protection_persons_property",
+    "aia.a201.article_11_insurance_bonds",
+    "aia.a201.article_12_uncovering_correction",
+    "aia.a201.article_13_miscellaneous_provisions",
+    "aia.a201.article_14_termination_suspension",
+    "aia.a201.article_15_claims_disputes",
+    "aia.a201.notice_provisions_3_3_set",
+    "aia.a201.indemnification_3_18_present",
+    "aia.a201.warranty_3_5_present",
+    "aia.g702_g703_schedule_of_values_balanced",
+    "aia.g702_retainage_field_present",
+    "aia.g703_continuation_sheet_referenced"
+  ]
+}

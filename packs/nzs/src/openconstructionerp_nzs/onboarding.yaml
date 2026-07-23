@@ -1,0 +1,72 @@
+# OCERP × New Zealand partner pack — first-login onboarding script.
+
+version: 1
+pack: nzs
+locale: en-NZ
+estimated_minutes: 8
+title: "Haere mai — OpenConstructionERP, New Zealand Edition"
+subtitle: "Six quick steps to align your workspace with NZBC, NZS 3604:2011, NZS 3910:2023 and Rawlinsons NZ."
+
+steps:
+  - id: company_profile
+    title: "Company profile"
+    body: "Tell us about your organisation so reports, tenders and GST returns are correctly attributed."
+    fields:
+      - { key: company_name, label: "Company name", type: text, required: true }
+      - { key: nzbn, label: "NZBN — New Zealand Business Number (13 digits)", type: text, required: true, pattern: "^\\d{13}$" }
+      - { key: ird_number, label: "IRD Number (8 or 9 digits)", type: text, required: false, pattern: "^\\d{8,9}$" }
+      - { key: gst_registered, label: "Registered for GST?", type: checkbox, default: true }
+      - { key: head_office_region, label: "Head-office region", type: select, required: true, options: ["Auckland", "Wellington", "Canterbury (Christchurch)", "Waikato (Hamilton)", "Bay of Plenty (Tauranga)", "Otago (Dunedin / Queenstown)", "Other"] }
+
+  - id: lbp_licence
+    title: "Licensed Building Practitioner (LBP) registration"
+    body: "MBIE requires LBP registration for Restricted Building Work (RBW). We will surface LBP class on every project signature block."
+    fields:
+      - { key: lbp_number, label: "LBP registration number", type: text, required: false, pattern: "^BP\\d+$" }
+      - { key: lbp_class, label: "LBP class", type: multiselect, required: false, options: ["Design 1 (≤ 1 storey)", "Design 2 (≤ 2 storeys)", "Design 3 (≥ 3 storeys)", "Carpentry", "Bricklaying & Blocklaying", "External Plastering", "Foundations", "Roofing", "Site 1", "Site 2", "Site 3"] }
+      - { key: rmb_member, label: "Member of Registered Master Builders Association?", type: checkbox, default: false }
+      - { key: cba_member, label: "Member of Certified Builders Association of New Zealand?", type: checkbox, default: false }
+
+  - id: nzbc_compliance
+    title: "NZBC compliance pathway"
+    body: "The New Zealand Building Code is performance-based — pick which acceptable solutions you typically follow."
+    fields:
+      - { key: nzbc_b1_via_3604, label: "B1 Structure via NZS 3604:2011 (timber)", type: checkbox, default: true }
+      - { key: nzbc_e2_weather, label: "E2/AS1 External moisture (weathertightness — cavity drainage)", type: checkbox, default: true }
+      - { key: nzbc_h1_thermal, label: "H1/AS1 Energy efficiency (post-2022 thermal envelope uplift)", type: checkbox, default: true }
+      - { key: default_compliance_path, label: "Default compliance pathway", type: radio, required: true, default: "Acceptable Solution", options: ["Acceptable Solution (AS)", "Verification Method (VM)", "Alternative Solution (with PS1/PS2/PS3/PS4 evidence)"] }
+
+  - id: framing_zones
+    title: "NZS 3604 wind, earthquake and exposure zones"
+    body: "Pre-select your default zones. The validator will warn when a project crosses into Specific Engineering Design (SED) territory."
+    fields:
+      - { key: default_wind_zone, label: "Default wind zone", type: select, required: true, default: "Medium", options: ["Low", "Medium", "High", "Very High", "Extra High", "Specific Engineering Design (SED)"] }
+      - { key: default_earthquake_z, label: "Default earthquake Z-factor", type: select, required: true, options: ["0.13 (low — Northland)", "0.20", "0.30", "0.40 (Christchurch)", "0.45 (Wellington / Hawkes Bay)", "0.60 (max)"] }
+      - { key: default_exposure_zone, label: "Default exposure zone (durability)", type: select, required: true, options: ["Zone B (low)", "Zone C (medium)", "Zone D (high)", "Sea Spray Zone"] }
+
+  - id: contract_suite
+    title: "Default contract framework"
+    body: "Pre-select your usual NZS 3910 variant. NZS 3910:2023 replaced the 2013 edition in October 2023."
+    fields:
+      - { key: default_contract, label: "Default contract", type: select, required: true, default: "NZS 3910:2023", options: ["NZS 3910:2023 — Conditions of Contract for Building and Civil Engineering Construction", "NZS 3916:2013 — Design and Construct", "NZS 3917:2013 — Fixed Term", "NZS 3915:2005 — Without Engineer (civil)"] }
+      - { key: hswa_principal, label: "Acknowledge HSWA 2015 Principal designation", type: checkbox, default: true }
+      - { key: cca_payment_schedules, label: "Apply Construction Contracts Act 2002 payment schedules", type: checkbox, default: true }
+
+  - id: cost_data
+    title: "Cost data sources"
+    body: "Confirm which NZ cost regions should be loaded."
+    fields:
+      - { key: cwicr_regions, label: "CWICR regions to preload", type: multiselect, required: true, default: ["Auckland", "Wellington"], options: ["Auckland", "Wellington", "Christchurch", "Hamilton", "Tauranga", "Dunedin", "Queenstown"] }
+      - { key: rawlinsons_nz_subscription, label: "I have an active Rawlinsons New Zealand Construction Handbook subscription", type: checkbox, default: false }
+      - { key: rlb_nz_subscription, label: "I have a Rider Levett Bucknall (RLB) NZ Riders Digest subscription", type: checkbox, default: false }
+      - { key: confirm_gst_rate, label: "Confirm GST rate", type: select, required: true, default: "15% (New Zealand)", options: ["15% (New Zealand)", "0% — Zero-rated supply"] }
+
+  - id: review
+    title: "Review and finish"
+    body: "We will create your first NZ project workspace with NZBC, NZS 3604 and NZS 3910:2023 validation, plus Rawlinsons NZ benchmarks on the dashboard."
+    action:
+      label: "Create my New Zealand workspace"
+      apply:
+        - set_default_currency: NZD
+        - set_tax_template: nz_gst_15
+        - enable_rule_packs: [nzbc_acceptable_solutions, nzs_3604_timber, nzs_3910_2023_contracts, rawlinsons_nz_benchmarks]

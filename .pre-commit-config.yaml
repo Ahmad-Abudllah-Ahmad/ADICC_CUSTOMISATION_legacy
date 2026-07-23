@@ -1,0 +1,87 @@
+# Pre-commit hooks for OpenEstimate
+# Install: pip install pre-commit && pre-commit install
+
+repos:
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+        args: ['--maxkb=1024']
+      - id: detect-private-key
+
+  # Python linting & formatting. Pinned to the same ruff the CI gate and
+  # backend/pyproject.toml dev extra use (ruff==0.15.20): the "ruff format
+  # --check" gate compares against the formatter's exact output, so a hook on
+  # an older ruff would reformat differently and fail CI on code that passed
+  # locally. Bump this in lockstep with the pyproject pin.
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.20
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  # Secret scanning
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.22.0
+    hooks:
+      - id: gitleaks
+
+  # Conventional commit messages
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v4.0.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args: [feat, fix, refactor, docs, test, chore, perf, ci, build, style]
+
+  # Local hooks
+  - repo: local
+    hooks:
+      # Catch backend/pyproject.toml ↔ frontend/package.json version drift.
+      # History note: v1.3.32 → v1.4.2 silently shipped with backend stuck
+      # on 1.3.31 because nothing was guarding the two literals.  Added in
+      # v1.4.4 so the same gap can never sneak past a commit again.
+      - id: version-sync-check
+        name: Check backend/frontend version literals are in sync
+        entry: python scripts/check_version_sync.py
+        language: system
+        pass_filenames: false
+        files: ^(backend/pyproject\.toml|frontend/package\.json|CHANGELOG\.md|frontend/src/features/about/Changelog\.tsx)$
+
+      # Block competitor/vendor brand names from entering the repo. Scans the
+      # staged files only (so it guards new work without a full-tree pass), and
+      # permits the small reviewed set of functional interop names in
+      # scripts/brand_token_allowlist.txt. The check stores only token hashes,
+      # so the denylist itself never names a brand.
+      - id: brand-token-check
+        name: Block competitor/vendor brand tokens
+        entry: python scripts/check_no_brand_tokens.py
+        language: system
+        pass_filenames: true
+
+      # Keep internal-only planning, strategy, QA, audit and runbook files out
+      # of the repo. They are local only; this fails the commit if one is
+      # staged. CI and the publish pipelines run the same script (against the
+      # built wheel too) so a leak is caught at commit, CI and build time.
+      - id: repo-hygiene-check
+        name: Block internal-only files from the repo
+        entry: python scripts/check_repo_hygiene.py
+        language: system
+        pass_filenames: false
+
+      # Forbid recording an AI assistant as a commit contributor. Runs at
+      # commit-msg time on the message being written and rejects a
+      # "Co-authored-by:" trailer or "Generated with ..." footer that names an
+      # assistant; real human and bot co-authors are preserved. CI runs the same
+      # script across history, so a trailer cannot land even if hooks are skipped.
+      - id: commit-trailer-check
+        name: Block AI attribution trailers in commit messages
+        entry: python scripts/check_commit_trailers.py
+        language: system
+        stages: [commit-msg]

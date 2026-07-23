@@ -1,0 +1,64 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openconstructionerp-bimhessen-de"
+version = "0.2.0"
+description = "Pre-configured partner pack for German BIM consultancies and engineering offices — DIN 276, GAEB X83/X84/X86, VOB/A+B+C, ISO 19650, BKI, HOAI 2021, LV quality."
+readme = "README.md"
+license = { text = "AGPL-3.0-or-later" }
+requires-python = ">=3.11"
+authors = [
+    { name = "BIM-Cluster Hessen", email = "info@datadrivenconstruction.io" },
+]
+keywords = [
+    "openconstructionerp",
+    "ocerp",
+    "partner-pack",
+    "germany",
+    "hessen",
+    "bim",
+    "din276",
+    "gaeb",
+    "vob",
+    "iso19650",
+    "bki",
+    "hoai",
+    "leistungsverzeichnis",
+    "lv",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Other Audience",
+    "Topic :: Office/Business",
+    "Natural Language :: German",
+]
+dependencies = [
+    "openconstructionerp>=5.5.0",
+]
+
+[project.urls]
+Homepage = "https://bim-cluster-hessen.com"
+Source = "https://github.com/DataDrivenConstruction/openconstructionerp"
+
+[project.entry-points."openconstructionerp.partner_packs"]
+bimhessen-de = "openconstructionerp_bimhessen_de:MANIFEST"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+openconstructionerp_bimhessen_de = [
+    "logo.png",
+    "onboarding.yaml",
+    "locales/*.json",
+    "rule_packs/*.json",
+]

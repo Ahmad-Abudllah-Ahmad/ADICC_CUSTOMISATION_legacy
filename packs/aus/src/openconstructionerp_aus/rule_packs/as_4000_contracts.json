@@ -1,0 +1,45 @@
+{
+  "rule_pack_id": "as_4000_contracts",
+  "name": "AS 4000 / AS 4902 Contract Suite — Clause Compliance (Australia)",
+  "standard": "AS 4000-1997 / AS 4902-2000",
+  "jurisdiction": "AU",
+  "regulator": "Standards Australia",
+  "publication_year": 1997,
+  "current_revision": "AS 4000-1997 (Reconfirmed 2018) / AS 4902-2000 (Reconfirmed 2017)",
+  "description": "Enables OCERP built-in validation rules that check tender packs and contract documents against AS 4000-1997 General Conditions (construct-only, 47 clauses) and AS 4902-2000 General Conditions for Design and Construct, including Annexure Part A (principal-completed) and Annexure Part B (contractor-completed amendments). Covers Master Builders amendments where applicable.",
+  "contract_variants": {
+    "AS 4000-1997": "General Conditions of Contract (construct-only)",
+    "AS 4902-2000": "General Conditions for Design and Construct (D&C)",
+    "AS 4905-2002": "Minor Works Contract Conditions (Superintendent administered)",
+    "AS 4906-2002": "Minor Works Contract Conditions (cost-plus, ≤ ~AUD 500k)",
+    "AS 2124-1992": "Legacy general conditions (still encountered on long-running infra)"
+  },
+  "annexures": {
+    "part_a": "Principal-completed contract particulars (47 fields)",
+    "part_b": "Contractor-completed amendments and special conditions"
+  },
+  "applies_to": ["tendering", "contracts", "validation"],
+  "enables_rule_ids": [
+    "as4000.contract_variant_selected",
+    "as4000.formal_agreement_present",
+    "as4000.annexure_part_a_complete",
+    "as4000.annexure_part_a_principal_name_set",
+    "as4000.annexure_part_a_date_for_practical_completion_set",
+    "as4000.annexure_part_a_liquidated_damages_rate_set",
+    "as4000.annexure_part_a_defects_liability_period_set",
+    "as4000.annexure_part_b_complete",
+    "as4000.payment_clause_37_compliant",
+    "as4000.payment_security_of_payment_act_aligned",
+    "as4000.variations_clause_36_compliant",
+    "as4000.insurance_clause_16_set",
+    "as4000.insurance_works_property_damage_min",
+    "as4000.insurance_public_liability_min",
+    "as4000.security_clause_5_set",
+    "as4000.retention_or_bank_guarantee_specified",
+    "as4000.dispute_resolution_clause_42_set",
+    "as4000.suspension_clause_33_compliant",
+    "as4000.termination_clause_39_compliant",
+    "as4902.design_obligations_clause_2_set",
+    "as4902.principals_project_requirements_attached"
+  ]
+}

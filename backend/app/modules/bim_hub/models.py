@@ -1,0 +1,504 @@
+# DDC-CWICR-OE: DataDrivenConstruction · OpenConstructionERP
+# Copyright (c) 2026 Artem Boiko / DataDrivenConstruction
+"""BIM Hub ORM models.
+
+Tables:
+    oe_bim_model        - imported BIM/CAD model metadata
+    oe_bim_element      - individual elements extracted from a model
+    oe_bim_boq_link     - links between BIM elements and BOQ positions
+    oe_bim_quantity_map  - rules for mapping BIM quantities to BOQ items
+    oe_bim_model_diff   - diff results between two model versions
+"""
+
+from __future__ import annotations
+
+import uuid
+
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.database import GUID, Base
+
+# Source formats that are 2D drawings, not 3D models. These can never carry a
+# real mesh, so they must never appear in the BIM 3D Takeoff lists / pickers /
+# viewer. DWG/DXF belong to the dedicated DWG Takeoff module; DGN and 2D PDF
+# sheets are handled elsewhere too. The BIM 3D list query filters these out so
+# the 3D viewer is never handed a model whose geometry cannot exist (the source
+# of the "marked ready but its 3D geometry file is no longer on the server"
+# 404 reported on fresh installs). Matching is substring + case-insensitive so
+# values like ".dwg", "DWG", "autocad_dwg" all resolve correctly.
+NON_3D_MODEL_FORMATS: frozenset[str] = frozenset({"dwg", "dxf", "dgn"})
+
+
+def is_non_3d_format(model_format: str | None) -> bool:
+    """Return True when ``model_format`` is a 2D drawing format (no 3D mesh).
+
+    Used to keep DWG/DXF/DGN drawings out of the BIM 3D Takeoff surface. A
+    ``None``/empty format is treated as 3D-eligible (legacy rows predating the
+    format column, and generic uploads, still show in the 3D list).
+    """
+    if not model_format:
+        return False
+    fmt = model_format.strip().lower().lstrip(".")
+    return any(token in fmt for token in NON_3D_MODEL_FORMATS)
+
+
+class BIMModel(Base):
+    """Imported BIM/CAD model - one record per uploaded file version."""
+
+    __tablename__ = "oe_bim_model"
+
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        GUID(),
+        nullable=False,
+        index=True,
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    discipline: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    model_format: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    version: Mapped[str] = mapped_column(String(20), nullable=False, default="1")
+    import_date: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    status: Mapped[str] = mapped_column(String(50), nullable=False, default="processing")
+    element_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    storey_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    bounding_box: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    original_file_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    canonical_file_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    parent_model_id: Mapped[uuid.UUID | None] = mapped_column(
+        GUID(),
+        ForeignKey("oe_bim_model.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_by: Mapped[uuid.UUID | None] = mapped_column(GUID(), nullable=True)
+    metadata_: Mapped[dict] = mapped_column(  # type: ignore[assignment]
+        "metadata",
+        JSON,
+        nullable=False,
+        default=dict,
+        server_default="{}",
+    )
+
+    # Relationships
+    #
+    # ``lazy="select"`` (NOT ``selectin``): no code reads ``model.elements``
+    # through this relationship - elements are always queried straight from
+    # oe_bim_element (list_elements etc.). Under ``selectin`` every plain
+    # ``session.get(BIMModel, id)`` (get_model -> geometry / schema /
+    # single-model endpoints) silently hydrated ALL of a model's elements
+    # into memory, which blew up the worker on large models and surfaced as a
+    # "parsing error" in the BIM 3D viewer (issue #291: a 6114-element HVAC
+    # model). The list endpoint already guards with noload(); deletes use a
+    # Core DELETE + DB ondelete="CASCADE", so nothing depends on the eager load.
+    elements: Mapped[list[BIMElement]] = relationship(
+        back_populates="model",
+        cascade="all, delete-orphan",
+        lazy="select",
+    )
+
+    def __repr__(self) -> str:
+        return f"<BIMModel {self.name} ({self.status})>"
+
+
+class BIMElement(Base):
+    """Single element extracted from a BIM model.
+
+    Since v2.3.0 BIMElement is also the **asset register** for the project
+    (ISO 19650 Asset Information Model). ``asset_info`` holds the
+    operational-phase metadata (manufacturer, warranty, serial) and
+    ``is_tracked_asset`` flags the element as a real-world object that
+    persists after construction - pumps, AHUs, doors, elevators etc.
+    Most geometry-only elements (walls, floors) leave both fields at
+    their defaults and are invisible to the Assets page.
+    """
+
+    __tablename__ = "oe_bim_element"
+    __table_args__ = (
+        Index("ix_bim_element_model_stable", "model_id", "stable_id"),
+        # Speeds up the Assets list query which filters by this flag
+        # across every BIMElement in a project (joined through model_id).
+        Index("ix_bim_element_tracked", "is_tracked_asset"),
+    )
+
+    model_id: Mapped[uuid.UUID] = mapped_column(
+        GUID(),
+        ForeignKey("oe_bim_model.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    stable_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    element_type: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
+    name: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    storey: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    discipline: Mapped[str | None] = mapped_column(String(50), nullable=True, index=True)
+    properties: Mapped[dict] = mapped_column(  # type: ignore[assignment]
+        JSON,
+        nullable=False,
+        default=dict,
+        server_default="{}",
+    )
+    quantities: Mapped[dict] = mapped_column(  # type: ignore[assignment]
+        JSON,
+        nullable=False,
+        default=dict,
+        server_default="{}",
+    )
+    geometry_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    bounding_box: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    mesh_ref: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    lod_variants: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    metadata_: Mapped[dict] = mapped_column(  # type: ignore[assignment]
+        "metadata",
+        JSON,
+        nullable=False,
+        default=dict,
+        server_default="{}",
+    )
+    # Operational-phase metadata. Free-form JSON so tenants can extend
+    # beyond the fields listed in AssetInfoPayload without a migration.
+    # Canonical keys: manufacturer, model, serial_number, warranty_until,
+    # commissioned_at, operational_status, parent_system_id, asset_tag.
+    asset_info: Mapped[dict] = mapped_column(
+        JSON,
+        nullable=False,
+        default=dict,
+        server_default="{}",
+    )
+    # Whether this element represents a real-world tracked asset
+    # (pump, AHU, door). Filtered by the /assets page. Flipped
+    # automatically when asset_info is first populated, but users can
+    # also toggle manually (e.g. mark a specific wall as tracked).
+    is_tracked_asset: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default="0",
+    )
+
+    # Relationships
+    model: Mapped[BIMModel] = relationship(back_populates="elements")
+    boq_links: Mapped[list[BOQElementLink]] = relationship(
+        back_populates="bim_element",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+
+    def __repr__(self) -> str:
+        return f"<BIMElement {self.stable_id} ({self.element_type})>"
+
+
+class BOQElementLink(Base):
+    """Link between a BOQ position and a BIM element."""
+
+    __tablename__ = "oe_bim_boq_link"
+    __table_args__ = (UniqueConstraint("boq_position_id", "bim_element_id", name="uq_bim_boq_link_pos_elem"),)
+
+    boq_position_id: Mapped[uuid.UUID] = mapped_column(
+        GUID(),
+        nullable=False,
+        index=True,
+    )
+    bim_element_id: Mapped[uuid.UUID] = mapped_column(
+        GUID(),
+        ForeignKey("oe_bim_element.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    link_type: Mapped[str] = mapped_column(String(50), nullable=False, default="manual")
+    confidence: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    rule_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    created_by: Mapped[uuid.UUID | None] = mapped_column(GUID(), nullable=True)
+    metadata_: Mapped[dict] = mapped_column(  # type: ignore[assignment]
+        "metadata",
+        JSON,
+        nullable=False,
+        default=dict,
+        server_default="{}",
+    )
+
+    # Relationships
+    bim_element: Mapped[BIMElement] = relationship(back_populates="boq_links")
+
+    def __repr__(self) -> str:
+        return f"<BOQElementLink pos={self.boq_position_id} elem={self.bim_element_id}>"
+
+
+class BIMQuantityMap(Base):
+    """Rule for mapping BIM element quantities to BOQ items."""
+
+    __tablename__ = "oe_bim_quantity_map"
+
+    org_id: Mapped[uuid.UUID | None] = mapped_column(GUID(), nullable=True)
+    project_id: Mapped[uuid.UUID | None] = mapped_column(GUID(), nullable=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    name_translations: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    element_type_filter: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    property_filter: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    quantity_source: Mapped[str] = mapped_column(String(100), nullable=False)
+    multiplier: Mapped[str] = mapped_column(String(20), nullable=False, default="1")
+    unit: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    waste_factor_pct: Mapped[str] = mapped_column(String(10), nullable=False, default="0")
+    boq_target: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    metadata_: Mapped[dict] = mapped_column(  # type: ignore[assignment]
+        "metadata",
+        JSON,
+        nullable=False,
+        default=dict,
+        server_default="{}",
+    )
+
+    def __repr__(self) -> str:
+        return f"<BIMQuantityMap {self.name} ({self.quantity_source})>"
+
+
+class BIMModelDiff(Base):
+    """Diff result between two BIM model versions."""
+
+    __tablename__ = "oe_bim_model_diff"
+    __table_args__ = (UniqueConstraint("old_model_id", "new_model_id", name="uq_bim_model_diff_pair"),)
+
+    old_model_id: Mapped[uuid.UUID] = mapped_column(
+        GUID(),
+        ForeignKey("oe_bim_model.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    new_model_id: Mapped[uuid.UUID] = mapped_column(
+        GUID(),
+        ForeignKey("oe_bim_model.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    diff_summary: Mapped[dict] = mapped_column(  # type: ignore[assignment]
+        JSON,
+        nullable=False,
+    )
+    diff_details: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    metadata_: Mapped[dict] = mapped_column(  # type: ignore[assignment]
+        "metadata",
+        JSON,
+        nullable=False,
+        default=dict,
+        server_default="{}",
+    )
+
+    def __repr__(self) -> str:
+        return f"<BIMModelDiff old={self.old_model_id} new={self.new_model_id}>"
+
+
+class BIMElementGroup(Base):
+    """Saved/named selection of BIM elements.
+
+    A group is either:
+    - **dynamic** (``is_dynamic=True``): members are recomputed from
+      ``filter_criteria`` against ``oe_bim_element`` on every read, and the
+      resolved ids are cached into ``element_ids`` for fast reads.
+    - **static** (``is_dynamic=False``): the explicit ``element_ids`` snapshot
+      is the source of truth and never auto-recomputes.
+
+    Scope:
+    - ``project_id`` is required - a group always belongs to a project.
+    - ``model_id`` is optional - when set, the group is scoped to a single
+      model; when NULL, it spans every model in the project.
+
+    Uniqueness:
+    - ``(project_id, name)`` must be unique per project so the UI can safely
+      address groups by human-readable name.
+    """
+
+    __tablename__ = "oe_bim_element_group"
+    __table_args__ = (
+        UniqueConstraint("project_id", "name", name="uq_bim_element_group_project_name"),
+        Index("ix_bim_element_group_project", "project_id"),
+    )
+
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        GUID(),
+        nullable=False,
+        index=True,
+    )
+    model_id: Mapped[uuid.UUID | None] = mapped_column(
+        GUID(),
+        ForeignKey("oe_bim_model.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Optional folder label so selection sets can be grouped in the UI tree.
+    # NULL / empty means "ungrouped"; a plain string keeps grouping migration
+    # light (renaming a folder is a bulk string update, not a row move).
+    folder: Mapped[str | None] = mapped_column(String(255), nullable=True, default=None)
+    is_dynamic: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True,
+        server_default="1",
+    )
+    filter_criteria: Mapped[dict] = mapped_column(  # type: ignore[assignment]
+        JSON,
+        nullable=False,
+        default=dict,
+        server_default="{}",
+    )
+    element_ids: Mapped[list] = mapped_column(  # type: ignore[assignment]
+        JSON,
+        nullable=False,
+        default=list,
+        server_default="[]",
+    )
+    element_count: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
+        server_default="0",
+    )
+    color: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    created_by: Mapped[uuid.UUID | None] = mapped_column(GUID(), nullable=True)
+    metadata_: Mapped[dict] = mapped_column(  # type: ignore[assignment]
+        "metadata",
+        JSON,
+        nullable=False,
+        default=dict,
+        server_default="{}",
+    )
+
+    def __repr__(self) -> str:
+        return f"<BIMElementGroup {self.name} project={self.project_id}>"
+
+
+# ── BIM Federation (v4.0 / Slice 1) ──────────────────────────────────────────
+
+
+class BIMFederation(Base):
+    """Federation - a named group of N BIM models with a shared origin.
+
+    A federation composes multiple per-discipline models (architectural,
+    structural, MEP, …) into a single coordinated set. Each member model
+    keeps its own version history and upload pipeline; the federation
+    simply records which models belong together, in what z-order, and
+    with what display hint (visibility + color).
+
+    Federation ownership tracks project ownership - the project access
+    helper (``_verify_project_access``) is the sole authorization gate.
+    """
+
+    __tablename__ = "oe_bim_federation"
+    __table_args__ = (Index("ix_bim_federation_project", "project_id"),)
+
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        GUID(),
+        nullable=False,
+        index=True,
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Shared origin offset applied to every member model at composition
+    # time. Defaults to {x:0, y:0, z:0} so identical authoring origins
+    # render correctly without manual alignment.
+    origin_offset: Mapped[dict] = mapped_column(  # type: ignore[assignment]
+        JSON,
+        nullable=False,
+        default=lambda: {"x": 0.0, "y": 0.0, "z": 0.0},
+        server_default='{"x":0,"y":0,"z":0}',
+    )
+    # Display unit hint for the federated scene (e.g. ``m``, ``mm``,
+    # ``ft``). Quantities themselves remain canonical SI on the member
+    # ``BIMElement.quantities`` blobs.
+    shared_units: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        default="m",
+        server_default="m",
+    )
+
+    # Relationships - member links cascade on federation delete so we
+    # never strand orphaned link rows. Members themselves (BIMModel
+    # rows) are NOT deleted; the federation is purely an overlay.
+    members: Mapped[list[BIMFederationModel]] = relationship(
+        back_populates="federation",
+        cascade="all, delete-orphan",
+        order_by="BIMFederationModel.z_order",
+        lazy="selectin",
+    )
+
+    def __repr__(self) -> str:
+        return f"<BIMFederation {self.name} project={self.project_id}>"
+
+
+class BIMFederationModel(Base):
+    """Join row - one ``BIMModel`` participating in one ``BIMFederation``.
+
+    A model can belong to multiple federations (e.g. the structural
+    model takes part in both a clash-detection federation and a coord-
+    review federation), so the link table is intentionally many-to-many
+    with a uniqueness constraint per (federation, model) pair to keep
+    duplicate adds out.
+    """
+
+    __tablename__ = "oe_bim_federation_model"
+    __table_args__ = (
+        UniqueConstraint(
+            "federation_id",
+            "bim_model_id",
+            name="uq_bim_federation_model_pair",
+        ),
+        Index("ix_bim_federation_model_fed", "federation_id"),
+        Index("ix_bim_federation_model_model", "bim_model_id"),
+    )
+
+    federation_id: Mapped[uuid.UUID] = mapped_column(
+        GUID(),
+        ForeignKey("oe_bim_federation.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    bim_model_id: Mapped[uuid.UUID] = mapped_column(
+        GUID(),
+        ForeignKey("oe_bim_model.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    # Canonical discipline tag for the role this model plays inside the
+    # federation. Free-form string with a documented allow-list (the
+    # Pydantic schema enforces the enum at the API boundary; the DB
+    # stays open so future disciplines don't require a migration).
+    discipline: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+        default="other",
+        server_default="other",
+    )
+    # Optional hex colour swatch (``#RRGGBB``) used by the federated
+    # viewer to tint this model's elements. ``None`` means "use member's
+    # own discipline palette".
+    color_hint: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    visible: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True,
+        server_default="1",
+    )
+    z_order: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
+        server_default="0",
+    )
+
+    # Relationships
+    federation: Mapped[BIMFederation] = relationship(back_populates="members")
+
+    def __repr__(self) -> str:
+        return f"<BIMFederationModel fed={self.federation_id} model={self.bim_model_id} z={self.z_order}>"

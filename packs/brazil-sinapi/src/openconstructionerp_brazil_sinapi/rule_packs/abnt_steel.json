@@ -1,0 +1,19 @@
+{
+  "rule_pack_id": "abnt_steel",
+  "name": "ABNT NBR 8800:2008 — Projeto de estruturas de aco e mistas de aco e concreto de edificios",
+  "name_pt": "ABNT NBR 8800:2008 — Projeto de estruturas de aco e mistas de aco e concreto de edificios",
+  "standard": "ABNT NBR 8800",
+  "jurisdiction": "BR",
+  "regulator": "ABNT — Associacao Brasileira de Normas Tecnicas",
+  "publication_year": 2008,
+  "description": "Enforces ABNT NBR 8800:2008 for steel and steel-concrete composite building structures: steel grade per ASTM/NBR table, connection class declared, fire-protection coating specified per NBR 14323, corrosion-protection scheme per NBR 14643, and welding procedure documented (AWS D1.1 / NBR 8800 Annex M).",
+  "description_pt": "Aplica a NBR 8800:2008 para estruturas de aco e mistas aco-concreto: grau de aco conforme tabela ASTM/NBR, classe de ligacao declarada, protecao contra incendio conforme NBR 14323, esquema de protecao contra corrosao conforme NBR 14643 e procedimento de soldagem documentado (AWS D1.1 / NBR 8800 Anexo M).",
+  "applies_to": ["projects", "boq", "cad", "validation"],
+  "enables_rule_ids": [
+    "abnt.steel_grade_specified",
+    "abnt.connection_class_declared",
+    "abnt.fire_protection_nbr14323_specified",
+    "abnt.corrosion_protection_nbr14643_specified",
+    "abnt.welding_procedure_documented"
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "$schema": "openconstructionerp.partner_pack.rule_pack/v1",
+  "slug": "dguv_101_008_formwork_safety",
+  "display_name": "DGUV-Regel 101-008 — Arbeitssicherheit bei Schalungsarbeiten",
+  "description": "Validiert Schalungsarbeiten gegen DGUV-Regel 101-008 (vormals BGR 106) und BG-BAU-Vorgaben: Absturzsicherung ab 2,00 m, Seitenschutz mit Geländer / Brüstung 1,00 m, Konsoltreppen, Belastungsklassen Belagsteile, Stützen-Standsicherheit, Persönliche Schutzausrüstung (PSA), Unterweisung Schalungsbauer.",
+  "standard": "DGUV-Regel 101-008 / BG-BAU",
+  "severity_default": "error",
+  "category": "hse",
+  "locale_default": "de",
+  "enables_rule_ids": [
+    "hse.dguv_101_008.fall_protection_above_2m",
+    "hse.dguv_101_008.guardrail_height_1m_min",
+    "hse.dguv_101_008.toe_board_present",
+    "hse.dguv_101_008.intermediate_rail_present",
+    "hse.dguv_101_008.working_platform_load_class_specified",
+    "hse.dguv_101_008.access_ladder_or_stair_present",
+    "hse.dguv_101_008.props_stability_check_documented",
+    "hse.dguv_101_008.formwork_anchor_capacity_verified",
+    "hse.dguv_101_008.psa_helmet_harness_required",
+    "hse.dguv_101_008.toolbox_talk_logged",
+    "hse.dguv_101_008.weather_wind_speed_limit_documented",
+    "hse.dguv_101_008.crane_lift_plan_for_panel_above_500kg"
+  ],
+  "parameters": {
+    "fall_protection_threshold_m": 2.0,
+    "guardrail_height_min_m": 1.0,
+    "toe_board_height_min_m": 0.15,
+    "intermediate_rail_max_gap_m": 0.47,
+    "platform_load_classes": ["1", "2", "3", "4", "5", "6"],
+    "default_platform_load_class": "3",
+    "wind_speed_stop_work_m_per_s": 12.0,
+    "single_panel_max_manual_kg": 25.0,
+    "panel_crane_lift_min_kg": 500.0
+  },
+  "metadata": {
+    "applies_to": ["method_statement", "site_setup", "schedule_advanced_phase"],
+    "references": [
+      "DGUV-Regel 101-008 'Schalungsarbeiten' (vormals BGR 106)",
+      "DGUV-Information 201-011 'Handlungsanleitung für den Umgang mit Schalung'",
+      "Betriebssicherheitsverordnung BetrSichV",
+      "BG-BAU-Bausteine A 110 'Absturz von hochgelegenen Arbeitsplätzen'"
+    ]
+  }
+}

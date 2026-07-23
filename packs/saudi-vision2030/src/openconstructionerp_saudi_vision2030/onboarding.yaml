@@ -1,0 +1,294 @@
+# Saudi Vision 2030 Pack — first-login onboarding wizard.
+#
+# Streamed by /api/v1/partner-pack/onboarding-script and rendered by
+# the OnboardingWizard React component in place of the default steps.
+#
+# Step titles + labels are bilingual (Arabic primary, English fallback).
+# UI runs in RTL when default_locale=ar. Body copy stays in English by
+# default and resolves through the ar.json bundle when the locale switches.
+#
+# Field reference:
+#   id          — stable step identifier (kebab-case)
+#   kind        — renderer type: intro | form | choice | external_link | summary
+#   title_i18n  — i18next key OR { en, ar } literal fallbacks
+#   body_i18n   — same shape as title_i18n
+#   skippable   — user may click "Skip for now"
+#   actions     — optional list of CTA buttons rendered at step bottom
+
+version: 1
+pack: saudi-vision2030
+estimated_minutes: 9
+direction: rtl
+
+steps:
+  - id: welcome
+    kind: intro
+    skippable: false
+    title_i18n:
+      ar: "أهلاً بكم في OpenConstructionERP — إصدار المملكة العربية السعودية"
+      en: "Welcome to OCERP — Saudi Edition"
+    body_i18n:
+      ar: "تم تهيئة OpenConstructionERP مسبقاً لسوق المملكة العربية السعودية — رؤية 2030. تسع خطوات سريعة وستكون جاهزاً لتقدير مشاريعك وفق معايير SBC و MoMRAH و أرامكو و نيوم."
+      en: "Your OpenConstructionERP install is pre-configured for the Kingdom of Saudi Arabia — Vision 2030. Nine quick steps and you are ready to estimate against SBC, MoMRAH, Aramco and NEOM standards."
+
+  - id: company-profile
+    kind: form
+    skippable: false
+    title_i18n:
+      ar: "الملف التعريفي للشركة"
+      en: "Company profile"
+    body_i18n:
+      ar: "أدخل بيانات شركتك حتى يتم نسب التقارير ومستندات العطاءات بشكل صحيح باللغتين العربية والإنجليزية."
+      en: "Tell us about your firm so reports and tender documents are correctly attributed in both Arabic and English."
+    fields:
+      - key: company_name_ar
+        type: text
+        required: true
+        label_ar: "اسم الشركة (عربي)"
+        label_en: "Company name (Arabic)"
+      - key: company_name_en
+        type: text
+        required: true
+        label_ar: "اسم الشركة (إنجليزي)"
+        label_en: "Company name (English)"
+      - key: cr_number
+        type: text
+        required: true
+        placeholder: "10xxxxxxxx"
+        label_ar: "رقم السجل التجاري (CR)"
+        label_en: "Commercial Registration (CR) number"
+        validation: { pattern: "^[0-9]{10}$" }
+      - key: zatca_vat_number
+        type: text
+        required: false
+        placeholder: "3xxxxxxxxxxxxx0 (15 digits)"
+        label_ar: "الرقم الضريبي ZATCA (15 رقم)"
+        label_en: "ZATCA VAT registration number (15 digits)"
+        validation: { pattern: "^[0-9]{15}$" }
+      - key: head_office_region
+        type: select
+        required: true
+        default: "Riyadh"
+        label_ar: "منطقة المقر الرئيسي"
+        label_en: "Head-office region"
+        options:
+          - { value: "Riyadh", label_ar: "الرياض", label_en: "Riyadh" }
+          - { value: "Makkah", label_ar: "مكة المكرمة", label_en: "Makkah" }
+          - { value: "Madinah", label_ar: "المدينة المنورة", label_en: "Madinah" }
+          - { value: "Eastern", label_ar: "المنطقة الشرقية (الدمام / الخبر / الظهران)", label_en: "Eastern Province (Dammam / Khobar / Dhahran)" }
+          - { value: "Jeddah", label_ar: "جدة", label_en: "Jeddah" }
+          - { value: "Tabuk-NEOM", label_ar: "تبوك / نيوم", label_en: "Tabuk / NEOM" }
+          - { value: "Asir", label_ar: "عسير", label_en: "Asir" }
+          - { value: "Qassim", label_ar: "القصيم", label_en: "Qassim" }
+          - { value: "Hail", label_ar: "حائل", label_en: "Hail" }
+          - { value: "Jazan", label_ar: "جازان", label_en: "Jazan" }
+          - { value: "Najran", label_ar: "نجران", label_en: "Najran" }
+          - { value: "Al-Jouf", label_ar: "الجوف", label_en: "Al-Jouf" }
+          - { value: "Northern-Borders", label_ar: "الحدود الشمالية", label_en: "Northern Borders" }
+          - { value: "Al-Bahah", label_ar: "الباحة", label_en: "Al-Bahah" }
+
+  - id: momrah-classification
+    kind: form
+    skippable: true
+    title_i18n:
+      ar: "تصنيف المقاول لدى MoMRAH وتراخيص أخرى"
+      en: "MoMRAH contractor classification & other licenses"
+    body_i18n:
+      ar: "حدد درجة تصنيف المقاول لديك (1-5) — حيث الدرجة 1 تسمح بالمشاريع الكبرى. سيتم استخدام هذه القيمة بواسطة قواعد التحقق لتأكيد أهلية المناقصات الحكومية."
+      en: "Pick your MoMRAH contractor classification grade (1-5) — Grade 1 unlocks the largest contract values. Validation rules use this to gate public tender eligibility."
+    fields:
+      - key: momrah_grade
+        type: select
+        required: true
+        default: "3"
+        label_ar: "درجة تصنيف MoMRAH"
+        label_en: "MoMRAH classification grade"
+        options:
+          - { value: "1", label_ar: "الدرجة 1 — مشاريع غير محدودة القيمة", label_en: "Grade 1 — Unlimited value" }
+          - { value: "2", label_ar: "الدرجة 2", label_en: "Grade 2" }
+          - { value: "3", label_ar: "الدرجة 3", label_en: "Grade 3" }
+          - { value: "4", label_ar: "الدرجة 4", label_en: "Grade 4" }
+          - { value: "5", label_ar: "الدرجة 5 — مشاريع صغيرة فقط", label_en: "Grade 5 — Small projects only" }
+          - { value: "none", label_ar: "غير مصنف", label_en: "Not yet classified" }
+      - key: citc_license
+        type: checkbox
+        default: false
+        label_ar: "نملك رخصة CITC (للبنية التحتية للاتصالات)"
+        label_en: "We hold a CITC license (telecom infrastructure work)"
+      - key: aramco_pim_status
+        type: select
+        required: false
+        default: "not_applicable"
+        label_ar: "حالة التأهيل المسبق لدى أرامكو (PIM)"
+        label_en: "Saudi Aramco pre-qualification (PIM) status"
+        options:
+          - { value: "approved_on_avl", label_ar: "معتمد على قائمة AVL", label_en: "Approved on Aramco AVL" }
+          - { value: "submitted_pending", label_ar: "مقدم — قيد المراجعة", label_en: "Submitted — pending" }
+          - { value: "not_submitted", label_ar: "لم يقدم", label_en: "Not submitted" }
+          - { value: "not_applicable", label_ar: "غير منطبق — لا نعمل مع أرامكو", label_en: "Not applicable — no Aramco work" }
+
+  - id: nitaqat-band
+    kind: choice
+    skippable: false
+    title_i18n:
+      ar: "السعودة (نطاقات)"
+      en: "Saudization (Nitaqat) band"
+    body_i18n:
+      ar: "حدد نطاقك الحالي. النطاق الأخضر فأعلى مطلوب للمناقصات الحكومية وتأهيل أرامكو. للشركات التي يقل عدد موظفيها عن 10، اختر 'غير مطلوب'."
+      en: "Pick your current Nitaqat band. Green or above is required for government tenders and Aramco pre-qualification. If headcount < 10, pick 'Not applicable'."
+    options:
+      - { value: "platinum", label_ar: "بلاتيني", label_en: "Platinum", recommended: true }
+      - { value: "green_high", label_ar: "أخضر مرتفع", label_en: "Green-High" }
+      - { value: "green_medium", label_ar: "أخضر متوسط", label_en: "Green-Medium" }
+      - { value: "green_low", label_ar: "أخضر منخفض", label_en: "Green-Low" }
+      - { value: "yellow", label_ar: "أصفر (إقفال التأشيرات)", label_en: "Yellow (visa freeze)" }
+      - { value: "red", label_ar: "أحمر (محظور)", label_en: "Red (banned)" }
+      - { value: "not_applicable", label_ar: "غير منطبق (< 10 موظفين)", label_en: "Not applicable (< 10 employees)" }
+
+  - id: building-code
+    kind: form
+    skippable: true
+    title_i18n:
+      ar: "كود البناء السعودي (SBC 2018)"
+      en: "Saudi Building Code (SBC 2018)"
+    body_i18n:
+      ar: "أكّد أجزاء SBC 2018 المنطبقة على نطاق عملك المعتاد. ستفرض محرر جدول الكميات ومحرك التحقق هذه القواعد على كل استيراد."
+      en: "Confirm which SBC 2018 Parts apply to your typical scope. The BOQ editor and validation engine will enforce these on every import."
+    fields:
+      - key: sbc_201
+        type: checkbox
+        default: true
+        label_ar: "SBC 201 — كود ترشيد الطاقة"
+        label_en: "SBC 201 — Energy Conservation Code"
+      - key: sbc_301
+        type: checkbox
+        default: true
+        label_ar: "SBC 301 — الأحمال والتصميم الإنشائي"
+        label_en: "SBC 301 — Loads & structural design"
+      - key: sbc_304
+        type: checkbox
+        default: true
+        label_ar: "SBC 304 — الخرسانة المسلحة"
+        label_en: "SBC 304 — Concrete structures"
+      - key: sbc_401
+        type: checkbox
+        default: false
+        label_ar: "SBC 401 — الكود الكهربائي"
+        label_en: "SBC 401 — Electrical code"
+      - key: sbc_501
+        type: checkbox
+        default: false
+        label_ar: "SBC 501 — الكود الميكانيكي (تكييف وسباكة)"
+        label_en: "SBC 501 — Mechanical code (HVAC + Plumbing)"
+      - key: sbc_801
+        type: checkbox
+        default: true
+        label_ar: "SBC 801 — كود الحماية من الحريق (مع الدفاع المدني)"
+        label_en: "SBC 801 — Fire Code (with Civil Defense)"
+
+  - id: primary-client
+    kind: choice
+    skippable: false
+    title_i18n:
+      ar: "العميل الأساسي / جهة المالك"
+      en: "Primary client / project owner"
+    body_i18n:
+      ar: "اختر نوع المالك الذي تستخدم مسار اعتماده الأكثر شيوعاً. يمكن تغييره لكل مشروع لاحقاً."
+      en: "Pick the owner type whose approval workflow you use most. You can override per project later."
+    options:
+      - { value: "neom", label_ar: "نيوم (THE LINE / Oxagon / Trojena / Sindalah)", label_en: "NEOM (THE LINE / Oxagon / Trojena / Sindalah)" }
+      - { value: "red_sea_global", label_ar: "البحر الأحمر العالمية / أمالا", label_en: "Red Sea Global / AMAALA" }
+      - { value: "diriyah", label_ar: "هيئة تطوير الدرعية", label_en: "Diriyah Gate Development Authority" }
+      - { value: "qiddiya", label_ar: "شركة القدية للاستثمار", label_en: "Qiddiya Investment Company" }
+      - { value: "pif_giga", label_ar: "صندوق الاستثمارات العامة (PIF) — مشروع عملاق آخر", label_en: "Public Investment Fund (PIF) — other giga-project" }
+      - { value: "aramco", label_ar: "أرامكو السعودية", label_en: "Saudi Aramco" }
+      - { value: "rcjy", label_ar: "الهيئة الملكية للجبيل وينبع (RCJY)", label_en: "Royal Commission for Jubail and Yanbu (RCJY)" }
+      - { value: "momrah", label_ar: "MoMRAH (بلدية / حكومي)", label_en: "MoMRAH (municipal / government)" }
+      - { value: "private", label_ar: "مطور خاص", label_en: "Private developer" }
+
+  - id: cost-regions
+    kind: choice
+    skippable: false
+    multiple: true
+    title_i18n:
+      ar: "مناطق التكاليف CWICR"
+      en: "CWICR cost regions to preload"
+    body_i18n:
+      ar: "اختر كتالوجات التكاليف الإقليمية لتحميلها مسبقاً. الرياض مفعّل افتراضياً."
+      en: "Pick the regional cost catalogues to preload. Riyadh is enabled by default."
+    options:
+      - { value: "cwicr-eng-riyadh", label_ar: "الرياض", label_en: "Riyadh", default: true, recommended: true }
+      - { value: "cwicr-eng-jeddah", label_ar: "جدة", label_en: "Jeddah" }
+      - { value: "cwicr-eng-dammam", label_ar: "الدمام / المنطقة الشرقية", label_en: "Dammam / Eastern Province" }
+      - { value: "cwicr-eng-khobar", label_ar: "الخبر", label_en: "Khobar" }
+      - { value: "cwicr-eng-makkah", label_ar: "مكة المكرمة", label_en: "Makkah" }
+      - { value: "cwicr-eng-madinah", label_ar: "المدينة المنورة", label_en: "Madinah" }
+      - { value: "cwicr-eng-neom", label_ar: "نيوم / تبوك", label_en: "NEOM / Tabuk" }
+
+  - id: localisation
+    kind: form
+    skippable: false
+    title_i18n:
+      ar: "اللغة والاتجاه والتقويم"
+      en: "Language, direction & calendar"
+    body_i18n:
+      ar: "تتطلب عطاءات المملكة وتقاريرها الحكومية اللغة العربية. سيعمل OCERP في وضع من اليمين إلى اليسار مع دعم التصدير ثنائي اللغة."
+      en: "Saudi tender packs and government submittals require Arabic. OCERP will run in right-to-left mode with bilingual exports."
+    fields:
+      - key: primary_locale
+        type: radio
+        required: true
+        default: "ar"
+        label_ar: "لغة الواجهة الأساسية"
+        label_en: "Primary UI language"
+        options:
+          - { value: "ar", label_ar: "العربية فقط", label_en: "Arabic only" }
+          - { value: "en", label_ar: "الإنجليزية فقط", label_en: "English only" }
+          - { value: "ar+en", label_ar: "ثنائي اللغة جنباً إلى جنب", label_en: "Both side-by-side" }
+      - key: hijri_calendar
+        type: checkbox
+        default: true
+        label_ar: "عرض التواريخ الهجرية مع الميلادية في التقارير"
+        label_en: "Show Hijri dates alongside Gregorian on reports"
+      - key: bilingual_exports
+        type: checkbox
+        default: true
+        label_ar: "إصدار جداول الكميات والمناقصات بصيغة PDF ثنائية اللغة"
+        label_en: "Generate BOQ / tender PDFs in bilingual Arabic + English layout"
+      - key: track_iktva
+        type: checkbox
+        default: true
+        label_ar: "تتبع درجة IKTVA (المحتوى المحلي) على المناقصات"
+        label_en: "Track IKTVA (In-Kingdom Total Value Add) score on tenders"
+
+  - id: review
+    kind: summary
+    skippable: false
+    title_i18n:
+      ar: "المراجعة والإنهاء"
+      en: "Review and finish"
+    body_i18n:
+      ar: "سنُنشئ مساحة عملك السعودية الأولى مع تفعيل قواعد التحقق الكاملة لـ SBC 2018 و MoMRAH و نطاقات و أرامكو و نيوم و ISO 19650، وريال سعودي كعملة افتراضية، وضريبة قيمة مضافة 15%، وواجهة عربية من اليمين إلى اليسار. يمكنك تغيير كل شيء لاحقاً من الإعدادات."
+      en: "We will create your first Saudi workspace with the full SBC 2018 + MoMRAH + Nitaqat + Aramco + NEOM + ISO 19650 validation stack enabled, SAR as default currency, 15% VAT, and Arabic RTL UI. You can change everything later in Settings."
+    action:
+      label_ar: "إنشاء مساحة العمل السعودية"
+      label_en: "Create my Saudi workspace"
+      apply:
+        - set_default_currency: SAR
+        - set_tax_template: sa_vat_15
+        - set_default_locale: ar
+        - enable_rule_packs:
+            - sbc_201_energy
+            - sbc_301_loads
+            - sbc_304_concrete
+            - sbc_401_electrical
+            - sbc_501_mechanical
+            - sbc_801_fire
+            - momrah_urban_planning
+            - aramco_saes_samss
+            - aramco_approval_chain
+            - aramco_pim_qualification
+            - neom_design_standards
+            - saudization_nitaqat
+            - iso_19650_bim
+            - vision_2030_kpis

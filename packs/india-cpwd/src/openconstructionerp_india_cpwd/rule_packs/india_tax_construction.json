@@ -1,0 +1,39 @@
+{
+  "rule_pack_id": "india_tax_construction",
+  "name": "India Construction Tax — GST + TDS + Labour Cess",
+  "name_hi": "भारत निर्माण कर — जीएसटी + टीडीएस + श्रम उपकर",
+  "standard": "CGST/SGST/IGST Act + Income-Tax Act + BOCW Cess Act",
+  "jurisdiction": "IN",
+  "regulator": "Central Board of Indirect Taxes & Customs (CBIC) + Central Board of Direct Taxes (CBDT) + Building & Other Construction Workers Welfare Cess Act 1996",
+  "applies_to": ["tendering", "invoicing", "payments", "validation"],
+  "description": "Enables OCERP built-in validation rules that check tender documents, invoices and payment certificates for combined Indian-construction tax compliance — GST (correct HSN/SAC, rate by contract type: 12% affordable housing / 18% commercial / 5% govt works contract), TDS u/s 194C (1% individual, 2% company) on contractor payments, labour cess 1% on construction cost (BOCW Act), reverse-charge, place-of-supply, composition-scheme consistency.",
+  "description_hi": "निविदा, चालान एवं भुगतान प्रमाणपत्रों की भारतीय निर्माण कर अनुपालन (जीएसटी, टीडीएस 194C, श्रम उपकर 1%) हेतु जाँच।",
+  "rates": {
+    "gst_affordable_housing": "12%",
+    "gst_commercial_construction": "18%",
+    "gst_government_works_contract": "5%",
+    "tds_194c_individual_huf": "1%",
+    "tds_194c_company_firm": "2%",
+    "labour_cess_bocw": "1% of construction cost above ₹10 lakh threshold"
+  },
+  "enables_rule_ids": [
+    "gst.sac_code_present_works_contract",
+    "gst.hsn_code_present_material_supply",
+    "gst.tax_rate_applicable_to_contract_type",
+    "gst.rate_12_affordable_housing_check",
+    "gst.rate_18_commercial_construction_check",
+    "gst.rate_5_government_works_contract_check",
+    "gst.cgst_sgst_split_intra_state",
+    "gst.igst_inter_state_supply",
+    "gst.reverse_charge_flag_set",
+    "gst.place_of_supply_specified",
+    "gst.composition_scheme_consistency",
+    "tds.194c_rate_individual_1pct",
+    "tds.194c_rate_company_2pct",
+    "tds.194c_threshold_aggregate_check",
+    "tds.tan_pan_present",
+    "labour_cess.bocw_1pct_above_10_lakh",
+    "labour_cess.deposit_to_welfare_board",
+    "labour_cess.clause_in_tender_document"
+  ]
+}

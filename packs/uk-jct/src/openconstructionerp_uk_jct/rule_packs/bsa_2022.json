@@ -1,0 +1,25 @@
+{
+  "rule_pack_id": "bsa_2022",
+  "name": "Building Safety Act 2022 — Higher-Risk Buildings",
+  "standard": "Building Safety Act 2022",
+  "jurisdiction": "GB",
+  "description": "Enables OCERP built-in validation rules for the Building Safety Act 2022 regime overseen by the Building Safety Regulator (BSR, HSE). Mandatory for Higher-Risk Buildings (HRBs) — buildings at least 18 metres in height OR containing at least 7 storeys, with at least 2 residential units. Covers the three Gateway approvals (Gateway 1 planning, Gateway 2 pre-construction, Gateway 3 pre-occupation), the Golden Thread of information, Principal Accountable Person registration, mandatory occurrence reporting and the Resident Engagement Strategy.",
+  "enables_rule_ids": [
+    "bsa.hrb_status_evaluated",
+    "bsa.hrb_height_or_storey_threshold_documented",
+    "bsa.principal_accountable_person_identified",
+    "bsa.accountable_persons_register_complete",
+    "bsa.bsr_building_registration_submitted",
+    "bsa.gateway_1_planning_approval_present",
+    "bsa.gateway_2_pre_construction_approval_present",
+    "bsa.gateway_3_pre_occupation_approval_present",
+    "bsa.golden_thread_information_strategy_present",
+    "bsa.golden_thread_digital_format_compliant",
+    "bsa.safety_case_report_present",
+    "bsa.safety_case_report_reviewed_annually",
+    "bsa.mandatory_occurrence_reporting_process",
+    "bsa.resident_engagement_strategy_present",
+    "bsa.complaints_handling_procedure_present",
+    "bsa.competent_person_duty_holder_evidenced"
+  ]
+}

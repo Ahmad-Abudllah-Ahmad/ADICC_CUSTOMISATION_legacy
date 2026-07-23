@@ -1,0 +1,34 @@
+{
+  "rule_pack_id": "asaqs_measurement",
+  "name": "ASAQS Standard System of Measuring Building Work",
+  "standard": "ASAQS SSMBW",
+  "jurisdiction": "ZA",
+  "regulator": "Association of South African Quantity Surveyors (ASAQS)",
+  "description": "Building work measurement per the ASAQS Standard System of Measuring Building Work, the South African counterpart to SANS 1200 for buildings. Switches on the universal BOQ quality rules today. ASAQS specific trade-section checks are on the roadmap and are reported as unsupported until implemented in core.",
+  "applies_to": ["projects", "boq", "validation"],
+  "trade_sections_reference": [
+    "Earthworks",
+    "Concrete, formwork and reinforcement",
+    "Masonry",
+    "Waterproofing",
+    "Roof coverings",
+    "Carpentry and joinery",
+    "Ceilings, partitions and access flooring",
+    "Ironmongery",
+    "Structural steelwork and metalwork",
+    "Plastering",
+    "Tiling",
+    "Plumbing and drainage",
+    "Electrical installation",
+    "Glazing",
+    "Paintwork",
+    "External works"
+  ],
+  "enables_rule_ids": [
+    "boq_quality.no_zero_unit_rate",
+    "boq_quality.no_missing_quantity",
+    "boq_quality.no_duplicate_positions",
+    "asaqs.trade_section_classified",
+    "asaqs.measurement_unit_valid"
+  ]
+}

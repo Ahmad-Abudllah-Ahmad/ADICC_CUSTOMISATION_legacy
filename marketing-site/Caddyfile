@@ -1,0 +1,158 @@
+{$SITE_HOST} chat.datadrivenconstruction.io {
+  encode zstd gzip
+  @api path /api/*
+  reverse_proxy @api app:3000
+  root * /srv
+  file_server
+}
+
+{$NOCO_HOST} {
+  encode zstd gzip
+  reverse_proxy nocodb:8080
+}
+
+prozesswerk.31.97.123.81.nip.io {
+  encode zstd gzip
+  root * /srv-pw
+  try_files {path} {path}.html /index.html
+  file_server
+}
+
+adicc-uae.com {
+  redir https://adicc-uae.com{uri} permanent
+}
+
+adicc-uae.com {
+  encode zstd gzip
+
+  header {
+    Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+    X-Content-Type-Options nosniff
+    X-Frame-Options SAMEORIGIN
+    Referrer-Policy strict-origin-when-cross-origin
+    Permissions-Policy "camera=(), microphone=(), geolocation=()"
+  }
+
+  # Force browsers to revalidate HTML on every load (ETags still allow 304s).
+  # Prevents stale marketing page being served from heuristic browser cache.
+  @html path *.html /
+  header @html Cache-Control "no-cache, must-revalidate"
+
+  # Demo registration API → tiny Python service
+  handle /api/demo-register {
+    reverse_proxy 172.19.0.1:8891 {
+      rewrite /register
+    }
+  }
+
+  # Commercial licence request → same tiny Python service
+  handle /api/license-request {
+    reverse_proxy 172.19.0.1:8891 {
+      rewrite /license-request
+    }
+  }
+
+  # General contact / custom-build inquiry — used by the inline form on
+  # index.html (#custom-form) and the /contact landing page. Routes to
+  # the in-house SMTP service so the form never touches third-party
+  # mailers (Formspree etc) and survives backend redeploys.
+  handle /api/inquiry {
+    reverse_proxy 172.19.0.1:8891 {
+      rewrite /inquiry
+    }
+  }
+
+  # Newsletter signups (3 forms: footer inline, footer card, popup).
+  handle /api/subscribe {
+    reverse_proxy 172.19.0.1:8891 {
+      rewrite /subscribe
+    }
+  }
+
+  # Partner program application (partners.html #apply-form).
+  handle /api/partners-apply {
+    reverse_proxy 172.19.0.1:8891 {
+      rewrite /partners-apply
+    }
+  }
+
+  # Health check for the marketing-forms SMTP service (uptime monitoring).
+  # Must be declared BEFORE the catch-all /api/* below.
+  handle /api/forms-health {
+    reverse_proxy 172.19.0.1:8891 {
+      rewrite /health
+    }
+  }
+
+  # ERP App: API calls (absolute /api/ paths from frontend)
+  handle /api/* {
+    reverse_proxy 172.19.0.1:9090
+  }
+
+  # Demo registration page (exact /demo path — gate before the app)
+  handle /demo {
+    root * /srv-oce
+    rewrite * /demo-register.html
+    file_server
+  }
+
+  # Marketing assets (loops/gifs/stills/screenshots) — serve static BEFORE the /assets/* reverse_proxy
+  handle /assets/loops/* {
+    root * /srv-oce
+    file_server
+  }
+  handle /assets/stills/* {
+    root * /srv-oce
+    file_server
+  }
+  handle /assets/screenshots/* {
+    root * /srv-oce
+    file_server
+  }
+  handle /assets/svg/* {
+    root * /srv-oce
+    file_server
+  }
+  handle /assets/icons/* {
+    root * /srv-oce
+    file_server
+  }
+  handle /assets/partners/* {
+    root * /srv-oce
+    header Cache-Control "public, max-age=31536000, immutable"
+    file_server
+  }
+  handle /assets/stars/* {
+    root * /srv-oce
+    header Cache-Control "public, max-age=31536000, immutable"
+    file_server
+  }
+
+  # ERP SPA root-relative assets — vite builds index.html with /assets/* paths,
+  # forward those to the backend which serves frontend/dist directly.
+  handle /assets/* {
+    reverse_proxy 172.19.0.1:9090
+  }
+
+  # ERP App: strip /demo prefix and proxy to backend
+  handle_path /demo/* {
+    reverse_proxy 172.19.0.1:9090
+  }
+
+  # Static marketing site + SPA refresh fallback.
+  # Static files (docs.html, privacy-policy.html, etc.) come from /srv-oce.
+  # Anything that isn't a static file falls through to the backend so React
+  # Router routes (/login, /dashboard, /projects, ...) survive a refresh
+  # instead of returning 404.
+  handle {
+    root * /srv-oce
+    @notstatic {
+      not file {path}
+      not file {path}.html
+      not file {path}/index.html
+    }
+    reverse_proxy @notstatic 172.19.0.1:9090
+    try_files {path} {path}.html {path}/index.html
+    file_server
+  }
+}

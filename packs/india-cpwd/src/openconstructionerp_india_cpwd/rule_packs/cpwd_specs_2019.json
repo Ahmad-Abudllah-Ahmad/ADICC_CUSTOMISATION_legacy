@@ -1,0 +1,41 @@
+{
+  "rule_pack_id": "cpwd_specs_2019",
+  "name": "CPWD Specifications 2019 + Works Manual 2019 + DSR 2023",
+  "name_hi": "सीपीडब्ल्यूडी विशिष्टियाँ 2019 + वर्क्स मैनुअल 2019 + डीएसआर 2023",
+  "standard": "CPWD-Specs-2019",
+  "jurisdiction": "IN",
+  "regulator": "Central Public Works Department, Government of India",
+  "publication_year": 2019,
+  "complementary_documents": [
+    "CPWD Works Manual 2019 (procedural reference for central public works)",
+    "CPWD DSR 2023 (Delhi Schedule of Rates, latest published edition)",
+    "Yardstick for Cost of Construction (per-sqm benchmark by zone)",
+    "Pamphlet of Rates (analysis of rates supplement)"
+  ],
+  "applies_to": ["projects", "boq", "tendering", "validation"],
+  "scope": "Central PWD works only. State PWD works follow state-specific SoRs (MPPWD, RPWD, MJP, Kerala PWD, Tamil Nadu PWD, KSR, MSR, etc.).",
+  "description": "Enables OCERP built-in validation rules that check BOQ items, item analysis and tender documents against CPWD Specifications 2019 (Vols. I & II), Works Manual 2019 procedural rules, and DSR 2023 unit-rate references. Covers item nomenclature, mandatory subhead structure, labour+material+P&T breakup for extra/substituted items, and Cost Index alignment with the current CPWD quarter.",
+  "description_hi": "सीपीडब्ल्यूडी विशिष्टियाँ 2019, वर्क्स मैनुअल 2019 और डीएसआर 2023 के अनुसार बीओक्यू, दर विश्लेषण एवं निविदा दस्तावेज़ों की जाँच।",
+  "validates": {
+    "item_code_format": "chapter.section.item (e.g. 2.5.1 = Earthwork > Earthwork in Excavation > In ordinary soil)",
+    "unit_consistency": ["cum", "sqm", "Rmt", "Quintal", "Kg", "each", "lump-sum", "MT", "tonne"],
+    "extra_item_breakup": "Extra / substituted items must carry labour + material + P&T (Petty Tools & Plant) component-wise analysis",
+    "cost_index": "DSR base + current CPWD quarterly Cost Index multiplier"
+  },
+  "enables_rule_ids": [
+    "cpwd.subhead_structure_valid",
+    "cpwd.item_nomenclature_matches_2019",
+    "cpwd.unit_of_measurement_allowed",
+    "cpwd.mode_of_measurement_specified",
+    "cpwd.preliminary_section_present",
+    "cpwd.contingency_provision_present",
+    "cpwd.labour_cess_clause_present",
+    "cpwd.cost_index_applied_current_quarter",
+    "cpwd.item_code_format_chapter_section_item",
+    "cpwd.extra_item_labour_material_pt_breakup",
+    "cpwd.dsr_2023_reference_year_current",
+    "cpwd.works_manual_2019_procedural_compliance",
+    "cpwd.yardstick_per_sqm_benchmark_within_band",
+    "cpwd.pamphlet_of_rates_analysis_attached"
+  ]
+}

@@ -1,0 +1,144 @@
+{
+  "common": {
+    "page_of": "Page {page} sur {total}",
+    "generated_at": "Généré le {timestamp} UTC",
+    "doc_ref": "Réf. doc.",
+    "developer": "Promoteur",
+    "unit_code": "Code Unité",
+    "watermark_draft": "PROJET",
+    "currency": "Devise",
+    "amount": "Montant",
+    "date": "Date",
+    "signature": "Signature",
+    "place": "Lieu",
+    "buyer_signature": "Signature Acquéreur",
+    "developer_signature": "Signature Promoteur",
+    "witness": "Témoin"
+  },
+  "reservation_receipt": {
+    "title": "Reçu de Réservation",
+    "intro": "Le présent reçu confirme la réservation du bien décrit ci-dessous. Le dépôt a été reçu et l'unité est retirée du marché jusqu'à l'expiration de la période de rétractation ou la signature du contrat de vente.",
+    "headings": {
+      "buyer": "Acquéreur",
+      "property": "Bien",
+      "amount_paid": "Montant Versé",
+      "valid_until": "Valable Jusqu'au",
+      "next_step": "Étape Suivante",
+      "reservation_number": "N° de Réservation",
+      "cooling_off": "Période de Rétractation",
+      "deposit_status": "Statut du Dépôt",
+      "plot_details": "Détails de l'Unité"
+    },
+    "next_step_text": "Dans un délai de {days} jours, l'acquéreur doit signer le contrat de vente et payer le prochain versement, faute de quoi la réservation expirera.",
+    "cooling_off_text": "{days} jours à compter de la réception du présent document.",
+    "footer_note": "Le dépôt n'est intégralement remboursable que pendant la période de rétractation prévue par la juridiction applicable. Au-delà, les règles de déchéance s'appliquent."
+  },
+  "sales_contract": {
+    "title": "Contrat de Vente",
+    "subtitle": "Contrat N° {number}",
+    "preamble": "Le présent contrat de vente (le « Contrat ») est conclu à la date indiquée ci-dessous entre le Promoteur et le(s) Acquéreur(s) listé(s) ci-dessous, portant sur la vente du bien identifié dans le présent document.",
+    "headings": {
+      "parties": "Parties au Contrat",
+      "property": "Le Bien",
+      "price": "Prix d'Achat",
+      "payment_schedule": "Échéancier",
+      "clauses": "Conditions Générales",
+      "instalments": "Versements",
+      "signatures": "Signatures",
+      "co_ownership": "Indivision",
+      "regulatory": "Mentions Réglementaires",
+      "annexes": "Annexes"
+    },
+    "parties_intro": "Les Acquéreurs acquièrent le bien conjointement, dans les quotes-parts indiquées ci-dessous. Toutes les parties sont solidairement responsables des obligations contractuelles, sauf indication contraire expresse.",
+    "instalment_columns": {
+      "sequence": "N°",
+      "milestone": "Jalon",
+      "due_date": "Échéance",
+      "amount": "Montant",
+      "currency": "Devise"
+    },
+    "party_columns": {
+      "name": "Nom",
+      "role": "Rôle",
+      "ownership_pct": "Quote-part %",
+      "email": "Email"
+    },
+    "property_columns": {
+      "plot_number": "N° Unité",
+      "development": "Programme",
+      "area_m2": "Surface (m²)",
+      "house_type": "Type"
+    },
+    "price_label": "Prix Total",
+    "breakdown_label": "Détail du Prix",
+    "signature_note": "Signé à {place} le {date}. En signant ci-dessous, l'Acquéreur et le Promoteur confirment avoir lu, compris et accepté les conditions du Contrat, y compris toutes les annexes."
+  },
+  "payment_receipt": {
+    "title": "Reçu de Paiement",
+    "intro": "Le présent reçu atteste du paiement d'un versement au titre du contrat de vente référencé ci-dessous.",
+    "headings": {
+      "spa_ref": "Contrat N°",
+      "instalment": "Versement",
+      "milestone": "Jalon",
+      "amount_paid": "Montant Versé",
+      "payment_method": "Mode de Paiement",
+      "payment_ref": "Référence",
+      "paid_at": "Payé le",
+      "outstanding": "Solde Restant"
+    },
+    "footer_note": "Le présent reçu est généré automatiquement et est valable sans signature manuelle. À conserver dans vos archives."
+  },
+  "handover_certificate": {
+    "title": "Procès-Verbal de Remise des Clés",
+    "intro": "Le présent procès-verbal acte la remise du bien par le Promoteur à l'/aux Acquéreur(s). L'Acquéreur accepte l'unité sous réserve de la liste de réserves et des conditions de garantie jointes.",
+    "headings": {
+      "spa_ref": "Contrat N°",
+      "completed_at": "Date de Remise",
+      "snag_count": "Réserves Ouvertes",
+      "warranty_period": "Période de Garantie",
+      "keys_handed_over": "Clés Remises",
+      "buyer_acceptance": "Acceptation de l'Acquéreur",
+      "developer_declaration": "Déclaration du Promoteur"
+    },
+    "developer_declaration_text": "Le Promoteur confirme par les présentes que le bien a été construit conformément au Contrat de vente, que l'ensemble de la documentation requise a été remise à l'Acquéreur, et que les garanties structurelles et de parfait achèvement courent à compter de la date du présent procès-verbal.",
+    "buyer_acceptance_text": "L'Acquéreur accepte par les présentes la remise du bien sous réserve de la liste de réserves annexée. L'Acquéreur reconnaît avoir reçu les clés, les notices et toute la documentation requise.",
+    "snag_note": "Les réserves ouvertes seront levées par le Promoteur dans un délai raisonnable selon la clause de levée de réserves du Contrat."
+  },
+  "warranty_certificate": {
+    "title": "Certificat de Garantie",
+    "intro": "Le présent Certificat définit les obligations de garantie du Promoteur concernant le bien remis à l'/aux Acquéreur(s) à la date indiquée ci-dessous.",
+    "headings": {
+      "spa_ref": "Contrat N°",
+      "handover_date": "Date de Remise",
+      "structural": "Garantie Structurelle",
+      "finishing": "Garantie de Parfait Achèvement",
+      "structural_period": "Période Structurelle",
+      "finishing_period": "Période de Parfait Achèvement",
+      "warranty_expiry": "Expiration",
+      "scope": "Étendue",
+      "exclusions": "Exclusions"
+    },
+    "structural_text": "Le Promoteur garantit l'intégrité structurelle du bien - y compris la structure porteuse, les fondations et l'étanchéité - pour une durée de {years} ans à compter de la date de remise.",
+    "finishing_text": "Le Promoteur garantit les travaux de finition - peinture, sanitaires, équipements installés par le Promoteur et finitions cosmétiques mineures - pour une durée de {years} an(s) à compter de la date de remise.",
+    "exclusions_text": "La garantie exclut les dommages causés par une utilisation incorrecte, les modifications réalisées par l'Acquéreur ou des tiers, l'usure normale, la force majeure ainsi que les éléments couverts par des garanties fabricants séparées.",
+    "claim_procedure": "Pour faire valoir un recours, l'Acquéreur doit adresser au Promoteur, dans le délai de garantie, une notification écrite décrivant le défaut accompagnée de pièces justificatives raisonnables."
+  },
+  "noc": {
+    "title": "Attestation de Non-Objection",
+    "subtitle": "Pour la Revente de l'Unité",
+    "intro": "La présente attestation de non-objection est délivrée par le Promoteur et confirme l'absence d'obligation impayée de l'Acquéreur susceptible d'empêcher la revente de l'unité identifiée ci-dessous.",
+    "headings": {
+      "spa_ref": "Contrat N°",
+      "requested_by": "Demandée par",
+      "issued_to": "Délivrée à",
+      "purpose": "Objet",
+      "validity": "Validité",
+      "outstanding_balance": "Solde Dû",
+      "transfer_fee": "Frais de Transfert"
+    },
+    "validity_text": "La présente attestation est valable {days} jours à compter de la date d'émission. Au-delà, une nouvelle attestation doit être demandée.",
+    "purpose_text": "Cession de l'unité à un acquéreur tiers, sous réserve des procédures standards de transfert du Promoteur.",
+    "no_outstanding": "Tous les versements échus à la date de la présente attestation ont été intégralement payés. Aucun paiement en souffrance n'est enregistré.",
+    "developer_statement": "Le Promoteur accorde par la présente, sous réserve des frais et procédures standards de transfert, l'autorisation à l'Acquéreur de céder la propriété de l'unité à un tiers. La présente attestation ne renonce à aucun des droits du Promoteur au titre du Contrat de vente."
+  }
+}

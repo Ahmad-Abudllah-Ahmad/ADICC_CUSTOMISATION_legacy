@@ -1,0 +1,32 @@
+{
+  "regulator": "NONE",
+  "title": "General Terms and Conditions",
+  "intro": "This Agreement is governed by general contract law principles applicable to the sale of immovable property in the jurisdiction set out in the governing-law clause.",
+  "clauses": [
+    {
+      "id": "generic.completion",
+      "heading": "Completion & Possession",
+      "text": "The Developer shall complete construction and deliver possession of the Property on or before {completion_date}. Delay beyond this date shall entitle the Buyer to the remedies set out under this Agreement and applicable law."
+    },
+    {
+      "id": "generic.force_majeure",
+      "heading": "Force Majeure",
+      "text": "Neither party shall be liable for failure to perform any obligation hereunder where such failure is caused by force majeure events outside the affected party's reasonable control. Written notice must be given within 30 days of the event."
+    },
+    {
+      "id": "generic.warranty",
+      "heading": "Warranty",
+      "text": "The Developer warrants the structural soundness of the Property for a period of not less than 10 years from handover, and the finishing works for a period of not less than 1 year, subject to the warranty exclusions set out in the attached Warranty Certificate."
+    },
+    {
+      "id": "generic.jurisdiction",
+      "heading": "Governing Law & Jurisdiction",
+      "text": "This Agreement is governed by the laws of {jurisdiction_seat}. Disputes shall be resolved by the competent courts of that jurisdiction."
+    },
+    {
+      "id": "generic.assignment",
+      "heading": "Assignment",
+      "text": "The Buyer shall not assign rights under this Agreement to any third party without the prior written consent of the Developer, which shall not be unreasonably withheld and is subject to settlement of outstanding obligations."
+    }
+  ]
+}

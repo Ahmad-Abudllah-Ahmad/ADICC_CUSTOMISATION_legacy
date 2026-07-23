@@ -1,0 +1,37 @@
+{
+  "regulator": "MAHARERA",
+  "title": "MAHARERA Regulatory Disclosures (Maharashtra Real Estate Regulatory Authority)",
+  "intro": "This Agreement complies with the Maharashtra Real Estate (Regulation and Development) Rules and the disclosures mandated under Section 4 of the RERA Act.",
+  "clauses": [
+    {
+      "id": "maharera.registration",
+      "heading": "MAHARERA Registration",
+      "text": "The project is registered with the Maharashtra Real Estate Regulatory Authority under registration number {maharera_registration_no}. The Developer affirms the registration is valid as of the date of execution and undertakes to maintain it through completion."
+    },
+    {
+      "id": "maharera.carpet_area",
+      "heading": "Carpet Area Declaration (Section 4 of the RERA Act)",
+      "text": "The carpet area of the Unit, as defined by the RERA Act, is {carpet_area_m2} m². Any deviation in the carpet area as built versus as declared exceeding 3% shall be governed by Section 14(2) of the RERA Act and entitles the Buyer to receive a proportionate refund along with interest at the prescribed rate."
+    },
+    {
+      "id": "maharera.promoter_retention",
+      "heading": "5% Promoter Retention",
+      "text": "In accordance with the MAHARERA Order, no more than 5% of the agreed consideration may be retained by the Promoter until the Buyer takes physical possession and the Conveyance Deed is registered. All remaining instalments shall be released only against verified construction milestones."
+    },
+    {
+      "id": "maharera.late_handover",
+      "heading": "Late Handover Compensation",
+      "text": "In the event of delay in handing over possession beyond the date committed to under this Agreement, the Promoter shall pay the Buyer interest at the State Bank of India's highest Marginal Cost of Lending Rate plus 2% per annum on the amounts paid by the Buyer, computed from the date of delay until actual possession, in line with Section 18 of the RERA Act."
+    },
+    {
+      "id": "maharera.formation_society",
+      "heading": "Formation of Co-operative Society",
+      "text": "The Promoter shall take all necessary steps to form a Co-operative Housing Society (or such other legal body as elected by the Buyers) within the timeline mandated by the Maharashtra Co-operative Societies Act and shall convey the title to the Society in accordance with the said Act."
+    },
+    {
+      "id": "maharera.jurisdiction",
+      "heading": "Dispute Resolution",
+      "text": "Disputes arising under this Agreement shall be referred to MAHARERA in accordance with the Real Estate (Regulation and Development) Act, 2016. The courts at Mumbai shall have exclusive jurisdiction in matters not within MAHARERA's purview."
+    }
+  ]
+}

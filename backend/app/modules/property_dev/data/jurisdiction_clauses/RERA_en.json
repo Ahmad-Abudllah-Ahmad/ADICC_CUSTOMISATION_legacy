@@ -1,0 +1,37 @@
+{
+  "regulator": "RERA",
+  "title": "RERA Regulatory Disclosures",
+  "intro": "This Sale-Purchase Agreement is subject to the Real Estate Regulatory Authority (RERA) framework and the disclosures set out below.",
+  "clauses": [
+    {
+      "id": "rera.registration",
+      "heading": "RERA Registration",
+      "text": "The Development is registered with the Real Estate Regulatory Authority under registration number {rera_registration_no}. A copy of the registration certificate is annexed to this Agreement. The Developer warrants the registration is in force at the date of signing."
+    },
+    {
+      "id": "rera.escrow",
+      "heading": "Escrow Account",
+      "text": "All buyer payments under this Agreement shall be deposited into the regulator-supervised escrow account {escrow_account_no} held with {escrow_bank}. Funds may be withdrawn by the Developer only against verified construction milestones, in accordance with the applicable RERA rules. The Buyer acknowledges the escrow arrangement and the limits it places on the Developer's access to funds."
+    },
+    {
+      "id": "rera.completion_date",
+      "heading": "Completion & Possession Date",
+      "text": "The Developer undertakes to complete construction and offer possession of the Property on or before {completion_date}, subject to force majeure events and the grace period set out below. Any extension exceeding the grace period entitles the Buyer to the statutory remedies under the RERA Act."
+    },
+    {
+      "id": "rera.force_majeure",
+      "heading": "Force Majeure",
+      "text": "Neither party shall be liable for failure to perform any obligation hereunder if such failure is caused by force majeure - including but not limited to natural disasters, war, civil unrest, government-imposed shutdowns, or pandemic-related restrictions. The affected party shall give written notice within 30 days of the event and the completion date shall be extended by the period of the force majeure event."
+    },
+    {
+      "id": "rera.dispute",
+      "heading": "Dispute Resolution & Jurisdiction",
+      "text": "Disputes arising out of or in connection with this Agreement shall be referred in the first instance to the RERA Adjudicating Officer in accordance with the Real Estate (Regulation and Development) Act. The parties consent to the exclusive jurisdiction of the courts of {jurisdiction_seat}."
+    },
+    {
+      "id": "rera.transfer",
+      "heading": "Transfer & NOC",
+      "text": "The Buyer shall not assign, transfer, or sublet any rights under this Agreement without first obtaining a No Objection Certificate (NOC) from the Developer. The Developer shall not unreasonably withhold the NOC subject to settlement of any outstanding instalments and payment of the standard transfer fee."
+    }
+  ]
+}

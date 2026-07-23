@@ -1,0 +1,115 @@
+{
+  "name": "en_kitchen",
+  "raw_request": "kitchen renovation, 8 m2, standard finish",
+  "mode_hint": "offline",
+  "expected_type": "kitchen_reno",
+  "answers": {
+    "floor_area_m2": 8.0,
+    "ceiling_height_m": 2.7,
+    "finish_level": "standard",
+    "demolition": true
+  },
+  "expected_params": {
+    "floor_area_m2": 8.0,
+    "ceiling_height_m": 2.7,
+    "finish_level": "standard",
+    "demolition": true
+  },
+  "expected_selected_packages": [
+    "commissioning",
+    "debris_removal",
+    "demo_strip",
+    "floor_screed",
+    "floor_tiling",
+    "painting_ceiling",
+    "painting_walls",
+    "wall_plaster",
+    "wall_tiling"
+  ],
+  "expected_stage_order": [
+    "demo",
+    "rough",
+    "close",
+    "finish",
+    "commission"
+  ],
+  "expected_quantities": {
+    "demo_strip": 8.0,
+    "floor_screed": 8.0,
+    "floor_tiling": 8.0,
+    "painting_ceiling": 8.0
+  },
+  "golden_positions": {
+    "demo_strip": {
+      "collection_name": [
+        "Finishing works",
+        "Repair and construction works"
+      ],
+      "masterformat": [
+        "02"
+      ]
+    },
+    "floor_screed": {
+      "collection_name": [
+        "Floors",
+        "Finishing works"
+      ],
+      "masterformat": [
+        "03 35",
+        "09"
+      ]
+    },
+    "wall_plaster": {
+      "collection_name": [
+        "Plastering work",
+        "Stucco work",
+        "Finishing works"
+      ],
+      "masterformat": [
+        "09 24",
+        "09 20",
+        "09"
+      ]
+    },
+    "wall_tiling": {
+      "collection_name": [
+        "Stucco work",
+        "Finishing works"
+      ],
+      "masterformat": [
+        "09 30",
+        "09"
+      ]
+    },
+    "floor_tiling": {
+      "collection_name": [
+        "Floors",
+        "Finishing works"
+      ],
+      "masterformat": [
+        "09 30",
+        "09"
+      ]
+    },
+    "painting_walls": {
+      "collection_name": [
+        "Painting work",
+        "Finishing works"
+      ],
+      "masterformat": [
+        "09 90",
+        "09"
+      ]
+    },
+    "painting_ceiling": {
+      "collection_name": [
+        "Painting work",
+        "Finishing works"
+      ],
+      "masterformat": [
+        "09 90",
+        "09"
+      ]
+    }
+  }
+}

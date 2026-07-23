@@ -1,0 +1,297 @@
+# OCERP × batimatech (Canada) — first-login onboarding script.
+#
+# Replaces the default OnboardingWizard when this partner pack is active.
+# Each step is rendered by the frontend OnboardingWizard component;
+# step `kind` values map to existing wizard step renderers in
+# frontend/src/features/onboarding/.
+#
+# Field reference:
+#   id          — stable step identifier (kebab-case)
+#   kind        — renderer type: intro | form | choice | external_link | summary
+#   title_i18n  — i18next key OR { en, fr-CA, en-CA } literal fallbacks
+#   body_i18n   — same shape as title_i18n
+#   skippable   — user may click "Skip for now"
+#   actions     — optional list of CTA buttons rendered at step bottom
+
+version: 2
+pack: batimatech-ca
+estimated_minutes: 10
+
+steps:
+  - id: welcome
+    kind: intro
+    skippable: false
+    title_i18n:
+      en: "Welcome to OCERP × batimatech"
+      fr-CA: "Bienvenue dans OCERP × batimatech"
+      en-CA: "Welcome to OCERP × batimatech"
+    body_i18n:
+      en: "Your OpenConstructionERP install is pre-configured for the Canadian construction market — NBC 2020, CCDC contracts, CSA standards and provincial overlays (Québec CCQ/RBQ, Ontario OBC). Eight quick steps and you are ready to estimate."
+      fr-CA: "Votre installation OpenConstructionERP est préconfigurée pour le marché canadien de la construction — CNB 2020, contrats CCDC, normes CSA et surcouches provinciales (Québec CCQ/RBQ, Ontario CBO). Huit étapes rapides et vous êtes prêt à estimer."
+      en-CA: "Your OpenConstructionERP install is pre-configured for the Canadian construction market — NBC 2020, CCDC contracts, CSA standards and provincial overlays (Québec CCQ/RBQ, Ontario OBC). Eight quick steps and you are ready to estimate."
+
+  - id: company-profile
+    kind: form
+    skippable: false
+    title_i18n:
+      en: "Your construction firm"
+      fr-CA: "Votre entreprise de construction"
+      en-CA: "Your construction firm"
+    body_i18n:
+      en: "Tell us about your firm. This populates default-issuer fields on tenders, contracts and invoices."
+      fr-CA: "Parlez-nous de votre entreprise. Ces données préremplissent les champs émetteur sur les appels d'offres, contrats et factures."
+      en-CA: "Tell us about your firm. This populates default-issuer fields on tenders, contracts and invoices."
+    fields:
+      - key: legal_name
+        type: text
+        required: true
+        label_en: "Legal name (registered)"
+        label_fr-CA: "Dénomination sociale (au registre)"
+      - key: trade_name
+        type: text
+        label_en: "Trade name (if different)"
+        label_fr-CA: "Nom commercial (si différent)"
+      - key: head_office_postal_code
+        type: text
+        required: true
+        label_en: "Head-office postal code (e.g. M5V 2T6)"
+        label_fr-CA: "Code postal du siège social (ex. H2X 1Y9)"
+      - key: home_province
+        type: select
+        required: true
+        label_en: "Home province / territory"
+        label_fr-CA: "Province / territoire d'attache"
+        options:
+          - { value: "AB", label_en: "Alberta",                       label_fr-CA: "Alberta" }
+          - { value: "BC", label_en: "British Columbia",              label_fr-CA: "Colombie-Britannique" }
+          - { value: "MB", label_en: "Manitoba",                      label_fr-CA: "Manitoba" }
+          - { value: "NB", label_en: "New Brunswick",                 label_fr-CA: "Nouveau-Brunswick" }
+          - { value: "NL", label_en: "Newfoundland & Labrador",       label_fr-CA: "Terre-Neuve-et-Labrador" }
+          - { value: "NS", label_en: "Nova Scotia",                   label_fr-CA: "Nouvelle-Écosse" }
+          - { value: "ON", label_en: "Ontario",                       label_fr-CA: "Ontario" }
+          - { value: "PE", label_en: "Prince Edward Island",          label_fr-CA: "Île-du-Prince-Édouard" }
+          - { value: "QC", label_en: "Québec",                        label_fr-CA: "Québec" }
+          - { value: "SK", label_en: "Saskatchewan",                  label_fr-CA: "Saskatchewan" }
+          - { value: "NT", label_en: "Northwest Territories",         label_fr-CA: "Territoires du Nord-Ouest" }
+          - { value: "NU", label_en: "Nunavut",                       label_fr-CA: "Nunavut" }
+          - { value: "YT", label_en: "Yukon",                         label_fr-CA: "Yukon" }
+
+  - id: tax-registrations
+    kind: form
+    skippable: true
+    title_i18n:
+      en: "Tax & regulatory registrations"
+      fr-CA: "Numéros fiscaux et réglementaires"
+      en-CA: "Tax & regulatory registrations"
+    body_i18n:
+      en: "We will print these on invoices, tenders and progress draws. All fields optional but recommended — required for federal & provincial public-sector tenders."
+      fr-CA: "Nous les imprimerons sur les factures, soumissions et décaissements. Tous les champs sont facultatifs mais recommandés — exigés pour les appels d'offres des secteurs publics fédéral et provinciaux."
+      en-CA: "We will print these on invoices, tenders and progress draws. All fields optional but recommended — required for federal & provincial public-sector tenders."
+    fields:
+      - key: gst_hst_number
+        type: text
+        label_en: "GST/HST number (9 digits + RT + 4 digits, e.g. 123456789 RT 0001)"
+        label_fr-CA: "Numéro TPS/TVH (9 chiffres + RT + 4 chiffres, ex. 123456789 RT 0001)"
+      - key: qst_number
+        type: text
+        label_en: "QST number (10 digits + TQ + 4 digits) — Québec firms"
+        label_fr-CA: "Numéro TVQ (10 chiffres + TQ + 4 chiffres) — entreprises du Québec"
+      - key: rbq_licence
+        type: text
+        label_en: "RBQ licence number — required to perform construction work in Québec"
+        label_fr-CA: "Numéro de licence RBQ — obligatoire pour exécuter des travaux de construction au Québec"
+      - key: ccq_employer_number
+        type: text
+        label_en: "CCQ employer number — Québec firms employing construction workers"
+        label_fr-CA: "Numéro d'employeur CCQ — entreprises du Québec employant des travailleurs de la construction"
+      - key: wsib_account
+        type: text
+        label_en: "WSIB account number — Ontario firms"
+        label_fr-CA: "Numéro de compte WSIB — entreprises de l'Ontario"
+      - key: cnesst_employer
+        type: text
+        label_en: "CNESST employer number — Québec firms"
+        label_fr-CA: "Numéro d'employeur CNESST — entreprises du Québec"
+      - key: worksafebc_account
+        type: text
+        label_en: "WorkSafeBC account — BC firms"
+        label_fr-CA: "Numéro WorkSafeBC — entreprises de la C.-B."
+
+  - id: nbc-2020
+    kind: form
+    skippable: true
+    title_i18n:
+      en: "NBC 2020 coverage"
+      fr-CA: "Couverture du CNB 2020"
+      en-CA: "NBC 2020 coverage"
+    body_i18n:
+      en: "Pick the National Building Code of Canada 2020 Parts most relevant to your trade — these toggle the validation rules that will run on every import. You can change this later in Settings → Validation."
+      fr-CA: "Sélectionnez les Parties du Code national du bâtiment du Canada 2020 pertinentes pour votre métier — elles activent les règles de validation appliquées à chaque importation. Modifiable plus tard dans Paramètres → Validation."
+      en-CA: "Pick the National Building Code of Canada 2020 Parts most relevant to your trade — these toggle the validation rules that will run on every import. You can change this later in Settings → Validation."
+    fields:
+      - key: nbc_part_3_compliance
+        type: checkbox
+        label_en: "Part 3 — Fire protection, occupant safety, accessibility"
+        label_fr-CA: "Partie 3 — Protection incendie, sécurité, accessibilité"
+        default: true
+      - key: nbc_part_4_compliance
+        type: checkbox
+        label_en: "Part 4 — Structural design (loads, snow, seismic)"
+        label_fr-CA: "Partie 4 — Calcul des structures (charges, neige, sismique)"
+        default: true
+      - key: nbc_part_5_compliance
+        type: checkbox
+        label_en: "Part 5 — Environmental separation (envelope)"
+        label_fr-CA: "Partie 5 — Séparation environnementale (enveloppe)"
+        default: false
+      - key: nbc_part_6_compliance
+        type: checkbox
+        label_en: "Part 6 — HVAC"
+        label_fr-CA: "Partie 6 — CVCA"
+        default: false
+      - key: nbc_part_7_compliance
+        type: checkbox
+        label_en: "Part 7 — Plumbing"
+        label_fr-CA: "Partie 7 — Plomberie"
+        default: false
+      - key: nbc_part_9_compliance
+        type: checkbox
+        label_en: "Part 9 — Housing and small buildings"
+        label_fr-CA: "Partie 9 — Maisons et petits bâtiments"
+        default: false
+      - key: nbc_part_10_necb
+        type: checkbox
+        label_en: "Part 10 / NECB — Energy efficiency"
+        label_fr-CA: "Partie 10 / CNÉB — Efficacité énergétique"
+        default: false
+
+  - id: ccdc-contract
+    kind: choice
+    skippable: true
+    title_i18n:
+      en: "Choose your default CCDC contract type"
+      fr-CA: "Choisissez votre type de contrat CCDC par défaut"
+      en-CA: "Choose your default CCDC contract type"
+    body_i18n:
+      en: "We will pre-fill contract templates, payment milestones (incl. Ready-for-Takeover), holdback and progress-draw rules accordingly. You can pick a different CCDC form on any new project."
+      fr-CA: "Nous préremplirons les modèles de contrats, les jalons de paiement (incl. Prêt-pour-prise-en-charge), la retenue et les règles de décaissement en conséquence. Vous pouvez choisir un autre formulaire CCDC pour chaque nouveau projet."
+      en-CA: "We will pre-fill contract templates, payment milestones (incl. Ready-for-Takeover), holdback and progress-draw rules accordingly. You can pick a different CCDC form on any new project."
+    options:
+      - value: ccdc-2
+        label_en: "CCDC 2 — Stipulated Price (lump sum)"
+        label_fr-CA: "CCDC 2 — Prix forfaitaire"
+        recommended: true
+      - value: ccdc-3
+        label_en: "CCDC 3 — Cost Plus"
+        label_fr-CA: "CCDC 3 — Coût majoré"
+      - value: ccdc-4
+        label_en: "CCDC 4 — Unit Price"
+        label_fr-CA: "CCDC 4 — Prix unitaire"
+      - value: ccdc-5a
+        label_en: "CCDC 5A — Construction Management for Services (advisory)"
+        label_fr-CA: "CCDC 5A — Gérance pour services (conseil)"
+      - value: ccdc-5b
+        label_en: "CCDC 5B — Construction Management for Services + Construction"
+        label_fr-CA: "CCDC 5B — Gérance pour services et construction"
+      - value: ccdc-14
+        label_en: "CCDC 14 — Design-Build Stipulated Price"
+        label_fr-CA: "CCDC 14 — Conception-construction à prix forfaitaire"
+      - value: ccdc-17
+        label_en: "CCDC 17 — Trade Contractor (on CM project)"
+        label_fr-CA: "CCDC 17 — Entrepreneur spécialisé (projet en gérance)"
+      - value: ccdc-30
+        label_en: "CCDC 30 — Integrated Project Delivery (IPD)"
+        label_fr-CA: "CCDC 30 — Réalisation de projet intégrée (IPD)"
+
+  - id: cwicr-regions
+    kind: choice
+    skippable: false
+    multiple: true
+    title_i18n:
+      en: "Pre-load CWICR Canada cost catalogues"
+      fr-CA: "Préchargez les catalogues de coûts CWICR Canada"
+      en-CA: "Pre-load CWICR Canada cost catalogues"
+    body_i18n:
+      en: "Pick the regional cost catalogues to preload. The Toronto (English) snapshot ships today; Montréal (French), Vancouver, Calgary and Halifax snapshots are flagged as upcoming and will activate automatically once published in the marketplace."
+      fr-CA: "Sélectionnez les catalogues de coûts régionaux à précharger. L'instantané de Toronto (anglais) est livré aujourd'hui ; les instantanés de Montréal (français), Vancouver, Calgary et Halifax sont marqués « à venir » et s'activeront automatiquement dès leur publication dans la marketplace."
+      en-CA: "Pick the regional cost catalogues to preload. The Toronto (English) snapshot ships today; Montréal (French), Vancouver, Calgary and Halifax snapshots are flagged as upcoming and will activate automatically once published in the marketplace."
+    options:
+      - value: cwicr-eng-toronto
+        label_en: "Toronto, ON (English) — available"
+        label_fr-CA: "Toronto, ON (anglais) — disponible"
+        default: true
+      - value: cwicr-fra-montreal
+        label_en: "Montréal, QC (French) — upcoming"
+        label_fr-CA: "Montréal, QC (français) — à venir"
+        default: false
+        disabled: true
+      - value: cwicr-eng-vancouver
+        label_en: "Vancouver, BC (English) — upcoming"
+        label_fr-CA: "Vancouver, BC (anglais) — à venir"
+        default: false
+        disabled: true
+      - value: cwicr-eng-calgary
+        label_en: "Calgary, AB (English) — upcoming"
+        label_fr-CA: "Calgary, AB (anglais) — à venir"
+        default: false
+        disabled: true
+      - value: cwicr-eng-halifax
+        label_en: "Halifax, NS (English) — upcoming"
+        label_fr-CA: "Halifax, NÉ (anglais) — à venir"
+        default: false
+        disabled: true
+      - value: cwicr-eng-ottawa
+        label_en: "Ottawa, ON (English) — upcoming"
+        label_fr-CA: "Ottawa, ON (anglais) — à venir"
+        default: false
+        disabled: true
+
+  - id: invite-team
+    kind: form
+    skippable: true
+    title_i18n:
+      en: "Connect your team"
+      fr-CA: "Connectez votre équipe"
+      en-CA: "Connect your team"
+    body_i18n:
+      en: "Add the email addresses of estimators, project managers, site superintendents and field staff who will collaborate on this OCERP instance. You can do this later from Settings → Team."
+      fr-CA: "Ajoutez les courriels des estimateurs, gestionnaires de projet, surintendants et personnel de chantier qui collaboreront sur cette instance OCERP. Vous pourrez le faire plus tard via Paramètres → Équipe."
+      en-CA: "Add the email addresses of estimators, project managers, site superintendents and field staff who will collaborate on this OCERP instance. You can do this later from Settings → Team."
+    fields:
+      - key: invites
+        type: email_list
+        max: 20
+        placeholder_en: "name@company.ca"
+        placeholder_fr-CA: "nom@entreprise.ca"
+
+  - id: bilingual-mode
+    kind: choice
+    skippable: false
+    title_i18n:
+      en: "Enable bilingual EN-CA / FR-CA mode"
+      fr-CA: "Activez le mode bilingue EN-CA / FR-CA"
+      en-CA: "Enable bilingual EN-CA / FR-CA mode"
+    body_i18n:
+      en: "Required for federal public-sector tenders (Official Languages Act) and Québec public-sector tenders (Charter of the French Language, Bill 96). When enabled, contracts, tender documents, exports and emails will be generated in both languages."
+      fr-CA: "Requis pour les appels d'offres du secteur public fédéral (Loi sur les langues officielles) et du secteur public québécois (Charte de la langue française, Loi 96). Lorsqu'activé, les contrats, documents d'appel d'offres, exports et courriels seront générés dans les deux langues."
+      en-CA: "Required for federal public-sector tenders (Official Languages Act) and Québec public-sector tenders (Charter of the French Language, Bill 96). When enabled, contracts, tender documents, exports and emails will be generated in both languages."
+    options:
+      - value: bilingual_on
+        label_en: "Yes — generate every document in EN-CA and FR-CA"
+        label_fr-CA: "Oui — générer chaque document en EN-CA et FR-CA"
+        recommended: true
+      - value: primary_only
+        label_en: "No — use my default locale only"
+        label_fr-CA: "Non — utiliser uniquement ma langue par défaut"
+
+  - id: done
+    kind: summary
+    skippable: false
+    title_i18n:
+      en: "All set"
+      fr-CA: "C'est prêt"
+      en-CA: "All set"
+    body_i18n:
+      en: "Your Canadian-edition OCERP is configured. You can re-run this onboarding any time from Settings → Onboarding. Next: create your first project from the Dashboard."
+      fr-CA: "Votre OCERP édition canadienne est configuré. Vous pouvez relancer cette intégration à tout moment depuis Paramètres → Intégration. Étape suivante : créez votre premier projet depuis le Tableau de bord."
+      en-CA: "Your Canadian-edition OCERP is configured. You can re-run this onboarding any time from Settings → Onboarding. Next: create your first project from the Dashboard."

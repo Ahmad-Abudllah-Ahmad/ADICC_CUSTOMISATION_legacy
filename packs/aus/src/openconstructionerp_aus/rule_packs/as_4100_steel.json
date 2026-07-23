@@ -1,0 +1,26 @@
+{
+  "rule_pack_id": "as_4100_steel",
+  "name": "AS 4100 — Steel Structures",
+  "standard": "AS 4100",
+  "jurisdiction": "AU",
+  "regulator": "Standards Australia",
+  "publication_year": 2020,
+  "current_revision": "AS 4100:2020",
+  "description": "Enables OCERP built-in validation rules for steel structures designed to AS 4100:2020 — steel grade selection, section classification, connection design, fire protection (FRL), corrosion protection per AS/NZS 2312, fabrication tolerances per AS/NZS 5131.",
+  "steel_grades": ["300", "350", "400", "450"],
+  "fabrication_construction_categories": ["CC1", "CC2", "CC3", "CC4"],
+  "applies_to": ["projects", "boq", "validation", "bim"],
+  "enables_rule_ids": [
+    "as4100.steel_grade_specified",
+    "as4100.section_classification_compact_noncompact_slender",
+    "as4100.member_capacity_within_table",
+    "as4100.connection_type_specified",
+    "as4100.bolt_grade_specified",
+    "as4100.weld_category_specified",
+    "as4100.fire_resistance_level_for_steel",
+    "as4100.intumescent_coating_dft_specified",
+    "as4100.corrosion_protection_as_nzs_2312",
+    "as4100.fabrication_category_as_nzs_5131",
+    "as4100.inspection_test_plan_present"
+  ]
+}

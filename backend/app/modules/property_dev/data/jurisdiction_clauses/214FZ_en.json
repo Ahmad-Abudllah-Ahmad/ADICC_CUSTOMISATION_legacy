@@ -1,0 +1,37 @@
+{
+  "regulator": "214_FZ",
+  "title": "Regulatory Disclosures under Federal Law 214-FZ (Russian Federation)",
+  "intro": "This Agreement constitutes a participation-in-shared-construction contract (ДДУ) within the meaning of Federal Law No. 214-FZ \"On Participation in Shared Construction of Apartment Buildings\".",
+  "clauses": [
+    {
+      "id": "214fz.escrow",
+      "heading": "Escrow Account (Эскроу-счёт)",
+      "text": "Pursuant to Articles 15.4 and 15.5 of Federal Law 214-FZ, all Participant payments shall be deposited into an escrow account opened with {escrow_bank} (Tax ID {escrow_bank_inn}), account number {escrow_account_no}. Funds shall be released to the Developer only after registration of ownership of the first apartment in the building, in accordance with the Law."
+    },
+    {
+      "id": "214fz.ddu_number",
+      "heading": "DDU Registration",
+      "text": "This DDU shall be registered with the Federal Service for State Registration, Cadastre and Cartography (Rosreestr). Registration number: {ddu_registration_no}. The Agreement enters into force as of the date of state registration."
+    },
+    {
+      "id": "214fz.insurance",
+      "heading": "Insurance / Compensation Fund Premium (Article 15.2 of 214-FZ)",
+      "text": "The Developer has made the mandatory contribution to the Compensation Fund for Participants in Shared Construction (Фонд защиты прав граждан - участников долевого строительства) in the amount of {fund_contribution_amount} RUB, in accordance with Article 23.2 of Federal Law 214-FZ."
+    },
+    {
+      "id": "214fz.penalty",
+      "heading": "Penalty for Delay (Неустойка)",
+      "text": "In the event of delay in delivering the apartment beyond the date specified in this Agreement, the Developer shall pay the Participant a penalty (неустойка) at a rate of 1/300 of the Central Bank of Russia's refinancing rate applicable on the date of performance, computed for each day of delay on the price of the Agreement. For individual Participants, the rate is doubled (1/150) per Article 6 of Federal Law 214-FZ."
+    },
+    {
+      "id": "214fz.guarantee",
+      "heading": "Construction Quality Guarantee (Гарантийный срок)",
+      "text": "In accordance with Article 7 of Federal Law 214-FZ, the Developer warrants the construction quality of the apartment for a period of not less than 5 years, and the engineering and technical equipment installed in the apartment for not less than 3 years, in each case from the date of handover."
+    },
+    {
+      "id": "214fz.jurisdiction",
+      "heading": "Governing Law & Jurisdiction",
+      "text": "This Agreement is governed by the laws of the Russian Federation. Disputes shall be resolved through the Russian state courts at the place of the immovable property, in accordance with the Civil Procedure Code of the Russian Federation."
+    }
+  ]
+}

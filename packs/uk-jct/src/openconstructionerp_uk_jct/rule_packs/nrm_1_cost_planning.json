@@ -1,0 +1,26 @@
+{
+  "rule_pack_id": "nrm_1_cost_planning",
+  "name": "RICS NRM 1 (2nd ed, 2021) — Order of Cost Estimating & Cost Planning",
+  "standard": "NRM 1 (2nd edition, 2021)",
+  "jurisdiction": "GB",
+  "description": "Enables OCERP built-in validation rules that enforce the RICS New Rules of Measurement 1 (2nd edition, 2021) cost-planning structure (group elements, elements, sub-elements) and the required completeness for RIBA stages 0-4 / OGC gateways 0-3C. Aligned with the 2021 reissue which clarified facilitating works, main contractor's preliminaries, OH&P percentages and risk allowance categories.",
+  "enables_rule_ids": [
+    "nrm1.group_element_required",
+    "nrm1.element_hierarchy_valid",
+    "nrm1.sub_element_completeness",
+    "nrm1.facilitating_works_classified",
+    "nrm1.main_contractor_preliminaries_present",
+    "nrm1.main_contractor_overheads_profit_present",
+    "nrm1.project_team_fees_present",
+    "nrm1.other_development_development_costs_present",
+    "nrm1.design_development_risk_allowance_present",
+    "nrm1.construction_risk_allowance_present",
+    "nrm1.employer_change_risk_allowance_present",
+    "nrm1.employer_other_risk_allowance_present",
+    "nrm1.inflation_allowance_tender_present",
+    "nrm1.inflation_allowance_construction_present",
+    "nrm1.location_factor_applied",
+    "nrm1.cost_per_m2_within_bcis_band",
+    "nrm1.gifa_method_consistent"
+  ]
+}

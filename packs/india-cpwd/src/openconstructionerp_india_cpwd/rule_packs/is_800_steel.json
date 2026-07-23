@@ -1,0 +1,32 @@
+{
+  "rule_pack_id": "is_800_steel",
+  "name": "IS 800:2007 — General Construction in Steel (Limit-State)",
+  "name_hi": "आईएस 800:2007 — इस्पात में सामान्य निर्माण (सीमा-स्थिति)",
+  "standard": "IS 800:2007",
+  "jurisdiction": "IN",
+  "regulator": "Bureau of Indian Standards (BIS)",
+  "publication_year": 2007,
+  "applies_to": ["boq", "validation", "structural-design"],
+  "complementary_codes": [
+    "IS 1893-1:2016 (Seismic Design)",
+    "IS 875 Parts 1-5:1987 (Design Loads)",
+    "IS 2062 (Hot rolled steel grade)",
+    "IS 4923 (Hollow steel sections)",
+    "IS 808 (Dimensions of hot rolled sections)"
+  ],
+  "description": "Enables OCERP built-in validation rules that check structural-steel BOQ items and design documents against IS 800:2007 (limit-state design basis) — section designation (ISMB/ISMC/ISA etc.), steel grade (E250/E350/E410), connection type, weld specification (IS 816), bolt grade (IS 1367), corrosion-protection, fire-protection rating, and consistency with IS 1893 seismic basis and IS 875 loads.",
+  "description_hi": "इस्पात बीओक्यू मदों एवं डिज़ाइन दस्तावेज़ों की आईएस 800:2007 (सीमा-स्थिति) के अनुसार जाँच।",
+  "enables_rule_ids": [
+    "is800.steel_grade_specified",
+    "is800.section_designation_valid",
+    "is800.connection_type_specified",
+    "is800.weld_specification_present",
+    "is800.bolt_grade_specified",
+    "is800.corrosion_protection_clause",
+    "is800.fire_protection_rating_specified",
+    "is800.limit_state_design_basis",
+    "is800.is_2062_grade_reference",
+    "is800.is_1893_seismic_design_basis_present",
+    "is800.is_875_loads_basis_present"
+  ]
+}

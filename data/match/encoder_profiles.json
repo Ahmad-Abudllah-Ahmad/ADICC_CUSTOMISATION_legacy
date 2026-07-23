@@ -1,0 +1,9 @@
+{
+  "default": "bge-m3",
+  "profiles": {
+    "bge-m3":     {"high": 0.78, "medium": 0.60, "low": 0.40},
+    "bge-small":  {"high": 0.72, "medium": 0.54, "low": 0.36},
+    "e5-small":   {"high": 0.70, "medium": 0.52, "low": 0.35},
+    "sonnet-rerank": {"high": 0.82, "medium": 0.66, "low": 0.45}
+  }
+}

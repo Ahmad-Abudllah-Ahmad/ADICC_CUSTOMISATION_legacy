@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Button lab - OpenConstructionERP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@600;700;800&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f1f2f3;          /* light concrete */
+      --bg-2: #e8e9eb;
+      --card: #ffffff;
+      --ink-0: #0b1220;
+      --ink-2: #51607a;
+      --line-1: rgba(15, 23, 42, 0.12);
+      --accent: #2d5e8e;
+      --accent-3: #244c74;
+      --accent-fg: #ffffff;
+      --solid-bg: #11182a;    /* strict near-black */
+      --solid-fg: #ffffff;
+      color-scheme: light;
+    }
+    [data-theme="dark"] {
+      --bg: #0e1320;
+      --bg-2: #131a28;
+      --card: #171f2e;
+      --ink-0: #eef3fa;
+      --ink-2: #9fb0c4;
+      --line-1: rgba(255, 255, 255, 0.16);
+      --accent: #6ba2d8;
+      --accent-3: #5a90c8;
+      --accent-fg: #0b1220;
+      --solid-bg: #eef3fa;
+      --solid-fg: #0b1220;
+      color-scheme: dark;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background:
+        radial-gradient(1200px 600px at 80% -10%, color-mix(in oklab, var(--accent) 6%, transparent), transparent 60%),
+        linear-gradient(160deg, var(--bg) 0%, var(--bg-2) 100%);
+      background-attachment: fixed;
+      color: var(--ink-0);
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      /* fine concrete grain */
+      position: relative;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: -1; pointer-events: none;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='480' height='480'><filter id='m'><feTurbulence type='fractalNoise' baseFrequency='0.02' numOctaves='3' seed='4' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.46 0 0 0 0 0.46 0 0 0 0 0.46 0 0 0 0.5 0'/></filter><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.34 0 0 0 0 0.34 0 0 0 0 0.34 0 0 0 0.7 0'/></filter><rect width='100%25' height='100%25' filter='url(%23m)'/><rect width='100%25' height='100%25' filter='url(%23g)'/></svg>");
+      background-size: 480px 480px;
+      opacity: 0.06;
+      mix-blend-mode: multiply;
+    }
+    [data-theme="dark"] body::before { mix-blend-mode: overlay; opacity: 0.08; }
+
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 56px 24px 96px; }
+    header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 8px; }
+    .eyebrow {
+      font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600;
+      letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent);
+      margin: 0 0 10px;
+    }
+    h1 { font-family: 'Inter Tight', Inter, sans-serif; font-weight: 800; font-size: 30px; letter-spacing: -0.02em; margin: 0; }
+    .lede { color: var(--ink-2); font-size: 15px; line-height: 1.55; margin: 12px 0 0; max-width: 640px; }
+    .theme-btn {
+      flex: none; display: inline-flex; align-items: center; gap: 8px;
+      height: 40px; padding: 0 14px; border-radius: 10px; cursor: pointer;
+      background: var(--card); color: var(--ink-0); border: 1px solid var(--line-1);
+      font: 600 13px/1 'Inter', sans-serif;
+    }
+    .theme-btn svg { width: 16px; height: 16px; }
+
+    .grid {
+      margin-top: 40px;
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px;
+    }
+    @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+    .cell {
+      background: color-mix(in oklab, var(--card) 60%, transparent);
+      border: 1px solid var(--line-1);
+      border-radius: 16px;
+      padding: 26px 24px 24px;
+      display: flex; flex-direction: column; gap: 16px;
+      min-height: 168px;
+      backdrop-filter: blur(6px);
+    }
+    .cell-head { display: flex; align-items: baseline; gap: 10px; }
+    .cell-num { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; color: var(--accent); }
+    .cell-name { font-weight: 700; font-size: 14px; letter-spacing: -0.01em; }
+    .cell-desc { color: var(--ink-2); font-size: 12.5px; line-height: 1.5; margin: -6px 0 0; }
+    .cell-stage { margin-top: auto; display: flex; }
+
+    /* ---- shared button base ---- */
+    .btn {
+      display: inline-flex; align-items: center; gap: 12px;
+      height: 56px; padding: 0 22px; border-radius: 12px;
+      font-family: 'Inter Tight', Inter, sans-serif; font-weight: 700; font-size: 16px; letter-spacing: -0.01em;
+      text-decoration: none; cursor: pointer; border: 1.5px solid transparent;
+      transition: transform 0.18s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+      box-sizing: border-box; min-width: 264px;
+    }
+    .btn .glyph { width: 22px; height: 22px; flex: none; fill: currentColor; }
+    .btn .stack { display: flex; flex-direction: column; text-align: left; line-height: 1.12; gap: 2px; }
+    .btn .sub { font-size: 11.5px; font-weight: 500; opacity: 0.82; letter-spacing: 0; }
+
+    /* v1 - ink solid */
+    .v1 { background: var(--solid-bg); color: var(--solid-fg); border-radius: 12px; }
+    .v1:hover { transform: translateY(-1px); box-shadow: 0 14px 30px -18px color-mix(in oklab, var(--solid-bg) 70%, transparent); }
+
+    /* v2 - accent flat */
+    .v2 { background: var(--accent); color: var(--accent-fg); }
+    .v2:hover { background: var(--accent-3); }
+
+    /* v3 - ghost, fills on hover */
+    .v3 { background: transparent; border-color: var(--ink-0); color: var(--ink-0); }
+    .v3:hover { background: var(--solid-bg); color: var(--solid-fg); border-color: var(--solid-bg); }
+
+    /* v4 - accent outline */
+    .v4 { background: transparent; border-color: color-mix(in oklab, var(--accent) 55%, transparent); color: var(--accent); }
+    .v4:hover { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+
+    /* v5 - elevated surface */
+    .v5 { background: var(--card); color: var(--ink-0); border-color: var(--line-1);
+          box-shadow: 0 12px 28px -20px rgba(15,23,42,.45), inset 0 1px 0 rgba(255,255,255,.65); }
+    .v5 .glyph { color: var(--accent); }
+    .v5:hover { transform: translateY(-1px); border-color: color-mix(in oklab, var(--accent) 32%, var(--line-1)); }
+
+    /* v6 - split: accent icon tile + dark body */
+    .v6 { padding: 0; overflow: hidden; align-items: stretch; background: var(--solid-bg); color: var(--solid-fg); border-color: var(--solid-bg); }
+    .v6 .lead { display: flex; align-items: center; justify-content: center; width: 54px; background: var(--accent); color: var(--accent-fg); }
+    .v6 .body { display: flex; align-items: center; padding: 0 20px; }
+    .v6:hover .lead { background: var(--accent-3); }
+
+    /* v7 - frosted glass */
+    .v7 { background: color-mix(in oklab, var(--card) 64%, transparent); color: var(--ink-0);
+          border-color: color-mix(in oklab, var(--ink-0) 10%, transparent);
+          backdrop-filter: blur(14px) saturate(160%); -webkit-backdrop-filter: blur(14px) saturate(160%);
+          box-shadow: 0 12px 30px -20px rgba(15,23,42,.4); }
+    .v7 .glyph { color: var(--accent); }
+    .v7:hover { background: color-mix(in oklab, var(--card) 82%, transparent); }
+
+    /* v8 - pill */
+    .v8 { background: var(--solid-bg); color: var(--solid-fg); border-radius: 999px; }
+    .v8:hover { background: var(--accent); color: var(--accent-fg); }
+
+    /* v9 - architectural left bar */
+    .v9 { background: var(--card); color: var(--ink-0); border-color: var(--line-1); border-radius: 8px; position: relative; padding-left: 26px; }
+    .v9::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--accent); border-radius: 8px 0 0 8px; }
+    .v9 .glyph { color: var(--accent); }
+    .v9:hover { border-color: color-mix(in oklab, var(--accent) 40%, var(--line-1)); }
+
+    /* v10 - gradient ring */
+    .v10 { color: var(--ink-0); border: 1.5px solid transparent;
+           background: linear-gradient(var(--card), var(--card)) padding-box,
+                       linear-gradient(135deg, var(--accent), var(--accent-3)) border-box; }
+    .v10 .glyph { color: var(--accent); }
+    .v10:hover { background: linear-gradient(135deg, var(--accent), var(--accent-3)) padding-box,
+                             linear-gradient(135deg, var(--accent), var(--accent-3)) border-box; color: #fff; }
+    .v10:hover .glyph { color: #fff; }
+
+    footer { margin-top: 56px; color: var(--ink-2); font-size: 12.5px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <p class="eyebrow">Internal - button styles</p>
+        <h1>Primary CTA button lab</h1>
+        <p class="lede">Ten strict, modern takes on the download button, all on the light concrete background and the calmed blue accent. Pick one or mix details (radius, fill, hover) and I will roll it across the site. Toggle the theme to check both.</p>
+      </div>
+      <button class="theme-btn" id="themeBtn" type="button" aria-label="Toggle theme">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <span id="themeLabel">Dark</span>
+      </button>
+    </header>
+
+    <div class="grid" id="grid"></div>
+
+    <footer>OpenConstructionERP - draft button styles. Not linked from the site.</footer>
+  </div>
+
+  <script>
+    var GLYPH = '<svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M11 3v10.2L7.5 9.7 6 11.2 12 17l6-5.8-1.5-1.5L13 13.2V3zM5 18.5V20a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 20v-1.5h-2V19H7v-.5z"/></svg>';
+    var LABEL = '<span class="stack"><span>Download the desktop app</span><span class="sub">Free, no setup</span></span>';
+
+    var VARIANTS = [
+      { cls: 'v1',  name: 'Ink solid',        desc: 'Near-black fill, white text. Maximum authority, minimal color.' },
+      { cls: 'v2',  name: 'Accent flat',      desc: 'Single muted blue, no gradient. Clean and current.' },
+      { cls: 'v3',  name: 'Ghost outline',    desc: 'Thin ink border, fills to solid on hover. Quiet and confident.' },
+      { cls: 'v4',  name: 'Accent outline',   desc: 'Blue hairline that floods with color on hover.' },
+      { cls: 'v5',  name: 'Elevated surface', desc: 'White card with a soft lifted shadow. Tactile, restrained.' },
+      { cls: 'v6',  name: 'Split tile',       desc: 'Accent icon block joined to a dark label. Architectural.', split: true },
+      { cls: 'v7',  name: 'Frosted glass',    desc: 'Translucent panel with blur. Sits lightly on concrete.' },
+      { cls: 'v8',  name: 'Pill',             desc: 'Fully rounded ink button. Modern, approachable, still strict.' },
+      { cls: 'v9',  name: 'Blueprint bar',    desc: 'Square card with an accent edge bar. Drawing-sheet feel.' },
+      { cls: 'v10', name: 'Gradient ring',    desc: 'White fill inside a thin accent gradient border. Premium, subtle.' }
+    ];
+
+    var grid = document.getElementById('grid');
+    VARIANTS.forEach(function (v, i) {
+      var inner = v.split
+        ? '<span class="lead">' + GLYPH + '</span><span class="body">' + LABEL + '</span>'
+        : GLYPH + LABEL;
+      var cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.innerHTML =
+        '<div class="cell-head"><span class="cell-num">' + (i + 1).toString().padStart(2, '0') + '</span>' +
+        '<span class="cell-name">' + v.name + '</span></div>' +
+        '<p class="cell-desc">' + v.desc + '</p>' +
+        '<div class="cell-stage"><a class="btn ' + v.cls + '" href="#" onclick="return false;">' + inner + '</a></div>';
+      grid.appendChild(cell);
+    });
+
+    var btn = document.getElementById('themeBtn');
+    var label = document.getElementById('themeLabel');
+    btn.addEventListener('click', function () {
+      var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+      document.documentElement.setAttribute('data-theme', dark ? 'light' : 'dark');
+      label.textContent = dark ? 'Dark' : 'Light';
+    });
+  </script>
+</body>
+</html>

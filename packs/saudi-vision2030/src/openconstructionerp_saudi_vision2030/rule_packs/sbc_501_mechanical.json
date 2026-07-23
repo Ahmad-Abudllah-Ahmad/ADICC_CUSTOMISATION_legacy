@@ -1,0 +1,27 @@
+{
+  "rule_pack_id": "sbc_501_mechanical",
+  "name": "SBC 501 — Mechanical Code (HVAC + Plumbing)",
+  "name_ar": "SBC 501 — الكود الميكانيكي",
+  "standard": "Saudi Building Code 2018 — SBC 501 (Mechanical) + SBC 701 (Plumbing)",
+  "jurisdiction": "SA",
+  "regulator": "Saudi Building Code National Committee (SBCNC)",
+  "publication_year": 2018,
+  "derives_from": ["IMC 2018", "IPC 2018", "ASHRAE 62.1-2016"],
+  "applies_to": ["projects", "boq", "validation"],
+  "description": "Enables OCERP built-in validation rules that enforce SBC 501 (Mechanical) and SBC 701 (Plumbing) — HVAC sizing for 45-50 degC outdoor design, MEPS-compliant chillers and split units, district cooling integration for large NEOM/Diriyah/Qiddiya developments, fresh-air ventilation per ASHRAE 62.1, plumbing fixture units, greywater reuse (Vision 2030 water target: 50% non-potable substitution), and Hajj-period water demand surcharges.",
+  "description_ar": "تفعيل قواعد التحقق لإنفاذ الكود الميكانيكي SBC 501 والكود الصحي SBC 701 — تصميم التكييف لدرجات الحرارة العالية، التبريد المركزي، التهوية، وإعادة استخدام المياه الرمادية.",
+  "severity_overrides": {},
+  "enables_rule_ids": [
+    "sbc501.outdoor_design_temperature_documented",
+    "sbc501.hvac_load_calculation_present",
+    "sbc501.chiller_efficiency_meps_compliant",
+    "sbc501.district_cooling_integration_for_megaproject",
+    "sbc501.fresh_air_ventilation_ashrae_62_1",
+    "sbc701.plumbing_fixture_count_documented",
+    "sbc701.greywater_reuse_strategy_present",
+    "sbc701.hajj_water_demand_surcharge_for_makkah_madinah",
+    "sbc501.duct_insulation_thickness_min",
+    "sbc501.refrigerant_low_gwp_required",
+    "sbc501.economiser_for_large_ahu"
+  ]
+}

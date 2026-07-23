@@ -1,0 +1,48 @@
+{
+  "$schema": "openconstructionerp.partner_pack.rule_pack/v1",
+  "slug": "formwork_cycle_economics",
+  "display_name": "Schalungsökonomie — Nutzungshäufigkeit, Taktzeit, Modulrastung",
+  "description": "Doker-spezifische Wirtschaftlichkeits-Regeln für Schalungseinsätze: Nutzungshäufigkeit (Einsatzzahl pro Element), Taktzeit (Wand/Stütze/Decke/Träger), Modulraster-Effizienz (m² nutzbar / m² geliefert), Schalungssystem-spezifische Wiederverwendungs-Caps und Abbruchkosten bei unvollständigen Zyklen.",
+  "standard": "internal-doker",
+  "severity_default": "warning",
+  "category": "economics",
+  "locale_default": "de",
+  "enables_rule_ids": [
+    "economics.formwork.reuse_factor_set",
+    "economics.formwork.reuse_within_system_cap",
+    "economics.formwork.takt_time_wall_within_bounds",
+    "economics.formwork.takt_time_column_within_bounds",
+    "economics.formwork.takt_time_slab_within_bounds",
+    "economics.formwork.takt_time_beam_within_bounds",
+    "economics.formwork.panel_module_efficiency_min_0_85",
+    "economics.formwork.no_orphan_offcuts_above_threshold",
+    "economics.formwork.abandonment_cost_estimated",
+    "economics.formwork.cycle_complete_before_invoice",
+    "economics.formwork.material_to_labor_ratio_within_range"
+  ],
+  "parameters": {
+    "typical_takt_hours": {
+      "wall_formwork": {"min": 6, "typical": 12, "max": 24},
+      "column_formwork": {"min": 2, "typical": 4, "max": 8},
+      "slab_formwork": {"min": 24, "typical": 72, "max": 120},
+      "beam_formwork": {"min": 4, "typical": 8, "max": 16}
+    },
+    "typical_reuse_factor": {
+      "frami_xlife": 100,
+      "framax_xlife_plus": 150,
+      "alu_star": 80,
+      "dokaflex": 50,
+      "doka_xlife_panel": 200
+    },
+    "min_module_efficiency": 0.85,
+    "min_material_to_labor_ratio": 0.4,
+    "max_material_to_labor_ratio": 2.5
+  },
+  "metadata": {
+    "applies_to": ["formwork_assembly", "schedule_advanced_takt", "boq_position"],
+    "references": [
+      "Doka Engineering Handbook 'Wirtschaftliches Schalen'",
+      "DBV-Merkblatt 'Wirtschaftlicher Schalungseinsatz'"
+    ]
+  }
+}

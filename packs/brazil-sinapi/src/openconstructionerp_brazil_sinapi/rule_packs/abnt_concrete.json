@@ -1,0 +1,36 @@
+{
+  "rule_pack_id": "abnt_concrete",
+  "name": "ABNT NBR 6118:2023 + NBR 14931:2004 — Estruturas de concreto",
+  "name_pt": "ABNT NBR 6118:2023 + NBR 14931:2004 — Estruturas de concreto",
+  "standard": "ABNT NBR 6118",
+  "jurisdiction": "BR",
+  "regulator": "ABNT — Associacao Brasileira de Normas Tecnicas",
+  "publication_year": 2023,
+  "description": "Enforces ABNT NBR 6118:2023 (concrete structure design — last revised 2023) and NBR 14931:2004 (execution): minimum fck per environmental aggressiveness class (CAA I-IV), nominal cover c-nom per CAA, durability class assignment, control category, rebar specification (CA-25/CA-50/CA-60), and slump target documentation per NBR 8953.",
+  "description_pt": "Aplica a NBR 6118:2023 (projeto de estruturas de concreto — ultima revisao 2023) e a NBR 14931:2004 (execucao): fck minimo por classe de agressividade ambiental (CAA I-IV), cobrimento nominal c-nom por CAA, atribuicao de classe de durabilidade, categoria de controle, especificacao de aco (CA-25/CA-50/CA-60) e documentacao do slump conforme NBR 8953.",
+  "applies_to": ["projects", "boq", "cad", "validation"],
+  "config": {
+    "min_fck_by_caa": {
+      "CAA I": "C20",
+      "CAA II": "C25",
+      "CAA III": "C30",
+      "CAA IV": "C40"
+    },
+    "min_cover_mm_by_caa": {
+      "CAA I": 20,
+      "CAA II": 25,
+      "CAA III": 35,
+      "CAA IV": 45
+    },
+    "rebar_grades": ["CA-25", "CA-50", "CA-60"]
+  },
+  "enables_rule_ids": [
+    "abnt.concrete_class_min_per_caa",
+    "abnt.cover_meets_environmental_class",
+    "abnt.durability_class_assigned",
+    "abnt.control_category_set",
+    "abnt.rebar_specification_compliant",
+    "abnt.slump_target_documented",
+    "abnt.concrete_traceability_documented"
+  ]
+}

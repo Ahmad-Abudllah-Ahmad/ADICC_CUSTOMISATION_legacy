@@ -1,0 +1,3236 @@
+// DDC-CWICR-OE: DataDrivenConstruction · OpenConstructionERP
+// Copyright (c) 2026 Artem Boiko / DataDrivenConstruction
+/**
+ * ElementManager — loads and manages BIM element meshes in the Three.js scene.
+ *
+ * Loads elements from the BIM Hub API. For each element:
+ * - If DAE geometry is loaded: matches mesh node IDs to element stable_ids
+ * - If mesh_ref is available but no DAE: creates placeholder box geometry
+ * - Otherwise: creates placeholder box geometry from bounding_box
+ *
+ * Elements are colored by discipline:
+ *   architectural = light blue, structural = orange, mechanical = green,
+ *   electrical = yellow, plumbing = purple
+ */
+
+import * as THREE from 'three';
+import { ColladaLoader } from 'three/addons/loaders/ColladaLoader.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import type { SceneManager } from './SceneManager';
+import type { BIMQualityMode } from '@/stores/useBIMViewerStore';
+import { modelIdFromGeometryUrl, streamModelTiles } from './streaming/tileStreamer';
+import { installBVH, ensureBoundsTree, disposeBounds } from './bvh';
+
+// Module-level in-flight buffer fetches, shared across ElementManager
+// instances. React StrictMode's dev double-mount creates two managers
+// for the same model and both kick off the geometry GET before either
+// can populate the per-model BIM geometry cache; without this dedup the
+// browser issued the same N00-KB request twice on every BIM page mount.
+const inFlightGeometryFetches = new Map<
+  string,
+  Promise<{ buffer: ArrayBuffer; format: 'glb' | 'dae' }>
+>();
+
+/**
+ * Inspect the first few bytes of a geometry buffer and return what kind
+ * of file it actually is, regardless of what the server's Content-Type
+ * header claimed. Returns ``null`` if neither GLB magic nor a COLLADA
+ * root tag is found — used as the trigger for an early-fail diagnostic.
+ *
+ * - GLB: bytes 0..3 == ASCII 'glTF' (0x67 0x6c 0x54 0x46)
+ * - DAE: the leading 4 KiB (skipping an optional UTF-8 BOM and the XML
+ *   declaration) holds a ``<COLLADA`` root element. The probe is
+ *   case-insensitive and tolerates a namespace prefix, so it recognises
+ *   both the plain ``<COLLADA`` spelling and the ``<ns0:COLLADA`` spelling.
+ *   The prefixed variant is what Python ElementTree emits when
+ *   ET.register_namespace() has not been called, and both are valid COLLADA.
+ */
+function detectGeometryKind(buffer: ArrayBuffer): 'glb' | 'dae' | null {
+  if (buffer.byteLength < 12) return null;
+  const view = new Uint8Array(buffer);
+  if (view[0] === 0x67 && view[1] === 0x6c && view[2] === 0x54 && view[3] === 0x46) {
+    return 'glb';
+  }
+  // Decode up to first 4 KiB as UTF-8 and look for the COLLADA root.
+  // We slice rather than decode the whole buffer (large DAEs can be 30+ MB).
+  const head = new TextDecoder('utf-8', { fatal: false }).decode(
+    view.subarray(0, Math.min(4096, view.byteLength)),
+  );
+  // Strip BOM for the check.
+  const stripped = head.charCodeAt(0) === 0xfeff ? head.slice(1) : head;
+  // Accept either the plain <COLLADA spelling or a prefixed one like
+  // <ns0:COLLADA, which is how Python ET writes it absent register_namespace().
+  if (/<(?:[\w-]+:)?COLLADA[\s>]/i.test(stripped)) return 'dae';
+  return null;
+}
+
+/* ── Types ─────────────────────────────────────────────────────────────── */
+
+export interface BIMBoundingBox {
+  min_x: number;
+  min_y: number;
+  min_z: number;
+  max_x: number;
+  max_y: number;
+  max_z: number;
+}
+
+/** Brief of a BOQ position linked to this element, embedded in the element
+ *  response by the backend. See `BOQElementLinkBrief` in `features/bim/api.ts`. */
+export interface BIMBOQLinkBrief {
+  id: string;
+  boq_position_id: string;
+  boq_position_ordinal: string | null;
+  boq_position_description: string | null;
+  boq_position_quantity: number | null;
+  boq_position_unit: string | null;
+  boq_position_unit_rate: number | null;
+  boq_position_total: number | null;
+  link_type: 'manual' | 'auto' | 'rule_based';
+  confidence: string | null;
+}
+
+/** Brief of a Document linked to this element. */
+export interface BIMDocumentLinkBrief {
+  id: string;
+  document_id: string;
+  document_name: string | null;
+  document_category: string | null;
+  link_type: 'manual' | 'auto';
+  confidence: string | null;
+}
+
+/** Brief of a Task linked to this element. */
+export interface BIMTaskBrief {
+  id: string;
+  project_id: string;
+  title: string;
+  status: string;
+  task_type: string | null;
+  due_date: string | null;
+}
+
+/** Brief of a Schedule Activity linked to this element. */
+export interface BIMActivityBrief {
+  id: string;
+  name: string;
+  start_date: string | null;
+  end_date: string | null;
+  status: string | null;
+  percent_complete: number | null;
+}
+
+/** Brief of a Requirement (EAC triplet) pinned to this element.
+ *
+ *  The link is stored under `Requirement.metadata_["bim_element_ids"]`
+ *  on the backend; the BIM viewer surfaces it via the eager-load path
+ *  in `BIMHubService.list_elements_with_links` (Step 6.5).
+ */
+export interface BIMRequirementBrief {
+  id: string;
+  requirement_set_id: string;
+  entity: string;
+  attribute: string;
+  constraint_type: string;
+  constraint_value: string;
+  unit: string;
+  category: string;
+  priority: 'must' | 'should' | 'may' | string;
+  status: 'open' | 'verified' | 'linked' | 'conflict' | string;
+}
+
+/** Per-element validation summary embedded in the element response after
+ *  the user runs POST /validation/check-bim-model. */
+export interface BIMValidationSummary {
+  rule_id: string;
+  severity: 'error' | 'warning' | 'info';
+  message: string;
+}
+
+/* ── Color-by-property types (W6.6) ──────────────────────────────────────── */
+
+/**
+ * Palette identifiers supported by `ElementManager.setColorByProperty`.
+ *
+ *   - categorical-12       — distinct colors for up to 12 unique values
+ *   - sequential-blue      — light → dark blue for numeric ranges
+ *   - sequential-red-blue  — diverging red ← white → blue
+ *   - fire-rating          — domain-specific lookup (F30/F60/F90/F120 → fixed hues)
+ */
+export type ColorByPropertyPalette =
+  | 'categorical-12'
+  | 'sequential-blue'
+  | 'sequential-red-blue'
+  | 'fire-rating';
+
+/** Configuration object passed to `setColorByProperty`. */
+export interface ColorByPropertyConfig {
+  /** Property key to colour by — e.g. ``fire_rating``, ``level``, ``category``,
+   *  ``volume``.  Read from `element.properties[key]` first, falling back to
+   *  the well-known top-level fields (`element_type`, `discipline`, `storey`,
+   *  `category`) so users get sensible results for both raw IFC psets and
+   *  the canonical-format keys. */
+  propertyKey: string;
+  /** Which palette to apply. */
+  palette: ColorByPropertyPalette;
+  /** Required when palette is `sequential-*`; ignored otherwise. */
+  numericRange?: [number, number];
+  /** Hex string used for elements whose property is missing (or non-numeric
+   *  in a sequential palette). Default `#888888`. */
+  unknownColor?: string;
+}
+
+/** A distinct value + occurrence count for a property — returned by
+ *  `getDistinctPropertyValues` for legend / range UI. */
+export interface PropertyValueCount {
+  value: string | number;
+  count: number;
+}
+
+export interface BIMElementData {
+  id: string;
+  /** RVT UniqueId / IFC GlobalId — stable across re-uploads. */
+  stable_id?: string;
+  name: string;
+  element_type: string;
+  discipline: string;
+  storey?: string;
+  category?: string;
+  bounding_box?: BIMBoundingBox;
+  mesh_ref?: string;
+  properties?: Record<string, unknown>;
+  quantities?: Record<string, number>;
+  classification?: Record<string, string>;
+  /** Links to BOQ positions — populated by the backend with every element
+   *  fetch so the viewer can render link state without a second round-trip. */
+  boq_links?: BIMBOQLinkBrief[];
+  /** Documents (drawings, photos, RFIs, specs) linked to this element.
+   *  Same eager-load pattern as boq_links. */
+  linked_documents?: BIMDocumentLinkBrief[];
+  /** Tasks / defects / issues spatially pinned to this element. */
+  linked_tasks?: BIMTaskBrief[];
+  /** Schedule activities (4D) that affect this element. */
+  linked_activities?: BIMActivityBrief[];
+  /** Requirements (EAC triplets) pinned to this element — the bridge
+   *  between client intent / spec and the executed model.  Surfaced as
+   *  the new "Linked requirements" section in the viewer details panel. */
+  linked_requirements?: BIMRequirementBrief[];
+  /** Per-element validation summary from the most recent
+   *  /validation/check-bim-model run. */
+  validation_results?: BIMValidationSummary[];
+  /** Worst-severity rollup: 'error' > 'warning' > 'pass' > 'unchecked'. */
+  validation_status?: 'pass' | 'warning' | 'error' | 'unchecked';
+  /** True when this element's geometry is a synthesized placeholder box
+   *  (text-IFC fallback path, DDC cad2data not installed). The viewer
+   *  shows a non-blocking warning banner when ANY element has this set. */
+  is_placeholder?: boolean;
+}
+
+export interface BIMModelData {
+  id: string;
+  name: string;
+  filename: string;
+  format: string;
+  status: string;
+  /** model_format from backend, e.g. "rvt", "ifc" */
+  model_format?: string;
+  /** File size in bytes (set after CAD upload) */
+  file_size?: number;
+  /** ISO date string */
+  created_at?: string;
+  /** Element count (0 for processing models) */
+  element_count?: number;
+  /** Storey/level count extracted during processing */
+  storey_count?: number;
+  /** Project this model belongs to */
+  project_id?: string;
+  /** Last updated ISO date */
+  updated_at?: string;
+  /** Human-readable failure description set by the background processor.
+   *  Surfaced in the non-ready overlay so users can see *why* conversion
+   *  failed instead of a generic "Error" placeholder. */
+  error_message?: string | null;
+  /** Free-form metadata bag from the backend. Keys we read here:
+   *    - error_code: 'ddc_not_found' | 'ddc_failed' | 'zero_elements' | 'unexpected'
+   *    - converter_id: 'rvt' | 'ifc' | 'dwg' | 'dgn' (when error_code is converter-related)
+   *    - install_endpoint: POST URL to install the missing converter */
+  metadata?: Record<string, unknown> | null;
+  /** Stable error id surfaced as a top-level field by the backend
+   *  (mirrors `metadata.error_code` for convenience).  Added in v2.6.29. */
+  error_code?: string | null;
+  /** Disk usage of conversion artifacts (GLB/DAE/parquet/thumbnails)
+   *  for this model, in megabytes.  `null` when the storage probe
+   *  failed.  Added in v2.6.29. */
+  conversion_artifact_size_mb?: number | null;
+  /** Whether the raw uploaded CAD file is still on storage.  Drives
+   *  retry availability and the disk-usage tooltip.  Added in v2.6.29. */
+  has_original?: boolean | null;
+  /** Whether geometry (GLB/DAE) is available for this model.  Derived by
+   *  the backend at response time from `canonical_file_path` (set when the
+   *  converter produced a usable mesh) and returned on every list/detail
+   *  response.  Drives whether the 3D canvas is mounted vs. the "data only"
+   *  element list; `false`/undefined means the model imported elements +
+   *  quantities but has no 3D mesh (e.g. no native CAD converter on this
+   *  server). */
+  has_geometry?: boolean;
+}
+
+/* ── Discipline Colors ─────────────────────────────────────────────────── */
+
+const DISCIPLINE_COLORS: Record<string, number> = {
+  architectural: 0x64b5f6, // light blue
+  structural: 0xff9800,    // orange
+  mechanical: 0x66bb6a,    // green
+  electrical: 0xfdd835,    // yellow
+  plumbing: 0xab47bc,      // purple
+  piping: 0xab47bc,        // purple (alias)
+  fire_protection: 0xef5350, // red
+  civil: 0x8d6e63,         // brown
+  landscape: 0x4caf50,     // darker green
+};
+
+const DEFAULT_COLOR = 0x90a4ae; // blue-grey
+
+function getDisciplineColor(discipline: string | null | undefined): number {
+  // #153 guard — RVT elements without a mapped IFC discipline arrive with
+  // `discipline === undefined`; previous code crashed in toLowerCase().
+  if (!discipline) return DEFAULT_COLOR;
+  const key = discipline.toLowerCase().replace(/[\s-]/g, '_');
+  return DISCIPLINE_COLORS[key] ?? DEFAULT_COLOR;
+}
+
+/* ── Category Colors (for placeholder boxes) ─────────────────────────── */
+
+/** Map element_type (RVT Category / IFC Entity) to a distinct color so
+ *  placeholder boxes are immediately distinguishable by building trade.
+ *  Exported for reuse in the filter panel (colored dots on chips). */
+export const CATEGORY_COLORS: Record<string, number> = {
+  'Walls': 0x4488cc,
+  'Doors': 0x44aa44,
+  'Windows': 0x66ccdd,
+  'Structural Columns': 0x888888,
+  'Structural Framing': 0x999999,
+  'Floors': 0xccaa66,
+  'Roofs': 0xcc6644,
+  'Ceilings': 0xddccaa,
+  'Stairs': 0xaa6644,
+  'Furniture': 0x886644,
+  'Curtain Wall Mullions': 0x6688aa,
+  'Curtain Wall Panels': 0x88aacc,
+  'Planting': 0x55bb55,
+  'Rooms': 0xeeeecc,
+  'Columns': 0x888888,
+  'Mechanical Equipment': 0x66bb6a,
+  'Electrical Equipment': 0xfdd835,
+  'Plumbing Fixtures': 0xab47bc,
+  'Railings': 0x9e8e7e,
+  'Generic Models': 0xbbbbbb,
+  'Pipes': 0xab47bc,
+  'Ducts': 0x66bb6a,
+  'Cable Trays': 0xfdd835,
+  // IFC entities
+  'IfcWall': 0x4488cc,
+  'IfcWallStandardCase': 0x4488cc,
+  'IfcDoor': 0x44aa44,
+  'IfcWindow': 0x66ccdd,
+  'IfcColumn': 0x888888,
+  'IfcBeam': 0x999999,
+  'IfcSlab': 0xccaa66,
+  'IfcRoof': 0xcc6644,
+  'IfcCovering': 0xddccaa,
+  'IfcStair': 0xaa6644,
+  'IfcFurnishingElement': 0x886644,
+  'IfcCurtainWall': 0x88aacc,
+  'IfcSpace': 0xeeeecc,
+  'IfcRailing': 0x9e8e7e,
+  'IfcBuildingElementProxy': 0xbbbbbb,
+  // Civil infrastructure (IFC4x3)
+  'Alignment': 0xe91e63,
+  'Horizontal Alignment': 0xe91e63,
+  'Vertical Alignment': 0xc2185b,
+  'Alignment Segment': 0xf06292,
+  'Bridge': 0x5d4037,
+  'Bridge Part': 0x6d4c41,
+  'Road': 0x455a64,
+  'Road Part': 0x546e7a,
+  'Railway': 0x37474f,
+  'Railway Part': 0x455a64,
+  'Pavement': 0x78909c,
+  'Kerb': 0x607d8b,
+  'Course': 0x90a4ae,
+  'Earthworks Fill': 0x795548,
+  'Earthworks Cut': 0xa1887f,
+  'Earthworks Element': 0x8d6e63,
+  'Reinforced Soil': 0x6d4c41,
+  'Civil Element': 0x8d6e63,
+  'Facility': 0x546e7a,
+  'Surface Feature': 0x80cbc4,
+  'Geotechnic Element': 0x4e342e,
+  'Deep Foundation': 0x3e2723,
+  'Bearing': 0x757575,
+  'Tendon': 0x9e9e9e,
+};
+
+export function getCategoryColor(elementType: string): number {
+  return CATEGORY_COLORS[elementType] ?? 0xdd8833; // default warm orange
+}
+
+/* ── Color-by-property palettes (W6.6) ───────────────────────────────────── */
+
+/** 12 visually distinct hues, ColorBrewer-derived. Ordered roughly by
+ *  hue so adjacent indices read as different categories.  Used by the
+ *  ``categorical-12`` palette in `setColorByProperty`. */
+export const CATEGORICAL_12: readonly string[] = [
+  '#1f77b4', // blue
+  '#ff7f0e', // orange
+  '#2ca02c', // green
+  '#d62728', // red
+  '#9467bd', // purple
+  '#8c564b', // brown
+  '#e377c2', // pink
+  '#7f7f7f', // grey
+  '#bcbd22', // olive
+  '#17becf', // teal
+  '#aec7e8', // light blue
+  '#ffbb78', // peach
+] as const;
+
+/** Fire-rating lookup table.  Keys are the lowercase property value
+ *  (so ``F90`` is matched as ``f90``).  Anything not in this map falls
+ *  back to `unknownColor`. */
+export const FIRE_RATING_PALETTE: Readonly<Record<string, string>> = {
+  f30: '#fde047',  // yellow
+  f60: '#f97316',  // orange
+  f90: '#dc2626',  // red
+  f120: '#7c3aed', // purple
+  f180: '#1e3a8a', // dark blue (very rare, kept for completeness)
+} as const;
+
+const SEQ_BLUE_LOW = '#e0f2fe';
+const SEQ_BLUE_HIGH = '#0c4a6e';
+const DIVERGING_LOW = '#b91c1c';   // red (low)
+const DIVERGING_MID = '#ffffff';   // white (mid)
+const DIVERGING_HIGH = '#1d4ed8';  // blue (high)
+
+/** Parse a CSS-hex string into a THREE.Color (no #-less or rgb() support). */
+function hexToColor(hex: string): THREE.Color {
+  return new THREE.Color(hex);
+}
+
+/** Linear interpolation between two hex colours at fraction t ∈ [0, 1]. */
+function lerpHex(low: string, high: string, t: number): THREE.Color {
+  const a = hexToColor(low);
+  const b = hexToColor(high);
+  const clamped = Math.max(0, Math.min(1, t));
+  return new THREE.Color(
+    a.r + (b.r - a.r) * clamped,
+    a.g + (b.g - a.g) * clamped,
+    a.b + (b.b - a.b) * clamped,
+  );
+}
+
+/** Three-stop interpolation used for `sequential-red-blue`. */
+function lerpHex3(low: string, mid: string, high: string, t: number): THREE.Color {
+  const clamped = Math.max(0, Math.min(1, t));
+  if (clamped < 0.5) {
+    return lerpHex(low, mid, clamped / 0.5);
+  }
+  return lerpHex(mid, high, (clamped - 0.5) / 0.5);
+}
+
+/**
+ * Resolve a property value off an element. Looks first in
+ * `element.properties[key]`, then in the well-known top-level fields. Numbers
+ * (e.g. ``volume``) are returned as-is; everything else is coerced to string.
+ * Returns `undefined` when no value is present.
+ *
+ * Exported for tests and for `ColorByPropertyPanel` (so its preview legend
+ * uses the exact same lookup as the colouring).
+ */
+export function resolveElementProperty(
+  el: BIMElementData,
+  key: string,
+): string | number | undefined {
+  const props = el.properties;
+  if (props && Object.prototype.hasOwnProperty.call(props, key)) {
+    const v = props[key];
+    if (typeof v === 'number') return v;
+    if (v === null || v === undefined) return undefined;
+    return String(v);
+  }
+  // Convenience fall-throughs for canonical-format top-level fields.
+  switch (key) {
+    case 'element_type':
+    case 'category':
+      return el.element_type || el.category;
+    case 'discipline':
+      return el.discipline;
+    case 'storey':
+    case 'level':
+      return el.storey;
+    case 'name':
+      return el.name;
+    default:
+      break;
+  }
+  // Last resort: numeric quantities (volume / area / length).
+  const q = el.quantities;
+  if (q && Object.prototype.hasOwnProperty.call(q, key)) {
+    const v = q[key];
+    return typeof v === 'number' ? v : undefined;
+  }
+  return undefined;
+}
+
+/**
+ * Pure helper: compute the hex color a config would assign to a given value.
+ * Centralised so the legend in `ColorByPropertyPanel` and the runtime
+ * material colouring stay in lock-step.
+ *
+ *  - `valueOrderIndex` is the rank of the value among the distinct keys
+ *    (most-common first); used only by `categorical-12`.
+ *  - `unknownColor` is returned for sequential palettes when the value
+ *    is not numeric.
+ */
+export function colorForPropertyValue(
+  config: ColorByPropertyConfig,
+  value: string | number | undefined,
+  valueOrderIndex: number,
+): string {
+  const unknown = config.unknownColor ?? '#888888';
+  if (value === undefined || value === null || value === '') return unknown;
+
+  if (config.palette === 'fire-rating') {
+    const key = String(value).toLowerCase().replace(/\s+/g, '');
+    // Try exact key match first, then a "f30 in f30-min" style partial
+    // (some converters emit "F30 (REI)" or "REI 90").
+    if (FIRE_RATING_PALETTE[key]) return FIRE_RATING_PALETTE[key]!;
+    for (const fkey of Object.keys(FIRE_RATING_PALETTE)) {
+      if (key.includes(fkey)) return FIRE_RATING_PALETTE[fkey]!;
+    }
+    // Numeric fall-through: bare "30" / "90" → f30 / f90.
+    const numMatch = key.match(/(\d+)/);
+    if (numMatch) {
+      const fkey = `f${numMatch[1]}`;
+      if (FIRE_RATING_PALETTE[fkey]) return FIRE_RATING_PALETTE[fkey]!;
+    }
+    return unknown;
+  }
+
+  if (config.palette === 'categorical-12') {
+    if (valueOrderIndex < 0) return unknown;
+    return CATEGORICAL_12[valueOrderIndex % CATEGORICAL_12.length]!;
+  }
+
+  // Sequential palettes — value must be numeric.
+  const num = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(num)) return unknown;
+  const range = config.numericRange ?? [0, 1];
+  const [lo, hi] = range;
+  const span = hi - lo;
+  const t = span === 0 ? 0 : (num - lo) / span;
+  if (config.palette === 'sequential-blue') {
+    return `#${lerpHex(SEQ_BLUE_LOW, SEQ_BLUE_HIGH, t).getHexString()}`;
+  }
+  // sequential-red-blue
+  return `#${lerpHex3(DIVERGING_LOW, DIVERGING_MID, DIVERGING_HIGH, t).getHexString()}`;
+}
+
+/* ── Glass detection ──────────────────────────────────────────────────────
+ *
+ * Cheap, allocation-free heuristic: a glass-like element is recognised by
+ * its RVT/IFC category or name (Windows, Curtain Panels, Glazing, …) or
+ * by an obviously-glass material string when the converter named it. We
+ * deliberately do NOT use physical transmission/refraction — that needs a
+ * second render target and a roughness map and tanks the frame rate on big
+ * models. A plain `transparent:true` + tuned `opacity` + `depthWrite:false`
+ * gives a convincing glass look in the existing single forward pass with
+ * no measurable cost (only the small glass subset pays the alpha-blend +
+ * sort, which Three.js already does for any transparent material). */
+const GLASS_NAME_RE =
+  /\b(glass|glazing|glazed|curtain\s*panel|curtain\s*wall|window|vidro|verre|glas|vitr|стекл|玻璃|ガラス|skylight|storefront|spider\s*glass|laminated\s*glass|tempered\s*glass)\b/i;
+
+/** True when the element reads as glass from its category / name, or the
+ *  GLB/DAE material was explicitly named like glass. Mullions, frames and
+ *  hardware are explicitly excluded — only the transparent infill panes
+ *  should turn translucent, not the aluminium that holds them. */
+export function isGlassLikeElement(
+  el: { element_type?: string | null; name?: string | null } | undefined,
+  materialName?: string | null,
+): boolean {
+  const type = (el?.element_type || '').toLowerCase();
+  // Frames / mullions / hardware are opaque even on glazed assemblies.
+  if (
+    /mullion|frame|hardware|sill|astragal|spider|fitting|bracket/.test(type)
+  ) {
+    return false;
+  }
+  if (el?.element_type && GLASS_NAME_RE.test(el.element_type)) return true;
+  if (el?.name && GLASS_NAME_RE.test(el.name)) return true;
+  if (materialName && GLASS_NAME_RE.test(materialName)) return true;
+  return false;
+}
+
+/* ── Element Manager ───────────────────────────────────────────────────── */
+
+export class ElementManager {
+  private sceneManager: SceneManager;
+  elementGroup: THREE.Group;
+  private daeGroup: THREE.Group | null = null;
+  /** Meshes that have been linked to an element by stable_id / bbox. */
+  private meshMap = new Map<string, THREE.Mesh>();
+  /** Every mesh that lives under `daeGroup`, matched or not. Needed so the
+   *  filter / color-by / isolate features still work for RVT/IFC exports
+   *  whose mesh nodes don't expose element stable_ids. */
+  private allDaeMeshes: THREE.Mesh[] = [];
+  /** BatchedMesh objects created by `batchMeshesByMaterial` for big-model
+   *  perf.  Sits beside `daeGroup` directly under the scene root.  Tracked
+   *  here so `clear()` can dispose their internal buffers. */
+  private batchedMeshes: THREE.BatchedMesh[] = [];
+  private elementDataMap = new Map<string, BIMElementData>();
+  private baseMaterials = new Map<string, THREE.MeshStandardMaterial>();
+  /**
+   * Cached translucent "glass" materials, keyed by the source material's
+   * uuid (or a `_fallback` key when we synthesised one). Glass meshes that
+   * share a base material share one cloned translucent material — the whole
+   * model's glazing typically collapses to 1–3 extra materials, NOT one
+   * allocation per pane, so the effect is essentially free. Disposed in
+   * `dispose()` alongside `createdMaterials`.
+   */
+  private glassMaterials = new Map<string, THREE.Material>();
+  private wireframeEnabled = false;
+  private geometryLoaded = false;
+  // In-flight promise per URL so concurrent ``loadGeometry`` calls share the
+  // same fetch. React StrictMode double-mounts the BIMViewer effect in dev,
+  // and even in prod a fast re-render before the first fetch resolves would
+  // otherwise issue a second 100s-of-KB GET for the same geometry URL.
+  private inFlightLoad: { url: string; promise: Promise<void> } | null = null;
+  /**
+   * Every material we allocate via `clone()` inside `colorBy*` paths is
+   * tracked here so `resetColors()` / `dispose()` can free the GPU
+   * resources.  Without this set, rapid mode switching (validation →
+   * default → boq_coverage → …) leaks one WebGL program per element per
+   * switch — visible as VRAM growth in long sessions.
+   */
+  private createdMaterials = new Set<THREE.Material>();
+  /**
+   * Per-category materials cloned from the base material when the user
+   * drags a transparency slider in the Layers tab.  Tracked separately from
+   * `createdMaterials` because their lifetime is tied to the category
+   * filter state, not the colorBy mode. Disposed in `dispose()`.
+   */
+  private categoryMaterials = new Map<string, THREE.Material>();
+  /**
+   * Shared translucent "ghost" material applied to non-kept meshes when
+   * the user ghosts a selection.  One instance for the whole scene; the
+   * original material per mesh is parked in `userData.ghostOriginal` and
+   * restored on `clearGhost()`.  Lazily created so a viewer that never
+   * ghosts pays no GPU cost.
+   */
+  private ghostMaterial: THREE.MeshStandardMaterial | null = null;
+  /** Element ids currently ghosted — used for a clean, exact restore. */
+  private ghostedIds = new Set<string>();
+  /**
+   * Fraction of loaded elements that the viewer was able to match to DAE
+   * mesh nodes by stable_id. < 0.02 means we effectively have no mesh-level
+   * mapping — the parent UI uses this to show a hint explaining why
+   * per-element filters don't affect the viewport.
+   */
+  private meshMatchRatio = 0;
+
+  /* ── W6.6 color-by-property + hide/isolate state ────────────────────── */
+
+  /** Current color-by-property overlay, or null when off. Replaces the
+   *  legacy `colorBy()` rainbow when set. */
+  private colorByPropertyConfig: ColorByPropertyConfig | null = null;
+  /** Element IDs the user has explicitly hidden via `hide()` / `isolate()`.
+   *  Separate from filter-driven visibility (which uses `applyFilter`) so
+   *  the two systems don't fight. */
+  private hiddenElementIds = new Set<string>();
+  /** True after the most recent `isolate()` call; cleared by `showAll()`.
+   *  Used so `hasHidden()` returns the intuitive answer when "everything
+   *  but X" is the current state. */
+  private isolateActive = false;
+  /** The predicate of the most recent `applyFilter()` call, or null when no
+   *  filter is active (cleared by `showAll()` / a match-all predicate).
+   *
+   *  The in-viewer filter panel (category / type / bucket selection) and the
+   *  Layers-tab category toggles are two independent visibility systems that
+   *  must not stomp each other. The Layers sync in BIMViewer re-runs whenever
+   *  `hiddenIds` changes - and `applyFilter` resets `hiddenIds` on every filter
+   *  change - so without this guard a category toggle pass would call
+   *  `setCategoryVisible(cat, true)` for every category right after a filter
+   *  isolated one group, re-showing the whole model and making the filter look
+   *  like it "briefly works then reverts" (founder report: the chosen group is
+   *  not isolated, the full project stays visible). When a filter is active,
+   *  `setCategoryVisible` re-applies the filter predicate instead of blindly
+   *  revealing the category. */
+  private filterPredicate: ((el: BIMElementData) => boolean) | null = null;
+  /** Categories hidden via the Layers tab (`setCategoryVisible(cat, false)`).
+   *  Kept separate from `hiddenElementIds` (context-menu Hide / isolate) so
+   *  the two visibility systems don't corrupt each other's counts — a
+   *  category hide must not bump the hide/isolate badge, and un-hiding a
+   *  category must not reveal an element the user hid individually. */
+  private hiddenCategorySet = new Set<string>();
+  /** Subscribers for hidden-count changes — wired by BIMViewer to drive a
+   *  small "{n} hidden — Show all" badge above the canvas. */
+  private hiddenCountSubscribers = new Set<(count: number) => void>();
+
+  constructor(sceneManager: SceneManager) {
+    this.sceneManager = sceneManager;
+    this.elementGroup = new THREE.Group();
+    this.elementGroup.name = 'bim_elements';
+    // Placeholder boxes have Z_UP→Y_UP conversion baked into
+    // createBoxMesh() (Y↔Z swap), so no group rotation needed.
+    this.sceneManager.scene.add(this.elementGroup);
+    // Patch three's raycast for BVH-accelerated picking. Idempotent and
+    // behaviour-preserving (meshes without a bounds tree raycast as before);
+    // the loaded meshes opt in via buildPickingBVH() once geometry arrives.
+    installBVH();
+  }
+
+  /** Load elements and (optionally) create placeholder meshes.
+   *
+   * @param skipPlaceholders  When true, no box placeholders are
+   *   created from `el.bounding_box`. Use this when a real DAE/COLLADA
+   *   geometry URL is about to load — the placeholders would briefly
+   *   render at the BIM bounding-box coordinates (which can be in a
+   *   different scale than the COLLADA scene) and produce a
+   *   wrong-distance camera fit on the first frame.
+   */
+  loadElements(
+    elements: BIMElementData[],
+    options: { skipPlaceholders?: boolean } = {},
+  ): void {
+    this.clear();
+
+    const skipPlaceholders = options.skipPlaceholders === true;
+
+    for (const el of elements) {
+      this.elementDataMap.set(el.id, el);
+
+      // Create box placeholders when the caller opts in (showBoundingBoxes).
+      // Normally skipped when real DAE/GLB geometry is loaded.
+      if (!skipPlaceholders && el.bounding_box) {
+        const mesh = this.createBoxMesh(el);
+        this.meshMap.set(el.id, mesh);
+        this.elementGroup.add(mesh);
+      }
+    }
+
+    // Zoom to fit only when we actually have visible content. Without
+    // placeholders the scene is empty until the DAE loader finishes
+    // — BIMViewer schedules its own zoomToFit chain at that point.
+    if (this.meshMap.size > 0 || (this.daeGroup && this.daeGroup.children.length > 0)) {
+      this.sceneManager.zoomToFit();
+    }
+  }
+
+  /** Return the number of elements currently loaded. */
+  getElementCount(): number {
+    return this.elementDataMap.size;
+  }
+
+  /**
+   * Update element data in-place without recreating meshes or reloading geometry.
+   * Used when element properties change (link updates, validation) but the
+   * element set itself hasn't changed.
+   */
+  updateElementData(elements: BIMElementData[]): void {
+    for (const el of elements) {
+      this.elementDataMap.set(el.id, el);
+      // Also update userData on matched meshes so filters see fresh data
+      const mesh = this.meshMap.get(el.id);
+      if (mesh) {
+        const ud = mesh.userData as Record<string, unknown>;
+        ud.elementData = el;
+      }
+    }
+  }
+
+  /**
+   * Auto-detect geometry format (GLB vs DAE) and load accordingly.
+   *
+   * The backend now preferentially serves GLB (8.8x faster than DAE).
+   * The Content-Type header determines the format:
+   *   - ``model/gltf-binary`` -> GLTFLoader
+   *   - ``model/vnd.collada+xml`` -> ColladaLoader (legacy fallback)
+   *
+   * Falls back to ColladaLoader if the Content-Type is ambiguous.
+   *
+   * If `cache` callbacks are provided, the buffer is consulted via
+   * `cache.lookup(url)` before any network IO; on miss, the freshly fetched
+   * buffer is written back via `cache.store(url, buffer, format)` so the
+   * next mount can skip the round-trip entirely (RFC 19 §UX-1).
+   */
+  async loadGeometry(
+    geometryUrl: string,
+    onProgress?: (fraction: number) => void,
+    cache?: {
+      lookup: (url: string) =>
+        | { buffer: ArrayBuffer; format: 'glb' | 'dae' }
+        | null;
+      store: (url: string, buffer: ArrayBuffer, format: 'glb' | 'dae') => void;
+    },
+  ): Promise<void> {
+    // 0. Concurrency guard — if a load for this exact URL is already in
+    //    flight, hand the caller the same promise instead of issuing a
+    //    second network request. This dedupes the StrictMode dev
+    //    double-mount and any production race where a parent re-renders
+    //    before the previous load resolved. We DO still fire onProgress
+    //    so the second caller's overlay updates correctly.
+    if (this.inFlightLoad?.url === geometryUrl) {
+      return this.inFlightLoad.promise.then(() => onProgress?.(1));
+    }
+
+    // 1. Cache hit fast-path — parse the cached buffer in-process, no network.
+    const hit = cache?.lookup(geometryUrl);
+    if (hit) {
+      // Signal completion to the progress UI so the spinner doesn't linger.
+      onProgress?.(1);
+      return this.parseGeometryBuffer(hit.buffer, hit.format);
+    }
+
+    // Wrap the rest of the load in a promise we cache so concurrent calls
+    // can dedupe. Cleared in finally so a later mount with the same URL
+    // (e.g. after a remount) still re-runs the cache lookup at the top.
+    const loadPromise = this.doLoadGeometry(geometryUrl, onProgress, cache);
+    this.inFlightLoad = { url: geometryUrl, promise: loadPromise };
+    try {
+      await loadPromise;
+    } finally {
+      if (this.inFlightLoad?.url === geometryUrl) {
+        this.inFlightLoad = null;
+      }
+    }
+  }
+
+  private async doLoadGeometry(
+    geometryUrl: string,
+    onProgress?: (fraction: number) => void,
+    cache?: {
+      lookup: (url: string) =>
+        | { buffer: ArrayBuffer; format: 'glb' | 'dae' }
+        | null;
+      store: (url: string, buffer: ArrayBuffer, format: 'glb' | 'dae') => void;
+    },
+  ): Promise<void> {
+    // 1b. Fast streaming path — when the model has a baked tileset, stream its
+    //     content-addressed tiles (IndexedDB cache-first, parsed in small
+    //     chunks that yield to the event loop) instead of one monolithic GLB.
+    //     Tiles are the same trimesh GLB format and preserve node names, so
+    //     the merged group feeds the existing processLoadedScene() unchanged.
+    //     Any failure — no tileset, a bad tile, a parse error — falls through
+    //     to the monolithic path below, so this can only speed loading up.
+    let previewGroup: THREE.Group | null = null;
+    try {
+      const streamModelId = modelIdFromGeometryUrl(geometryUrl);
+      if (streamModelId) {
+        // Progressive reveal: show each tile the instant it parses instead of
+        // waiting for the whole model. Gated to the initial open (nothing on
+        // screen yet) - on a model switch the previous model is still shown
+        // until processLoadedScene swaps it, so a progressive preview there
+        // would briefly overlap the two; that case keeps the old atomic swap.
+        const progressive = !this.geometryLoaded;
+        const streamed = await streamModelTiles(streamModelId, {
+          onProgress,
+          // Viewport-priority streaming: when the camera has already been aimed
+          // (e.g. a clash / element deep-link focused it before the geometry
+          // finished), stream the tiles nearest what the user is looking at
+          // first. Returns null on a plain cold open, so that case keeps the
+          // geometry-mass order.
+          getCameraPose: () => this.sceneManager.getPlacedCameraPose(),
+          onTileParsed: progressive
+            ? (group) => {
+                if (!previewGroup) {
+                  this.clearPlaceholders();
+                  // Apply the same -90 deg X rotation processLoadedScene will,
+                  // so the building the user watches assemble sits exactly where
+                  // the finished, batched model ends up (no jump on completion).
+                  group.rotation.x = -Math.PI / 2;
+                  this.elementGroup.add(group);
+                  previewGroup = group;
+                }
+                this.sceneManager.requestRender();
+              }
+            : undefined,
+        });
+        if (streamed) {
+          // processLoadedScene reparents this same group into daeGroup and
+          // collapses it into BatchedMeshes - the big-model batching is intact;
+          // the rotation it re-applies matches the preview, so nothing moves.
+          this.processLoadedScene(streamed.group, undefined, true);
+          onProgress?.(1);
+          return;
+        }
+      }
+    } catch (streamErr) {
+      // Streaming is a pure optimization; never let it break the load. Drop any
+      // partial preview so it can't double up with the monolithic geometry.
+      if (previewGroup) this.elementGroup.remove(previewGroup);
+      console.warn('[BIM] tile streaming failed, using monolithic GLB', streamErr);
+    }
+
+    // 2. Cache miss — fetch the bytes. The actual network IO is funnelled
+    //    through a module-level in-flight Map so that a parallel
+    //    ElementManager (e.g. the second StrictMode mount, which creates
+    //    its own manager instance) waits on the same fetch instead of
+    //    issuing a duplicate GET. Each manager still parses the buffer
+    //    into its own scene independently — only the bytes are shared.
+    let buffer: ArrayBuffer;
+    let format: 'glb' | 'dae' = 'glb';
+    const inFlight = inFlightGeometryFetches.get(geometryUrl);
+    if (inFlight) {
+      const result = await inFlight;
+      buffer = result.buffer;
+      format = result.format;
+      onProgress?.(0.95);
+    } else {
+      const fetchPromise = (async (): Promise<{ buffer: ArrayBuffer; format: 'glb' | 'dae' }> => {
+        let detectedFormat: 'glb' | 'dae' = 'glb';
+        try {
+          const headResp = await fetch(geometryUrl, { method: 'HEAD' });
+          if (headResp.ok) {
+            const ct = headResp.headers.get('content-type') || '';
+            if (ct.includes('collada') || ct.includes('xml') || ct.includes('dae')) {
+              detectedFormat = 'dae';
+            }
+          }
+        } catch {
+          // HEAD failed — keep the GLB default. parseGeometryBuffer falls
+          // back to DAE if GLB parsing fails.
+        }
+        const resp = await fetch(geometryUrl);
+        if (!resp.ok) {
+          // Pull the structured FastAPI detail payload when present (the
+          // backend ships a JSON diagnostic block with head_hex, format,
+          // expected_signature, first_tag, size_bytes and a human
+          // `message` field). Falls back to plain text / status when the
+          // server is unreachable or returns HTML (e.g. a proxy error).
+          let detail: unknown = null;
+          let messageHint = '';
+          try {
+            const ct = resp.headers.get('content-type') ?? '';
+            if (ct.includes('application/json')) {
+              const body = (await resp.json()) as { detail?: unknown };
+              detail = body?.detail ?? body;
+            } else {
+              const text = await resp.text();
+              if (text) messageHint = text.slice(0, 500);
+            }
+          } catch {
+            // Body could not be read — keep going with the bare status.
+          }
+          // Detail may be a string (legacy) or an object (new diagnostic).
+          let diagnosticMessage = '';
+          if (typeof detail === 'string') {
+            diagnosticMessage = detail;
+          } else if (detail && typeof detail === 'object') {
+            const d = detail as { message?: string };
+            diagnosticMessage = d.message ?? '';
+          } else if (messageHint) {
+            diagnosticMessage = messageHint;
+          }
+          // Correlation ID — every backend response (success or error)
+          // carries an X-Request-Id header. Surface it on the Error so
+          // the UI can quote it in the user-visible diagnostic and the
+          // "Send to support" template; users don't have to dig through
+          // DevTools to find it.
+          const requestId =
+            resp.headers.get('x-request-id') ??
+            resp.headers.get('X-Request-Id') ??
+            null;
+          const headline = diagnosticMessage
+            ? `Failed to fetch geometry (${resp.status}): ${diagnosticMessage}`
+            : `Failed to fetch geometry: ${resp.status}`;
+          const err = new Error(headline) as Error & {
+            status?: number;
+            diagnostic?: unknown;
+            requestId?: string | null;
+            expected?: boolean;
+          };
+          err.status = resp.status;
+          err.diagnostic = detail;
+          err.requestId = requestId;
+          // A 404 here means the model simply has no 3D mesh artifact
+          // (lightweight install / showcase / metadata-only model). That is
+          // an expected empty state the viewer already handles gracefully —
+          // it is NOT a bug. Flag it so the global error logger drops it and
+          // the auto bug-reporter never files a false report (#168).
+          err.expected = resp.status === 404;
+          throw err;
+        }
+        const total = Number(resp.headers.get('content-length')) || 0;
+        const reader = resp.body?.getReader();
+        if (!reader) {
+          const buf = await resp.arrayBuffer();
+          onProgress?.(0.95);
+          return { buffer: buf, format: detectedFormat };
+        }
+        const chunks: Uint8Array[] = [];
+        let received = 0;
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          if (value) {
+            chunks.push(value);
+            received += value.byteLength;
+            if (onProgress && total > 0) {
+              onProgress(Math.min(0.95, received / total));
+            }
+          }
+        }
+        const fetchedBuffer = new ArrayBuffer(received);
+        const view = new Uint8Array(fetchedBuffer);
+        let offset = 0;
+        for (const c of chunks) {
+          view.set(c, offset);
+          offset += c.byteLength;
+        }
+        return { buffer: fetchedBuffer, format: detectedFormat };
+      })();
+      inFlightGeometryFetches.set(geometryUrl, fetchPromise);
+      try {
+        const result = await fetchPromise;
+        buffer = result.buffer;
+        format = result.format;
+      } finally {
+        inFlightGeometryFetches.delete(geometryUrl);
+      }
+    }
+
+    // Nudge progress from 95% → 97% the moment fetch finishes so the UX
+    // makes it obvious that we left the network phase. The 97 → 100
+    // jump happens after the (synchronous, main-thread) parse settles.
+    // Hugo Lee's report (Glodon, 204MB RVT) flagged that the bar
+    // "stuck at 95%" — it wasn't stuck, GLTFLoader.parse was just
+    // burning 20-40s on a fat GLB while the bar didn't move.
+    onProgress?.(0.97);
+    await this.parseGeometryBuffer(buffer, format);
+    cache?.store(geometryUrl, buffer, format);
+  }
+
+  /**
+   * Parse an in-memory geometry buffer and bind it to elements.
+   * Used by both the cache-hit fast-path and the post-fetch slow-path.
+   *
+   * Robust to a hint mismatch: if the server said ``dae`` but the bytes
+   * start with the GLB magic ``glTF``, we try GLB first; same in reverse.
+   * Bytes that match neither GLB magic nor a COLLADA ``<COLLADA`` root tag
+   * fail fast with a clear message instead of crashing inside the loader.
+   */
+  private async parseGeometryBuffer(
+    buffer: ArrayBuffer,
+    format: 'glb' | 'dae',
+  ): Promise<void> {
+    if (buffer.byteLength === 0) {
+      throw new Error('Geometry buffer is empty (0 bytes)');
+    }
+    const detected = detectGeometryKind(buffer);
+    // If we can detect from bytes, prefer that over the server hint —
+    // Content-Type headers lie often enough to be untrustworthy.
+    const order: Array<'glb' | 'dae'> =
+      detected === 'glb' ? ['glb', 'dae']
+      : detected === 'dae' ? ['dae', 'glb']
+      : [format, format === 'glb' ? 'dae' : 'glb'];
+
+    const errors: Error[] = [];
+    for (const kind of order) {
+      try {
+        if (kind === 'glb') await this.parseGLBBuffer(buffer);
+        else await this.parseDAEBuffer(buffer);
+        return; // success
+      } catch (err) {
+        const e = err instanceof Error ? err : new Error(String(err));
+        errors.push(new Error(`${kind.toUpperCase()} parse: ${e.message}`));
+        if (typeof import.meta !== 'undefined' && import.meta.env?.DEV) {
+          console.warn(`[BIM] ${kind.toUpperCase()} parse failed:`, e);
+        }
+      }
+    }
+    // Both parsers failed — surface the first few bytes (hex) so the
+    // user / bug report has a fingerprint of what the server returned
+    // even when the file is no longer available (cache eviction, etc.).
+    const headBytes = new Uint8Array(buffer.slice(0, 8));
+    const head = Array.from(headBytes)
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join(' ');
+    const aggregate = errors.map((e) => e.message).join(' | ');
+
+    // Sniff common non-geometry payloads and give the user actionable
+    // advice instead of raw hex. Most external bug reports we have seen
+    // fall into one of these buckets — the server delivered something
+    // that isn't COLLADA / GLB / glTF.
+    const asAscii = new TextDecoder('ascii', { fatal: false })
+      .decode(buffer.slice(0, 1024))
+      .trimStart()
+      .toLowerCase();
+
+    let hint = '';
+    if (asAscii.startsWith('<?xml')) {
+      // Generic XML — most common cause is an .ifcXML / gbXML / wrapper
+      // file the converter wrote next to the model, picked up because
+      // it shares the same prefix. The viewer needs COLLADA DAE (which
+      // is also XML but with a <COLLADA root) or a GLB binary.
+      hint =
+        ' - The file is XML but not COLLADA. This usually means the DDC cad2data converter did not emit 3D geometry for this model (an older converter version, or a source format without geometry - e.g. .ifcXML / gbXML). Try re-running the conversion with the latest DDC cad2data (v0.3+) or upload the source as RVT/IFC/DWG/DGN to trigger geometry export.';
+    } else if (asAscii.startsWith('<!doctype') || asAscii.startsWith('<html')) {
+      // HTML — almost always an auth/redirect or error page.
+      hint =
+        " - The geometry URL returned an HTML page (likely an auth redirect, a 404, or a proxy/CDN error). Reload the page to refresh credentials; if it persists, check that your session hasn't expired.";
+    } else if (asAscii.startsWith('{')) {
+      // JSON — server sent an error envelope instead of binary.
+      hint =
+        ' - The geometry URL returned a JSON response, not 3D geometry. Open the browser network panel to see the server message - common causes are expired presigned URLs or a converter still running in the background.';
+    }
+
+    throw new Error(
+      `Geometry parse failed (${buffer.byteLength} bytes, head=${head}): ${aggregate}${hint}`,
+    );
+  }
+
+  /** Parse a GLB ArrayBuffer using GLTFLoader.parse() (no network). */
+  private parseGLBBuffer(buffer: ArrayBuffer): Promise<void> {
+    return new Promise((resolve, reject) => {
+      // Pre-validate GLB magic header before handing to GLTFLoader.parse —
+      // when bytes are not a real GLB, the loader can throw deep internal
+      // errors ("Cannot read properties of undefined (reading
+      // 'getAttribute')") that bubble up unhelpfully. A 4-byte check
+      // returns a clear message instead.
+      if (buffer.byteLength < 12) {
+        reject(new Error(`GLB buffer too small (${buffer.byteLength} bytes; need ≥12)`));
+        return;
+      }
+      const magic = new Uint32Array(buffer.slice(0, 4))[0] ?? 0;
+      // ASCII 'glTF' little-endian = 0x46546C67
+      if (magic !== 0x46546c67) {
+        reject(new Error(`Not a GLB file (magic=0x${magic.toString(16)}, expected 0x46546c67)`));
+        return;
+      }
+      const loader = new GLTFLoader();
+      try {
+        loader.parse(
+          buffer,
+          '',
+          (gltf) => {
+            try {
+              if (!gltf || !gltf.scene) {
+                reject(new Error('GLTFLoader returned empty result'));
+                return;
+              }
+              this.processLoadedScene(gltf.scene, undefined, true);
+              resolve();
+            } catch (sceneErr) {
+              reject(sceneErr instanceof Error ? sceneErr : new Error(String(sceneErr)));
+            }
+          },
+          (error) => reject(error instanceof Error ? error : new Error(String(error))),
+        );
+      } catch (syncErr) {
+        // GLTFLoader.parse usually reports via the onError callback, but
+        // a corrupt JSON chunk can throw synchronously from inside the
+        // top-level header walker before any callback fires. Catch that
+        // here so it doesn't escape as an unhandled exception.
+        reject(syncErr instanceof Error ? syncErr : new Error(String(syncErr)));
+      }
+    });
+  }
+
+  /** Parse a DAE/COLLADA ArrayBuffer using ColladaLoader.parse() (no network). */
+  private parseDAEBuffer(buffer: ArrayBuffer): Promise<void> {
+    return new Promise((resolve, reject) => {
+      try {
+        const loader = new ColladaLoader();
+        // Strip UTF-8 BOM (some RVT exports prepend one) — leaving it
+        // in confuses ColladaLoader's XML parser on some platforms.
+        let text = new TextDecoder('utf-8').decode(new Uint8Array(buffer));
+        if (text.charCodeAt(0) === 0xfeff) text = text.slice(1);
+
+        // Cheap structural pre-check: every legal COLLADA document must
+        // contain a "<COLLADA" root tag. If it doesn't, the loader's XML
+        // walker explodes with the unhelpful "reading 'getAttribute'"
+        // error somewhere inside the parser instead of telling us it's
+        // not COLLADA. Bail out early with a clear message.
+        // A leading namespace prefix is allowed too, e.g. "<ns0:COLLADA",
+        // which is the shape Python ET emits without register_namespace().
+        if (!/<(?:[\w-]+:)?COLLADA[\s>]/i.test(text.slice(0, 4096))) {
+          reject(new Error('Not a COLLADA document - <COLLADA> root tag not found in first 4096 chars'));
+          return;
+        }
+
+        const collada = loader.parse(text, '');
+        if (!collada || !collada.scene) {
+          reject(new Error('ColladaLoader returned empty result'));
+          return;
+        }
+        try {
+          this.processLoadedScene(collada.scene);
+        } catch (sceneErr) {
+          reject(sceneErr instanceof Error ? sceneErr : new Error(String(sceneErr)));
+          return;
+        }
+        resolve();
+      } catch (err) {
+        // ColladaLoader's known failure mode on malformed DAE: throws
+        // ``Cannot read properties of undefined (reading 'getAttribute')``
+        // from somewhere inside its XML walker because a referenced
+        // ``<source>`` / ``<input>`` / ``<sampler>`` id wasn't found.
+        // Annotate the error with that context so the user banner
+        // shows the actual cause instead of the cryptic JS message.
+        const baseMessage = err instanceof Error ? err.message : String(err);
+        const hint = baseMessage.includes("reading 'getAttribute'")
+          ? ' - DAE contains broken cross-references (a node referenced an id that does not exist)'
+          : '';
+        const wrapped = new Error(`COLLADA parse: ${baseMessage}${hint}`);
+        if (err instanceof Error && err.stack) wrapped.stack = err.stack;
+        reject(wrapped);
+      }
+    });
+  }
+
+  /**
+   * Shared scene-processing logic for both GLTFLoader and ColladaLoader.
+   *
+   * Strips lights/cameras, matches mesh nodes to BIM elements by
+   * stable_id / mesh_ref / name, disables shadows, freezes matrices,
+   * and triggers BatchedMesh collapsing for large models.
+   */
+  private processLoadedScene(
+    scene: THREE.Group | THREE.Object3D,
+    onProgress?: (fraction: number) => void,
+    _isGLB = false,
+  ): void {
+    // Remove any existing placeholder meshes for elements that have geometry
+    this.clearPlaceholders();
+
+    // Purge any previous geometry load (e.g. GLB from the first pass when
+    // loadGeometry() falls back to DAE after a low match ratio). Without this,
+    // stale GLB meshes remain in the scene graph and in meshMap with temporary
+    // _unmatched_N ids that no longer resolve to element data, so clicking
+    // such a mesh picks an id that getElementData can't find and the
+    // properties panel never opens.
+    if (this.daeGroup) {
+      this.daeGroup.traverse((obj) => {
+        if (obj instanceof THREE.Mesh) {
+          disposeBounds(obj.geometry);
+          obj.geometry?.dispose();
+        }
+      });
+      this.elementGroup.remove(this.daeGroup);
+    }
+    for (const batched of this.batchedMeshes) {
+      this.sceneManager.scene.remove(batched);
+      batched.dispose();
+    }
+    this.batchedMeshes = [];
+    // Drop meshMap entries that pointed at the purged meshes — any mesh we
+    // still reference was from the previous load. elementDataMap is kept
+    // so that the new matching pass can rebind element ids to new meshes.
+    for (const mesh of this.allDaeMeshes) {
+      const ud = mesh.userData as { elementId?: string | null };
+      if (ud.elementId) this.meshMap.delete(ud.elementId);
+    }
+    this.allDaeMeshes = [];
+    this.meshMatchRatio = 0;
+    this.geometryLoaded = false;
+
+    this.daeGroup = new THREE.Group();
+    this.daeGroup.name = 'bim_dae_geometry';
+
+    // Up-axis handling — must branch by loader, otherwise the model ends up
+    // upside-down + laterally mirrored (regression of fix 1f0530f / 1f80522).
+    //
+    //  - GLB path: trimesh does NOT convert Z_UP→Y_UP when exporting GLB
+    //    from our Z_UP DAE source. GLTFLoader does no auto-rotation either,
+    //    so we apply -90° X here.
+    //  - DAE path: ColladaLoader inspects <up_axis> in the COLLADA <asset>
+    //    block and pre-rotates Z_UP scenes to Y_UP itself.  Applying our
+    //    own rotation on top of that flips the model back over.  Skip it.
+    //
+    // Y_UP DAE corner case: a DAE that already declares Y_UP arrives
+    // un-rotated by ColladaLoader. We detect that via a bbox heuristic
+    // (Y extent > Z extent) and also skip rotation in that case — the
+    // model is already upright in Three.js coordinates.
+    if (_isGLB) {
+      scene.rotation.x = -Math.PI / 2;
+    } else {
+      const bbox = new THREE.Box3().setFromObject(scene);
+      const sizeY = Math.max(0, bbox.max.y - bbox.min.y);
+      const sizeZ = Math.max(0, bbox.max.z - bbox.min.z);
+      if (Number.isFinite(sizeY) && Number.isFinite(sizeZ) && sizeZ > sizeY) {
+        // Bbox extends more in Z than Y → ColladaLoader did NOT pre-rotate
+        // (some DAE writers omit <up_axis>, leaving the loader's default).
+        // Apply the rotation ourselves.
+        scene.rotation.x = -Math.PI / 2;
+      }
+      // else: ColladaLoader already brought the scene to Y_UP — leave alone.
+    }
+    scene.updateMatrixWorld(true);
+
+    // Build lookups: by stable_id / mesh_ref / element name.
+    // mesh_ref is the RVT ElementId string (e.g. "105545") that matches
+    // the COLLADA <node id="105545"> — after the backend patches node names,
+    // ColladaLoader exposes it as Object3D.name on the parent Group.
+    const stableIdToElement = new Map<string, BIMElementData>();
+    const nameToElement = new Map<string, BIMElementData>();
+    for (const el of this.elementDataMap.values()) {
+      if (el.mesh_ref) stableIdToElement.set(el.mesh_ref, el);
+      stableIdToElement.set(el.id, el);
+      if (el.name) nameToElement.set(el.name, el);
+    }
+
+    let matchedCount = 0;
+    let strippedLights = 0;
+    this.allDaeMeshes = [];
+
+    // Strip every Light/Camera that the loader dragged into the scene.
+    const lightsToRemove: THREE.Object3D[] = [];
+    scene.traverse((obj) => {
+      if (obj instanceof THREE.Light || obj instanceof THREE.Camera) {
+        lightsToRemove.push(obj);
+      }
+    });
+    for (const obj of lightsToRemove) {
+      if (obj.parent) obj.parent.remove(obj);
+      strippedLights++;
+    }
+
+    // Walk ALL ancestors up to the scene root and collect every Object3D.name.
+    // The DDC RvtExporter DAE sometimes nests nodes:
+    //   <node id="140056" name="140056">        ← RVT ElementId (outer)
+    //     <node id="135248" name="135248">      ← internal sub-node
+    //       <instance_geometry />
+    //     </node>
+    //   </node>
+    // ColladaLoader turns each <node> into a Group, so `mesh.parent.name`
+    // is "135248" (inner) and `mesh.parent.parent.name` is "140056" (outer).
+    // We prefer the OUTERMOST numeric ancestor — that's the element id a
+    // user expects to see — over any inner id, regardless of which one
+    // happens to live in stableIdToElement.
+    //
+    // Matching strategy per mesh:
+    //   1. collect every ancestor name (+ mesh.name itself)
+    //   2. prefer the outermost ancestor whose name matches stableIdToElement
+    //   3. if none match, prefer the outermost ancestor whose name matches nameToElement
+    //   4. extract any "Type-N-ElementId-suffix" numeric segments as a last resort
+    //   5. remember the outermost numeric ancestor as `outerNodeId` — used
+    //      later as the stub `mesh_ref` for unmatched meshes, so the
+    //      properties panel shows the user-facing RVT ElementId, not the
+    //      inner geometry container.
+    //
+    // IMPORTANT: do NOT replace `child.material` -- the geometry file
+    // ships with real per-element materials. We only touch the material
+    // when an explicit colour-by mode is on, and we cache the original
+    // on `userData.originalMaterial` so `resetColors()` can restore it.
+    let skippedMalformedMeshes = 0;
+    scene.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        // Defensive: a malformed DAE/GLB can yield Mesh objects with
+        // null/undefined ``geometry`` or a geometry without a position
+        // attribute. Every downstream call (computeBoundingSphere,
+        // BatchedMesh.addGeometry, raycast) crashes on these with the
+        // unhelpful "Cannot read properties of undefined (reading
+        // 'getAttribute' / 'attributes')" error that previously bubbled
+        // up to the user. Skip them — better to render N-k meshes than
+        // none.
+        const geom = child.geometry as THREE.BufferGeometry | undefined;
+        if (
+          !geom ||
+          !geom.attributes ||
+          !geom.attributes.position ||
+          (geom.attributes.position as THREE.BufferAttribute).count === 0
+        ) {
+          skippedMalformedMeshes++;
+          // Mark for removal after traverse — mutating the tree mid-
+          // traversal is unsafe in Three.js.
+          (child.userData as { _drop?: boolean })._drop = true;
+          return;
+        }
+        // Collect the ancestor chain: [mesh.name, parent.name, grandparent.name, …]
+        // from innermost (mesh) to outermost (scene root). We stop at the
+        // loaded scene root so patched `scene.name` (the DAE filename or
+        // empty) doesn't pollute matching.
+        const chain: string[] = [];
+        let cursor: THREE.Object3D | null = child;
+        while (cursor && cursor !== scene) {
+          chain.push(cursor.name || '');
+          cursor = cursor.parent;
+        }
+        // Drop the empty strings so lookups don't accidentally hit
+        // `stableIdToElement.get('')`.
+        const namedChain = chain.filter((n) => n !== '');
+
+        // Outermost numeric ancestor — used as mesh_ref on stubs and as the
+        // user-facing ID for ancestor-matched elements.
+        let outerNumericName = '';
+        for (let i = namedChain.length - 1; i >= 0; i--) {
+          if (/^\d+$/.test(namedChain[i]!)) {
+            outerNumericName = namedChain[i]!;
+            break;
+          }
+        }
+
+        let element: BIMElementData | undefined;
+        // Prefer the outermost ancestor that resolves in stableIdToElement,
+        // falling back through increasingly inner nodes.
+        for (let i = namedChain.length - 1; i >= 0; i--) {
+          const hit = stableIdToElement.get(namedChain[i]!);
+          if (hit) {
+            element = hit;
+            break;
+          }
+        }
+        if (!element) {
+          for (let i = namedChain.length - 1; i >= 0; i--) {
+            const hit = nameToElement.get(namedChain[i]!);
+            if (hit) {
+              element = hit;
+              break;
+            }
+          }
+        }
+        // Last-resort: some DDC COLLADA nodes encode the ElementId as a
+        // "Type-N-ElementId-suffix" segment (e.g. "Light-1-235371-point").
+        // Scan every ancestor name for such segments, outer → inner.
+        if (!element) {
+          outer: for (let i = namedChain.length - 1; i >= 0; i--) {
+            const segments = namedChain[i]!.split('-');
+            for (const seg of segments) {
+              if (/^\d+$/.test(seg)) {
+                const candidate = stableIdToElement.get(seg);
+                if (candidate) {
+                  element = candidate;
+                  if (!outerNumericName) outerNumericName = seg;
+                  break outer;
+                }
+              }
+            }
+          }
+        }
+
+        child.castShadow = false;
+        child.receiveShadow = false;
+        child.frustumCulled = true;
+        child.matrixAutoUpdate = false;
+        child.updateMatrix();
+        // Pre-compute bounding sphere so Three.js frustum culling works
+        // correctly even with matrixAutoUpdate = false. Wrapped so a
+        // single malformed mesh (e.g. infinite/NaN coords from a broken
+        // exporter) does not abort the whole load — mark it for removal
+        // and continue.
+        try {
+          child.geometry.computeBoundingSphere();
+        } catch {
+          skippedMalformedMeshes++;
+          (child.userData as { _drop?: boolean })._drop = true;
+          return;
+        }
+
+        const originalMaterial = child.material;
+
+        if (element) {
+          child.userData = {
+            elementId: element.id,
+            elementData: element,
+            originalMaterial,
+            // Remember which ancestor-name the viewer used to pick this
+            // element so the panel can show it verbatim when the element
+            // row has no mesh_ref (e.g. some legacy imports).
+            outerNodeId: outerNumericName || undefined,
+          };
+          this.meshMap.set(element.id, child);
+          matchedCount++;
+        } else {
+          child.userData = {
+            elementId: null,
+            originalMaterial,
+            outerNodeId: outerNumericName || undefined,
+            // Keep the raw chain so the stub pass below can build
+            // `mesh_ref` without repeating the traversal.
+            ancestorNames: namedChain,
+          };
+        }
+
+        if (!child.material) {
+          child.material = this.getMaterial(element?.discipline || 'other');
+        } else {
+          // IFC files frequently arrive with no IfcSurfaceStyle, so DDC's
+          // DAE export emits <color>0 0 0 1</color>. Trimesh preserves that,
+          // and the whole model renders pitch-black (Three.js issue tracker
+          // OE-#bim-ifc-black). Detect near-black albedo and swap in the
+          // discipline-coloured fallback so the user sees something usable.
+          const matsArr = Array.isArray(child.material) ? child.material : [child.material];
+          const isNearBlack = (m: THREE.Material): boolean => {
+            const c = (m as { color?: THREE.Color }).color;
+            if (!c) return false;
+            // Rec.601 luma — anything below 0.04 reads as solid black on screen.
+            return c.r * 0.299 + c.g * 0.587 + c.b * 0.114 < 0.04;
+          };
+          if (matsArr.length > 0 && matsArr.every(isNearBlack)) {
+            child.material = this.getMaterial(element?.discipline || 'other');
+          }
+        }
+
+        this.allDaeMeshes.push(child);
+      }
+    });
+
+    // Drop meshes flagged during traversal (no geometry / no position
+    // attribute / boundingSphere computation threw). We do this AFTER
+    // the traverse() finishes so we never mutate the tree mid-walk —
+    // that would skip siblings and confuse Three.js's depth-first
+    // traversal cursor. Removed meshes are also dropped from
+    // ``allDaeMeshes`` so later passes (BatchedMesh, raycast, fallback
+    // matching) never see them again.
+    if (skippedMalformedMeshes > 0) {
+      const malformed: THREE.Object3D[] = [];
+      scene.traverse((obj) => {
+        if ((obj.userData as { _drop?: boolean })?._drop) malformed.push(obj);
+      });
+      for (const obj of malformed) {
+        if (obj.parent) obj.parent.remove(obj);
+      }
+      if (typeof import.meta !== 'undefined' && import.meta.env?.DEV) {
+        console.warn(
+          `[BIM] skipped ${skippedMalformedMeshes} malformed mesh(es) from loaded scene`,
+        );
+      }
+    }
+
+    if (strippedLights > 0 && typeof import.meta !== 'undefined' && import.meta.env?.DEV) {
+      console.info(`[BIM] stripped ${strippedLights} lights/cameras from loaded scene`);
+    }
+
+    if (typeof import.meta !== 'undefined' && import.meta.env?.DEV) {
+      console.info(
+        `[BIM] mesh matching: ${matchedCount}/${this.allDaeMeshes.length} meshes matched ` +
+        `to ${this.elementDataMap.size} elements ` +
+        `(${this.elementDataMap.size > 0 ? Math.round((matchedCount / this.elementDataMap.size) * 100) : 0}% element coverage)`,
+      );
+      // Log first 5 unmatched mesh names + first 5 element mesh_refs for debugging
+      const unmatchedNames = this.allDaeMeshes
+        .filter((m) => !(m.userData as { elementId?: string | null }).elementId)
+        .slice(0, 5)
+        .map((m) => {
+          const ud = m.userData as { ancestorNames?: string[]; outerNodeId?: string };
+          const chain = ud.ancestorNames?.join(' ← ') || m.name;
+          return `outer="${ud.outerNodeId || ''}" chain=[${chain}]`;
+        });
+      const sampleRefs = Array.from(this.elementDataMap.values()).slice(0, 5).map((e) => `id="${e.id}" mesh_ref="${e.mesh_ref}" name="${e.name}"`);
+      if (unmatchedNames.length > 0) {
+        console.info('[BIM] sample unmatched meshes:', unmatchedNames);
+        console.info('[BIM] sample element refs:', sampleRefs);
+      }
+    }
+
+    // FALLBACK: assign elementIds to unmatched meshes so every visible
+    // mesh is selectable.  When explicit matching covers < 50% of meshes,
+    // we pair remaining unmatched meshes with unmatched elements by index.
+    const unmatchedMeshes = this.allDaeMeshes.filter(
+      (m) => !(m.userData as { elementId?: string | null }).elementId,
+    );
+    const matchedElementIds = new Set(
+      this.allDaeMeshes
+        .map((m) => (m.userData as { elementId?: string | null }).elementId)
+        .filter(Boolean),
+    );
+    const unmatchedElements = Array.from(this.elementDataMap.values()).filter(
+      (el) => !matchedElementIds.has(el.id),
+    );
+
+    if (unmatchedMeshes.length > 0 && unmatchedElements.length > 0) {
+      // Greedy nearest-neighbor fallback: for each unmatched mesh, find the
+      // closest unmatched element by 3D distance between bounding box centers.
+      // This replaces the old Y-sort + storey-sort index pairing which
+      // produced wrong associations (e.g. roof mesh → furniture element).
+
+      // Threshold: matches with distance > 5m are marked unreliable.
+      const UNRELIABLE_DISTANCE_M = 5;
+
+      // Pre-compute mesh world-space bounding box centers.
+      const meshCenters = unmatchedMeshes.map((m) => {
+        const center = new THREE.Vector3();
+        m.getWorldPosition(center);
+        // If the mesh has geometry with a bounding box, use its center
+        // for a more accurate position (getWorldPosition gives the origin).
+        if (m.geometry.boundingBox) {
+          const geomCenter = new THREE.Vector3();
+          m.geometry.boundingBox.getCenter(geomCenter);
+          geomCenter.applyMatrix4(m.matrixWorld);
+          center.copy(geomCenter);
+        }
+        return { mesh: m, center };
+      });
+
+      // Pre-compute element bounding box centers (only elements that have bbox).
+      // Elements without bounding_box cannot be spatially matched and are skipped.
+      const elementCenters: { el: BIMElementData; center: THREE.Vector3 }[] = [];
+      for (const el of unmatchedElements) {
+        if (el.bounding_box) {
+          const bb = el.bounding_box;
+          // Element bbox is in Z_UP coordinates (same as the loaded scene
+          // before the -90deg X rotation). Convert to Y_UP to match mesh
+          // world positions: swap Y ↔ Z, negate new-Z (the rotation is
+          // -90° around X which maps Z→Y, Y→-Z).
+          const cx = (bb.min_x + bb.max_x) / 2;
+          const cy = (bb.min_z + bb.max_z) / 2;  // Z_UP height → Y_UP height
+          const cz = -(bb.min_y + bb.max_y) / 2; // Y_UP depth (negated by rotation)
+          elementCenters.push({ el, center: new THREE.Vector3(cx, cy, cz) });
+        }
+      }
+
+      let pairedCount = 0;
+      let unreliableCount = 0;
+      const pairedElementIds = new Set<string>();
+
+      if (elementCenters.length > 0) {
+        // Greedy: for each mesh, find the nearest unpaired element.
+        for (const { mesh, center: meshCenter } of meshCenters) {
+          let bestDist = Infinity;
+          let bestIdx = -1;
+          for (let j = 0; j < elementCenters.length; j++) {
+            if (pairedElementIds.has(elementCenters[j]!.el.id)) continue;
+            const dist = meshCenter.distanceTo(elementCenters[j]!.center);
+            if (dist < bestDist) {
+              bestDist = dist;
+              bestIdx = j;
+            }
+          }
+          if (bestIdx >= 0) {
+            const el = elementCenters[bestIdx]!.el;
+            const unreliable = bestDist > UNRELIABLE_DISTANCE_M;
+            mesh.userData = {
+              ...(mesh.userData as object),
+              elementId: el.id,
+              elementData: el,
+              positionalFallback: true,
+              unreliableMatch: unreliable,
+              matchDistance: Math.round(bestDist * 100) / 100,
+            };
+            this.meshMap.set(el.id, mesh);
+            pairedElementIds.add(el.id);
+            pairedCount++;
+            if (unreliable) unreliableCount++;
+          }
+        }
+      }
+      matchedCount += pairedCount;
+      if (typeof import.meta !== 'undefined' && import.meta.env?.DEV) console.info(
+        `[BIM] positional fallback: paired ${pairedCount} meshes with element data ` +
+        `by nearest bounding-box center (${unreliableCount} unreliable, distance > ${UNRELIABLE_DISTANCE_M}m)`,
+      );
+    }
+
+    // Assign temporary IDs AND stub BIMElementData entries to any remaining
+    // meshes that still have no elementId. Without the elementDataMap stub,
+    // clicking such a mesh would call getElementData(tempId) → undefined →
+    // setSelectedElement(null) → properties panel never opens. The DAE node
+    // name (patched by the backend to equal the RVT ElementId) is used as
+    // mesh_ref — so the Parquet-fetch path can still pull the full row for
+    // elements the backend filtered out of BIMElement (planting, sketch
+    // lines, detail components, …).
+    let tempIdCounter = 0;
+    for (const mesh of this.allDaeMeshes) {
+      const ud = mesh.userData as {
+        elementId?: string | null;
+        outerNodeId?: string;
+        ancestorNames?: string[];
+      };
+      if (!ud.elementId) {
+        const tempId = `_unmatched_${tempIdCounter++}`;
+        // Prefer the OUTERMOST numeric ancestor name as mesh_ref — that
+        // matches the RVT ElementId a user would expect to see (same
+        // value the Excel parquet row uses as its `id`). Falling through
+        // to inner node names would display a sub-component id that is
+        // not what the user reads from their CAD tool.
+        const outerNodeId = ud.outerNodeId || '';
+        const chain = ud.ancestorNames || [];
+        const innerNodeName = chain[0] || '';
+        const meshRef = outerNodeId || innerNodeName || undefined;
+        const stubName = meshRef || `Unmatched element ${tempIdCounter}`;
+        const stub: BIMElementData = {
+          id: tempId,
+          mesh_ref: meshRef,
+          name: stubName,
+          element_type: 'Unmatched',
+          discipline: 'other',
+          properties: {
+            node_name: outerNodeId || innerNodeName,
+            inner_node: innerNodeName && innerNodeName !== outerNodeId ? innerNodeName : '',
+            ancestor_chain: chain.join(' › '),
+          },
+        };
+        mesh.userData = {
+          ...(mesh.userData as object),
+          elementId: tempId,
+          elementData: stub,
+        };
+        this.meshMap.set(tempId, mesh);
+        this.elementDataMap.set(tempId, stub);
+      }
+    }
+    if (tempIdCounter > 0) {
+      matchedCount += tempIdCounter;
+      if (typeof import.meta !== 'undefined' && import.meta.env?.DEV) console.info(`[BIM] assigned ${tempIdCounter} temporary IDs+stubs to unmatched meshes (clickable)`);
+    }
+
+    const totalElements = this.elementDataMap.size;
+    this.meshMatchRatio = totalElements > 0 ? matchedCount / totalElements : 0;
+
+    // ── Glass pass ──────────────────────────────────────────────────────
+    // Runs AFTER every matching strategy (stable-id, name, positional
+    // fallback, stubs) so an element resolved late still gets its
+    // translucent material. Glass-like elements arrive from the converter
+    // as solid slabs (baked albedo, alpha=1, no transmission); swap in a
+    // cached translucent variant so windows / curtain panels read as
+    // glazing. Detection is a cheap category/name string test and the
+    // material is shared per source-uuid, so this whole pass is O(meshes)
+    // string compares + at most a few material clones — no measurable
+    // frame-rate cost even on 50k-mesh models.
+    let glassMeshCount = 0;
+    for (const mesh of this.allDaeMeshes) {
+      const ud = mesh.userData as { elementData?: BIMElementData };
+      if (!isGlassLikeElement(ud.elementData)) continue;
+      const cur = Array.isArray(mesh.material)
+        ? mesh.material[0]
+        : mesh.material;
+      mesh.material = this.getGlassMaterial(cur);
+      // Keep the swapped material as the "original" so resetColors() /
+      // ghost-restore put the glass look back, not the opaque slab.
+      (mesh.userData as { originalMaterial?: THREE.Material }).originalMaterial =
+        mesh.material as THREE.Material;
+      glassMeshCount++;
+    }
+    if (
+      glassMeshCount > 0 &&
+      typeof import.meta !== 'undefined' &&
+      import.meta.env?.DEV
+    ) {
+      console.info(
+        `[BIM] glass pass: ${glassMeshCount} mesh(es) → translucent ` +
+          `(${this.glassMaterials.size} shared glass material(s))`,
+      );
+    }
+
+    this.daeGroup.add(scene);
+    this.elementGroup.add(this.daeGroup);
+    this.geometryLoaded = true;
+
+    this.sceneManager.scene.updateMatrixWorld(true);
+
+    // BatchedMesh: collapse same-material meshes into one draw call per
+    // material.  Threshold raised to 10,000 so that selection highlighting
+    // works for typical models (BatchedMesh doesn't support per-instance
+    // material changes needed for click-to-highlight).  Only very large
+    // models (10K+ meshes) trade selection UX for render performance.
+    if (this.allDaeMeshes.length >= 10_000) {
+      try {
+        this.batchMeshesByMaterial();
+      } catch (err) {
+        if (typeof import.meta !== 'undefined' && import.meta.env?.DEV) console.warn('[BIM] BatchedMesh path failed, falling back to individual meshes', err);
+      }
+    }
+
+    // Build a BVH per individually-rendered mesh so click / hover picking
+    // descends a tree instead of scanning every triangle. Runs after the
+    // batching decision so batched-away meshes (hidden, picked via the
+    // BatchedMesh) are skipped.
+    this.buildPickingBVH();
+
+    this.sceneManager.zoomToFit();
+    this.sceneManager.requestRender();
+
+    if (onProgress) onProgress(1);
+  }
+
+  /**
+   * Big-model perf optimisation: collapse same-material meshes into one
+   * `THREE.BatchedMesh` per material.  Replaces N draw calls with
+   * (number of unique materials) draw calls — typically 5 000 → ~30
+   * for a real RVT export.
+   *
+   * The original `THREE.Mesh` objects stay in `meshMap` and `allDaeMeshes`
+   * (so raycasting and the existing per-mesh API keep working) but they
+   * are REMOVED from the scene graph so the renderer doesn't draw them
+   * twice.  Every batched mesh gets a `userData.batchHandle` pointing
+   * back at its (BatchedMesh, instanceId) pair so visibility/colour
+   * updates can be forwarded.
+   *
+   * Groups with fewer than 10 meshes are left as individual draw calls
+   * — the BatchedMesh fixed-size buffer overhead isn't worth it.
+   */
+  private batchMeshesByMaterial(): void {
+    interface Group {
+      material: THREE.Material;
+      meshes: THREE.Mesh[];
+      totalVertices: number;
+      totalIndices: number;
+    }
+    const groups = new Map<string, Group>();
+
+    for (const mesh of this.allDaeMeshes) {
+      const mat = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
+      if (!mat) continue;
+      // Skip any mesh whose geometry was disposed or arrived without a
+      // position attribute (defense in depth — these should have been
+      // dropped in processLoadedScene, but a later code path could have
+      // disposed the geometry in the interim).
+      const geom = mesh.geometry as THREE.BufferGeometry | undefined;
+      if (!geom || !geom.attributes || !geom.attributes.position) continue;
+      const key = mat.uuid;
+      const posCount = (geom.attributes.position as THREE.BufferAttribute).count;
+      const idxCount = geom.index?.count ?? posCount;
+      let g = groups.get(key);
+      if (!g) {
+        g = { material: mat, meshes: [], totalVertices: 0, totalIndices: 0 };
+        groups.set(key, g);
+      }
+      g.meshes.push(mesh);
+      g.totalVertices += posCount;
+      g.totalIndices += idxCount;
+    }
+
+    let batchedMeshes = 0;
+    let batchedInstances = 0;
+    let drawCallsBefore = this.allDaeMeshes.length;
+    let drawCallsAfter = 0;
+
+    for (const group of groups.values()) {
+      if (group.meshes.length < 10) {
+        // Tiny group — leave as individual meshes
+        drawCallsAfter += group.meshes.length;
+        continue;
+      }
+
+      // BatchedMesh constructor: (maxInstanceCount, maxVertexCount, maxIndexCount, material)
+      // Add a small slack (10%) so we don't run out mid-batch.
+      const maxInstances = Math.ceil(group.meshes.length * 1.1);
+      const maxVertices = Math.ceil(group.totalVertices * 1.1);
+      const maxIndices = Math.ceil(group.totalIndices * 1.1);
+
+      let batched: THREE.BatchedMesh;
+      try {
+        batched = new THREE.BatchedMesh(
+          maxInstances,
+          maxVertices,
+          maxIndices,
+          group.material,
+        );
+      } catch (err) {
+        if (typeof import.meta !== 'undefined' && import.meta.env?.DEV) console.warn('[BIM] BatchedMesh ctor failed for material group, falling back', err);
+        drawCallsAfter += group.meshes.length;
+        continue;
+      }
+      batched.frustumCulled = true;
+      batched.castShadow = false;
+      batched.receiveShadow = false;
+      batched.name = `bim_batched_${group.material.uuid.slice(0, 8)}`;
+
+      let added = 0;
+      for (const mesh of group.meshes) {
+        try {
+          const geomId = batched.addGeometry(mesh.geometry);
+          const instId = batched.addInstance(geomId);
+          batched.setMatrixAt(instId, mesh.matrixWorld);
+          (mesh.userData as { batchHandle?: { batched: THREE.BatchedMesh; instanceId: number } }).batchHandle = {
+            batched,
+            instanceId: instId,
+          };
+          // Hide the original mesh from rendering — the BatchedMesh draws
+          // it now. We KEEP it in the scene graph (don't reparent) so its
+          // matrixWorld + bbox stay accurate for zoomToSelection / picking.
+          mesh.visible = false;
+          added++;
+        } catch (err) {
+          // Geometry didn't fit (e.g. because of mismatched attribute formats
+          // between source meshes); leave this one as an individual mesh.
+          if (typeof import.meta !== 'undefined' && import.meta.env?.DEV) console.warn('[BIM] addInstance failed, leaving mesh standalone', err);
+        }
+      }
+
+      if (added > 0) {
+        // Add the BatchedMesh to the SCENE ROOT, not to daeGroup, so the
+        // per-instance world matrices we set via setMatrixAt aren't double-
+        // transformed by the daeGroup's parent chain.  daeGroup keeps the
+        // un-batched leftover meshes; the BatchedMesh sits beside it.
+        this.sceneManager.scene.add(batched);
+        this.batchedMeshes.push(batched);
+        batchedMeshes++;
+        batchedInstances += added;
+        drawCallsAfter += 1; // one draw call per BatchedMesh
+      } else {
+        // Nothing added — drop the empty batched mesh and keep originals
+        drawCallsAfter += group.meshes.length;
+      }
+    }
+
+    if (typeof import.meta !== 'undefined' && import.meta.env?.DEV) console.info(
+      `[BIM] BatchedMesh: ${batchedMeshes} batches holding ${batchedInstances} instances; ` +
+        `draw calls ${drawCallsBefore} → ${drawCallsAfter} ` +
+        `(${Math.round((1 - drawCallsAfter / Math.max(1, drawCallsBefore)) * 100)}% reduction)`,
+    );
+  }
+
+  /**
+   * Give every individually-rendered mesh a bounds tree so raycast picking is
+   * accelerated. Meshes collapsed into a BatchedMesh are skipped - they are
+   * hidden and their picking is resolved through the BatchedMesh + batchHandle,
+   * so a per-mesh tree would only waste memory. Each build is wrapped so a
+   * single un-indexable geometry can't abort the pass, and the whole pass is
+   * capped so a pathological un-batchable model can't stall the load; anything
+   * without a tree simply keeps the stock (correct, slower) raycast path.
+   */
+  private buildPickingBVH(): void {
+    // Above this many individual meshes the eager build cost outweighs the
+    // per-pick saving during load; such a model has almost certainly batched
+    // anyway. Kept just above the 10k batching threshold for the mixed case
+    // where small material groups stay un-batched.
+    const MAX_EAGER_BVH_MESHES = 12_000;
+    const pickable = this.allDaeMeshes.filter(
+      (m) => !(m.userData as { batchHandle?: unknown }).batchHandle,
+    );
+    if (pickable.length === 0 || pickable.length > MAX_EAGER_BVH_MESHES) return;
+    let built = 0;
+    for (const mesh of pickable) {
+      if (ensureBoundsTree(mesh.geometry)) built++;
+    }
+    if (built > 0 && typeof import.meta !== 'undefined' && import.meta.env?.DEV) {
+      console.info(`[BIM] built ${built}/${pickable.length} picking BVH(s)`);
+    }
+  }
+
+  /** Returns true if DAE geometry was loaded. */
+  hasLoadedGeometry(): boolean {
+    return this.geometryLoaded;
+  }
+
+  /** Reset the load-status flag so the next ``loadGeometry`` call goes
+   *  through. Used by the BIMViewer retry button after a load failure
+   *  (issue #113) — there's no in-scene state to clean up because a
+   *  failed load never reached the success branch that sets
+   *  ``geometryLoaded = true``. */
+  resetGeometryLoadFlag(): void {
+    this.geometryLoaded = false;
+  }
+
+  /**
+   * Ratio of elements whose DAE mesh was successfully identified by
+   * stable_id/name. The parent UI surfaces a hint when this is very low
+   * (i.e. filter chips can't hide individual objects in the viewport).
+   */
+  getMeshMatchRatio(): number {
+    return this.meshMatchRatio;
+  }
+
+  /** Remove placeholder box meshes (used when DAE geometry replaces them). */
+  private clearPlaceholders(): void {
+    for (const mesh of this.meshMap.values()) {
+      mesh.geometry.dispose();
+      this.elementGroup.remove(mesh);
+    }
+    this.meshMap.clear();
+  }
+
+  private createBoxMesh(element: BIMElementData): THREE.Mesh {
+    const bb = element.bounding_box!;
+    // DDC converters (RVT/IFC) output Z_UP coordinates (Z = height).
+    // Three.js uses Y_UP (Y = height).  Swap Y ↔ Z so the model stands
+    // upright instead of being perpendicular to the ground plane.
+    const width = Math.abs(bb.max_x - bb.min_x) || 0.1;
+    const height = Math.abs(bb.max_z - bb.min_z) || 0.1; // Z → Y (height)
+    const depth = Math.abs(bb.max_y - bb.min_y) || 0.1;  // Y → Z (depth)
+
+    const geometry = new THREE.BoxGeometry(width, height, depth);
+    // Color by element category (type) for immediate visual distinction,
+    // falling back to discipline color if no category mapping exists.
+    const catColor = getCategoryColor(element.element_type);
+    const material = this.getOrCreateCategoryMaterial(element.element_type, catColor);
+
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(
+      (bb.min_x + bb.max_x) / 2,
+      (bb.min_z + bb.max_z) / 2,  // Z → Y (height)
+      (bb.min_y + bb.max_y) / 2,  // Y → Z (depth)
+    );
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+
+    // Add thin wireframe outline for depth / edge visibility
+    const edgeGeo = new THREE.EdgesGeometry(geometry);
+    const edgeMat = new THREE.LineBasicMaterial({
+      color: 0x222222,
+      transparent: true,
+      opacity: 0.25,
+    });
+    const wireframe = new THREE.LineSegments(edgeGeo, edgeMat);
+    mesh.add(wireframe);
+
+    // Store element data for raycasting / picking
+    mesh.userData = {
+      elementId: element.id,
+      elementData: element,
+    };
+
+    return mesh;
+  }
+
+  private getMaterial(discipline: string): THREE.MeshStandardMaterial {
+    const key = discipline.toLowerCase();
+    let mat = this.baseMaterials.get(key);
+    if (!mat) {
+      mat = new THREE.MeshStandardMaterial({
+        color: getDisciplineColor(discipline),
+        roughness: 0.7,
+        metalness: 0.1,
+        // Opaque by default: an alpha-blended default forced a per-frame
+        // back-to-front sort across every element and disabled early-z, which
+        // is the single biggest frame-rate cost on a heavy model. The
+        // see-through looks (per-category opacity, isolation ghost, glass) set
+        // their own transparency at the moment they are used, so making the
+        // default solid changes only the resting appearance, not those tools.
+        transparent: false,
+        opacity: 1.0,
+        wireframe: this.wireframeEnabled,
+      });
+      this.baseMaterials.set(key, mat);
+    }
+    return mat;
+  }
+
+  /**
+   * Return a translucent variant of `source` for a glass-like element.
+   *
+   * The variant keeps the source's albedo (so blue/green tinted glazing
+   * stays tinted) but becomes alpha-blended with a low opacity, a glossy
+   * low-roughness finish and `depthWrite:false` so panes behind it still
+   * show through instead of z-fighting into an opaque slab.
+   *
+   * Performance contract: NO transmission/refraction (those need a second
+   * render target). The only added cost is the alpha-blend + back-to-front
+   * sort that Three.js already performs for any `transparent` material, and
+   * it is paid only by the small glass subset. Variants are cached per
+   * source-material uuid so the model's glazing collapses to a handful of
+   * extra materials regardless of pane count.
+   */
+  private getGlassMaterial(source: THREE.Material | undefined): THREE.Material {
+    const key = source?.uuid ?? '_fallback';
+    const cached = this.glassMaterials.get(key);
+    if (cached) return cached;
+
+    let glass: THREE.Material;
+    if (
+      source &&
+      (source as THREE.MeshStandardMaterial).isMeshStandardMaterial
+    ) {
+      const std = source.clone() as THREE.MeshStandardMaterial;
+      std.transparent = true;
+      std.opacity = 0.28;
+      std.roughness = 0.05;
+      std.metalness = 0.0;
+      std.depthWrite = false;
+      // A faint envelope so edges read even against a bright background.
+      std.side = THREE.DoubleSide;
+      glass = std;
+    } else if (source && (source as THREE.Material).clone) {
+      const m = source.clone();
+      (m as THREE.Material & { transparent: boolean }).transparent = true;
+      (m as THREE.Material & { opacity: number }).opacity = 0.3;
+      (m as THREE.Material & { depthWrite: boolean }).depthWrite = false;
+      glass = m;
+    } else {
+      glass = new THREE.MeshStandardMaterial({
+        color: 0x9fc8d8,
+        transparent: true,
+        opacity: 0.28,
+        roughness: 0.05,
+        metalness: 0.0,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        wireframe: this.wireframeEnabled,
+      });
+    }
+    this.glassMaterials.set(key, glass);
+    this.createdMaterials.add(glass);
+    return glass;
+  }
+
+  /** Get or create a material keyed by category name + color.
+   *  Placeholder boxes use this so each RVT/IFC category gets a
+   *  unique color without duplicating material allocations. */
+  private getOrCreateCategoryMaterial(
+    category: string,
+    color: number,
+  ): THREE.MeshStandardMaterial {
+    const key = `cat_${category}`;
+    let mat = this.baseMaterials.get(key);
+    if (!mat) {
+      mat = new THREE.MeshStandardMaterial({
+        color,
+        roughness: 0.6,
+        metalness: 0.08,
+        // Opaque by default (see getMaterial): avoids a per-frame transparency
+        // sort across every placeholder box. Per-category opacity / ghost still
+        // apply their own transparency on demand.
+        transparent: false,
+        opacity: 1.0,
+        wireframe: this.wireframeEnabled,
+      });
+      this.baseMaterials.set(key, mat);
+    }
+    return mat;
+  }
+
+  /** Get mesh by element ID. */
+  getMesh(elementId: string): THREE.Mesh | undefined {
+    return this.meshMap.get(elementId);
+  }
+
+  /** Get element data by ID. */
+  getElementData(elementId: string): BIMElementData | undefined {
+    return this.elementDataMap.get(elementId);
+  }
+
+  /** Get all meshes for raycasting — includes both matched element meshes
+   *  and un-matched DAE background meshes so clicking the model always
+   *  hits something. */
+  getAllMeshes(): THREE.Mesh[] {
+    if (this.allDaeMeshes.length > 0) return this.allDaeMeshes;
+    return Array.from(this.meshMap.values());
+  }
+
+  /** Get all element data entries. */
+  getAllElements(): BIMElementData[] {
+    return Array.from(this.elementDataMap.values());
+  }
+
+  /** Toggle wireframe mode for ALL meshes — both box placeholders
+   *  (baseMaterials) and DAE/COLLADA-loaded geometry. */
+  toggleWireframe(): void {
+    this.wireframeEnabled = !this.wireframeEnabled;
+    for (const mat of this.baseMaterials.values()) {
+      mat.wireframe = this.wireframeEnabled;
+    }
+    // Also toggle DAE-loaded meshes whose materials are NOT in baseMaterials
+    for (const mesh of this.allDaeMeshes) {
+      const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+      for (const mat of mats) {
+        if (mat && 'wireframe' in mat) {
+          (mat as THREE.MeshStandardMaterial).wireframe = this.wireframeEnabled;
+        }
+      }
+    }
+    this.sceneManager.requestRender();
+  }
+
+  /** Get wireframe state. */
+  isWireframe(): boolean {
+    return this.wireframeEnabled;
+  }
+
+  /**
+   * Apply a render-quality preset to every material this manager owns,
+   * and toggle CAD-style edge overlays for the Visual preset.
+   *
+   * The four modes are designed to be VISUALLY distinct, not just to flip
+   * one flag:
+   *
+   *   fast   — flatShading + rough matte + opaque (including glass).
+   *            Lighting calcs simplified to vertex-flat normals → up to
+   *            2× fragment perf on shaded geometry; opaque glass kills
+   *            alpha-sort.
+   *   default — PBR standard, opaque non-glass surface (glass stays a
+   *            translucent pane), full lighting. Migration-safe.
+   *   visual  — PBR + glass alone stays transparent + per-mesh edge
+   *            overlay (LineSegments built from EdgesGeometry) gives a
+   *            CAD-render look. The opaque non-glass surface lets the
+   *            edges read crisply against the geometry.
+   *   walk    — flat shaded + opaque everything for top-rate fps while
+   *            navigating in first-person.
+   */
+  applyQualityMode(mode: BIMQualityMode): void {
+    // Per-mode property targets. The default non-glass surface is now opaque in
+    // every mode (founder call): an alpha-blended default cost a per-frame
+    // transparency sort on the whole model for a marginal look. See-through is
+    // still available on demand (per-category opacity, isolation ghost).
+    const baseFlat = mode === 'fast' || mode === 'walk';
+    const baseRoughness = mode === 'visual' ? 0.5 : baseFlat ? 1.0 : 0.7;
+    const baseMetalness = mode === 'visual' ? 0.15 : baseFlat ? 0.0 : 0.1;
+
+    // Glass: opaque tinted panel in fast/walk; cleanest pane in visual;
+    // current 0.28 in default.
+    const glassOpaque = mode === 'fast' || mode === 'walk';
+    const glassOpacity = glassOpaque ? 1.0 : mode === 'visual' ? 0.2 : 0.28;
+    const glassRoughness = mode === 'visual' ? 0.02 : 0.05;
+
+    // Build a uuid set of glass materials so we can route each material
+    // down the correct branch when sweeping `createdMaterials`.
+    const glassUuids = new Set<string>();
+    for (const g of this.glassMaterials.values()) glassUuids.add(g.uuid);
+
+    const applyBase = (mat: THREE.Material | null | undefined): void => {
+      if (!mat) return;
+      if (glassUuids.has(mat.uuid)) return;
+      const m = mat as THREE.MeshStandardMaterial & {
+        flatShading?: boolean;
+      };
+      m.transparent = false;
+      m.opacity = 1.0;
+      if ('flatShading' in m) m.flatShading = baseFlat;
+      if ('roughness' in m) m.roughness = baseRoughness;
+      if ('metalness' in m) m.metalness = baseMetalness;
+      // flatShading swap regenerates normals → must mark for full recompile.
+      mat.needsUpdate = true;
+    };
+
+    const applyGlass = (mat: THREE.Material): void => {
+      const m = mat as THREE.MeshStandardMaterial;
+      m.transparent = !glassOpaque;
+      m.opacity = glassOpacity;
+      // Opaque glass needs depthWrite ON; transparent glass keeps it OFF
+      // so panes behind it render correctly. The constructor sets `false`
+      // for the transparent path — we mirror that here per mode.
+      m.depthWrite = glassOpaque;
+      if ('roughness' in m) m.roughness = glassRoughness;
+      mat.needsUpdate = true;
+    };
+
+    for (const mat of this.baseMaterials.values()) applyBase(mat);
+    for (const mat of this.createdMaterials) {
+      if (glassUuids.has(mat.uuid)) applyGlass(mat);
+      else applyBase(mat);
+    }
+    for (const mat of this.glassMaterials.values()) applyGlass(mat);
+
+    // CAD-style edge silhouettes are the signature of the Visual preset.
+    // Toggling is idempotent — _enableEdgeOverlay() short-circuits when
+    // overlays already exist, and _disableEdgeOverlay() is a no-op on an
+    // empty map.
+    if (mode === 'visual') this._enableEdgeOverlay();
+    else this._disableEdgeOverlay();
+
+    this.sceneManager.requestRender();
+  }
+
+  /** LineSegments overlays drawn on top of every mesh in Visual mode to
+   *  give the model a CAD-documentation look. Keyed by element id so we
+   *  can tear them down cleanly on mode change without disturbing the
+   *  underlying meshes. */
+  private _edgeOverlays = new Map<string, THREE.LineSegments>();
+  /** Shared LineBasicMaterial used by every overlay — one allocation,
+   *  one disposal in `dispose()` via `createdMaterials`. */
+  private _edgeMaterial: THREE.LineBasicMaterial | null = null;
+
+  private _enableEdgeOverlay(): void {
+    if (this._edgeOverlays.size > 0) return;
+    if (!this._edgeMaterial) {
+      this._edgeMaterial = new THREE.LineBasicMaterial({
+        color: 0x1f2937,
+        transparent: true,
+        opacity: 0.55,
+      });
+      this.createdMaterials.add(this._edgeMaterial);
+    }
+    // 25° threshold — emits the strong silhouette lines you want in a CAD
+    // render without exploding draw-count on curved DAE surfaces. For a
+    // 5 000-mesh federation this is the line between "looks crisp" and
+    // "kills the GPU".
+    const THRESHOLD_DEG = 25;
+    for (const [id, mesh] of this.meshMap) {
+      if (!mesh.geometry) continue;
+      const edges = new THREE.EdgesGeometry(mesh.geometry, THRESHOLD_DEG);
+      const lines = new THREE.LineSegments(edges, this._edgeMaterial);
+      lines.renderOrder = 1;
+      lines.frustumCulled = mesh.frustumCulled;
+      mesh.add(lines);
+      this._edgeOverlays.set(id, lines);
+    }
+  }
+
+  private _disableEdgeOverlay(): void {
+    for (const lines of this._edgeOverlays.values()) {
+      if (lines.parent) lines.parent.remove(lines);
+      if (lines.geometry) lines.geometry.dispose();
+    }
+    this._edgeOverlays.clear();
+  }
+
+  /** Set visibility of elements by discipline. */
+  setDisciplineVisible(discipline: string, visible: boolean): void {
+    // #153 guard — RVT elements without an IFC discipline arrive with
+    // `data.elementData.discipline === undefined`. Previous code crashed
+    // on the first such element when the user toggled a filter.
+    const target = (discipline ?? '').toLowerCase();
+    for (const [, mesh] of this.meshMap) {
+      const data = mesh.userData as { elementData?: BIMElementData };
+      const elDiscipline = (data.elementData?.discipline ?? '').toLowerCase();
+      if (elDiscipline && elDiscipline === target) {
+        mesh.visible = visible;
+      }
+    }
+  }
+
+  /** Set visibility of elements by storey. */
+  setStoreyVisible(storey: string, visible: boolean): void {
+    for (const [, mesh] of this.meshMap) {
+      const data = mesh.userData as { elementData?: BIMElementData };
+      if (data.elementData?.storey === storey) {
+        mesh.visible = visible;
+      }
+    }
+  }
+
+  /** Get unique disciplines from loaded elements. */
+  getDisciplines(): string[] {
+    const set = new Set<string>();
+    for (const el of this.elementDataMap.values()) {
+      if (el.discipline) set.add(el.discipline);
+    }
+    return Array.from(set).sort();
+  }
+
+  /** Get unique storeys from loaded elements. */
+  getStoreys(): string[] {
+    const set = new Set<string>();
+    for (const el of this.elementDataMap.values()) {
+      if (el.storey) set.add(el.storey);
+    }
+    return Array.from(set).sort();
+  }
+
+  /** Get unique element types from loaded elements, with counts. */
+  getTypeCounts(): Map<string, number> {
+    const map = new Map<string, number>();
+    for (const el of this.elementDataMap.values()) {
+      const key = el.element_type || 'Unknown';
+      map.set(key, (map.get(key) ?? 0) + 1);
+    }
+    return map;
+  }
+
+  /** Get discipline counts. */
+  getDisciplineCounts(): Map<string, number> {
+    const map = new Map<string, number>();
+    for (const el of this.elementDataMap.values()) {
+      const key = el.discipline || 'other';
+      map.set(key, (map.get(key) ?? 0) + 1);
+    }
+    return map;
+  }
+
+  /** Get storey counts. */
+  getStoreyCounts(): Map<string, number> {
+    const map = new Map<string, number>();
+    for (const el of this.elementDataMap.values()) {
+      const key = el.storey || 'Unassigned';
+      map.set(key, (map.get(key) ?? 0) + 1);
+    }
+    return map;
+  }
+
+  /**
+   * Apply a visibility predicate to every element. Fast bulk update: each
+   * matched mesh gets `visible = predicate(element)`.
+   *
+   * Behaviour when DAE geometry is loaded but mesh-to-element matching is
+   * sparse (e.g. RVT exports where nodes are numeric IDs unrelated to
+   * element stable_ids): we still update matched meshes, but we also
+   * KEEP the un-matched DAE group fully visible so users at least see the
+   * rest of the model as a "context" background. If a mesh-level filter
+   * matters, the parent UI surfaces a hint via getMeshMatchRatio().
+   *
+   * Returns the number of visible elements after the filter.
+   */
+  applyFilter(predicate: (el: BIMElementData) => boolean): number {
+    let visibleCount = 0;
+    let noDataCount = 0;
+
+    // Remember the active predicate so the Layers-tab category sync
+    // (`setCategoryVisible`) defers to it instead of revealing every category
+    // and undoing the isolation. We treat a predicate that keeps every loaded
+    // element as "no filter" so a cleared filter restores the normal
+    // category-toggle behaviour.
+    let keepsAll = true;
+    for (const el of this.elementDataMap.values()) {
+      if (!predicate(el)) {
+        keepsAll = false;
+        break;
+      }
+    }
+    this.filterPredicate = keepsAll ? null : predicate;
+
+    // Build a set of element IDs that pass the filter
+    const visibleIds = new Set<string>();
+    for (const [elementId] of this.meshMap) {
+      const el = this.elementDataMap.get(elementId);
+      const elFromUserData = this.meshMap.get(elementId);
+      const effectiveEl = el || (elFromUserData?.userData as { elementData?: BIMElementData })?.elementData;
+      if (!effectiveEl) {
+        noDataCount++;
+        continue;
+      }
+      if (predicate(effectiveEl)) {
+        visibleIds.add(elementId);
+        visibleCount++;
+      }
+    }
+    if (typeof import.meta !== 'undefined' && import.meta.env?.DEV) console.info(
+      `[BIM filter] meshMap=${this.meshMap.size} visible=${visibleCount} hidden=${this.meshMap.size - visibleCount - noDataCount} noData=${noDataCount}`,
+    );
+
+    // Apply visibility to meshMap entries (placeholder boxes + matched DAE)
+    for (const [elementId, mesh] of this.meshMap) {
+      const shouldShow = visibleIds.has(elementId);
+      const handle = (mesh.userData as { batchHandle?: { batched: THREE.BatchedMesh; instanceId: number } }).batchHandle;
+      if (handle) {
+        handle.batched.setVisibleAt(handle.instanceId, shouldShow);
+      } else {
+        mesh.visible = shouldShow;
+      }
+    }
+
+    // ALSO walk the entire DAE scene graph and hide/show meshes there.
+    // This catches meshes that are in the scene graph but may not be
+    // the same object reference as meshMap (Three.js ColladaLoader
+    // can nest meshes inside intermediate Group nodes).
+    //
+    // Two rules keep this isolate-correct on large RVT/IFC models:
+    //   1. Skip any mesh that carries a `batchHandle`. On big models
+    //      (>= 10k meshes) the geometry is collapsed into BatchedMesh
+    //      instances and the original mesh is parked at `visible = false`
+    //      because the batch draws it now. The meshMap loop above already
+    //      drove the batch instance via setVisibleAt. Re-showing the
+    //      original here would draw the isolated subset twice (z-fighting)
+    //      and was the only place this pass diverged from `isolate()`.
+    //   2. For a non-batched matched mesh, show it only when its element
+    //      passes the predicate; hide everything else (unmatched DAE
+    //      background included) so the selected groups are isolated rather
+    //      than overlaid on the full model.
+    if (this.daeGroup) {
+      this.daeGroup.traverse((obj) => {
+        if (obj instanceof THREE.Mesh) {
+          const ud = obj.userData as {
+            elementId?: string | null;
+            batchHandle?: { batched: THREE.BatchedMesh; instanceId: number };
+          };
+          // Batched original — rendering is owned by the BatchedMesh; leave
+          // the parked original hidden so we never double-draw the subset.
+          if (ud.batchHandle) {
+            obj.visible = false;
+            return;
+          }
+          if (ud.elementId) {
+            obj.visible = visibleIds.has(ud.elementId);
+          } else {
+            // Unmatched mesh — hide when filter is active
+            obj.visible = false;
+          }
+        }
+      });
+      this.daeGroup.visible = true;
+    }
+
+    this.sceneManager.requestRender();
+    return visibleCount;
+  }
+
+  /** Hide specific elements by ID. Sets mesh.visible = false for each.
+   *  Other elements remain unaffected.
+   *
+   *  Tracks the hidden set internally so `hasHidden()` / the W6.6
+   *  hidden-count badge can react. */
+  hideElements(ids: Set<string>): void {
+    for (const id of ids) {
+      const mesh = this.meshMap.get(id);
+      if (!mesh) continue;
+      const handle = (mesh.userData as { batchHandle?: { batched: THREE.BatchedMesh; instanceId: number } }).batchHandle;
+      if (handle) {
+        handle.batched.setVisibleAt(handle.instanceId, false);
+      } else {
+        mesh.visible = false;
+      }
+      this.hiddenElementIds.add(id);
+    }
+    this.notifyHiddenCount();
+    this.sceneManager.requestRender();
+  }
+
+  /** Reset all element visibility to visible. Also clears the hide/isolate
+   *  state so `hasHidden()` returns false until the next hide call. */
+  showAll(): void {
+    for (const mesh of this.meshMap.values()) {
+      const handle = (mesh.userData as { batchHandle?: { batched: THREE.BatchedMesh; instanceId: number } }).batchHandle;
+      if (handle) {
+        handle.batched.setVisibleAt(handle.instanceId, true);
+      } else {
+        mesh.visible = true;
+      }
+    }
+    // Walk the full DAE scene graph and make everything visible again
+    if (this.daeGroup) {
+      this.daeGroup.traverse((obj) => {
+        obj.visible = true;
+      });
+      this.daeGroup.visible = true;
+    }
+    this.hiddenElementIds.clear();
+    this.isolateActive = false;
+    this.filterPredicate = null;
+    this.hiddenCategorySet.clear();
+    this.notifyHiddenCount();
+    this.sceneManager.requestRender();
+  }
+
+  /**
+   * Highlight elements without hiding the rest of the model.  Used to show
+   * which BIM elements are linked to the currently-selected BOQ position:
+   * the caller passes the `cad_element_ids` list and the viewer colours
+   * every matching mesh orange while leaving the rest at normal colour.
+   *
+   * Passing an empty array clears the highlight and restores original colours.
+   *
+   * `colorHex` overrides the default orange — used by the clash-review
+   * deep-link to flag interfering elements in a distinct clash red so they
+   * read differently from a normal BOQ-link highlight.
+   */
+  highlight(elementIds: string[], colorHex?: number): void {
+    // Dispose previous colorBy/highlight materials before applying new ones
+    this.disposeCreatedMaterials();
+
+    const highlightColor = new THREE.Color(colorHex ?? 0xff9500); // default orange
+    const keep = new Set(elementIds);
+    for (const [id, mesh] of this.meshMap) {
+      if (keep.has(id)) {
+        const ud = mesh.userData as {
+          customMaterial?: boolean;
+          originalMaterial?: THREE.Material | THREE.Material[];
+        };
+        // Clone material so we can recolour independently of the base.
+        const base = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
+        if (base && 'clone' in base) {
+          const cloned = (base as THREE.Material & { clone(): THREE.Material }).clone();
+          mesh.material = cloned;
+          this.createdMaterials.add(cloned);
+          ud.customMaterial = true;
+        }
+        const mat = mesh.material as THREE.MeshStandardMaterial | THREE.MeshPhongMaterial;
+        if (mat && 'color' in mat && mat.color) {
+          mat.color.copy(highlightColor);
+        }
+      }
+    }
+    this.sceneManager.requestRender();
+  }
+
+  /** Isolate given element IDs — hide everything else.
+   *
+   *  Tracks the hidden set internally so `hasHidden()` / the W6.6
+   *  hidden-count badge can surface a "Show all" affordance. */
+  isolate(elementIds: string[]): void {
+    const keep = new Set(elementIds);
+    // Reset state: an isolate completely replaces any previous hide/isolate.
+    // `isolate()` owns visibility outright (it explicitly drives every mesh),
+    // so any earlier filter predicate no longer applies - clear it so a later
+    // category toggle re-derives from the isolate state, not a stale filter.
+    this.hiddenElementIds.clear();
+    this.filterPredicate = null;
+    for (const [id, mesh] of this.meshMap) {
+      const v = keep.has(id);
+      const handle = (mesh.userData as { batchHandle?: { batched: THREE.BatchedMesh; instanceId: number } }).batchHandle;
+      if (handle) {
+        handle.batched.setVisibleAt(handle.instanceId, v);
+      } else {
+        mesh.visible = v;
+      }
+      if (!v) this.hiddenElementIds.add(id);
+    }
+    // When isolating specific elements, hide unmatched DAE background so the
+    // isolated part actually stands out. If no meshes are matched at all we
+    // keep the DAE group visible — users still need to see the model.
+    if (this.meshMap.size > 0) {
+      for (const mesh of this.allDaeMeshes) {
+        const ud = mesh.userData as { elementId?: string | null; batchHandle?: { batched: THREE.BatchedMesh; instanceId: number } };
+        if (!ud.elementId) {
+          if (ud.batchHandle) {
+            ud.batchHandle.batched.setVisibleAt(ud.batchHandle.instanceId, false);
+          } else {
+            mesh.visible = false;
+          }
+        }
+      }
+    }
+    this.isolateActive = keep.size > 0;
+    this.notifyHiddenCount();
+    this.sceneManager.requestRender();
+  }
+
+  /**
+   * Return the meshes currently mapped to the given element IDs.  Used by
+   * the clash-review deep-link to (a) decide whether the clash elements
+   * actually resolved to geometry in this model and (b) frame the camera on
+   * them.  Showcase IFC/RVT exports whose GLB nodes are numeric RVT ids
+   * (unrelated to the DB element UUIDs) only resolve via the positional
+   * fallback, so a caller that gets back fewer meshes than ids should fall
+   * back to the clash centroid for camera framing rather than trust an
+   * approximate pairing. */
+  getMeshesForIds(elementIds: string[]): THREE.Mesh[] {
+    const out: THREE.Mesh[] = [];
+    for (const id of elementIds) {
+      const m = this.meshMap.get(id);
+      if (m) out.push(m);
+    }
+    return out;
+  }
+
+  private ensureGhostMaterial(): THREE.MeshStandardMaterial {
+    if (this.ghostMaterial) return this.ghostMaterial;
+    this.ghostMaterial = new THREE.MeshStandardMaterial({
+      color: 0x9aa5b1,
+      transparent: true,
+      opacity: 0.12,
+      // depthWrite off so the kept elements always read through the ghost
+      // shell rather than fighting it for the depth buffer.
+      depthWrite: false,
+      roughness: 0.9,
+      metalness: 0,
+    });
+    return this.ghostMaterial;
+  }
+
+  /**
+   * Ghost every element NOT in `keepIds`: keep them visible but render them
+   * as a faint translucent shell so the kept set reads as fully solid in
+   * context.  The original material per mesh is parked in
+   * `userData.ghostOriginal`; `clearGhost()` restores it exactly.
+   *
+   * Re-callable: switching the kept set first restores any previously
+   * ghosted meshes so state never accumulates.  Passing an empty keep set
+   * is a no-op (nothing to contrast against) — callers should use
+   * `clearGhost()` instead.
+   */
+  ghost(keepIds: string[]): void {
+    const keep = new Set(keepIds);
+    if (keep.size === 0) {
+      this.clearGhost();
+      return;
+    }
+    // Restore anything ghosted from a previous call that is now kept, then
+    // (re)ghost the current complement.  Cheaper than a full clear+reapply
+    // and avoids a one-frame flash.
+    for (const id of [...this.ghostedIds]) {
+      if (keep.has(id)) this.restoreGhostMesh(id);
+    }
+    const ghostMat = this.ensureGhostMaterial();
+    for (const [id, mesh] of this.meshMap) {
+      if (keep.has(id)) continue;
+      if (this.ghostedIds.has(id)) continue;
+      const ud = mesh.userData as {
+        ghostOriginal?: THREE.Material | THREE.Material[];
+      };
+      if (ud.ghostOriginal === undefined) ud.ghostOriginal = mesh.material;
+      mesh.material = ghostMat;
+      this.ghostedIds.add(id);
+    }
+    this.sceneManager.requestRender();
+  }
+
+  /** Restore one ghosted mesh's original material (internal helper). */
+  private restoreGhostMesh(id: string): void {
+    const mesh = this.meshMap.get(id);
+    if (mesh) {
+      const ud = mesh.userData as {
+        ghostOriginal?: THREE.Material | THREE.Material[];
+      };
+      if (ud.ghostOriginal !== undefined) {
+        mesh.material = ud.ghostOriginal;
+        delete ud.ghostOriginal;
+      }
+    }
+    this.ghostedIds.delete(id);
+  }
+
+  /** Drop ghosting entirely and restore every original material. */
+  clearGhost(): void {
+    if (this.ghostedIds.size === 0) return;
+    for (const id of [...this.ghostedIds]) this.restoreGhostMesh(id);
+    this.ghostedIds.clear();
+    this.sceneManager.requestRender();
+  }
+
+  /** Whether any element is currently ghosted. */
+  isGhostActive(): boolean {
+    return this.ghostedIds.size > 0;
+  }
+
+  /* ── W6.6 hide / isolate (selection-aware wrappers) ─────────────────── */
+
+  /** Active selection seen from the parent UI. Settable so callers can
+   *  resolve `'selected'` shorthand without reaching back into BIMViewer
+   *  state. Kept tiny — no events. */
+  private activeSelectionIds: string[] = [];
+
+  /** Set the active selection — used by `hide('selected')` /
+   *  `isolate('selected')` so the parent UI can keep its own selection
+   *  state while ElementManager remains the source of truth for what's
+   *  actually visible. */
+  setActiveSelection(ids: readonly string[]): void {
+    this.activeSelectionIds = [...ids];
+  }
+
+  /**
+   * Hide one or more elements. Pass `'selected'` to hide whatever was last
+   * passed to `setActiveSelection`. Other elements stay visible.
+   */
+  hide(elementIds: string[] | 'selected'): void {
+    const ids =
+      elementIds === 'selected' ? this.activeSelectionIds : elementIds;
+    if (ids.length === 0) return;
+    this.hideElements(new Set(ids));
+  }
+
+  /** Returns true when at least one element is hidden by `hide()`,
+   *  `isolate()`, or a Layers-tab category toggle. Used to gate the
+   *  "Show all" affordance so it appears for category hides too. */
+  hasHidden(): boolean {
+    return (
+      this.hiddenElementIds.size > 0 ||
+      this.isolateActive ||
+      this.hiddenCategorySet.size > 0
+    );
+  }
+
+  /** Current count of hidden elements (driven by hide/isolate, not by
+   *  filter or layer toggles). */
+  hiddenCount(): number {
+    return this.hiddenElementIds.size;
+  }
+
+  /** Subscribe to hidden-count changes. Returns an unsubscribe callback.
+   *
+   *  Drives the floating "{n} hidden - Show all" badge in BIMViewer.tsx,
+   *  which is shown while `hasHidden()` is true and calls `showAll()` on
+   *  click. */
+  onHiddenCountChange(cb: (count: number) => void): () => void {
+    this.hiddenCountSubscribers.add(cb);
+    // Fire once with the current value so subscribers can render synchronously.
+    cb(this.hiddenCount());
+    return () => {
+      this.hiddenCountSubscribers.delete(cb);
+    };
+  }
+
+  /** Internal — push the current hidden count to every subscriber. */
+  private notifyHiddenCount(): void {
+    if (this.hiddenCountSubscribers.size === 0) return;
+    const count = this.hiddenCount();
+    for (const cb of this.hiddenCountSubscribers) {
+      try {
+        cb(count);
+      } catch (err) {
+        if (typeof import.meta !== 'undefined' && import.meta.env?.DEV) {
+          console.warn('[BIM] hidden-count subscriber threw', err);
+        }
+      }
+    }
+  }
+
+  /* ── W6.6 color-by-property ─────────────────────────────────────────── */
+
+  /** Every unique property key found across loaded elements, sorted with
+   *  the well-known top-level fields first (so they're easy to find in a
+   *  picker UI). */
+  getAvailablePropertyKeys(): string[] {
+    const fromProps = new Set<string>();
+    for (const el of this.elementDataMap.values()) {
+      if (el.properties) {
+        for (const k of Object.keys(el.properties)) fromProps.add(k);
+      }
+      if (el.quantities) {
+        for (const k of Object.keys(el.quantities)) fromProps.add(k);
+      }
+    }
+    // Always offer canonical-format top-level fields, even when no element
+    // has the key in its `properties` bag.
+    const wellKnown = ['element_type', 'discipline', 'storey', 'category'];
+    const out: string[] = [];
+    for (const k of wellKnown) {
+      if (this.hasAnyValueForCanonicalKey(k)) {
+        out.push(k);
+        fromProps.delete(k); // avoid duplicate when the key also sits in properties
+      }
+    }
+    for (const k of Array.from(fromProps).sort()) {
+      out.push(k);
+    }
+    return out;
+  }
+
+  private hasAnyValueForCanonicalKey(k: string): boolean {
+    for (const el of this.elementDataMap.values()) {
+      if (resolveElementProperty(el, k) !== undefined) return true;
+    }
+    return false;
+  }
+
+  /** Every distinct value for a property, with element counts, sorted
+   *  most-frequent-first. Used to drive the legend in
+   *  `ColorByPropertyPanel` and to assign categorical-12 ordering. */
+  getDistinctPropertyValues(key: string): PropertyValueCount[] {
+    const counts = new Map<string | number, number>();
+    for (const el of this.elementDataMap.values()) {
+      const v = resolveElementProperty(el, key);
+      if (v === undefined || v === '') continue;
+      counts.set(v, (counts.get(v) ?? 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .map(([value, count]) => ({ value, count }))
+      .sort((a, b) => b.count - a.count);
+  }
+
+  /**
+   * Apply a property-based colouring overlay. Replaces any previous overlay.
+   * Pass null to restore base materials.
+   *
+   * Implementation notes:
+   *  - Materials are cloned per mesh (matching the pattern used by every
+   *    other colorBy* path) and tracked in `createdMaterials` for disposal.
+   *  - Selection highlighting (a separate emissive/outline pass owned by
+   *    SelectionManager) sits on top of the base diffuse colour, so this
+   *    overlay does NOT interfere with selection visuals.
+   *  - For `categorical-12` the value-to-color order is by frequency,
+   *    most-common first.  For sequential palettes, the value is clamped
+   *    to `numericRange` and linearly interpolated.
+   */
+  setColorByProperty(config: ColorByPropertyConfig | null): void {
+    // Off → restore originals.
+    if (config === null) {
+      this.colorByPropertyConfig = null;
+      this.resetColors();
+      return;
+    }
+
+    this.colorByPropertyConfig = config;
+
+    // Pre-compute the value→rank map (only meaningful for categorical-12,
+    // but cheap enough to compute unconditionally so the code path is one).
+    const distinct = this.getDistinctPropertyValues(config.propertyKey);
+    const rank = new Map<string | number, number>();
+    distinct.forEach((d, i) => rank.set(d.value, i));
+
+    // Dispose previous overlay materials before applying new ones.
+    this.disposeCreatedMaterials();
+
+    for (const [elementId, mesh] of this.meshMap) {
+      const el = this.elementDataMap.get(elementId);
+      if (!el) continue;
+      const value = resolveElementProperty(el, config.propertyKey);
+      const idx = value !== undefined ? rank.get(value) ?? -1 : -1;
+      const hex = colorForPropertyValue(config, value, idx);
+      const colour = new THREE.Color(hex);
+
+      const ud = mesh.userData as {
+        customMaterial?: boolean;
+        originalMaterial?: THREE.Material | THREE.Material[];
+      };
+
+      if (!ud.customMaterial) {
+        const base = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
+        if (base && 'clone' in base) {
+          // Record the base material so resetColors() / disposeCreatedMaterials()
+          // can put it back when the overlay is cleared. Box-placeholder meshes
+          // (no DAE geometry) never had originalMaterial set during load — we
+          // set it here, the first time we replace their material, so the
+          // off-overlay path restores the shared per-category material.
+          if (!ud.originalMaterial) ud.originalMaterial = mesh.material;
+          const cloned = (
+            base as THREE.Material & { clone(): THREE.Material }
+          ).clone();
+          mesh.material = cloned;
+          this.createdMaterials.add(cloned);
+          ud.customMaterial = true;
+        }
+      }
+      const mat = mesh.material as THREE.MeshStandardMaterial | THREE.MeshPhongMaterial;
+      if (mat && 'color' in mat && mat.color) {
+        mat.color.copy(colour);
+      }
+    }
+    this.sceneManager.requestRender();
+  }
+
+  /** Active color-by-property config (or null when off). Read-only — for
+   *  the integrator to render the legend / "X" close button. */
+  getColorByPropertyConfig(): ColorByPropertyConfig | null {
+    return this.colorByPropertyConfig;
+  }
+
+  /**
+   * Apply an opacity (0..1) to every mesh whose element_type matches the
+   * given category. Clones the base material on first use per category so
+   * the change does not leak into other categories sharing the base.
+   *
+   * Setting opacity === 1 flips `transparent=false` for renderer perf; any
+   * value below 1 enables transparency.
+   */
+  setCategoryOpacity(category: string, opacity: number): void {
+    const clamped = Math.max(0, Math.min(1, opacity));
+    let categoryMat = this.categoryMaterials.get(category);
+    for (const [elementId, mesh] of this.meshMap) {
+      const el = this.elementDataMap.get(elementId);
+      if (!el || el.element_type !== category) continue;
+      if (!categoryMat) {
+        const base = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
+        if (!base || !('clone' in base)) continue;
+        const cloned = (base as THREE.Material & { clone(): THREE.Material }).clone();
+        categoryMat = cloned;
+        this.categoryMaterials.set(category, cloned);
+      }
+      const ud = mesh.userData as {
+        originalMaterial?: THREE.Material | THREE.Material[];
+        categoryMaterial?: boolean;
+      };
+      if (!ud.originalMaterial) ud.originalMaterial = mesh.material;
+      mesh.material = categoryMat;
+      ud.categoryMaterial = true;
+    }
+    if (categoryMat && 'opacity' in categoryMat) {
+      const m = categoryMat as THREE.Material & { opacity: number; transparent: boolean };
+      m.opacity = clamped;
+      m.transparent = clamped < 1;
+      m.needsUpdate = true;
+    }
+    this.sceneManager.requestRender();
+  }
+
+  /**
+   * Show or hide every mesh whose category (`element_type || 'Unknown'`)
+   * matches `category`. Drives the Layers-tab visibility toggles.
+   *
+   * Bidirectional and batched-aware: it uses the same `batchHandle`
+   * pattern as `applyFilter` / `hideElements` so it works on BatchedMesh
+   * instances (which ignore `mesh.visible`) as well as standalone meshes.
+   *
+   * When revealing (`visible === true`) it never un-hides an element that
+   * the user hid individually via `hide()` / context-menu Hide. While an
+   * `isolate()` is active, isolation owns visibility and this method only
+   * updates the tracked hidden-category set without touching any mesh — so
+   * a category toggle can't stomp the isolated subset. The set of hidden
+   * categories is tracked so `hasHidden()` and the Show-all affordance
+   * reflect Layers-tab hides too.
+   */
+  setCategoryVisible(category: string, visible: boolean): void {
+    if (visible) {
+      this.hiddenCategorySet.delete(category);
+    } else {
+      this.hiddenCategorySet.add(category);
+    }
+    // Isolation is the higher-priority visibility owner: leave meshes alone
+    // and just record intent. `showAll()`/exiting isolate re-derives the
+    // correct state, and a later category toggle outside isolation applies.
+    if (this.isolateActive) {
+      this.notifyHiddenCount();
+      return;
+    }
+    // A filter predicate (in-viewer panel selection) also owns visibility:
+    // the Layers sync in BIMViewer re-runs after every filter change, so
+    // blindly revealing a whole category here would re-show elements the
+    // filter just isolated away - the exact "filter briefly works then the
+    // model snaps back" symptom. Defer to the filter: an element of this
+    // category is visible only when it passes the filter predicate AND the
+    // category is not being hidden, and is never revealed against the filter.
+    const filter = this.filterPredicate;
+    for (const [elementId, mesh] of this.meshMap) {
+      const el = this.elementDataMap.get(elementId);
+      if (!el) continue;
+      const cat = el.element_type || 'Unknown';
+      if (cat !== category) continue;
+      // Never reveal an element the user hid individually — that hide wins.
+      // While a filter is active, "visible" also requires the predicate to
+      // pass so a category-reveal can't override the filter's isolation.
+      const passesFilter = filter ? filter(el) : true;
+      const shouldShow =
+        visible && passesFilter && !this.hiddenElementIds.has(elementId);
+      const handle = (mesh.userData as { batchHandle?: { batched: THREE.BatchedMesh; instanceId: number } }).batchHandle;
+      if (handle) {
+        handle.batched.setVisibleAt(handle.instanceId, shouldShow);
+      } else {
+        mesh.visible = shouldShow;
+      }
+    }
+    this.notifyHiddenCount();
+    this.sceneManager.requestRender();
+  }
+
+  /**
+   * Dispose all cloned materials from previous colorBy* calls.
+   * Must be called at the start of every colorBy method to prevent
+   * leaking one WebGL program per element per mode switch.
+   */
+  private disposeCreatedMaterials(): void {
+    for (const mat of this.createdMaterials) {
+      mat.dispose();
+    }
+    this.createdMaterials.clear();
+    // Reset customMaterial flag on all meshes so the next colorBy pass
+    // knows it needs to clone again from the original material.
+    for (const [, mesh] of this.meshMap) {
+      const ud = mesh.userData as {
+        customMaterial?: boolean;
+        originalMaterial?: THREE.Material | THREE.Material[];
+      };
+      if (ud.customMaterial) {
+        if (ud.originalMaterial) {
+          mesh.material = ud.originalMaterial;
+        }
+        ud.customMaterial = false;
+      }
+    }
+  }
+
+  /**
+   * Re-color every mesh using a direct (element → Color | null) function.
+   * Returning null leaves the mesh at its original colour.  This is the
+   * fixed-palette path used by the "color by validation" / "color by BOQ
+   * coverage" / "color by document coverage" modes — where we want a
+   * meaningful red/amber/green colour scale, not the hash-to-hue rainbow
+   * the existing `colorBy()` produces.
+   *
+   * Pass an `opacityFn` alongside `colorFn` to fade specific elements (e.g.
+   * the 5D mode fades elements that have no linked BOQ rate so they read
+   * as "no data").  Opacity 1 stays fully opaque and non-transparent;
+   * opacity < 1 sets `transparent=true` so the GPU composites correctly.
+   */
+  colorByDirect(
+    colorFn: (el: BIMElementData) => THREE.Color | null,
+    opacityFn?: (el: BIMElementData) => number,
+  ): void {
+    // Dispose all previously created materials to prevent memory leaks
+    // when switching between colorBy modes.
+    this.disposeCreatedMaterials();
+    for (const [elementId, mesh] of this.meshMap) {
+      const el = this.elementDataMap.get(elementId);
+      if (!el) continue;
+      const color = colorFn(el);
+      const opacity = opacityFn ? opacityFn(el) : 1;
+
+      const ud = mesh.userData as {
+        customMaterial?: boolean;
+        originalMaterial?: THREE.Material | THREE.Material[];
+      };
+
+      if (color === null) {
+        // Restore original material if we'd previously cloned one
+        if (ud.customMaterial) {
+          const old = mesh.material;
+          if (old instanceof THREE.Material) {
+            this.createdMaterials.delete(old);
+            old.dispose();
+          }
+          if (ud.originalMaterial) mesh.material = ud.originalMaterial;
+          ud.customMaterial = false;
+        }
+        continue;
+      }
+
+      // Clone material on first recolor so we don't mutate the shared one
+      if (!ud.customMaterial) {
+        const base = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
+        if (base && 'clone' in base) {
+          const cloned = (
+            base as THREE.Material & { clone(): THREE.Material }
+          ).clone();
+          mesh.material = cloned;
+          this.createdMaterials.add(cloned);
+          ud.customMaterial = true;
+        }
+      }
+      const mat = mesh.material as THREE.MeshStandardMaterial | THREE.MeshPhongMaterial;
+      if (mat && 'color' in mat && mat.color) {
+        mat.color.copy(color);
+      }
+      // Apply opacity. `transparent` must toggle in lockstep so the GPU
+      // picks the correct depth-write/blend path; at 1.0 we restore
+      // non-transparent rendering to avoid sort-order artefacts.
+      if (mat && 'opacity' in mat) {
+        const clamped = Math.max(0, Math.min(1, opacity));
+        (mat as THREE.Material & { opacity: number }).opacity = clamped;
+        (mat as THREE.Material & { transparent: boolean }).transparent = clamped < 1;
+      }
+    }
+    this.sceneManager.requestRender();
+  }
+
+  /**
+   * Re-color every mesh based on a key-extractor function. A distinct color
+   * is assigned to each unique key via a simple hash-to-hue mapping.
+   * Used to implement "color by storey" and "color by type" modes.
+   */
+  /**
+   * Compute the (key → CSS hex) mapping that `colorBy()` would apply for a
+   * given key function, without touching any meshes.  Used by the legend
+   * overlay so swatches stay in lock-step with the live colouring.
+   */
+  static buildColorByPalette(
+    elements: readonly BIMElementData[],
+    keyFn: (el: BIMElementData) => string,
+  ): Array<{ key: string; hex: string }> {
+    const keys = new Set<string>();
+    for (const el of elements) keys.add(keyFn(el));
+    const keyList = Array.from(keys).sort();
+    return keyList.map((key, i) => {
+      const hue = (i * 137.5) % 360;
+      const color = new THREE.Color().setHSL(hue / 360, 0.55, 0.55);
+      return { key, hex: `#${color.getHexString()}` };
+    });
+  }
+
+  colorBy(keyFn: (el: BIMElementData) => string): void {
+    // Collect unique keys for stable color assignment
+    const keys = new Set<string>();
+    for (const el of this.elementDataMap.values()) {
+      keys.add(keyFn(el));
+    }
+    const keyList = Array.from(keys).sort();
+    const colorMap = new Map<string, THREE.Color>();
+    for (let i = 0; i < keyList.length; i++) {
+      const hue = (i * 137.5) % 360; // golden angle for distinct hues
+      const color = new THREE.Color().setHSL(hue / 360, 0.55, 0.55);
+      colorMap.set(keyList[i]!, color);
+    }
+
+    // Dispose all previously created materials to prevent memory leaks
+    // when switching between colorBy modes.
+    this.disposeCreatedMaterials();
+
+    // Apply per-mesh material clone (so we can color independently)
+    for (const [elementId, mesh] of this.meshMap) {
+      const el = this.elementDataMap.get(elementId);
+      if (!el) continue;
+      const key = keyFn(el);
+      const color = colorMap.get(key);
+      if (!color) continue;
+
+      // Clone material on first recolor so we don't mutate the shared one
+      const ud = mesh.userData as { customMaterial?: boolean };
+      if (!ud.customMaterial) {
+        const base = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
+        if (base instanceof THREE.MeshStandardMaterial) {
+          const cloned = base.clone();
+          mesh.material = cloned;
+          this.createdMaterials.add(cloned);
+          ud.customMaterial = true;
+        }
+      }
+      const mat = mesh.material as THREE.MeshStandardMaterial;
+      if (mat && mat.color) {
+        mat.color.copy(color);
+      }
+    }
+    this.sceneManager.requestRender();
+  }
+
+  /** Reset mesh colors back to their discipline-based material. */
+  resetColors(): void {
+    // Dispose all cloned materials and restore originals in one pass.
+    this.disposeCreatedMaterials();
+    // Clear any color-by-property overlay so the next callsite gets a
+    // clean baseline (otherwise getColorByPropertyConfig() would still
+    // report an active overlay even though the meshes are at base colour).
+    this.colorByPropertyConfig = null;
+    // For meshes that had no originalMaterial cached, fall back to the
+    // flat discipline material so they stay visible.
+    for (const [elementId, mesh] of this.meshMap) {
+      const el = this.elementDataMap.get(elementId);
+      if (!el) continue;
+      const ud = mesh.userData as {
+        originalMaterial?: THREE.Material | THREE.Material[];
+      };
+      if (!ud.originalMaterial) {
+        mesh.material = this.getMaterial(el.discipline || 'other');
+      }
+    }
+    this.sceneManager.requestRender();
+  }
+
+  /** Remove all elements from the scene. */
+  clear(): void {
+    for (const mesh of this.meshMap.values()) {
+      disposeBounds(mesh.geometry);
+      mesh.geometry.dispose();
+      this.elementGroup.remove(mesh);
+    }
+    this.meshMap.clear();
+    this.elementDataMap.clear();
+
+    // Remove DAE geometry group if loaded
+    if (this.daeGroup) {
+      this.daeGroup.traverse((obj) => {
+        if (obj instanceof THREE.Mesh) {
+          disposeBounds(obj.geometry);
+          obj.geometry?.dispose();
+        }
+      });
+      this.elementGroup.remove(this.daeGroup);
+      this.daeGroup = null;
+    }
+    // Dispose every BatchedMesh added by the big-model perf path
+    for (const batched of this.batchedMeshes) {
+      this.sceneManager.scene.remove(batched);
+      batched.dispose();
+    }
+    this.batchedMeshes = [];
+    this.allDaeMeshes = [];
+    this.meshMatchRatio = 0;
+    this.geometryLoaded = false;
+    // Ghost references point at meshes that were just disposed above —
+    // drop them so a fresh model doesn't try to restore stale materials.
+    this.ghostedIds.clear();
+    // W6.6: hidden / isolate / color-by-property state is per-model — wipe.
+    if (
+      this.hiddenElementIds.size > 0 ||
+      this.isolateActive ||
+      this.hiddenCategorySet.size > 0
+    ) {
+      this.hiddenElementIds.clear();
+      this.isolateActive = false;
+      this.hiddenCategorySet.clear();
+      this.notifyHiddenCount();
+    }
+    this.colorByPropertyConfig = null;
+    // Drop any active filter predicate — it references the previous model's
+    // elements and must not leak into the freshly loaded one.
+    this.filterPredicate = null;
+    this.activeSelectionIds = [];
+    // Materials are reused — dispose them only on full destroy
+  }
+
+  /** Dispose all resources. */
+  dispose(): void {
+    this.clear();
+    for (const mat of this.baseMaterials.values()) {
+      mat.dispose();
+    }
+    this.baseMaterials.clear();
+    // Dispose any per-mesh material clones still alive from colorBy* paths
+    for (const mat of this.createdMaterials) {
+      mat.dispose();
+    }
+    this.createdMaterials.clear();
+    // Glass variants were registered in createdMaterials (disposed above) —
+    // just drop the cache map so a re-loaded model rebuilds fresh ones.
+    this.glassMaterials.clear();
+    // Release per-category material clones from setCategoryOpacity.
+    for (const mat of this.categoryMaterials.values()) {
+      mat.dispose();
+    }
+    this.categoryMaterials.clear();
+    if (this.ghostMaterial) {
+      this.ghostMaterial.dispose();
+      this.ghostMaterial = null;
+    }
+    this.ghostedIds.clear();
+    // W6.6: drop hidden-count subscribers so the next mount starts clean.
+    this.hiddenCountSubscribers.clear();
+    this.sceneManager.scene.remove(this.elementGroup);
+  }
+}

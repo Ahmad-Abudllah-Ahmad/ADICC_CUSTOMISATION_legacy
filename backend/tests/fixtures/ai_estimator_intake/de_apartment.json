@@ -1,0 +1,108 @@
+{
+  "name": "de_apartment",
+  "raw_request": "Wohnungssanierung 120 m2",
+  "mode_hint": "offline",
+  "expected_type": "apartment_reno",
+  "answers": {
+    "floor_area_m2": 120.0,
+    "room_count": 4,
+    "ceiling_height_m": 2.7,
+    "finish_level": "standard",
+    "demolition": true,
+    "wet_rooms_count": 2
+  },
+  "expected_params": {
+    "floor_area_m2": 120.0,
+    "room_count": 4,
+    "ceiling_height_m": 2.7,
+    "finish_level": "standard",
+    "demolition": true,
+    "wet_rooms_count": 2
+  },
+  "expected_selected_packages": [
+    "commissioning",
+    "debris_removal",
+    "demo_strip",
+    "floor_screed",
+    "floor_tiling",
+    "painting_ceiling",
+    "painting_walls",
+    "wall_plaster"
+  ],
+  "expected_stage_order": [
+    "demo",
+    "rough",
+    "close",
+    "finish",
+    "commission"
+  ],
+  "expected_quantities": {
+    "demo_strip": 120.0,
+    "floor_screed": 120.0,
+    "floor_tiling": 120.0,
+    "painting_ceiling": 120.0
+  },
+  "golden_positions": {
+    "demo_strip": {
+      "collection_name": [
+        "Finishing works",
+        "Repair and construction works"
+      ],
+      "masterformat": [
+        "02"
+      ]
+    },
+    "floor_screed": {
+      "collection_name": [
+        "Floors",
+        "Finishing works"
+      ],
+      "masterformat": [
+        "03 35",
+        "09"
+      ]
+    },
+    "wall_plaster": {
+      "collection_name": [
+        "Plastering work",
+        "Stucco work",
+        "Finishing works"
+      ],
+      "masterformat": [
+        "09 24",
+        "09 20",
+        "09"
+      ]
+    },
+    "floor_tiling": {
+      "collection_name": [
+        "Floors",
+        "Finishing works"
+      ],
+      "masterformat": [
+        "09 30",
+        "09"
+      ]
+    },
+    "painting_walls": {
+      "collection_name": [
+        "Painting work",
+        "Finishing works"
+      ],
+      "masterformat": [
+        "09 90",
+        "09"
+      ]
+    },
+    "painting_ceiling": {
+      "collection_name": [
+        "Painting work",
+        "Finishing works"
+      ],
+      "masterformat": [
+        "09 90",
+        "09"
+      ]
+    }
+  }
+}

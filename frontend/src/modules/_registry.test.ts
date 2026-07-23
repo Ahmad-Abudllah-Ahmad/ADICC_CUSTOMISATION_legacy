@@ -1,0 +1,244 @@
+// @ts-nocheck
+import { describe, it, expect } from 'vitest';
+import {
+  MODULE_REGISTRY,
+  getAllModuleRoutes,
+  getModuleNavItems,
+  getModuleSearchEntries,
+  getModuleDefaults,
+  getModulesByCategory,
+} from './_registry';
+
+describe('MODULE_REGISTRY', () => {
+  it('should contain at least 16 modules (post Wave 5 Epic I collapse)', () => {
+    // Wave 5 Epic I collapsed 20 country exchange modules into one
+    // polymorphic `regional-exchange` module. The registry count
+    // dropped from 35 → 16; we keep the assertion conservative so
+    // future module additions don't break it.
+    expect(MODULE_REGISTRY.length).toBeGreaterThanOrEqual(16);
+  });
+
+  it('should have unique module ids', () => {
+    const ids = MODULE_REGISTRY.map((m) => m.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('should not have installable property on any module', () => {
+    for (const mod of MODULE_REGISTRY) {
+      expect(mod).not.toHaveProperty('installable');
+    }
+  });
+
+  it('should include built-in feature modules', () => {
+    const ids = MODULE_REGISTRY.map((m) => m.id);
+    expect(ids).toContain('assemblies');
+    expect(ids).toContain('validation');
+    expect(ids).toContain('schedule');
+    expect(ids).toContain('5d');
+    expect(ids).toContain('tendering');
+    expect(ids).toContain('reports');
+  });
+
+  it('should include tool modules', () => {
+    const ids = MODULE_REGISTRY.map((m) => m.id);
+    expect(ids).toContain('sustainability');
+    expect(ids).toContain('cost-benchmark');
+    expect(ids).toContain('pdf-takeoff');
+    expect(ids).toContain('collaboration');
+    expect(ids).toContain('risk-analysis');
+    expect(ids).toContain('gaeb-exchange');
+  });
+
+  // Wave 5 Epic I: 20 individual country modules collapsed into ONE
+  // polymorphic regional-exchange module. The old per-country routes
+  // are preserved as compat shims on that single manifest.
+  it('should include the collapsed regional-exchange module', () => {
+    const ids = MODULE_REGISTRY.map((m) => m.id);
+    expect(ids).toContain('regional-exchange');
+  });
+
+  it('regional modules should have category "regional"', () => {
+    const regional = MODULE_REGISTRY.filter((m) => m.category === 'regional');
+    expect(regional.length).toBeGreaterThanOrEqual(1);
+    const ids = regional.map((m) => m.id);
+    expect(ids).toContain('regional-exchange');
+  });
+
+  it('regional-exchange should be disabled by default (gaeb-exchange is the lone exception)', () => {
+    const regional = MODULE_REGISTRY.filter((m) => m.category === 'regional');
+    for (const mod of regional) {
+      if (mod.id === 'gaeb-exchange') {
+        // GAEB DA XML 3.3 is core for the DACH workflow — on by default
+        // since v2.6.30, see modules/gaeb-exchange/manifest.ts.
+        expect(mod.defaultEnabled).toBe(true);
+      } else {
+        expect(mod.defaultEnabled).toBe(false);
+      }
+    }
+  });
+
+  it('regional modules should depend on boq', () => {
+    const regional = MODULE_REGISTRY.filter((m) => m.category === 'regional');
+    for (const mod of regional) {
+      expect(mod.depends).toContain('boq');
+    }
+  });
+
+  it('regional-exchange should expose all 20 back-compat country routes', () => {
+    const mod = MODULE_REGISTRY.find((m) => m.id === 'regional-exchange');
+    expect(mod).toBeDefined();
+    expect(mod!.routes.length).toBe(20);
+    const paths = mod!.routes.map((r) => r.path);
+    expect(paths).toContain('/uk-nrm-exchange');
+    expect(paths).toContain('/us-masterformat-exchange');
+    expect(paths).toContain('/fr-dpgf-exchange');
+    expect(paths).toContain('/uae-boq-exchange');
+    expect(paths).toContain('/au-boq-exchange');
+    expect(paths).toContain('/ca-boq-exchange');
+    expect(paths).toContain('/es-pbc-exchange');
+    expect(paths).toContain('/de-din276-exchange');
+    expect(paths).toContain('/nordic-ns3420-exchange');
+  });
+
+  it('regional-exchange should expose search entries + translations', () => {
+    const mod = MODULE_REGISTRY.find((m) => m.id === 'regional-exchange');
+    expect(mod).toBeDefined();
+    expect(mod!.searchEntries!.length).toBe(20);
+    expect(mod!.translations).toBeDefined();
+    expect(mod!.translations!['en']).toBeDefined();
+  });
+});
+
+describe('getAllModuleRoutes', () => {
+  it('should return flat list of routes from all modules', () => {
+    const routes = getAllModuleRoutes();
+    expect(routes.length).toBeGreaterThanOrEqual(10);
+    // Tool modules
+    expect(routes.some((r) => r.path === '/sustainability')).toBe(true);
+    expect(routes.some((r) => r.path === '/benchmarks')).toBe(true);
+    expect(routes.some((r) => r.path === '/takeoff-viewer')).toBe(true);
+    expect(routes.some((r) => r.path === '/collaboration')).toBe(true);
+    // Regional back-compat routes — Wave 5 Epic I kept all 20 of them
+    // even though they now share one polymorphic page.
+    expect(routes.some((r) => r.path === '/uk-nrm-exchange')).toBe(true);
+    expect(routes.some((r) => r.path === '/us-masterformat-exchange')).toBe(true);
+    expect(routes.some((r) => r.path === '/fr-dpgf-exchange')).toBe(true);
+    expect(routes.some((r) => r.path === '/uae-boq-exchange')).toBe(true);
+    expect(routes.some((r) => r.path === '/au-boq-exchange')).toBe(true);
+    expect(routes.some((r) => r.path === '/ca-boq-exchange')).toBe(true);
+    expect(routes.some((r) => r.path === '/es-pbc-exchange')).toBe(true);
+    expect(routes.some((r) => r.path === '/de-din276-exchange')).toBe(true);
+    expect(routes.some((r) => r.path === '/jp-sekisan-exchange')).toBe(true);
+    expect(routes.some((r) => r.path === '/ru-gesn-exchange')).toBe(true);
+  });
+
+  it('should have lazy components for each route', () => {
+    const routes = getAllModuleRoutes();
+    for (const route of routes) {
+      expect(route.component).toBeDefined();
+      expect(typeof route.component).toBe('object');
+    }
+  });
+});
+
+describe('getModuleNavItems', () => {
+  it('should return nav items for tools group', () => {
+    const items = getModuleNavItems('tools');
+    // Tools group holds sustainability. Other tools (benchmarks,
+    // takeoff-viewer, collaboration) live in their own groups now;
+    // gaeb-exchange opts out of sidebar nav (#217). risk-analysis no longer
+    // contributes a nav item: its standalone page was retired in the Monte
+    // Carlo IA merge (#71) so there is one simulation home (Risk Register).
+    expect(items.length).toBeGreaterThanOrEqual(1);
+    expect(items.some((i) => i.to === '/sustainability')).toBe(true);
+    expect(items.some((i) => i.to === '/risk-analysis')).toBe(false);
+  });
+
+  it('regional nav-items are intentionally empty (the page is reached via /boq)', () => {
+    // Issue #217 — the 20 country pages are reached from the BOQ
+    // page, not from individual sidebar entries. Wave 5 Epic I kept
+    // this invariant when collapsing the modules.
+    const items = getModuleNavItems('regional');
+    expect(items).toEqual([]);
+  });
+
+  it('should return empty array for non-existent group', () => {
+    const items = getModuleNavItems('nonexistent');
+    expect(items).toEqual([]);
+  });
+});
+
+describe('getModuleSearchEntries', () => {
+  it('should return search entries from all modules', () => {
+    const entries = getModuleSearchEntries();
+    expect(entries.length).toBeGreaterThanOrEqual(8);
+  });
+
+  it('should have keywords for each entry', () => {
+    const entries = getModuleSearchEntries();
+    for (const entry of entries) {
+      expect(entry.keywords.length).toBeGreaterThan(0);
+      expect(entry.path).toBeTruthy();
+      expect(entry.label).toBeTruthy();
+    }
+  });
+});
+
+describe('getModuleDefaults', () => {
+  it('should return defaults for all modules', () => {
+    const defaults = getModuleDefaults();
+    // Core modules — enabled by default
+    expect(defaults['sustainability']).toBe(true);
+    expect(defaults['cost-benchmark']).toBe(true);
+    expect(defaults['pdf-takeoff']).toBe(true);
+    expect(defaults['collaboration']).toBe(true);
+    expect(defaults['assemblies']).toBe(true);
+    expect(defaults['validation']).toBe(true);
+    // Advanced/regional — disabled by default
+    expect(defaults['risk-analysis']).toBe(false);
+    // gaeb-exchange flipped to on-by-default in v2.6.30 (GAEB DA XML 3.3
+    // is core for the DACH workflow — see manifest defaultEnabled=true).
+    expect(defaults['gaeb-exchange']).toBe(true);
+    // Wave 5 Epic I: 20 individual country exchanges collapsed into
+    // one polymorphic module (kept disabled by default like its
+    // predecessors).
+    expect(defaults['regional-exchange']).toBe(false);
+  });
+
+  it('should return an object with boolean values', () => {
+    const defaults = getModuleDefaults();
+    for (const value of Object.values(defaults)) {
+      expect(typeof value).toBe('boolean');
+    }
+  });
+});
+
+describe('getModulesByCategory', () => {
+  it('should group modules by category', () => {
+    const grouped = getModulesByCategory();
+    expect(grouped['estimation']).toBeDefined();
+    expect(grouped['planning']).toBeDefined();
+    expect(grouped['procurement']).toBeDefined();
+    expect(grouped['tools']).toBeDefined();
+    expect(grouped['regional']).toBeDefined();
+  });
+
+  it('should have assemblies in estimation category', () => {
+    const grouped = getModulesByCategory();
+    const ids = grouped['estimation']!.map((m) => m.id);
+    expect(ids).toContain('assemblies');
+  });
+
+  it('should have sustainability in tools category', () => {
+    const grouped = getModulesByCategory();
+    const ids = grouped['tools']!.map((m) => m.id);
+    expect(ids).toContain('sustainability');
+  });
+
+  it('should have at least one module in regional category', () => {
+    const grouped = getModulesByCategory();
+    expect(grouped['regional']!.length).toBeGreaterThanOrEqual(1);
+    const ids = grouped['regional']!.map((m) => m.id);
+    expect(ids).toContain('regional-exchange');
+  });
+});

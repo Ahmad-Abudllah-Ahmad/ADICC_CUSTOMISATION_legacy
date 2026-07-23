@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Contact - OpenConstructionERP</title>
+<meta name="description" content="Talk to the OpenConstructionERP team about custom modules, partnerships, commercial licensing, consulting, or anything else. We read and reply to every message.">
+<meta name="robots" content="index, follow">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://adicc-uae.com/contact">
+<meta property="og:title" content="Contact - OpenConstructionERP">
+<meta property="og:description" content="Send us a message about custom modules, partnerships, licensing, or consulting. We read every email.">
+<meta property="og:image" content="https://adicc-uae.com/og-image.png">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="canonical" href="https://adicc-uae.com/contact">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ContactPage",
+  "name": "Contact OpenConstructionERP",
+  "url": "https://adicc-uae.com/contact",
+  "description": "Get in touch with the OpenConstructionERP team.",
+  "isPartOf": { "@type": "WebSite", "name": "OpenConstructionERP", "url": "https://adicc-uae.com" }
+}
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+/* Tokens mirror license-request.html so the visual language stays
+   consistent across the marketing site. */
+:root{
+  --bg-0:#f1f2f3;
+  --bg-1:#ebeced;
+  --bg-2:#e4e5e7;
+  --ink-0:#0b1220;
+  --ink-1:#1e293b;
+  --ink-2:#475569;
+  --ink-3:#94a3b8;
+  --line-0:rgba(15,23,42,.05);
+  --line-1:rgba(15,23,42,.09);
+  --line-2:rgba(15,23,42,.14);
+  --accent:#2d5e8e;
+  --accent-2:#3c6fa0;
+  --accent-3:#244c74;
+  --accent-5:#3c6fa0;
+  --card-bg:rgba(255,255,255,.78);
+  --shadow-card:0 1px 2px rgba(15,23,42,.04), 0 12px 32px -16px rgba(15,23,42,.16);
+  color-scheme:light;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg-0);
+  color:var(--ink-0);
+  font-family:'Inter',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  text-rendering:optimizeLegibility;
+  min-height:100svh;
+  display:flex;
+  flex-direction:column;
+  overflow-x:hidden;
+}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+::selection{background:color-mix(in oklab,var(--accent) 28%,transparent);color:var(--ink-0)}
+
+.bg-wrap{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.bg-gradient{position:absolute;inset:0;background:linear-gradient(160deg,#f1f2f3 0%,#eeeff0 40%,#ebeced 72%,#e4e5e7 100%);}
+.blob{position:absolute;border-radius:999px;filter:blur(120px);animation:drift 50s ease-in-out infinite alternate}
+.blob-a{top:-10%;left:-5%;width:820px;height:820px;background:radial-gradient(circle at 50% 50%,rgba(45, 94, 142, 0.10),transparent 70%);animation-delay:0s}
+.blob-b{bottom:-15%;right:-10%;width:900px;height:900px;background:radial-gradient(circle at 50% 50%,rgba(45, 94, 142, 0.08),transparent 70%);animation-delay:-18s}
+@keyframes drift{0%{transform:translate3d(-3%,-2%,0) scale(1)}50%{transform:translate3d(4%,3%,0) scale(1.08)}100%{transform:translate3d(-2%,4%,0) scale(.96)}}
+
+.page-body{position:relative;z-index:1;flex:1;display:flex;flex-direction:column}
+
+/* Nav */
+.nav{position:fixed;top:0;left:0;right:0;height:64px;z-index:60;display:flex;align-items:center;padding:0 clamp(16px,3vw,32px);background:color-mix(in oklab,var(--bg-0) 78%,transparent);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);border-bottom:1px solid var(--line-0);}
+.nav-inner{width:100%;max-width:1180px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{display:inline-flex;align-items:center;gap:10px;font-family:'Inter Tight','Inter',sans-serif;font-weight:600;font-size:15px;letter-spacing:-.01em;color:var(--ink-0)}
+.brand-mark{width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--accent) 0%,var(--accent-2) 100%);box-shadow:0 6px 16px -8px color-mix(in oklab,var(--accent) 70%,transparent)}
+.brand-mark svg{color:#fff}
+.nav-back{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--line-1);font-family:'Inter Tight','Inter',sans-serif;font-weight:500;font-size:13px;color:var(--ink-1);background:color-mix(in oklab,#ffffff 60%,transparent);transition:transform .2s,border-color .2s,color .2s}
+.nav-back:hover{transform:translateY(-1px);border-color:var(--accent);color:var(--accent)}
+
+/* Layout */
+.page{flex:1;padding:104px clamp(16px,3vw,32px) 64px;display:flex;justify-content:center}
+.container{width:100%;max-width:1080px;display:flex;flex-direction:column;gap:48px}
+
+/* Hero */
+.hero{display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center;max-width:780px;margin:0 auto}
+.eyebrow{display:inline-flex;align-items:center;gap:10px;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+.eyebrow::before,.eyebrow::after{content:"";width:28px;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent)}
+h1.display{font-family:'Inter Tight','Inter',sans-serif;font-weight:600;font-size:clamp(32px,4.6vw,52px);line-height:1.05;letter-spacing:-.025em;color:var(--ink-0);max-width:18ch}
+h1.display em{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;background:linear-gradient(120deg,var(--accent) 0%,var(--accent-3) 60%,var(--accent-5) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-lede{font-size:16.5px;line-height:1.6;color:var(--ink-2);max-width:60ch}
+.topic-pill{display:none;align-items:center;gap:10px;padding:8px 14px;border-radius:999px;background:color-mix(in oklab,var(--accent) 8%,transparent);border:1px solid color-mix(in oklab,var(--accent) 25%,var(--line-1));font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11.5px;letter-spacing:.04em;color:var(--accent);width:fit-content;margin:0 auto}
+.topic-pill.show{display:inline-flex}
+
+/* Form card */
+.form-card{background:var(--card-bg);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);border:1px solid var(--line-1);border-radius:18px;padding:32px;box-shadow:var(--shadow-card)}
+.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.field.full{grid-column:1 / -1}
+.field label{display:block;font-size:13px;font-weight:500;color:var(--ink-1);margin-bottom:6px}
+.field .req{color:var(--accent);margin-left:2px}
+.field input,.field select,.field textarea{width:100%;padding:11px 14px;border:1px solid var(--line-2);border-radius:10px;font:inherit;color:var(--ink-0);background:#fff;transition:border-color .2s,box-shadow .2s}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in oklab,var(--accent) 18%,transparent)}
+.field textarea{min-height:120px;resize:vertical;font-family:inherit}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border:1px solid var(--line-2);border-radius:999px;font-size:13px;color:var(--ink-2);background:#fff;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
+.chip input{position:absolute;opacity:0;pointer-events:none}
+.chip:has(input:checked){border-color:var(--accent);color:var(--accent);background:color-mix(in oklab,var(--accent) 8%,#fff)}
+.consent{grid-column:1 / -1;display:flex;align-items:flex-start;gap:10px;font-size:12.5px;color:var(--ink-2);line-height:1.55}
+.consent input{margin-top:3px;flex-shrink:0}
+.submit-row{grid-column:1 / -1;display:flex;justify-content:space-between;align-items:center;gap:14px;margin-top:8px;flex-wrap:wrap}
+.btn-primary{display:inline-flex;align-items:center;gap:8px;padding:12px 22px;border-radius:12px;font-weight:600;font-size:14px;color:#fff;background:linear-gradient(135deg,var(--accent) 0%,var(--accent-3) 100%);box-shadow:0 8px 20px -10px color-mix(in oklab,var(--accent) 60%,transparent);transition:transform .2s,box-shadow .2s}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 12px 26px -10px color-mix(in oklab,var(--accent) 65%,transparent)}
+.btn-primary:disabled{opacity:.6;cursor:wait}
+.micro{font-size:12px;color:var(--ink-3)}
+.spinner{width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Status / error */
+.status-msg{margin-top:12px;padding:11px 14px;border-radius:10px;font-size:13px}
+.status-msg.error{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
+.status-msg.ok{background:linear-gradient(180deg,#ecfdf5,#f0fdf4);color:#065f46;border:1px solid #6ee7b7}
+
+/* Side panel */
+.flex-2col{display:grid;grid-template-columns:1.7fr 1fr;gap:32px}
+.side-card{background:var(--card-bg);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);border:1px solid var(--line-1);border-radius:18px;padding:24px;display:flex;flex-direction:column;gap:14px;height:fit-content}
+.side-card h3{margin:0;font-size:15px;font-family:'Inter Tight',sans-serif;font-weight:600;color:var(--ink-0)}
+.side-card p,.side-card li{font-size:13.5px;color:var(--ink-2);line-height:1.55}
+.side-card ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+.side-card a{color:var(--accent);text-decoration:underline;text-underline-offset:2px}
+.kbd{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;background:#fff;padding:2px 8px;border-radius:6px;border:1px solid var(--line-1);color:var(--ink-1)}
+
+/* Foot */
+.pagefoot{padding:32px clamp(16px,3vw,32px);border-top:1px solid var(--line-0);font-size:12.5px;color:var(--ink-3);background:rgba(255,255,255,.4)}
+.pagefoot .wrap{max-width:1180px;margin:0 auto;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.pagefoot a:hover{color:var(--accent)}
+
+@media (max-width:880px){
+  .flex-2col{grid-template-columns:1fr}
+  .form-grid{grid-template-columns:1fr}
+  .nav-back span{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="bg-wrap" aria-hidden="true">
+  <div class="bg-gradient"></div>
+  <div class="blob blob-a"></div>
+  <div class="blob blob-b"></div>
+</div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="/">
+      <span class="brand-mark"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><polyline points="2 8.5 12 15 22 8.5"/><line x1="12" y1="22" x2="12" y2="15"/></svg></span>
+      <span>OpenConstructionERP</span>
+    </a>
+    <a class="nav-back" href="/">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+      <span data-i18n="page.contact.nav_back">Back to home</span>
+    </a>
+  </div>
+</nav>
+
+<main class="page page-body">
+  <div class="container">
+
+    <section class="hero">
+      <span class="eyebrow" data-i18n="page.contact.eyebrow">Contact</span>
+      <h1 class="display" data-i18n-html="page.contact.hero_title">Tell us what your team <em>actually needs.</em></h1>
+      <p class="hero-lede" data-i18n-html="page.contact.hero_lede">
+        Custom modules, partnerships, commercial licensing, consulting,
+        feature requests - we read every message personally and reply
+        within a few business days. No bots, no triage queue.
+      </p>
+      <div class="topic-pill" id="topic-pill">
+        <span id="topic-pill-text">-</span>
+      </div>
+    </section>
+
+    <section class="flex-2col">
+      <div class="form-card">
+        <form id="contact-form" novalidate autocomplete="on">
+          <!-- Honeypot. Real users can't see it; bots fill it and get
+               silently 202'd by the API. -->
+          <input type="text" name="_honey" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;width:0;height:0;opacity:0" aria-hidden="true">
+          <input type="hidden" name="topic" id="topic-input" value="">
+          <input type="hidden" name="utm_source" id="utm_source">
+          <input type="hidden" name="utm_medium" id="utm_medium">
+          <input type="hidden" name="utm_campaign" id="utm_campaign">
+          <input type="hidden" name="landing_page" id="landing_page">
+
+          <div class="form-grid">
+            <div class="field full">
+              <label data-i18n-html="page.contact.help_with_label">What can we help with?<span class="req">*</span></label>
+              <div class="chips" role="group" aria-label="Topics" data-i18n-aria-label="page.contact.topics_aria">
+                <label class="chip"><input type="checkbox" name="interest" value="Custom module"> <span data-i18n="page.contact.chip_custom_module">Custom module</span></label>
+                <label class="chip"><input type="checkbox" name="interest" value="Bespoke build"> <span data-i18n="page.contact.chip_bespoke_build">Bespoke build</span></label>
+                <label class="chip"><input type="checkbox" name="interest" value="Partnership"> <span data-i18n="page.contact.chip_partnership">Partnership</span></label>
+                <label class="chip"><input type="checkbox" name="interest" value="Commercial licence"> <span data-i18n="page.contact.chip_commercial_licence">Commercial licence</span></label>
+                <label class="chip"><input type="checkbox" name="interest" value="Consulting"> <span data-i18n="page.contact.chip_consulting">Consulting</span></label>
+                <label class="chip"><input type="checkbox" name="interest" value="Workshops"> <span data-i18n="page.contact.chip_workshops">Workshops</span></label>
+                <label class="chip"><input type="checkbox" name="interest" value="Bug report"> <span data-i18n="page.contact.chip_bug_report">Bug report</span></label>
+                <label class="chip"><input type="checkbox" name="interest" value="Other"> <span data-i18n="page.contact.chip_other">Other</span></label>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="f-name" data-i18n-html="page.contact.label_full_name">Full name<span class="req">*</span></label>
+              <input id="f-name" type="text" name="name" required autocomplete="name" placeholder="Alex Morgan" data-i18n-attr="placeholder:page.contact.ph_full_name">
+            </div>
+            <div class="field">
+              <label for="f-email" data-i18n-html="page.contact.label_work_email">Work email<span class="req">*</span></label>
+              <input id="f-email" type="email" name="email" required autocomplete="email" placeholder="alex@yourco.com" data-i18n-attr="placeholder:page.contact.ph_work_email">
+            </div>
+            <div class="field">
+              <label for="f-company" data-i18n="page.contact.label_company">Company</label>
+              <input id="f-company" type="text" name="company" autocomplete="organization" placeholder="Your company" data-i18n-attr="placeholder:page.contact.ph_company">
+            </div>
+            <div class="field">
+              <label for="f-team_size" data-i18n="page.contact.label_team_size">Team size</label>
+              <select id="f-team_size" name="team_size">
+                <option value="" data-i18n="page.contact.opt_select">Select…</option>
+                <option value="1-5">1 - 5</option>
+                <option value="6-20">6 - 20</option>
+                <option value="21-100">21 - 100</option>
+                <option value="101-500">101 - 500</option>
+                <option value="500+">500+</option>
+              </select>
+            </div>
+
+            <div class="field full">
+              <label for="f-message" data-i18n-html="page.contact.label_message">Tell us what you need<span class="req">*</span></label>
+              <textarea id="f-message" name="message" required placeholder="Modules you need, deployment scale, timeline, compliance requirements…" data-i18n-attr="placeholder:page.contact.ph_message"></textarea>
+            </div>
+
+            <label class="consent">
+              <input type="checkbox" name="consent" required>
+              <span data-i18n="page.contact.consent_text">I agree that OpenConstructionERP / DataDrivenConstruction may contact me about this inquiry, store the submitted data for the purpose of responding, and may use my email for occasional product news. Unsubscribe any time.</span>
+            </label>
+
+            <div class="submit-row">
+              <span class="micro" id="form-status" role="status" aria-live="polite" data-i18n-html="page.contact.form_status">Reply within 1 business day &middot; info@datadrivenconstruction.io</span>
+              <button type="submit" class="btn-primary" id="submit-btn">
+                <span id="submit-label" data-i18n="page.contact.submit_label">Send message</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <aside class="side-card">
+        <h3 data-i18n="page.contact.side_title">Other ways to reach us</h3>
+        <p data-i18n-html="page.contact.side_email">
+          Prefer email? <a href="mailto:info@datadrivenconstruction.io">info@datadrivenconstruction.io</a> - same inbox, same person reads it.
+        </p>
+        <p data-i18n-html="page.contact.side_scope">
+          On a tight scope? Browse the <a href="/license-request">commercial licence</a> or <a href="/partners.html">partner program</a> pages for pricing context.
+        </p>
+        <p data-i18n-html="page.contact.side_bug">
+          Bug or feature? <a href="https://adicc-uae.com/issues" target="_blank" rel="noopener">Open a GitHub issue</a> - tagged tickets get triaged in the next release cycle.
+        </p>
+        <p style="font-size:12.5px;color:var(--ink-3);" data-i18n-html="page.contact.side_shortcut">
+          Press <span class="kbd">Cmd/Ctrl + Enter</span> in any field to submit.
+        </p>
+      </aside>
+    </section>
+
+  </div>
+</main>
+
+<footer class="pagefoot">
+  <div class="wrap">
+    <div data-i18n="page.contact.footer_copyright">© 2026 DataDrivenConstruction - Open source under AGPL-3.0.</div>
+    <div>
+      <a href="/" data-i18n="page.contact.footer_home">Home</a> &middot;
+      <a href="/license-request" data-i18n="page.contact.footer_licence">Commercial licence</a> &middot;
+      <a href="/partners.html" data-i18n="page.contact.footer_partner">Partner program</a> &middot;
+      <a href="https://adicc-uae.com" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+/*
+  Contact-page form handler.
+  - Reads ?topic= from the URL and surfaces it as a pill + hidden field so
+    the receiving inbox knows where the lead came from (e.g.
+    module_proposal_public from the in-app sidebar CTA).
+  - Captures UTM params, landing URL - same shape as license-request.html.
+  - POSTs JSON to /api/inquiry (our in-house SMTP service).
+*/
+(function(){
+  var TOPIC_LABELS = {
+    module_proposal_public: "Public module proposal",
+    module_proposal_private: "Private / bespoke module",
+    partnership: "Partnership",
+    licensing: "Commercial licensing",
+    consulting: "Consulting",
+    feedback: "Product feedback"
+  };
+
+  var params = new URLSearchParams(window.location.search);
+  var topic = (params.get('topic') || '').trim();
+  if (topic) {
+    document.getElementById('topic-input').value = topic;
+    var label = TOPIC_LABELS[topic] || topic.replace(/_/g,' ');
+    var pill = document.getElementById('topic-pill');
+    document.getElementById('topic-pill-text').textContent =
+      'Topic: ' + label;
+    pill.classList.add('show');
+
+    // Pre-select the matching interest chip when we recognise the
+    // topic, so the user lands on a form that's already half filled.
+    var preselect = {
+      module_proposal_public: 'Custom module',
+      module_proposal_private: 'Bespoke build',
+      partnership: 'Partnership',
+      licensing: 'Commercial licence',
+      consulting: 'Consulting'
+    }[topic];
+    if (preselect) {
+      var chip = document.querySelector(
+        'input[name="interest"][value="' + preselect + '"]'
+      );
+      if (chip) chip.checked = true;
+    }
+  }
+
+  document.getElementById('utm_source').value =
+    params.get('utm_source') || '';
+  document.getElementById('utm_medium').value =
+    params.get('utm_medium') || '';
+  document.getElementById('utm_campaign').value =
+    params.get('utm_campaign') || '';
+  document.getElementById('landing_page').value = window.location.href;
+
+  var form = document.getElementById('contact-form');
+  var btn = document.getElementById('submit-btn');
+  var btnLabel = document.getElementById('submit-label');
+  var statusEl = document.getElementById('form-status');
+
+  // Cmd/Ctrl+Enter submits - same shortcut every modern app uses.
+  form.addEventListener('keydown', function(e){
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault();
+      form.requestSubmit();
+    }
+  });
+
+  function showStatus(msg, kind){
+    var old = form.querySelector('.status-msg');
+    if (old) old.remove();
+    if (!msg) return;
+    var div = document.createElement('div');
+    div.className = 'status-msg ' + (kind || 'error');
+    div.setAttribute('role', kind === 'ok' ? 'status' : 'alert');
+    div.textContent = msg;
+    form.appendChild(div);
+  }
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    showStatus('');
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+
+    btn.disabled = true;
+    btnLabel.innerHTML = '<span class="spinner"></span> Sending…';
+
+    var fd = new FormData(form);
+    var payload = {};
+    var interests = [];
+    fd.forEach(function(v, k){
+      if (k === '_honey') { payload._honey = String(v); return; }
+      if (k === 'interest') { interests.push(String(v)); return; }
+      if (typeof v === 'string') payload[k] = v;
+    });
+    if (interests.length) payload.interests = interests;
+    payload.source = 'contact_page';
+
+    fetch('/api/inquiry', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+      .then(function(r){
+        return r.json().catch(function(){ return {}; }).then(function(j){
+          return { ok: r.ok, status: r.status, body: j };
+        });
+      })
+      .then(function(res){
+        if (res.ok && res.body && res.body.status === 'received') {
+          var ref = res.body.reference_id || '';
+          var container = form.parentElement;
+          container.innerHTML =
+            '<div style="padding:34px 28px;border-radius:14px;background:linear-gradient(180deg,#ecfdf5,#f0fdf4);border:1px solid #6ee7b7;">' +
+              '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">' +
+                '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' +
+                '<strong style="font-size:17px;color:#064e3b;">Message received</strong>' +
+              '</div>' +
+              '<p style="margin:0 0 12px;color:#065f46;font-size:14.5px;line-height:1.6;">Thanks - we read every message personally and will reply within a few business days. A confirmation email is on its way to you.</p>' +
+              (ref ? '<p style="margin:0;color:#047857;font-size:13px;">Reference: <code style="background:#fff;padding:2px 8px;border-radius:4px;color:#065f46;font-weight:600;">' + ref + '</code></p>' : '') +
+            '</div>';
+          return;
+        }
+        var msg = (res.body && res.body.message)
+          || 'Something went wrong. Please email info@datadrivenconstruction.io directly.';
+        showStatus(msg, 'error');
+        if (res.body && res.body.field) {
+          var f = document.querySelector('[name="' + res.body.field + '"]');
+          if (f && f.focus) f.focus();
+        }
+        btn.disabled = false;
+        btnLabel.textContent = 'Send message';
+      })
+      .catch(function(){
+        showStatus(
+          'Network error. Please try again or email info@datadrivenconstruction.io directly.',
+          'error'
+        );
+        btn.disabled = false;
+        btnLabel.textContent = 'Send message';
+      });
+  });
+})();
+</script>
+<script src="/i18n/i18n.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+{
+  "$schema": "openconstructionerp.partner_pack.rule_pack/v1",
+  "slug": "din_18218_formwork_pressure",
+  "display_name": "DIN 18218 — Frischbetondruck auf lotrechte Schalungen",
+  "description": "Validiert den maximalen Frischbetondruck σ_h_max nach DIN 18218:2010-01 gegen Aufschüttungsgeschwindigkeit v (m/h), Bauteilhöhe, Konsistenzklasse (F1–F6 / SCC), Frischbetontemperatur T_b und Verzögerer-Faktor.",
+  "standard": "DIN 18218:2010-01",
+  "severity_default": "error",
+  "category": "compliance",
+  "locale_default": "de",
+  "enables_rule_ids": [
+    "formwork.din18218.max_pressure_check",
+    "formwork.din18218.pour_rate_within_bounds",
+    "formwork.din18218.consistency_class_required",
+    "formwork.din18218.consistency_class_valid",
+    "formwork.din18218.element_height_vs_pressure",
+    "formwork.din18218.temperature_factor_applied",
+    "formwork.din18218.retarder_factor_applied",
+    "formwork.din18218.scc_self_compacting_full_hydrostatic",
+    "formwork.din18218.pour_speed_h_within_5m_per_hour",
+    "formwork.din18218.formwork_system_capacity_match",
+    "formwork.din18218.pressure_curve_documented",
+    "formwork.din18218.hardening_time_t_E_logged"
+  ],
+  "parameters": {
+    "consistency_classes": ["F1", "F2", "F3", "F4", "F5", "F6", "SCC"],
+    "max_pour_speed_m_per_h": {
+      "F1": 7.0,
+      "F2": 7.0,
+      "F3": 5.0,
+      "F4": 5.0,
+      "F5": 5.0,
+      "F6": 5.0,
+      "SCC": 2.0
+    },
+    "temperature_reference_celsius": 15,
+    "retarder_factor_default": 1.0,
+    "retarder_factor_max": 1.7,
+    "hydrostatic_density_kN_per_m3": 25.0,
+    "max_pressure_kN_per_m2_cap": 150.0
+  },
+  "metadata": {
+    "applies_to": ["wall_formwork", "column_formwork", "single_sided_formwork"],
+    "references": [
+      "DIN 18218:2010-01 Frischbetondruck auf lotrechte Schalungen",
+      "DBV-Merkblatt 'Frischbetondruck auf lotrechte Schalungen' (2017)"
+    ]
+  }
+}

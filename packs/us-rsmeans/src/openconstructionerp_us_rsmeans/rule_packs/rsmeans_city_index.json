@@ -1,0 +1,26 @@
+{
+  "rule_pack_id": "rsmeans_city_index",
+  "name": "RSMeans City Cost Index (CCI) — Regional Localization",
+  "standard": "RSMeans CCI",
+  "jurisdiction": "US/CA",
+  "edition": "Current annual release (published Jan each year; quarterly updates for Material and Labor)",
+  "description": "Enables OCERP built-in validation rules that apply the RSMeans City Cost Index to localise national average unit prices, validate that the chosen city + ZIP3 are within the CCI coverage (720+ US cities + ~80 Canadian cities), confirm the index period currency (must be within 12 months for unit costs, 24 for installed costs), enforce material/labor/equipment factor application, and flag estimates that diverge from indexed benchmarks beyond a configurable band.",
+  "issuer": "Gordian (Gordian's RSMeans Data)",
+  "metrics_referenced": "Total Index, Material Index, Labor Index, Equipment Index, Installed Index — all relative to 30-city average = 100.0",
+  "enables_rule_ids": [
+    "rsmeans.cci_city_selected",
+    "rsmeans.cci_zip3_within_city_coverage",
+    "rsmeans.cci_index_period_within_12_months",
+    "rsmeans.material_index_applied",
+    "rsmeans.labor_index_applied",
+    "rsmeans.equipment_index_applied",
+    "rsmeans.installed_index_applied_when_total_only",
+    "rsmeans.unit_rate_within_indexed_band",
+    "rsmeans.total_cost_within_benchmark_band",
+    "rsmeans.crew_productivity_assumed_documented",
+    "rsmeans.regional_overhead_profit_applied",
+    "rsmeans.bare_costs_vs_o_and_p_costs_distinguished",
+    "rsmeans.subscription_status_acknowledged",
+    "rsmeans.multi_city_average_when_project_spans_metros"
+  ]
+}

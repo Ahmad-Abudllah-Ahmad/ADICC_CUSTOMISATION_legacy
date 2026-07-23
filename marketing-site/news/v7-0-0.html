@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+  <!-- Google Analytics with Consent Mode v2 (GDPR-compliant) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-JYQXK2652T"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    // Default: deny all until user makes a choice
+    gtag('consent', 'default', {
+      'ad_storage': 'denied',
+      'analytics_storage': 'denied',
+      'ad_user_data': 'denied',
+      'ad_personalization': 'denied',
+      'wait_for_update': 500
+    });
+    // Restore prior consent if user already chose
+    try {
+      var prior = localStorage.getItem('oce-cookie-consent');
+      if (prior === 'granted') {
+        gtag('consent', 'update', { 'analytics_storage': 'granted' });
+      }
+    } catch (e) {}
+    gtag('js', new Date());
+    gtag('config', 'G-JYQXK2652T', { 'anonymize_ip': true });
+  </script>
+
+  <title>v7.0.0 - One way in, for every module - OpenConstructionERP</title>
+  <meta name="description" content="OpenConstructionERP v7.0.0 gives every module one identity and one way in: a single name and icon in the top bar, an info card that names the problem the module solves and explains in plain language what goes in, what comes out and where it flows next, and a collapse-to-top-bar control. A platform-wide palette fix restored dozens of translucent surfaces that a Tailwind bug had silently dropped. Plus the AI Estimate Builder, a reworked collaboration hub, Validate deep links, a clickable diary calendar, supplier-catalog browsing, and orientation copy for 110 modules in 27 languages." />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://adicc-uae.com/news/v7-0-0.html" />
+
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="OpenConstructionERP" />
+  <meta property="og:url" content="https://adicc-uae.com/news/v7-0-0.html" />
+  <meta property="og:title" content="v7.0.0 - One way in, for every module" />
+  <meta property="og:description" content="Every module now opens the same way: one identity in the top bar, an info card that names the pain it solves and how it works, collapse-to-top-bar, and a palette fix that restored dozens of translucent surfaces. Plus the AI Estimate Builder and a reworked collaboration hub." />
+  <meta property="article:published_time" content="2026-06-06T10:30:00Z" />
+  <meta property="article:author" content="Artem Boiko" />
+  <meta property="article:tag" content="Release" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="v7.0.0 - One way in, for every module" />
+  <meta name="twitter:description" content="One identity per module, an info card that names the pain and how it works, collapse-to-top-bar, and a palette fix that restored dozens of translucent surfaces. Plus the AI Estimate Builder and a reworked collaboration hub." />
+
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <meta name="theme-color" content="#2d5e8e" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <script>
+    (function () { try { var t = localStorage.getItem('oce-theme') || 'light'; document.documentElement.dataset.theme = t; } catch (e) { document.documentElement.dataset.theme = 'light'; } })();
+  </script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "v7.0.0 - One way in, for every module",
+    "datePublished": "2026-06-06",
+    "author": { "@type": "Person", "name": "Artem Boiko" },
+    "publisher": { "@type": "Organization", "name": "DataDrivenConstruction", "logo": { "@type": "ImageObject", "url": "https://adicc-uae.com/favicon.svg" } },
+    "mainEntityOfPage": "https://adicc-uae.com/news/v7-0-0.html"
+  }
+  </script>
+
+  <style>
+    :root { --bg-0: #f1f2f3; --bg-1: #ebeced; --bg-2: #e4e5e7; --ink-0: #0b1220; --ink-1: #1e293b; --ink-2: #475569; --ink-3: #94a3b8; --line-0: rgba(15, 23, 42, 0.05); --line-1: rgba(15, 23, 42, 0.09); --line-2: rgba(15, 23, 42, 0.14); --card: #ffffff; --code-bg: #0f172a; --code-fg: #e2e8f0; --accent: #2d5e8e; --accent-2: #3c6fa0; --accent-3: #244c74; --accent-4: #2d5e8e; --accent-5: #3c6fa0; }
+    [data-theme="dark"] { --bg-0: #0b1220; --bg-1: #111a2c; --bg-2: #152238; --ink-0: #eff6ff; --ink-1: #cfe0f5; --ink-2: #94a3b8; --ink-3: #64748b; --line-0: rgba(255,255,255,0.06); --line-1: rgba(255,255,255,0.10); --line-2: rgba(255,255,255,0.16); --card: #111a2c; --code-bg: #0a0f1c; --code-fg: #e2e8f0; --accent: #6ba2d8; --accent-2: #84b3e2; --accent-3: #5a90c8; }
+    *, *::before, *::after { box-sizing: border-box; } html { scroll-behavior: smooth; }
+    body { margin: 0; background: radial-gradient(60% 50% at 50% 0%, color-mix(in oklab, var(--accent) 7%, transparent) 0%, transparent 70%), var(--bg-0); color: var(--ink-0); font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif; font-size: 17px; line-height: 1.65; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; overflow-x: hidden; }
+    a { color: inherit; text-decoration: none; } a:hover { color: var(--accent); }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 48px); }
+    .narrow { max-width: 720px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 48px); }
+    .nav { position: sticky; top: 0; z-index: 50; background: color-mix(in oklab, var(--bg-0) 88%, transparent); -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4); border-bottom: 1px solid var(--line-1); }
+    .nav-inner { max-width: 1300px; margin: 0 auto; padding: 12px clamp(20px, 4vw, 48px); display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+    .nav-left, .nav-right { display: flex; align-items: center; gap: 10px; }
+    .brand { display: inline-flex; align-items: baseline; font-family: 'Inter Tight', sans-serif; font-weight: 700; font-size: 17px; letter-spacing: -0.015em; }
+    .brand-seg-1 { color: var(--ink-0); } .brand-seg-2 { color: var(--ink-2); } .brand-seg-3 { color: var(--accent); font-weight: 800; }
+    .nav-icon-btn { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 9px; border: 1px solid var(--line-2); background: transparent; color: var(--ink-2); cursor: pointer; transition: border-color 0.15s ease, color 0.15s ease; }
+    .nav-icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .nav-icon-btn .icon-moon { display: none; }
+    [data-theme="dark"] .nav-icon-btn .icon-sun { display: none; }
+    [data-theme="dark"] .nav-icon-btn .icon-moon { display: block; }
+    .nav-links { display: flex; gap: clamp(10px, 1.6vw, 22px); align-items: center; font-size: 14px; }
+    .nav-links a { color: var(--ink-2); font-weight: 500; padding: 6px 4px; transition: color 0.15s ease; }
+    .nav-links a:hover, .nav-links a.is-active { color: var(--accent); }
+    .nav-links a.is-active { font-weight: 600; }
+    .nav-pill { display: inline-flex; align-items: center; gap: 7px; padding: 8px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.2s ease; }
+    .nav-pill.github { border: 1px solid var(--line-2); color: var(--ink-1); background: transparent; }
+    .nav-pill.github:hover { border-color: var(--accent); color: var(--accent); }
+    .nav-pill.cta { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-3) 100%); color: #fff; box-shadow: 0 1px 0 rgba(255,255,255,0.3) inset, 0 8px 18px -8px color-mix(in oklab, var(--accent) 60%, transparent); }
+    .nav-pill.cta:hover { transform: translateY(-1px); color: #fff; }
+    .nav-pill .arrow { transition: transform 0.15s ease; } .nav-pill:hover .arrow { transform: translateX(2px); }
+    @media (max-width: 980px) { .nav-links a:not(.news-link), .nav-pill.github { display: none; } }
+    .article-hero { position: relative; padding: clamp(48px, 7vw, 96px) 0 clamp(32px, 5vw, 48px); overflow: hidden; }
+    .article-hero::before { content: ""; position: absolute; inset: 0; background-image: linear-gradient(to right, color-mix(in oklab, var(--accent) 7%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in oklab, var(--accent) 7%, transparent) 1px, transparent 1px); background-size: 56px 56px; -webkit-mask-image: radial-gradient(ellipse 75% 60% at 50% 35%, black 30%, transparent 78%); mask-image: radial-gradient(ellipse 75% 60% at 50% 35%, black 30%, transparent 78%); pointer-events: none; opacity: 0.5; }
+    .article-hero > * { position: relative; }
+    .crumbs { font-family: 'Inter Tight', sans-serif; font-size: 13px; color: var(--ink-3); margin-bottom: 18px; }
+    .crumbs a:hover { color: var(--accent); } .crumbs .sep { margin: 0 8px; opacity: 0.5; }
+    .pill-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 22px; }
+    .chip { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px; font-family: 'Inter Tight', sans-serif; font-size: 11.5px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; }
+    .chip.release { background: color-mix(in oklab, var(--accent) 10%, transparent); color: var(--accent); border: 1px solid color-mix(in oklab, var(--accent) 24%, transparent); }
+    .chip.stable { background: color-mix(in oklab, #16a34a 12%, transparent); color: #16a34a; border: 1px solid color-mix(in oklab, #16a34a 28%, transparent); }
+    [data-theme="dark"] .chip.stable { color: #4ade80; border-color: color-mix(in oklab, #4ade80 32%, transparent); }
+    .pill-meta { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--ink-2); letter-spacing: 0.01em; }
+    .pill-meta + .pill-meta::before { content: "·"; margin: 0 8px; opacity: 0.5; }
+    .article-hero h1 { font-family: 'Inter Tight', sans-serif; font-weight: 700; font-size: clamp(34px, 5.6vw, 60px); line-height: 1.05; letter-spacing: -0.025em; margin: 0 0 22px; }
+    .article-hero h1 .accent { color: var(--accent); }
+    .article-hero p.lede { font-size: clamp(17px, 1.6vw, 21px); line-height: 1.55; color: var(--ink-2); max-width: 680px; margin: 0 0 28px; }
+    .cover { max-width: 1180px; margin: 0 auto clamp(40px, 6vw, 64px); padding: 0 clamp(20px, 4vw, 48px); }
+    .cover-inner { position: relative; border-radius: 18px; overflow: hidden; border: 1px solid var(--line-2); background: linear-gradient(135deg, var(--bg-1), var(--bg-2)); box-shadow: 0 24px 60px -24px rgba(2, 90, 160, 0.22), 0 2px 8px -2px rgba(15, 23, 42, 0.08); aspect-ratio: 21 / 9; display: grid; place-items: center; }
+    .cover-inner .cover-art { font-family: 'Inter Tight', sans-serif; font-weight: 800; font-size: clamp(56px, 9vw, 128px); color: color-mix(in oklab, var(--accent) 22%, transparent); letter-spacing: -0.04em; }
+    .article { padding: 0 0 clamp(48px, 6vw, 80px); }
+    .article p, .article ul, .article ol { font-size: 17px; line-height: 1.7; color: var(--ink-1); margin: 0 0 18px; }
+    .article ul, .article ol { padding-left: 22px; } .article ul li, .article ol li { margin-bottom: 6px; }
+    .article h2 { font-family: 'Inter Tight', sans-serif; font-weight: 700; font-size: clamp(24px, 2.6vw, 32px); line-height: 1.15; letter-spacing: -0.02em; margin: 56px 0 18px; color: var(--ink-0); }
+    .article h2:first-child { margin-top: 0; }
+    .article h3 { font-family: 'Inter Tight', sans-serif; font-weight: 600; font-size: 19px; letter-spacing: -0.01em; margin: 28px 0 10px; color: var(--ink-0); }
+    .article a { color: var(--accent); text-decoration: none; border-bottom: 1px solid color-mix(in oklab, var(--accent) 32%, transparent); transition: border-color 0.15s ease; }
+    .article a:hover { border-bottom-color: var(--accent); }
+    .article .btn, .article .btn:hover { border-bottom: none; }
+    .article .btn-primary, .article .btn-primary:hover { color: #fff; }
+    .article .btn-ghost { color: var(--ink-0); }
+    .article .btn-ghost:hover { color: var(--accent); }
+    .article strong { color: var(--ink-0); font-weight: 600; }
+    .article code { font-family: 'JetBrains Mono', monospace; font-size: 0.92em; padding: 1px 6px; border-radius: 5px; background: color-mix(in oklab, var(--accent) 8%, var(--bg-1)); border: 1px solid color-mix(in oklab, var(--accent) 14%, var(--line-1)); color: var(--ink-0); }
+    .highlights { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin: 14px 0 28px; }
+    @media (max-width: 720px) { .highlights { grid-template-columns: 1fr; } }
+    .hi-card { background: var(--card); border: 1px solid var(--line-1); border-radius: 14px; padding: 20px 20px 22px; transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; }
+    .hi-card:hover { transform: translateY(-2px); border-color: color-mix(in oklab, var(--accent) 35%, var(--line-1)); box-shadow: 0 14px 28px -16px rgba(2, 90, 160, 0.18); }
+    .hi-card .hi-icon { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: color-mix(in oklab, var(--accent) 12%, transparent); color: var(--accent); margin-bottom: 14px; }
+    .hi-card .hi-icon svg { width: 18px; height: 18px; }
+    .hi-card h4 { font-family: 'Inter Tight', sans-serif; font-weight: 600; font-size: 15.5px; letter-spacing: -0.005em; margin: 0 0 6px; color: var(--ink-0); }
+    .hi-card p { font-size: 14px; line-height: 1.55; color: var(--ink-2); margin: 0; }
+    .codewrap { position: relative; background: var(--code-bg); color: var(--code-fg); border-radius: 14px; padding: 22px 24px; margin: 14px 0 30px; font-family: 'JetBrains Mono', monospace; font-size: 14px; line-height: 1.7; overflow-x: auto; border: 1px solid rgba(107, 162, 216, 0.09); box-shadow: 0 18px 40px -20px rgba(2, 90, 160, 0.25); }
+    .codewrap .cmd::before { content: "$ "; color: #64748b; user-select: none; }
+    .codewrap .tok-cmd { color: #84b3e2; } .codewrap .tok-arg { color: #e2e8f0; } .codewrap .tok-flag { color: #fbbf24; } .codewrap .tok-amp { color: #64748b; padding: 0 4px; }
+    .copy-btn { position: absolute; top: 14px; right: 14px; padding: 6px 12px; border-radius: 8px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14); color: #e2e8f0; font-family: 'Inter Tight', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.15s ease, border-color 0.15s ease; }
+    .copy-btn:hover { background: rgba(107, 162, 216, 0.09); border-color: rgba(107, 162, 216, 0.09); }
+    .copy-btn.is-copied { background: rgba(34, 197, 94, 0.18); border-color: rgba(34, 197, 94, 0.4); color: #86efac; }
+    .cta-block { margin: 56px auto 0; padding: clamp(28px, 4vw, 44px); background: radial-gradient(80% 100% at 0% 0%, color-mix(in oklab, var(--accent) 14%, transparent), transparent 60%), radial-gradient(80% 100% at 100% 100%, color-mix(in oklab, var(--accent-3) 14%, transparent), transparent 60%), var(--card); border: 1px solid color-mix(in oklab, var(--accent) 25%, var(--line-1)); border-radius: 20px; text-align: center; }
+    .cta-block h3 { font-family: 'Inter Tight', sans-serif; font-weight: 700; font-size: clamp(22px, 2.4vw, 28px); letter-spacing: -0.015em; margin: 0 0 8px; color: var(--ink-0); }
+    .cta-block p { color: var(--ink-2); font-size: 15px; margin: 0 0 22px; }
+    .cta-row { display: inline-flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 20px; border-radius: 12px; font-family: 'Inter Tight', sans-serif; font-weight: 600; font-size: 14.5px; letter-spacing: -0.005em; transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease; }
+    .btn .arrow { transition: transform 0.15s ease; } .btn:hover .arrow { transform: translateX(3px); }
+    .btn-primary { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-3) 100%); color: #fff; box-shadow: 0 1px 0 rgba(255,255,255,0.3) inset, 0 10px 22px -10px color-mix(in oklab, var(--accent) 60%, transparent); }
+    .btn-primary:hover { transform: translateY(-1px); color: #fff; }
+    .btn-ghost { background: transparent; border: 1px solid var(--line-2); color: var(--ink-0); }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+    .pagefoot { border-top: 1px solid var(--line-1); padding: 28px 0; margin-top: 24px; color: var(--ink-2); font-size: 13px; }
+    .pagefoot-inner { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .pagefoot a { color: var(--ink-2); } .pagefoot a:hover { color: var(--accent); }
+    @media (max-width: 540px) { .article p, .article ul, .article ol { font-size: 16px; } }
+  
+    /* ================================================================ */
+    /* COOKIE BANNER - GDPR-compliant consent dialog                     */
+    /* ================================================================ */
+    .cookie-banner {
+      position: fixed;
+      left: 50%;
+      bottom: 20px;
+      transform: translateX(-50%) translateY(14px);
+      width: min(720px, calc(100vw - 32px));
+      z-index: 9999;
+      background: color-mix(in oklab, #ffffff 88%, transparent);
+      border: 1px solid var(--line-1);
+      border-radius: 18px;
+      backdrop-filter: blur(22px) saturate(180%);
+      -webkit-backdrop-filter: blur(22px) saturate(180%);
+      box-shadow: 0 24px 64px -28px rgba(15, 23, 42, 0.35);
+      padding: 18px 22px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+    [data-theme="dark"] .cookie-banner {
+      background: color-mix(in oklab, #111a2c 88%, transparent);
+      box-shadow: 0 24px 64px -28px rgba(0, 0, 0, 0.7);
+    }
+    .cookie-banner.is-visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(-50%) translateY(0);
+    }
+    .cookie-banner-inner {
+      display: grid;
+      grid-template-columns: 32px 1fr auto;
+      grid-gap: 16px;
+      align-items: center;
+    }
+    .cookie-banner-icon {
+      font-size: 22px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+    }
+    .cookie-banner-body { min-width: 0; }
+    .cookie-banner-title {
+      font-family: 'Inter Tight', 'Inter', sans-serif;
+      font-weight: 650;
+      font-size: 14px;
+      color: var(--ink-0);
+      margin: 0 0 3px;
+      letter-spacing: -0.01em;
+    }
+    .cookie-banner-text {
+      font-size: 12.5px;
+      line-height: 1.5;
+      color: var(--ink-2);
+      margin: 0;
+    }
+    .cookie-banner-text a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+      border-bottom: 1px solid color-mix(in oklab, var(--accent) 40%, transparent);
+    }
+    .cookie-banner-text a:hover { border-bottom-color: var(--accent); }
+    .cookie-banner-actions {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: nowrap;
+    }
+    .cookie-btn {
+      padding: 9px 16px;
+      border-radius: 999px;
+      font-family: inherit;
+      font-size: 12.5px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .cookie-btn-reject {
+      background: transparent;
+      border: 1px solid var(--line-1);
+      color: var(--ink-1);
+    }
+    .cookie-btn-reject:hover {
+      border-color: color-mix(in oklab, var(--ink-0) 30%, var(--line-1));
+      background: color-mix(in oklab, var(--ink-0) 4%, transparent);
+    }
+    .cookie-btn-accept {
+      background: var(--accent);
+      border: 1px solid var(--accent);
+      color: #fff;
+      box-shadow: 0 6px 16px -6px color-mix(in oklab, var(--accent) 55%, transparent);
+    }
+    .cookie-btn-accept:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px -6px color-mix(in oklab, var(--accent) 70%, transparent);
+    }
+    @media (max-width: 640px) {
+      .cookie-banner-inner {
+        grid-template-columns: 28px 1fr;
+        grid-gap: 12px;
+      }
+      .cookie-banner-actions {
+        grid-column: 1 / -1;
+        margin-top: 4px;
+      }
+      .cookie-btn { flex: 1; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="nav" aria-label="Primary">
+  <div class="nav-inner">
+    <div class="nav-left">
+      <a class="brand" href="/"><span class="brand-name"><span class="brand-seg-1">Open</span><span class="brand-seg-2">Construction</span><span class="brand-seg-3">ERP</span></span></a>
+      <button type="button" class="nav-icon-btn" id="theme-toggle" aria-label="Toggle theme" title="Toggle theme">
+        <svg class="icon-sun" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79Z"/></svg>
+      </button>
+    </div>
+    <div class="nav-links">
+      <a href="/services.html">Practices</a>
+      <a href="/industries.html">Industries</a>
+      <a href="/standards.html">Standards</a>
+      <a href="/maturity.html">Maturity</a>
+      <a href="/#pricing">Pricing</a>
+      <a href="/partners.html">Partners</a>
+      <a href="/news.html" class="news-link is-active">News</a>
+      <a href="/docs.html">Docs</a>
+    </div>
+    <div class="nav-right">
+      <a class="nav-pill github" href="https://adicc-uae.com" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M12 0.5C5.65 0.5 0.5 5.65 0.5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.36-3.87-1.36-.52-1.32-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.47.11-3.05 0 0 .97-.31 3.18 1.18A11 11 0 0 1 12 6.8a11 11 0 0 1 2.9.39c2.2-1.5 3.17-1.18 3.17-1.18.63 1.58.24 2.76.12 3.05.74.81 1.18 1.84 1.18 3.1 0 4.43-2.7 5.4-5.27 5.69.42.36.78 1.07.78 2.15v3.19c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg>
+        <span>GitHub</span>
+      </a>
+      <a class="nav-pill cta" href="/demo"><span>Try demo</span><svg class="arrow" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+    </div>
+  </div>
+</nav>
+
+<section class="article-hero">
+  <div class="narrow">
+    <div class="crumbs">
+      <a href="/">Home</a><span class="sep">/</span>
+      <a href="/news.html">News</a><span class="sep">/</span>
+      <span>v7.0.0 - One way in, for every module</span>
+    </div>
+    <div class="pill-row">
+      <span class="chip release">Release</span>
+      <span class="pill-meta">2026-06-06</span>
+      <span class="pill-meta">~6 min read</span>
+    </div>
+    <h1>v7.0.0 - <span class="accent">Every module opens the same way</span>,<br />and finally says what it is for.</h1>
+    <p class="lede">
+      This release is about how the whole app reads. Every module now wears
+      one identity in the top bar, opens with an info card that names the
+      problem it solves and explains in plain words what you put in, what you
+      get out and where it flows next, and collapses that card to a single
+      icon when you want the room back. Underneath, a quiet palette bug that
+      had been dropping every translucent surface is fixed, so the interface
+      finally renders the way it was designed. The AI Estimate Builder, a
+      reworked collaboration hub and orientation copy for 110 modules in 27
+      languages ride along.
+    </p>
+  </div>
+</section>
+
+<div class="cover"><div class="cover-inner"><div class="cover-art">v7.0.0</div></div></div>
+
+<article class="article">
+  <div class="narrow">
+
+    <p>
+      The shape of this wave is coherence. The platform has grown to well over
+      a hundred modules, and each one had drifted into its own way of titling
+      itself, picking a project, drawing a breadcrumb and explaining what it
+      does, which was usually not at all. v7.0.0 settles that into one pattern
+      the whole app shares. One name and icon per module in the top bar, one
+      orientation card per page that earns its space, one global project
+      selector, and one page-header layout. It is the first release where the
+      app feels like a single product rather than a hundred screens that happen
+      to ship together. Everything here was verified against the live backend,
+      the Alembic head is a single revision, the frontend type-checks clean and
+      the backend is ruff clean.
+    </p>
+
+    <h2>What landed</h2>
+
+    <div class="highlights">
+
+      <div class="hi-card">
+        <div class="hi-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+        </div>
+        <h4>One identity per module, everywhere</h4>
+        <p>
+          The module name and icon live in the top bar next to the project
+          selector and nowhere else. Duplicate in-page titles are gone from
+          roughly 90 pages, breadcrumbs render only when they add real depth,
+          and the per-page project pickers are removed. You choose the project
+          once, globally.
+        </p>
+      </div>
+
+      <div class="hi-card">
+        <div class="hi-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+        </div>
+        <h4>An info card that names the pain</h4>
+        <p>
+          Every module page opens with the same card, and the heading names the
+          problem the module solves rather than repeating the module name.
+          "Nothing slips through at handover" instead of "Punch list". The body
+          says in two or three plain sentences what you put in, what you get out
+          and where the result flows next, with links to the connected modules.
+        </p>
+      </div>
+
+      <div class="hi-card">
+        <div class="hi-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="18 15 12 9 6 15"/></svg>
+        </div>
+        <h4>Collapse it to the top bar</h4>
+        <p>
+          Collapsing the card no longer leaves a stub behind. The card
+          disappears entirely and a small info icon appears in the top bar right
+          after the module name, and one click brings the card back. Longer
+          step-by-step explanations get a "Show more" expansion with simple
+          list and emphasis formatting.
+        </p>
+      </div>
+
+      <div class="hi-card">
+        <div class="hi-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="14.5" r="2.5"/><circle cx="6" cy="12" r="3"/><path d="M8.5 10l2.5-2M8.5 14l2.5 1"/></svg>
+        </div>
+        <h4>Translucent surfaces render again</h4>
+        <p>
+          The theme palette had silently dropped every semi-transparent variant
+          of the brand and surface colors at build time, so card backgrounds,
+          hover tints and accent borders never reached the screen and the info
+          cards looked like bare text on white. The palette now compiles those
+          variants correctly in both light and dark themes.
+        </p>
+      </div>
+
+      <div class="hi-card">
+        <div class="hi-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2 5 5 .5-3.5 3.5 1 5-4.5-2.5L7 20l1-5L4.5 11.5 9.5 11z"/></svg>
+        </div>
+        <h4>The AI Estimate Builder</h4>
+        <p>
+          A new module that takes a typed scope, a BIM model or uploaded
+          documents and walks it to a priced bill of quantities in four guarded
+          stages: understand the source, group the quantities, match rates,
+          review and apply. Every stage shows its work and waits for a person.
+          Unit rates only ever come from the cost catalogue.
+        </p>
+      </div>
+
+      <div class="hi-card">
+        <div class="hi-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <h4>A real collaboration hub</h4>
+        <p>
+          The collaboration hub is now a workspace instead of a set of dead
+          links: live comment threads, BIM viewpoints you can create and open,
+          who-is-here presence and your own element locks, all on one screen.
+        </p>
+      </div>
+
+      <div class="hi-card">
+        <div class="hi-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </div>
+        <h4>Validate deep links and a diary calendar</h4>
+        <p>
+          The Validate button in the BOQ editor jumps straight into the
+          validation dashboard with that BOQ preselected, and the dashboard
+          restores your last report when you return. Rule-set chips read as
+          names a person uses. The daily diary calendar is clickable: pick a day
+          to create or edit that day's entry, with keyboard navigation.
+        </p>
+      </div>
+
+      <div class="hi-card">
+        <div class="hi-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3h7v7H3z"/><path d="M14 3h7v7h-7z"/><path d="M14 14h7v7h-7z"/><path d="M3 14h7v7H3z"/></svg>
+        </div>
+        <h4>Orientation copy in 27 languages</h4>
+        <p>
+          The new info-card copy was written per module against what each page
+          actually does, for 110 modules and in all 27 interface languages, so
+          the card reads naturally everywhere and no screen falls back to
+          English mid-sentence.
+        </p>
+      </div>
+
+    </div>
+
+    <h2>One way in, for every module</h2>
+    <p>
+      The change that defines this release is the one a person feels on every
+      single screen. Until now the module name might be in a page heading, a
+      breadcrumb and a tab title all at once, the project might be chosen in one
+      place on one page and a different place on the next, and an empty module
+      gave you no idea what it was for. v7.0.0 settles all of that. The module
+      name and its icon live in the top bar next to the global project selector,
+      and that is the one place they appear. In-page duplicate titles are gone
+      from around 90 pages, breadcrumbs show only when they add real depth such
+      as a project or a detail trail, and the per-page project pickers are
+      retired in favour of a single global choice. Page headers now share one
+      layout, a muted one-line subtitle on the left and the actions on the
+      right, on a single midline, with one vertical rhythm instead of each page
+      hand-rolling its own margins. The result is an app that reads as one
+      product.
+    </p>
+
+    <h2>A card that explains the module, not its name</h2>
+    <p>
+      The orientation card at the top of each module page used to repeat the
+      module name and little else, and around 60 pages had no card at all.
+      Now the heading names the problem the module solves, "Nothing slips
+      through at handover" rather than "Punch list", and the body explains in
+      two or three plain sentences what you put in, what you get out and where
+      the result flows next, with direct links to the connected modules so the
+      next step is one click away. The copy was written by hand for each module,
+      against what the page actually does, for 110 modules and in all 27
+      languages. And when you have read it, collapsing the card no longer leaves
+      a stub on the page: it folds away entirely and a small info icon takes its
+      place in the top bar, one click from coming back. Longer explanations get
+      a "Show more" expansion with simple formatting for lists and emphasis.
+    </p>
+
+    <h2>The bug behind the bare cards</h2>
+    <p>
+      Those info cards were designed to wear a light translucent blue, and for a
+      while they did not. They looked like plain text on white, in both themes,
+      and so did a long tail of other surfaces. The cause was a single quiet bug
+      in the theme palette: it was dropping every semi-transparent variant of
+      the brand and surface colors at build time, so card backgrounds, hover
+      tints and accent borders that were specified in the design never reached
+      the screen. One fix restored dozens of surfaces at once. The palette now
+      compiles the alpha-modified variants correctly, and the info cards, along
+      with everything else that relied on a translucent tint, render the way
+      they were meant to in light and dark.
+    </p>
+
+    <h2>The AI Estimate Builder</h2>
+    <p>
+      The headline new module takes any starting point, a typed scope, a BIM
+      model or a set of uploaded documents, and walks it to a priced bill of
+      quantities in four guarded stages: understand the source, group the
+      quantities, match rates from the cost database, then review and apply.
+      Every stage shows its work and waits for a human decision. The model
+      suggests groupings and matches with confidence scores, but unit rates only
+      ever come from the cost catalogue. The model is never allowed to invent a
+      price. Runs are persisted, so a half-finished estimate survives a reload,
+      and the whole flow degrades gracefully when no AI key or vector database is
+      configured. It is the AI-augmented, human-confirmed pattern the platform
+      has held to from the start, applied to the one task estimators ask for
+      most.
+    </p>
+
+    <h2>Connective tissue and honest screens</h2>
+    <p>
+      A handful of modules got the wiring they were missing. The collaboration
+      hub is a real workspace now, with live comment threads, BIM viewpoints you
+      can create and open, who-is-here presence and your own element locks on one
+      screen, instead of a page of links that went nowhere. The Validate button
+      in the BOQ editor jumps straight into the validation dashboard with that
+      BOQ preselected, the dashboard restores your last report when you come
+      back, and the rule-set chips read as DIN 276, GAEB, NRM and MasterFormat
+      rather than raw engine ids. The daily diary calendar is clickable, with
+      keyboard navigation, so you pick a day and edit that day's entry directly.
+      The role-based reporting dashboards stop holding every widget hostage
+      behind one slow fan-out: widgets load independently and resolve to data, an
+      honest empty state with a way forward, or a retry, never a permanent grey
+      box, and figures with no source yet show a dash with a note explaining what
+      will fill them. Supplier catalogs stops pretending to be a purchasing
+      module and points clearly at Procurement for requisitions, purchase orders
+      and three-way matching, focusing on what it really is, the vendor and item
+      reference library.
+    </p>
+
+    <h2>Fixes riding along</h2>
+    <p>
+      Reopening a punch-list item works again: resolved items can go back to
+      open, verified items can be reopened and closed items can be brought back,
+      matching what the workflow allows on the server. Monte Carlo risk analysis
+      now respects the project currency on every figure and reads the project
+      from the global context, and the subcontractor payments portal no longer
+      traps signed-out visitors, it explains that access comes through the
+      invitation link and offers a way back to the app. The element-to-cost
+      matching wizard speaks all 27 languages now, including the stage rail and
+      step counter that were English-only before. The project pill in the top bar
+      yields space on mid-size screens, so module names no longer truncate to
+      "Carbo..." at common laptop widths. And the desktop app detects an
+      already-running backend on the common ports and attaches to it instead of
+      failing a fresh boot next to it, with the splash screen able to open the
+      launcher log directly when something does go wrong.
+    </p>
+
+    <h2>Upgrade</h2>
+
+    <div class="codewrap">
+      <button type="button" class="copy-btn" id="copy-upgrade" aria-label="Copy upgrade command">Copy</button>
+<pre><span class="cmd"><span class="tok-cmd">pip</span> <span class="tok-arg">install</span> <span class="tok-flag">--upgrade</span> <span class="tok-arg">openconstructionerp</span></span></pre>
+    </div>
+
+    <p>
+      The Alembic head is a single revision and the normal install path creates
+      the schema from the models and stamps it at the latest version. The
+      desktop installers for Windows, macOS and Linux carry the launcher that
+      attaches to an already-running backend and can open its log straight from
+      the splash screen. If you run an external PostgreSQL through
+      <code>DATABASE_URL</code>, nothing about that connection changes. Questions
+      or trouble upgrading, write to
+      <a href="mailto:info@datadrivenconstruction.io">info@datadrivenconstruction.io</a>.
+    </p>
+
+    <div class="cta-block">
+      <h3>Try v7.0.0 today.</h3>
+      <p>Live demo in your browser, or self-host in five minutes. AGPL-3.0, no signup required.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="/demo"><span>Try the demo</span><svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+        <a class="btn btn-ghost" href="https://adicc-uae.com" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M12 0.5C5.65 0.5 0.5 5.65 0.5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.36-3.87-1.36-.52-1.32-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.47.11-3.05 0 0 .97-.31 3.18 1.18A11 11 0 0 1 12 6.8a11 11 0 0 1 2.9.39c2.2-1.5 3.17-1.18 3.17-1.18.63 1.58.24 2.76.12 3.05.74.81 1.18 1.84 1.18 3.1 0 4.43-2.7 5.4-5.27 5.69.42.36.78 1.07.78 2.15v3.19c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg>
+          <span>View on GitHub</span>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</article>
+
+<footer class="pagefoot">
+  <div class="wrap">
+    <div class="pagefoot-inner">
+      <div>&copy; 2026 Artem Boiko / DataDrivenConstruction &middot; Open source under AGPL-3.0.</div>
+      <div>
+        <a href="/">Home</a> &middot;
+        <a href="/partners.html">Partners</a> &middot;
+        <a href="/news.html">News</a> &middot;
+        <a href="https://adicc-uae.com" target="_blank" rel="noopener">GitHub</a> &middot;
+        <a href="https://datadrivenconstruction.io" target="_blank" rel="noopener">DataDrivenConstruction.io</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- ================================================================ -->
+<!-- COOKIE CONSENT BANNER                                             -->
+<!-- ================================================================ -->
+<div class="cookie-banner" id="cookie-banner" role="dialog" aria-label="Cookie preferences" aria-live="polite">
+  <div class="cookie-banner-inner">
+    <div class="cookie-banner-icon" aria-hidden="true">🍪</div>
+    <div class="cookie-banner-body">
+      <div class="cookie-banner-title" data-i18n="cookie.title">Cookies &amp; analytics</div>
+      <p class="cookie-banner-text" data-i18n-html="cookie.text">
+        We use essential cookies and anonymised analytics to improve the site. No third-party trackers, no ads. <a href="/privacy-policy.html">Learn more</a>.
+      </p>
+    </div>
+    <div class="cookie-banner-actions">
+      <button type="button" class="cookie-btn cookie-btn-reject" id="cookie-reject" data-i18n="cookie.reject">Reject non-essential</button>
+      <button type="button" class="cookie-btn cookie-btn-accept" id="cookie-accept" data-i18n="cookie.accept">Accept all</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var btn = document.getElementById('theme-toggle'); if (!btn) return;
+    btn.addEventListener('click', function () {
+      var cur = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+      var next = cur === 'dark' ? 'light' : 'dark';
+      document.documentElement.dataset.theme = next;
+      try { localStorage.setItem('oce-theme', next); } catch (e) {}
+    });
+  })();
+  (function () {
+    var btn = document.getElementById('copy-upgrade'); if (!btn) return;
+    var cmd = 'pip install --upgrade openconstructionerp';
+    btn.addEventListener('click', function () {
+      var done = function () { var prev = btn.textContent; btn.textContent = 'Copied'; btn.classList.add('is-copied'); setTimeout(function () { btn.textContent = prev; btn.classList.remove('is-copied'); }, 1600); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(cmd).then(done).catch(function () { var ta = document.createElement('textarea'); ta.value = cmd; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) {} document.body.removeChild(ta); done(); });
+      } else { var ta = document.createElement('textarea'); ta.value = cmd; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) {} document.body.removeChild(ta); done(); }
+    });
+  })();
+  // Cookie consent banner - GDPR Consent Mode v2 integration
+  (function setupCookieBanner() {
+    const banner = document.getElementById('cookie-banner');
+    const accept = document.getElementById('cookie-accept');
+    const reject = document.getElementById('cookie-reject');
+    if (!banner) return;
+    let prior = null;
+    try { prior = localStorage.getItem('oce-cookie-consent'); } catch (e) {}
+    if (!prior) {
+      setTimeout(() => banner.classList.add('is-visible'), 800);
+    }
+    function apply(choice) {
+      try { localStorage.setItem('oce-cookie-consent', choice); } catch (e) {}
+      if (typeof gtag === 'function') {
+        gtag('consent', 'update', {
+          'analytics_storage': choice === 'granted' ? 'granted' : 'denied'
+        });
+      }
+      banner.classList.remove('is-visible');
+    }
+    accept?.addEventListener('click', () => apply('granted'));
+    reject?.addEventListener('click', () => apply('denied'));
+    // Allow re-opening via any element with data-open-cookies
+    document.querySelectorAll('[data-open-cookies]').forEach((el) => {
+      el.addEventListener('click', (e) => { e.preventDefault(); banner.classList.add('is-visible'); });
+    });
+  })();
+</script>
+
+<script src="/news/assets/related-articles.js" defer></script>
+
+</body>
+</html>

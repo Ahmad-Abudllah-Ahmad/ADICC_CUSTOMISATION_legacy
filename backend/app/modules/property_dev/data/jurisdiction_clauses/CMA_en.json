@@ -1,0 +1,37 @@
+{
+  "regulator": "CMA",
+  "title": "Capital Markets Authority Regulatory Disclosures (KSA / GCC)",
+  "intro": "This Agreement is subject to the off-plan sales framework supervised by the Capital Market Authority and the Ministry of Housing, including the Wafi Off-Plan Real Estate Sale and Rent program where applicable.",
+  "clauses": [
+    {
+      "id": "cma.mof_approval",
+      "heading": "Ministry of Finance Approval",
+      "text": "The off-plan sale of the Unit has been approved by the relevant Ministry of Finance / Ministry of Housing under approval reference {mof_approval_no}. The Developer warrants that the approval is in force as of the date of this Agreement."
+    },
+    {
+      "id": "cma.escrow",
+      "heading": "Escrow Account (Wafi)",
+      "text": "All Buyer payments shall be deposited into the regulator-supervised escrow account {escrow_account_no} held with {escrow_bank}. The account is monitored under the Wafi program. Funds may be released to the Developer only against verified construction milestones in accordance with the approved release schedule."
+    },
+    {
+      "id": "cma.admin_fee",
+      "heading": "5% Administrative Fee",
+      "text": "An administrative fee of 5% of the Unit price is payable by the Buyer at the time of execution of this Agreement. This fee covers registration, escrow administration, and regulatory submissions and is non-refundable except where this Agreement is rescinded due to the Developer's default."
+    },
+    {
+      "id": "cma.sharia",
+      "heading": "Sharia-Compliant Provisions",
+      "text": "Where this Agreement is structured under Sharia-compliant terms (e.g. Murabaha or Istisna'a financing), the financing terms shall be set out in a separate annex and shall prevail in the event of conflict with the conventional financing provisions of this Agreement. The Parties confirm that the price and payment schedule contain no element of riba (interest)."
+    },
+    {
+      "id": "cma.completion",
+      "heading": "Completion Date & Substantial Performance",
+      "text": "The Developer shall complete the Unit and deliver possession on or before {completion_date}. Delay exceeding the grace period set out in the schedule entitles the Buyer to claim a refund from the escrow account in accordance with the Wafi program rules."
+    },
+    {
+      "id": "cma.jurisdiction",
+      "heading": "Jurisdiction",
+      "text": "Disputes arising under this Agreement shall be resolved before the competent courts of {jurisdiction_seat}. The Parties may also refer the matter to the Real Estate Committee of the competent Ministry where the dispute falls within its jurisdiction."
+    }
+  ]
+}

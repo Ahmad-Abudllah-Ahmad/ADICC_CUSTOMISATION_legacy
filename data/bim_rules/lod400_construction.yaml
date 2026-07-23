@@ -1,0 +1,311 @@
+# AIA LOD 400 — Construction.
+#
+# LOD 400 adds *fabrication, assembly and detailing* information on top of
+# LOD 300. Elements must be detailed enough for shop drawings and to drive
+# procurement and warranty tracking. AIA G202-2013 §A.4 (LOD 400) — plus
+# COBie-compatible manufacturer and warranty psets — defines the minimum.
+#
+# Connectivity assertions (door → hosting wall, window → hosting wall,
+# MEP terminal → source) are property-based at this LOD; a future
+# geometric engine can replace them with topological checks without
+# changing the YAML.
+schema_version: "1.0"
+pack:
+  id: lod400_construction
+  name: AIA LOD 400 — Construction
+  description: |
+    Validates that every element carries the LOD 400 minimum information
+    (everything required at LOD 300 plus manufacturer, warranty,
+    maintenance, base quantities and hosting/source connectivity) per
+    AIA G202-2013 §A.4 (LOD 400) and the COBie 2.4 handover schema.
+  source: openconstructionerp
+  version: "1.0.0"
+  applies_to:
+    classifications: ["MasterFormat", "Uniformat", "OmniClass", "COBie"]
+    project_regions: ["US", "CA", "UK"]
+
+rules:
+  # ── Carry-overs from LOD 300 (still mandatory) ──────────────────────
+  - id: lod400_wall_material_present
+    name: LOD 400 — Wall has Material (carry-over from LOD 300)
+    severity: error
+    selector:
+      ifc_class: IfcWall
+    assertion:
+      property:
+        key: Material
+        op: exists
+        value: true
+    failure_message: "Wall has no Material property."
+
+  - id: lod400_door_material_present
+    name: LOD 400 — Door has Material (carry-over from LOD 300)
+    severity: error
+    selector:
+      ifc_class: IfcDoor
+    assertion:
+      property:
+        key: Material
+        op: exists
+        value: true
+    failure_message: "Door has no Material property."
+
+  # ── Pset_ManufacturerTypeInformation ────────────────────────────────
+  - id: lod400_manufacturer_name
+    name: LOD 400 — ManufacturerName authored on every type-bearing element
+    severity: error
+    rationale: |
+      AIA LOD 400 + COBie 2.4 require the ManufacturerName attribute on
+      every fabricated component so procurement and FM systems can
+      reconcile the actual product installed.
+    selector:
+      ifc_class: IfcElement
+      properties:
+        - { key: IsTypeBearing, op: eq, value: true }
+    assertion:
+      property:
+        key: ManufacturerName
+        op: exists
+        value: true
+    failure_message: "Element is type-bearing but has no ManufacturerName."
+
+  - id: lod400_product_code
+    name: LOD 400 — ProductCode authored on every type-bearing element
+    severity: error
+    selector:
+      ifc_class: IfcElement
+      properties:
+        - { key: IsTypeBearing, op: eq, value: true }
+    assertion:
+      property:
+        key: ProductCode
+        op: exists
+        value: true
+    failure_message: "Element is type-bearing but has no ProductCode."
+
+  - id: lod400_production_year
+    name: LOD 400 — ProductionYear within a plausible range
+    severity: warning
+    rationale: |
+      ProductionYear is part of Pset_ManufacturerTypeInformation. We
+      bound the range at [1900, 2100] to catch placeholders ("0" / "2") .
+    selector:
+      ifc_class: IfcElement
+      properties:
+        - { key: ProductionYear, op: exists, value: true }
+    assertion:
+      property:
+        key: ProductionYear
+        op: between
+        value: [1900, 2100]
+    failure_message: "ProductionYear {{ProductionYear}} is outside the plausible 1900..2100 range."
+
+  # ── Pset_Warranty ───────────────────────────────────────────────────
+  - id: lod400_warranty_start
+    name: LOD 400 — StartOfWarranty present on warranted elements
+    severity: warning
+    rationale: |
+      Pset_Warranty.StartOfWarranty is required for any element with a
+      manufacturer warranty so FM systems can drive maintenance alarms.
+    selector:
+      ifc_class: IfcElement
+      properties:
+        - { key: HasWarranty, op: eq, value: true }
+    assertion:
+      property:
+        key: StartOfWarranty
+        op: exists
+        value: true
+    failure_message: "Warranted element has no StartOfWarranty date."
+
+  - id: lod400_warranty_end_after_start
+    name: LOD 400 — EndOfWarranty after StartOfWarranty
+    severity: warning
+    rationale: |
+      A warranty duration of zero or negative is meaningless; we encode
+      this as a monotonic year check (EndOfWarrantyYear ≥ StartYear).
+    selector:
+      ifc_class: IfcElement
+      properties:
+        - { key: HasWarranty, op: eq, value: true }
+        - { key: WarrantyDurationYears, op: exists, value: true }
+    assertion:
+      property:
+        key: WarrantyDurationYears
+        op: gt
+        value: 0
+    failure_message: "Warranty duration {{WarrantyDurationYears}} years is not strictly positive."
+
+  # ── MEP maintenance frequency ───────────────────────────────────────
+  - id: lod400_mep_maintenance_frequency
+    name: LOD 400 — MEP element declares MaintenanceFrequency
+    severity: warning
+    rationale: |
+      Pset_MaintenanceFrequency is required on MEP equipment at LOD 400
+      so FM CMMS can schedule preventative maintenance from the model.
+    selector:
+      ifc_class: IfcDistributionElement
+    assertion:
+      property:
+        key: MaintenanceFrequency
+        op: exists
+        value: true
+    failure_message: "MEP element has no MaintenanceFrequency."
+
+  # ── QuantitySet_BaseQuantities ──────────────────────────────────────
+  - id: lod400_base_quantities_volume
+    name: LOD 400 — Volumetric element has GrossVolume > 0
+    severity: warning
+    rationale: |
+      QuantitySet_BaseQuantities drives cost rollup; GrossVolume = 0
+      indicates a placeholder family or a mass-only element.
+    selector:
+      ifc_class: IfcElement
+      properties:
+        - { key: HasGeometry, op: eq, value: true }
+    assertion:
+      property:
+        key: GrossVolume
+        op: gt
+        value: 0
+        unit: m3
+    failure_message: "Volumetric element has zero GrossVolume in base quantities."
+
+  - id: lod400_base_quantities_area
+    name: LOD 400 — Surface element has NetArea > 0
+    severity: warning
+    selector:
+      ifc_class: IfcElement
+      properties:
+        - { key: IsSurface, op: eq, value: true }
+    assertion:
+      property:
+        key: NetArea
+        op: gt
+        value: 0
+        unit: m2
+    failure_message: "Surface element has zero NetArea in base quantities."
+
+  # ── Connectivity / hosting ──────────────────────────────────────────
+  - id: lod400_door_hosted_by_wall
+    name: LOD 400 — Door is hosted by a wall
+    severity: error
+    rationale: |
+      Free-floating doors invalidate compartment audits and energy models.
+    selector:
+      ifc_class: IfcDoor
+    assertion:
+      property:
+        key: HostElementClass
+        op: eq
+        value: IfcWall
+    failure_message: "Door HostElementClass is '{{HostElementClass}}', expected IfcWall."
+
+  - id: lod400_window_hosted_by_wall
+    name: LOD 400 — Window is hosted by a wall
+    severity: error
+    selector:
+      ifc_class: IfcWindow
+    assertion:
+      property:
+        key: HostElementClass
+        op: eq
+        value: IfcWall
+    failure_message: "Window HostElementClass is '{{HostElementClass}}', expected IfcWall."
+
+  - id: lod400_mep_traces_to_source
+    name: LOD 400 — MEP terminal traces to a source element
+    severity: warning
+    rationale: |
+      Every terminal (IfcDistributionFlowElement subtype Terminal) must
+      declare HasSource=true so MEP system continuity audits succeed.
+    selector:
+      ifc_class: IfcDistributionElement
+      properties:
+        - { key: IsTerminal, op: eq, value: true }
+    assertion:
+      property:
+        key: HasSource
+        op: eq
+        value: true
+    failure_message: "MEP terminal does not trace back to a source element."
+
+  # ── Misc ─────────────────────────────────────────────────────────────
+  - id: lod400_serial_number_unique_hint
+    name: LOD 400 — SerialNumber present on serialised elements
+    severity: warning
+    rationale: |
+      Equipment marked IsSerialised=true must carry a SerialNumber.
+    selector:
+      ifc_class: IfcElement
+      properties:
+        - { key: IsSerialised, op: eq, value: true }
+    assertion:
+      property:
+        key: SerialNumber
+        op: exists
+        value: true
+    failure_message: "Serialised element has no SerialNumber."
+
+  - id: lod400_installation_date_present
+    name: LOD 400 — InstallationDate present once installed
+    severity: info
+    selector:
+      ifc_class: IfcElement
+      properties:
+        - { key: IsInstalled, op: eq, value: true }
+    assertion:
+      property:
+        key: InstallationDate
+        op: exists
+        value: true
+    failure_message: "Installed element has no InstallationDate."
+
+  - id: lod400_assembly_role
+    name: LOD 400 — Assembled element declares AssemblyRole
+    severity: info
+    rationale: |
+      Sub-elements of an IfcElementAssembly must declare their role
+      (e.g. Plate, Stiffener) so steel-detailing tools can re-assemble.
+    selector:
+      ifc_class: IfcElement
+      properties:
+        - { key: ParentAssemblyId, op: exists, value: true }
+    assertion:
+      property:
+        key: AssemblyRole
+        op: exists
+        value: true
+    failure_message: "Element belongs to an assembly but has no AssemblyRole."
+
+  - id: lod400_barcode_when_applicable
+    name: LOD 400 — BarCode authored when HasBarCode=true
+    severity: info
+    selector:
+      ifc_class: IfcElement
+      properties:
+        - { key: HasBarCode, op: eq, value: true }
+    assertion:
+      property:
+        key: BarCode
+        op: exists
+        value: true
+    failure_message: "Element claims HasBarCode=true but has no BarCode value."
+
+  - id: lod400_pset_warranty_consistency
+    name: LOD 400 — Warranty must NOT be flagged on un-warranted elements
+    severity: info
+    rationale: |
+      Detect stale parameter values: an element without a warranty must
+      not carry a WarrantyDurationYears > 0.
+    selector:
+      ifc_class: IfcElement
+      properties:
+        - { key: HasWarranty, op: eq, value: false }
+        - { key: WarrantyDurationYears, op: exists, value: true }
+    assertion:
+      property:
+        key: WarrantyDurationYears
+        op: eq
+        value: 0
+    failure_message: "HasWarranty=false but WarrantyDurationYears={{WarrantyDurationYears}}."

@@ -1,0 +1,24 @@
+{
+  "rule_pack_id": "rawlinsons_nz_benchmarks",
+  "name": "Rawlinsons New Zealand Construction Handbook — Cost Benchmarks",
+  "standard": "Rawlinsons NZCH",
+  "jurisdiction": "NZ",
+  "publisher": "Rawlhouse Publishing Pty Ltd",
+  "description": "Enables OCERP built-in validation rules that compare project cost-per-m² and elemental cost ratios against current Rawlinsons New Zealand Construction Handbook averages and apply Auckland/Wellington/Christchurch/regional NZ location factors.",
+  "covered_metros": [
+    "Auckland", "Wellington", "Christchurch",
+    "Hamilton", "Tauranga", "Dunedin", "Queenstown"
+  ],
+  "applies_to": ["projects", "boq", "validation", "reporting"],
+  "enables_rule_ids": [
+    "rawlinsons_nz.edition_year_current",
+    "rawlinsons_nz.cost_per_m2_within_band",
+    "rawlinsons_nz.element_ratio_within_band",
+    "rawlinsons_nz.location_factor_applied",
+    "rawlinsons_nz.location_factor_matches_region",
+    "rawlinsons_nz.gst_15pct_handling_explicit",
+    "rawlinsons_nz.preliminaries_pct_within_band",
+    "rawlinsons_nz.contingency_pct_within_band",
+    "rawlinsons_nz.gfa_method_consistent"
+  ]
+}

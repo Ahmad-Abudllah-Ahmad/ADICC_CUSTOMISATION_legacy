@@ -1,0 +1,27 @@
+{
+  "rule_pack_id": "aramco_approval_chain",
+  "name": "Saudi Aramco — Engineering Approval Workflow",
+  "name_ar": "أرامكو السعودية — مسار الاعتماد الهندسي",
+  "standard": "Saudi Aramco Project Management Team (PMT) approval workflow + Inspection Procedures + Schedule Q",
+  "jurisdiction": "SA-ARAMCO",
+  "regulator": "Saudi Aramco — Engineering Services / Project Management Office",
+  "publication_year": 2024,
+  "applies_to": ["projects", "tendering", "submittals", "validation"],
+  "description": "Enables OCERP built-in validation rules that enforce the Saudi Aramco approval sequence on every drawing, document and tender package: Proponent (operating organisation owning the asset) -> Engineering Discipline Lead -> PMT Project Engineer -> Project Manager -> Inspection (mandatory for safety-critical items) -> Approved-for-Construction (AFC) stamp. Each stage must be present and time-ordered; missing intermediate sign-off blocks issue-for-construction. Pairs with `aramco_saes_samss` (engineering refs) and `aramco_pim_qualification` (vendor pre-qual).",
+  "description_ar": "تفعيل قواعد التحقق لمسار اعتماد أرامكو الهندسي — جهة المستفيد، رئيس التخصص، مهندس المشروع، مدير المشروع، الفحص، ثم الاعتماد للتنفيذ.",
+  "severity_overrides": {
+    "aramco.proponent_approval_present": "ERROR",
+    "aramco.afc_stamp_present_for_construction_issue": "ERROR"
+  },
+  "enables_rule_ids": [
+    "aramco.proponent_approval_present",
+    "aramco.engineering_discipline_lead_approval",
+    "aramco.pmt_project_engineer_approval",
+    "aramco.pmt_project_manager_approval",
+    "aramco.inspection_sign_off_chain_complete",
+    "aramco.afc_stamp_present_for_construction_issue",
+    "aramco.approval_stages_time_ordered",
+    "aramco.deviation_request_format_compliant",
+    "aramco.material_inspection_report_mir_workflow"
+  ]
+}

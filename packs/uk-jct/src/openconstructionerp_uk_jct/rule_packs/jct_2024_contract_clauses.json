@@ -1,0 +1,25 @@
+{
+  "rule_pack_id": "jct_2024_contract_clauses",
+  "name": "JCT 2024 Contract Suite — Clause Compliance",
+  "standard": "JCT 2024",
+  "jurisdiction": "GB",
+  "description": "Enables OCERP built-in validation rules that check tender packs and contract documents for the mandatory JCT 2024 clauses (Articles, Recitals, Contract Particulars, schedules) across the contract variants (SBC, IC, MW, DB, CM). JCT 2024 introduced BIM/CDE provisions (collaborative working), Building Safety Act 2022 alignment, sustainability/net-zero commitments, modern slavery & anti-corruption clauses, supplemental provisions for early-warning notices, fluctuation Option C alignment and updated dispute-resolution mechanisms (adjudication, mediation triggers).",
+  "enables_rule_ids": [
+    "jct.articles_present",
+    "jct.recitals_present",
+    "jct.contract_particulars_complete",
+    "jct.schedule_amendments_documented",
+    "jct.payment_terms_clause_4_compliant",
+    "jct.variation_procedure_clause_5_compliant",
+    "jct.insurance_clause_6_set",
+    "jct.dispute_resolution_article_7_8_set",
+    "jct.bim_cde_provisions_present",
+    "jct.collaborative_working_clause_present",
+    "jct.building_safety_act_alignment",
+    "jct.sustainability_net_zero_clause_present",
+    "jct.modern_slavery_clause_present",
+    "jct.anti_corruption_clause_present",
+    "jct.early_warning_notice_procedure",
+    "jct.fluctuation_option_c_aligned"
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "rule_pack_id": "rawlinsons_benchmarks",
+  "name": "Rawlinsons Australian Construction Handbook 2024 — Cost Benchmarks",
+  "standard": "Rawlinsons ACH 2024",
+  "jurisdiction": "AU",
+  "publisher": "Rawlhouse Publishing Pty Ltd",
+  "edition": "42nd Edition (2024)",
+  "description": "Enables OCERP built-in validation rules that compare project cost-per-m² and elemental cost ratios against current Rawlinsons Australian Construction Handbook 2024 averages, apply state/city location factors, and flag outliers for review.",
+  "covered_metros": [
+    "Sydney", "Melbourne", "Brisbane", "Perth", "Adelaide",
+    "Hobart", "Darwin", "Canberra"
+  ],
+  "elemental_breakdown": "AIQS Australian Cost Management Manual / NATSPEC elemental codes",
+  "applies_to": ["projects", "boq", "validation", "reporting"],
+  "enables_rule_ids": [
+    "rawlinsons.edition_year_current",
+    "rawlinsons.cost_per_m2_within_band",
+    "rawlinsons.element_ratio_within_band",
+    "rawlinsons.location_factor_applied",
+    "rawlinsons.location_factor_matches_postcode",
+    "rawlinsons.building_price_index_current",
+    "rawlinsons.gfa_method_consistent",
+    "rawlinsons.gst_handling_explicit",
+    "rawlinsons.preliminaries_pct_within_band",
+    "rawlinsons.contingency_pct_within_band"
+  ]
+}

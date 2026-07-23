@@ -1,0 +1,74 @@
+# Authors Guard
+#
+# Enforces the project policy that only DataDrivenConstruction authors land in
+# the tree. If a pull request contains any commit that is not authored by a
+# first-party identity, this check fails so the PR cannot be merged. We read
+# community issues and write every fix in-house; we do not merge external code.
+# See CONTRIBUTORS.md for how to propose a change by opening an issue.
+
+name: Authors Guard
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  authors-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify every commit in the PR is first-party
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const allowLogins = new Set([
+              'boikoartem',
+              'datadrivenconstruction',
+              'dependabot[bot]',
+              'github-actions[bot]',
+              'web-flow',
+            ]);
+            const allowEmails = new Set([
+              'info@datadrivenconstruction.io',
+              '94158709+datadrivenconstruction@users.noreply.github.com',
+              'noreply@github.com',
+            ]);
+            const emailOk = (raw) => {
+              if (!raw) return false;
+              const e = raw.toLowerCase();
+              if (allowEmails.has(e)) return true;
+              return e.endsWith('@users.noreply.github.com')
+                && (e.includes('datadrivenconstruction') || e.includes('boikoartem'));
+            };
+            const { data: commits } = await github.rest.pulls.listCommits({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              per_page: 250,
+            });
+            const offenders = [];
+            for (const c of commits) {
+              const login = ((c.author && c.author.login) || '').toLowerCase();
+              const authorEmail = c.commit.author && c.commit.author.email;
+              const committerEmail = c.commit.committer && c.commit.committer.email;
+              const ok = allowLogins.has(login)
+                || emailOk(authorEmail)
+                || emailOk(committerEmail);
+              if (!ok) {
+                offenders.push(`${c.sha.slice(0, 8)} author=${login || '?'} <${authorEmail || '?'}>`);
+              }
+            }
+            if (offenders.length) {
+              core.setFailed(
+                'This pull request contains commits that are not authored by '
+                + 'DataDrivenConstruction:\n'
+                + offenders.join('\n')
+                + '\n\nProject policy: we do not merge external code. Please open an '
+                + 'issue describing the change and we will implement it in-house.'
+              );
+            } else {
+              core.info('All commits are first-party. OK.');
+            }

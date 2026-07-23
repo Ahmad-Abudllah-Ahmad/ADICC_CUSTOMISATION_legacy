@@ -1,0 +1,485 @@
+# OpenConstructionERP Desktop, build and release.
+#
+# Triggered on version tag push (e.g., v6.7.0).
+# Builds desktop installers for Windows, macOS, and Linux.
+#
+# Artifacts:
+#   - Windows: .exe (NSIS installer)
+#   - macOS: .dmg
+#   - Linux: .AppImage, .deb
+
+name: Desktop Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-sidecar:
+    name: Build Sidecar (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      # Build every OS even if one fails, so a single-platform break never
+      # cancels the others and we still ship the installers that did build.
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            ext: .exe
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            ext: ""
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            ext: ""
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build frontend
+        # The macOS arm64 runner OOMs the Vite/Rollup build with Node's
+        # default heap (exit 134, "JavaScript heap out of memory"). Give it
+        # an 8 GB old-space ceiling; harmless on the roomier Linux/Windows runners.
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
+        run: |
+          cd frontend
+          npm ci
+          npm run build
+
+      - name: Install Python dependencies
+        run: |
+          cd backend
+          # Install the exact, pinned dependency set first so every release
+          # ships identical versions on all platforms. The lock is universal
+          # (environment markers), so the same file resolves correctly on
+          # Windows, macOS and Linux. Then install the project itself without
+          # touching deps, so the lock fully owns the dependency graph.
+          pip install -r requirements-desktop.lock
+          pip install -e . --no-deps
+
+      - name: Build sidecar with PyInstaller
+        run: |
+          # PyInstaller is a build tool, not a runtime dependency, so it is
+          # installed separately and is intentionally absent from the lock.
+          pip install "pyinstaller>=6.0.0"
+          pyinstaller desktop/pyinstaller.spec --distpath desktop/dist --workpath desktop/build --noconfirm
+
+      - name: Copy sidecar binary
+        shell: bash
+        run: |
+          mkdir -p desktop/src-tauri/binaries
+          # onefile build: PyInstaller writes a single executable directly into
+          # distpath, not a onedir subfolder.
+          cp "desktop/dist/openconstructionerp-server${{ matrix.ext }}" \
+             "desktop/src-tauri/binaries/openconstructionerp-server-${{ matrix.target }}${{ matrix.ext }}"
+
+      - name: Upload sidecar artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sidecar-${{ matrix.target }}
+          path: desktop/src-tauri/binaries/
+
+  build-tauri:
+    name: Build Desktop (${{ matrix.os }})
+    needs: build-sidecar
+    runs-on: ${{ matrix.os }}
+    strategy:
+      # Build every OS even if one fails, so a single-platform break never
+      # cancels the others and we still ship the installers that did build.
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+          - os: macos-latest
+            target: aarch64-apple-darwin
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build frontend
+        # The macOS arm64 runner OOMs the Vite/Rollup build with Node's
+        # default heap (exit 134, "JavaScript heap out of memory"). Give it
+        # an 8 GB old-space ceiling; harmless on the roomier Linux/Windows runners.
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
+        run: |
+          cd frontend
+          npm ci
+          npm run build
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev
+
+      - name: Download sidecar
+        uses: actions/download-artifact@v4
+        with:
+          name: sidecar-${{ matrix.target }}
+          path: desktop/src-tauri/binaries/
+
+      - name: Make sidecar executable
+        if: runner.os != 'Windows'
+        run: chmod +x desktop/src-tauri/binaries/*
+
+      # Ad-hoc code sign the sidecar on macOS BEFORE Tauri bundles it. The
+      # sidecar is an unsigned PyInstaller binary; an unsigned nested Mach-O
+      # breaks the .app bundle's code-signature seal, and on Apple Silicon a
+      # broken seal on a quarantined download makes Gatekeeper report the app
+      # as "damaged" (the severe path, which right-click Open cannot bypass)
+      # rather than the milder "unidentified developer". Giving the sidecar a
+      # valid ad-hoc cdhash here lets Tauri's own ad-hoc bundle signing
+      # (bundle.macOS.signingIdentity "-") seal a valid bundle. This is not
+      # notarization: users still clear quarantine once (see the release
+      # notes and docs/desktop/INSTALL.md), but the app stops being reported
+      # as damaged.
+      - name: Ad-hoc sign sidecar (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          set -euo pipefail
+          for f in desktop/src-tauri/binaries/*; do
+            echo "Ad-hoc signing $f"
+            codesign --force --sign - --timestamp=none "$f"
+            codesign --verify --verbose=2 "$f"
+          done
+
+      # Bundle the small (~30 MB) DDC IFC converter into the Windows installer
+      # so a fresh install converts .ifc files offline with no first-use
+      # download. We fetch the public converter repo as a zipball for the pinned
+      # ref, extract only the DDC_WINDOWS_Converters/DDC_CONVERTER_IFC subtree,
+      # and drop it under resources/converters/ifc_windows/ (the layout the
+      # backend resolver expects via OE_BUNDLED_CONVERTERS_DIR). Windows only,
+      # because the bundled exe is win_amd64; the much larger RVT converter is
+      # deliberately NOT bundled and stays on demand. The step retries on
+      # transient network failures and never code-signs these binaries (they are
+      # upstream artifacts shipped as resources, not our own executables).
+      - name: Bundle IFC converter (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          # Same override knobs the runtime auto-installer honours, so a fork or
+          # a pinned release branch can be selected without editing this file.
+          OE_CONVERTER_REPO: ${{ vars.OE_CONVERTER_REPO || 'datadrivenconstruction/cad2data-Revit-IFC-DWG-DGN' }}
+          OE_CONVERTER_REF: ${{ vars.OE_CONVERTER_REF || 'main' }}
+          # Lifts the unauthenticated API rate limit on the runner. The converter
+          # repo is public, so a read with the default job token is enough.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $repo = $env:OE_CONVERTER_REPO
+          $ref  = $env:OE_CONVERTER_REF
+          $subPath = 'DDC_WINDOWS_Converters/DDC_CONVERTER_IFC'
+          $destRoot = 'desktop/src-tauri/resources/converters/ifc_windows'
+          # The API zipball endpoint accepts any ref - branch, tag, or SHA - so a
+          # pinned tag works the same as the default branch with no URL change.
+          $zipUrl = "https://api.github.com/repos/$repo/zipball/$ref"
+          $tmpZip = Join-Path $env:RUNNER_TEMP 'ddc_ifc.zip'
+          $tmpDir = Join-Path $env:RUNNER_TEMP 'ddc_ifc_extract'
+          # GITHUB_TOKEN lifts the unauthenticated API rate limit on the runner.
+          $headers = @{ 'User-Agent' = 'OpenConstructionERP-desktop-build' }
+          if ($env:GH_TOKEN) { $headers['Authorization'] = "Bearer $($env:GH_TOKEN)" }
+
+          # Resilient download with a few retries on transient network errors.
+          $ok = $false
+          for ($i = 1; $i -le 5; $i++) {
+            try {
+              Write-Host "Downloading IFC converter zipball (attempt $i): $zipUrl"
+              Invoke-WebRequest -Uri $zipUrl -OutFile $tmpZip -Headers $headers -UseBasicParsing -TimeoutSec 180
+              $ok = $true
+              break
+            } catch {
+              Write-Host "Attempt $i failed: $($_.Exception.Message)"
+              Start-Sleep -Seconds ([math]::Min(30, 5 * $i))
+            }
+          }
+          if (-not $ok) { throw "Could not download the IFC converter zipball after 5 attempts." }
+
+          if (Test-Path $tmpDir) { Remove-Item -Recurse -Force $tmpDir }
+          Expand-Archive -Path $tmpZip -DestinationPath $tmpDir -Force
+
+          # The zipball extracts to a single top-level <repo>-<ref> folder.
+          $top = Get-ChildItem -Path $tmpDir -Directory | Select-Object -First 1
+          if ($null -eq $top) { throw "Unexpected zip layout: no top-level directory found." }
+          $srcDir = Join-Path $top.FullName $subPath
+          if (-not (Test-Path $srcDir)) {
+            throw "Converter subpath not found in zipball: $subPath (looked under $($top.FullName))."
+          }
+
+          # Reset the destination so a re-run never mixes stale files in.
+          if (Test-Path $destRoot) { Remove-Item -Recurse -Force $destRoot }
+          New-Item -ItemType Directory -Force -Path $destRoot | Out-Null
+          Copy-Item -Path (Join-Path $srcDir '*') -Destination $destRoot -Recurse -Force
+
+          $exe = Join-Path $destRoot 'IfcExporter.exe'
+          if (-not (Test-Path $exe)) {
+            Get-ChildItem -Recurse $destRoot | Select-Object -First 50 FullName | Format-Table -AutoSize
+            throw "IfcExporter.exe missing after extraction at $exe."
+          }
+          $sizeMb = [math]::Round((Get-Item $exe).Length / 1MB, 2)
+          $totalMb = [math]::Round(((Get-ChildItem -Recurse $destRoot | Measure-Object -Property Length -Sum).Sum) / 1MB, 2)
+          Write-Host "Bundled IFC converter: IfcExporter.exe = $sizeMb MB, total resource = $totalMb MB"
+
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: desktop
+          tagName: ${{ github.ref_name }}
+          releaseName: "OpenConstructionERP ${{ github.ref_name }}"
+          releaseBody: |
+            ## OpenConstructionERP ${{ github.ref_name }}
+
+            A real native desktop app. No Python, no pip, no Docker, and no database to set up. Download one file, run it, and you are ready.
+
+            ### Download
+
+            | Platform | File | Notes |
+            | --- | --- | --- |
+            | Windows | `.exe` installer, 64-bit | WebView2 is fetched automatically if it is missing |
+            | macOS | `.dmg`, Apple Silicon | Drag the app to Applications, then see "Opening on macOS" below |
+            | Linux | `.deb` or `.AppImage`, 64-bit | `.deb` for Debian and Ubuntu, `.AppImage` runs anywhere |
+
+            The files are attached below under Assets. You can also always get the newest build at https://adicc-uae.com/download which detects your operating system for you.
+
+            ### Opening on macOS
+
+            This build is ad-hoc signed but not yet notarized by Apple. On the first launch macOS may say the app is "damaged" or block it. The app is fine: macOS quarantines anything downloaded from the web. After you drag the app into Applications, open Terminal and run this once:
+
+            ```
+            xattr -dr com.apple.quarantine /Applications/OpenConstructionERP.app
+            ```
+
+            Then open the app normally. On macOS Sequoia you may also need to approve it once under System Settings, Privacy and Security. You only do this once.
+
+            ### Prefer the command line?
+
+            pip (needs Python 3.12 or later):
+
+            ```
+            pip install --upgrade openconstructionerp
+            openconstructionerp
+            ```
+
+            Docker:
+
+            ```
+            docker run -d -p 8080:8080 -v oe_data:/data ghcr.io/datadrivenconstruction/openconstructionerp:latest
+            ```
+
+            ### Good to know
+
+            The first launch takes 40 to 90 seconds because the app sets up its local database the first time. A loading screen explains the wait, and every launch after that is fast. All your data stays on your own computer. The app is open source under AGPL-3.0. A demo account is ready to explore: demo@openconstructionerp.com / DemoPass1234!
+
+            Docs: https://adicc-uae.com/docs  .  Report an issue: https://adicc-uae.com/issues
+          releaseDraft: true
+          prerelease: false
+
+      # Read-only diagnostic: confirm the macOS .app carries a valid ad-hoc
+      # code signature. With the sidecar pre-signed and signingIdentity "-",
+      # the bundle seal must verify, otherwise Gatekeeper would report the
+      # download as "damaged". The result is printed into the build log so a
+      # broken seal is caught at release time. spctl will reject the app as
+      # unnotarized, which is expected (we ship ad-hoc, not notarized); the
+      # codesign --verify result is the seal-integrity signal. Non-fatal so a
+      # tooling quirk never blocks a release, but it surfaces regressions.
+      - name: Verify macOS bundle signature (diagnostic)
+        if: runner.os == 'macOS'
+        run: |
+          set -uo pipefail
+          APP=$(find desktop/src-tauri/target -path '*/bundle/macos/*.app' -type d -maxdepth 8 2>/dev/null | head -1)
+          echo "App bundle: ${APP:-<none found>}"
+          if [ -z "${APP:-}" ]; then echo "No .app bundle found, skipping"; exit 0; fi
+          echo "=== codesign -dvvv ==="
+          codesign -dvvv "$APP" 2>&1 || true
+          echo "=== codesign --verify --strict ==="
+          if codesign --verify --strict --verbose=2 "$APP" 2>&1; then
+            echo "OK: bundle code-signature seal is valid (ad-hoc)"
+          else
+            echo "WARN: bundle seal verification reported issues - the dmg may still be flagged damaged"
+          fi
+          echo "=== spctl assess (expected: rejected, unnotarized) ==="
+          spctl -a -t exec -vvv "$APP" 2>&1 || true
+
+  # Authenticode code signing for the Windows installers.
+  #
+  # The tauri-action above uploads the Windows .exe (NSIS) and .msi to the
+  # release as a draft, so the assets are never visible to users until the
+  # founder publishes the release by hand. This job runs on the Windows
+  # runner after the build, signs each Windows installer with the founder's
+  # GlobalSign certificate held in Azure Key Vault, and re-uploads the
+  # signed files over the unsigned ones. By the time the draft is published
+  # the binaries users download are the signed binaries.
+  #
+  # The private key never leaves the Key Vault HSM, so signing calls out to
+  # Azure Key Vault through AzureSignTool. The maintainer must set these
+  # five GitHub Actions secrets for signing to run:
+  #
+  #   AZURE_KV_URL            the Key Vault URL, for example https://myvault.vault.azure.net
+  #   AZURE_KV_CERT_NAME      the certificate name inside the vault
+  #   AZURE_KV_CLIENT_ID      the service principal application (client) id
+  #   AZURE_KV_CLIENT_SECRET  a freshly rotated Key Vault client secret for that service principal
+  #   AZURE_KV_TENANT_ID      the Entra (Azure AD) tenant id
+  #
+  # AZURE_KV_CLIENT_SECRET must be a fresh, rotated secret. If the secrets
+  # are not set, on forks, on pull requests, or before the founder adds
+  # them, the signing step skips cleanly and the build still succeeds with
+  # unsigned installers.
+  sign-windows:
+    name: Sign Windows installers
+    needs: build-tauri
+    runs-on: windows-latest
+    steps:
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Install AzureSignTool
+        run: dotnet tool install --global AzureSignTool
+
+      - name: Download Windows installers from the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          mkdir -p signing
+          # Pull only the Windows installers from this tag's release. The
+          # release may still be a draft at this point, which gh handles
+          # fine with a write-scoped token.
+          gh release download "$TAG" \
+            --repo "${{ github.repository }}" \
+            --dir signing \
+            --pattern '*.exe' \
+            --pattern '*.msi' \
+            --skip-existing || true
+          ls -la signing || true
+
+      - name: Sign the Windows installers with AzureSignTool
+        env:
+          # All five Azure values come from repository secrets. Nothing is
+          # ever hardcoded. If the client secret is empty the step skips.
+          AZURE_KV_URL: ${{ secrets.AZURE_KV_URL }}
+          AZURE_KV_CERT_NAME: ${{ secrets.AZURE_KV_CERT_NAME }}
+          AZURE_KV_CLIENT_ID: ${{ secrets.AZURE_KV_CLIENT_ID }}
+          AZURE_KV_CLIENT_SECRET: ${{ secrets.AZURE_KV_CLIENT_SECRET }}
+          AZURE_KV_TENANT_ID: ${{ secrets.AZURE_KV_TENANT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Graceful skip: when the signing secret is not configured, on
+          # forks, on pull requests, or before the founder adds the secret,
+          # leave the build green with unsigned installers instead of failing.
+          if [ -z "${AZURE_KV_CLIENT_SECRET:-}" ]; then
+            echo "AZURE_KV_CLIENT_SECRET signing secret not set, skipping Windows code signing."
+            exit 0
+          fi
+
+          shopt -s nullglob
+          files=(signing/*.exe signing/*.msi)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No Windows installers were downloaded, nothing to sign."
+            exit 0
+          fi
+
+          for f in "${files[@]}"; do
+            echo "Signing $f"
+            # The timestamp URL and the sha256 digest are public and may be
+            # literals. Everything Azure specific is read from secrets above.
+            azuresigntool sign \
+              -kvu "$AZURE_KV_URL" \
+              -kvc "$AZURE_KV_CERT_NAME" \
+              -kvi "$AZURE_KV_CLIENT_ID" \
+              -kvs "$AZURE_KV_CLIENT_SECRET" \
+              -kvt "$AZURE_KV_TENANT_ID" \
+              -tr http://timestamp.globalsign.com/tsa/r6advanced1 \
+              -td sha256 \
+              "$f"
+          done
+
+      - name: Verify the signatures
+        env:
+          AZURE_KV_CLIENT_SECRET: ${{ secrets.AZURE_KV_CLIENT_SECRET }}
+        shell: bash
+        run: |
+          set -uo pipefail
+
+          # Skip when signing was skipped.
+          if [ -z "${AZURE_KV_CLIENT_SECRET:-}" ]; then
+            echo "Signing was skipped, nothing to verify."
+            exit 0
+          fi
+
+          # signtool ships with the Windows SDK and is not on PATH. Find the
+          # newest copy if it exists. Verification is best effort: a missing
+          # signtool must not fail the build.
+          signtool="$(find '/c/Program Files (x86)/Windows Kits/10/bin' \
+            -name signtool.exe -path '*x64*' 2>/dev/null | sort | tail -n 1 || true)"
+          if [ -z "$signtool" ]; then
+            echo "signtool not found, skipping signature verification."
+            exit 0
+          fi
+
+          shopt -s nullglob
+          for f in signing/*.exe signing/*.msi; do
+            echo "Verifying $f"
+            "$signtool" verify /pa /v "$f" || echo "Verification reported an issue for $f (not failing the build)."
+          done
+
+      - name: Re-upload the signed installers to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          AZURE_KV_CLIENT_SECRET: ${{ secrets.AZURE_KV_CLIENT_SECRET }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Nothing to replace if signing was skipped.
+          if [ -z "${AZURE_KV_CLIENT_SECRET:-}" ]; then
+            echo "Signing was skipped, leaving the original installers in place."
+            exit 0
+          fi
+
+          shopt -s nullglob
+          for f in signing/*.exe signing/*.msi; do
+            echo "Uploading signed $f"
+            gh release upload "$TAG" "$f" \
+              --repo "${{ github.repository }}" \
+              --clobber
+          done

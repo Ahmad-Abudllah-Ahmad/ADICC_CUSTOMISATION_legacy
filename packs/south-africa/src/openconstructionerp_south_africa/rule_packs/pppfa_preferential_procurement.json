@@ -1,0 +1,31 @@
+{
+  "rule_pack_id": "pppfa_preferential_procurement",
+  "name": "PPPFA Preferential Procurement Scoring",
+  "standard": "PPPFA Act 5 of 2000 (2022 Regulations)",
+  "jurisdiction": "ZA",
+  "regulator": "National Treasury",
+  "description": "Preferential procurement scoring under the Preferential Procurement Policy Framework Act. Two systems apply by tender value: 80/20 and 90/10. The SA pack module exposes a scoring endpoint that implements the official price-points formula. Switches on the universal BOQ quality rules today; PPPFA tender-evaluation checks are on the roadmap.",
+  "applies_to": ["tendering", "validation"],
+  "systems": [
+    {
+      "name": "80/20",
+      "applies_when": "tender value up to and including R50 million",
+      "price_weight": 80,
+      "preference_weight": 20
+    },
+    {
+      "name": "90/10",
+      "applies_when": "tender value above R50 million",
+      "price_weight": 90,
+      "preference_weight": 10
+    }
+  ],
+  "price_points_formula": "Ps = W * (1 - (Pt - P_min) / P_min)  where W is 80 or 90, Pt is the tender price under consideration and P_min is the lowest acceptable tender price",
+  "preference_points_basis": "Up to 20 (or 10) points awarded for the procuring entity's specific goals, commonly the bidder's B-BBEE status level. Award goes to the highest total of price points plus preference points.",
+  "threshold_zar": "50000000",
+  "enables_rule_ids": [
+    "boq_quality.no_zero_unit_rate",
+    "pppfa.system_selected_by_value",
+    "pppfa.preference_points_within_cap"
+  ]
+}

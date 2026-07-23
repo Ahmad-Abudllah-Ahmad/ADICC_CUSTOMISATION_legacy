@@ -1,0 +1,54 @@
+{
+  "rule_pack_id": "lei_14133_2021",
+  "name": "Lei nº 14.133/2021 — Nova Lei de Licitacoes e Contratos Administrativos",
+  "name_pt": "Lei nº 14.133/2021 — Nova Lei de Licitacoes",
+  "standard": "Lei Federal 14.133/2021",
+  "jurisdiction": "BR — public-sector tenders only",
+  "regulator": "Governo Federal — Casa Civil",
+  "publication_year": 2021,
+  "supersedes": "Lei 8.666/1993 (revoked since 2023-12-30)",
+  "description": "Enforces compliance with the New Public Procurement Law (Nova Lei de Licitacoes) for federal, state and municipal tenders. Requires declared modalidade (Concorrencia, Pregao, Concurso, Leilao, Dialogo Competitivo, Dispensa, Inexigibilidade), criterio de julgamento (menor preco, melhor tecnica, tecnica+preco, maior desconto, maior retorno economico), habilitacao requirements documented (juridica, tecnica, fiscal, economico-financeira, trabalhista), and BDI within Acordao TCU 2622/2013 ceilings.",
+  "description_pt": "Garante conformidade com a Nova Lei de Licitacoes para certames federais, estaduais e municipais. Exige modalidade declarada (Concorrencia, Pregao, Concurso, Leilao, Dialogo Competitivo, Dispensa, Inexigibilidade), criterio de julgamento (menor preco, melhor tecnica, tecnica+preco, maior desconto, maior retorno economico), exigencias de habilitacao documentadas (juridica, tecnica, fiscal, economico-financeira, trabalhista) e BDI dentro dos tetos do Acordao TCU 2622/2013.",
+  "applies_to": ["projects", "tendering", "validation"],
+  "config": {
+    "modalidades": [
+      "Concorrencia",
+      "Pregao",
+      "Concurso",
+      "Leilao",
+      "Dialogo Competitivo",
+      "Dispensa",
+      "Inexigibilidade"
+    ],
+    "criterios_julgamento": [
+      "Menor preco",
+      "Melhor tecnica",
+      "Tecnica e preco",
+      "Maior desconto",
+      "Maior retorno economico"
+    ],
+    "habilitacao_classes": [
+      "Juridica",
+      "Tecnica",
+      "Fiscal",
+      "Economico-financeira",
+      "Trabalhista"
+    ],
+    "bdi_ceiling_source": "Acordao TCU 2622/2013",
+    "bdi_max_buildings_pct": 27.07,
+    "bdi_max_infrastructure_pct": 27.86
+  },
+  "enables_rule_ids": [
+    "lei14133.modalidade_declared",
+    "lei14133.criterio_julgamento_declared",
+    "lei14133.habilitacao_juridica_documented",
+    "lei14133.habilitacao_tecnica_documented",
+    "lei14133.habilitacao_fiscal_documented",
+    "lei14133.habilitacao_economico_financeira_documented",
+    "lei14133.habilitacao_trabalhista_documented",
+    "lei14133.estudo_tecnico_preliminar_attached",
+    "lei14133.matriz_de_riscos_attached",
+    "lei14133.bdi_within_tcu_2622_ceiling",
+    "lei14133.composicao_bdi_publicada"
+  ]
+}

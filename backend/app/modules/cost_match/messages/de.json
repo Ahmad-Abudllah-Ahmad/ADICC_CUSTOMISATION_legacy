@@ -1,0 +1,15 @@
+{
+  "common.ok": "OK",
+  "module.display_name": "Cost Match",
+  "match.semantic.not_installed": "Semantische Kostenzuordnung benötigt `pip install openconstructionerp[semantic]`. Es werden nur exakte Treffer angezeigt; installieren Sie das Extra für unscharfe Zuordnung.",
+  "match.reason.exact_match": "Exakter Treffer auf die normalisierte Beschreibung.",
+  "match.reason.strong_overlap": "Alle Suchbegriffe wurden in dieser Kostenposition gefunden.",
+  "match.reason.partial_overlap": "Einige Suchbegriffe wurden in dieser Kostenposition gefunden.",
+  "match.reason.weak_overlap": "Kaum oder keine Suchbegriffe passen zu dieser Kostenposition.",
+  "match.reason.unit_match": "Die Einheiten sind kompatibel.",
+  "match.reason.unit_mismatch": "Die Einheiten unterscheiden sich, das senkt die Konfidenz.",
+  "match.reason.unit_unknown": "Die Einheit konnte nicht verglichen werden.",
+  "match.hint.empty_query": "Geben Sie eine Material- oder Leistungsbeschreibung ein, um die Kostendatenbank zu durchsuchen.",
+  "match.hint.no_candidates": "Für diesen Katalog sind noch keine Kostenpositionen geladen. Laden Sie zuerst eine regionale Kostenbasis.",
+  "match.hint.no_good_match": "Kein sicherer Treffer gefunden. Versuchen Sie weniger Wörter, nur den Materialnamen oder die Beschreibung in einer anderen Sprache."
+}

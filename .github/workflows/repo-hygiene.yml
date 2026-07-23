@@ -1,0 +1,45 @@
+# Repo hygiene gate.
+#
+# Two guards run on every push and pull request:
+#   * no internal-only files (planning, strategy, QA artifacts, audits,
+#     runbooks) reach the public repository or a release artifact, and
+#   * no commit message records an AI assistant as a contributor (a
+#     "Co-authored-by:" trailer or "Generated with ..." footer naming one).
+# The file guard also runs in the publish pipelines against the built wheel and
+# as a pre-commit hook; the trailer guard runs as a commit-msg pre-commit hook.
+# So a violation is caught at commit time, in CI, and at build time.
+name: Repo hygiene
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  hygiene:
+    name: No internal-only files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check the tree for internal-only files
+        run: python scripts/check_repo_hygiene.py
+
+  trailers:
+    name: No forbidden commit trailers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Full history so the guard scans every commit reachable from HEAD,
+          # not just the tip; the tree is clean today and must stay that way.
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Scan commit messages for AI attribution trailers
+        run: python scripts/check_commit_trailers.py

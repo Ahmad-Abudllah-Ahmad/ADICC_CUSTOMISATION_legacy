@@ -1,0 +1,60 @@
+# OCERP x South Africa partner pack - first-login onboarding script.
+#
+# Replaces the default OnboardingWizard when this partner pack is active.
+# Each step is rendered by the frontend OnboardingWizard component.
+
+version: 1
+pack: south-africa
+locale: en-ZA
+estimated_minutes: 7
+title: "Welcome to OpenConstructionERP - South Africa Edition"
+subtitle: "A few quick steps to align your workspace with SANS 1200, ASAQS, CIDB grading, PPPFA procurement and ZAR VAT."
+
+steps:
+  - id: company_profile
+    title: "Company profile"
+    body: "Tell us about your organisation so tenders, tax invoices and reports are correctly attributed."
+    fields:
+      - { key: company_name, label: "Company name", type: text, required: true }
+      - { key: cipc_registration, label: "Company registration number (CIPC)", type: text, required: false }
+      - { key: vat_number, label: "VAT registration number (SARS, 10 digits)", type: text, required: false, pattern: "^4\\d{9}$" }
+      - { key: head_office_province, label: "Head-office province", type: select, required: true, options: ["Eastern Cape", "Free State", "Gauteng", "KwaZulu-Natal", "Limpopo", "Mpumalanga", "North West", "Northern Cape", "Western Cape"] }
+
+  - id: cidb_registration
+    title: "CIDB registration"
+    body: "Your CIDB grade and class of work set which tenders you may bid for. We pre-fill compliance templates from your answer."
+    fields:
+      - { key: cidb_grade, label: "CIDB contractor grade", type: select, required: true, options: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "Not registered"] }
+      - { key: cidb_class, label: "Primary class of work", type: select, required: true, options: ["CE - Civil Engineering", "GB - General Building", "EB - Electrical Engineering (Building)", "EP - Electrical Engineering (Infrastructure)", "ME - Mechanical Engineering", "SB to SQ - Specialist works"] }
+      - { key: cidb_number, label: "CIDB registration number", type: text, required: false }
+
+  - id: procurement_framework
+    title: "Procurement and contracts"
+    body: "Confirm the preferential procurement system and your usual contract form. You can override these per project."
+    fields:
+      - { key: pppfa_basis, label: "Preference points basis", type: select, required: true, default: "B-BBEE status level", options: ["B-BBEE status level", "Specific goals (local content, SMME, designated groups)", "None"] }
+      - { key: default_contract, label: "Default contract form", type: select, required: true, default: "GCC 2015", options: ["GCC 2015 - General Conditions of Contract", "JBCC - Principal Building Agreement", "NEC4 - Engineering and Construction Contract", "FIDIC - Conditions of Contract"] }
+      - { key: use_ipdm_gates, label: "Apply National Treasury infrastructure delivery gates (FIDPM)", type: checkbox, default: true }
+
+  - id: measurement_standard
+    title: "Measurement standard"
+    body: "Pick the measurement standard for your typical work. Civil works use SANS 1200; building works use the ASAQS system."
+    fields:
+      - { key: primary_measurement, label: "Primary measurement standard", type: radio, required: true, default: "ASAQS - building work", options: ["ASAQS - Standard System of Measuring Building Work", "SANS 1200 - civil engineering construction", "Both - choose per project"] }
+
+  - id: cost_data
+    title: "Cost data and VAT"
+    body: "Confirm which South African cost region to preload and the VAT rate."
+    fields:
+      - { key: cwicr_region, label: "CWICR region to preload", type: select, required: true, default: "Johannesburg", options: ["Johannesburg"] }
+      - { key: confirm_vat_rate, label: "Confirm VAT rate", type: select, required: true, default: "15% (South Africa)", options: ["15% (South Africa)", "0% - zero-rated or export"] }
+
+  - id: review
+    title: "Review and finish"
+    body: "We will set up your South African workspace with ZAR, 15 percent VAT and the SANS 1200, ASAQS, CIDB and PPPFA validation packs. You can change everything later in Settings."
+    action:
+      label: "Create my South Africa workspace"
+      apply:
+        - set_default_currency: ZAR
+        - set_tax_template: za_vat_15
+        - enable_rule_packs: [sans_1200_measurement, asaqs_measurement, cidb_grading, pppfa_preferential_procurement, ipdm_procurement_gates]

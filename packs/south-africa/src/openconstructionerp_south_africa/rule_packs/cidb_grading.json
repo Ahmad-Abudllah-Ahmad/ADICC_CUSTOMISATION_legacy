@@ -1,0 +1,35 @@
+{
+  "rule_pack_id": "cidb_grading",
+  "name": "CIDB Contractor Grading",
+  "standard": "CIDB Act 38 of 2000",
+  "jurisdiction": "ZA",
+  "regulator": "Construction Industry Development Board (CIDB)",
+  "description": "Contractor grading designation (1 to 9) by class of work, used to confirm a contractor may tender for a contract of a given value. Switches on the universal BOQ quality rules today. CIDB-specific eligibility checks are on the roadmap and reported as unsupported until implemented in core.",
+  "applies_to": ["projects", "tendering", "validation"],
+  "classes_of_work": [
+    {"code": "CE", "name": "Civil Engineering"},
+    {"code": "GB", "name": "General Building"},
+    {"code": "EB", "name": "Electrical Engineering (Building)"},
+    {"code": "EP", "name": "Electrical Engineering (Infrastructure)"},
+    {"code": "ME", "name": "Mechanical Engineering"},
+    {"code": "SB-SQ", "name": "Specialist works (asphalt, demolition, glazing, landscaping, piling and others)"}
+  ],
+  "grade_value_ceilings_zar_indicative": [
+    {"grade": 1, "tender_value_ceiling": "500000"},
+    {"grade": 2, "tender_value_ceiling": "1000000"},
+    {"grade": 3, "tender_value_ceiling": "3000000"},
+    {"grade": 4, "tender_value_ceiling": "6000000"},
+    {"grade": 5, "tender_value_ceiling": "10000000"},
+    {"grade": 6, "tender_value_ceiling": "20000000"},
+    {"grade": 7, "tender_value_ceiling": "60000000"},
+    {"grade": 8, "tender_value_ceiling": "200000000"},
+    {"grade": 9, "tender_value_ceiling": "no upper limit"}
+  ],
+  "note": "Tender value ceilings are indicative (ZAR) and reflect the schedule revised by the CIDB on 7 October 2019. They are periodically updated; confirm a contractor's current standing against the CIDB Register of Contractors before relying on these figures.",
+  "enables_rule_ids": [
+    "boq_quality.no_zero_unit_rate",
+    "boq_quality.no_missing_quantity",
+    "cidb.grade_designation_set",
+    "cidb.grade_covers_tender_value"
+  ]
+}

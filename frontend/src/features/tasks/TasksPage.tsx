@@ -1,0 +1,2022 @@
+// DDC-CWICR-OE: DataDrivenConstruction · OpenConstructionERP
+// Copyright (c) 2026 Artem Boiko / DataDrivenConstruction
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import clsx from 'clsx';
+import {
+  ClipboardList,
+  Search,
+  Plus,
+  X,
+  Calendar,
+  CheckCircle2,
+  User,
+  Download,
+  Upload,
+  Loader2,
+  FileDown,
+  Link2,
+  ListTodo,
+  MessageCircle,
+  Info,
+  Scale,
+  UserCircle,
+  AlertTriangle,
+  Pencil,
+  Trash2,
+  GripVertical,
+} from 'lucide-react';
+import { Button, Card, Badge, EmptyState, Breadcrumb, ConfirmDialog, RecoveryCard, ViewInBIMButton, ModuleGuideButton } from '@/shared/ui';
+import { PageHeader } from '@/shared/ui/PageHeader';
+import { DismissibleInfo, IntroRichText } from '@/shared/ui/DismissibleInfo';
+import { RequiresProject } from '@/shared/auth/RequiresProject';
+import { PlanningCrossLinks } from '@/features/schedule/PlanningCrossLinks';
+import { DateDisplay } from '@/shared/ui/DateDisplay';
+import { useConfirm } from '@/shared/hooks/useConfirm';
+import { useCreateShortcut } from '@/shared/hooks/useCreateShortcut';
+import { apiGet, extractErrorMessageFromBody, triggerDownload } from '@/shared/lib/api';
+import { useToastStore } from '@/stores/useToastStore';
+import { useProjectContextStore } from '@/stores/useProjectContextStore';
+import { useAuthStore } from '@/stores/useAuthStore';
+import {
+  fetchTasks,
+  fetchMyTasks,
+  createTask,
+  updateTask,
+  completeTask,
+  exportTasks,
+  type Task,
+  type TaskType,
+  type BuiltinTaskType,
+  type TaskStatus,
+  type TaskPriority,
+  type CreateTaskPayload,
+} from './api';
+import { tasksGuide } from './tasksGuide';
+import { VoiceEntry, getField } from '@/features/voice';
+
+/* ── Constants ─────────────────────────────────────────────────────────── */
+
+interface Project {
+  id: string;
+  name: string;
+}
+
+const BUILTIN_TASK_TYPES: BuiltinTaskType[] = ['task', 'topic', 'information', 'decision', 'personal'];
+// STATUSES is now computed dynamically (BUILTIN_STATUSES + custom) inside the component
+
+const TYPE_CARD_ICON: Record<string, React.ElementType> = {
+  task: ListTodo,
+  topic: MessageCircle,
+  information: Info,
+  decision: Scale,
+  personal: UserCircle,
+};
+
+const BUILTIN_TYPE_COLOR: Record<string, string> = {
+  task: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+  topic: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
+  information: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300',
+  decision: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+  personal: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+};
+
+/* ── Custom Category Palette ──────────────────────────────────────────── */
+
+const CUSTOM_CATEGORY_COLORS = [
+  { bg: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300', hex: '#f43f5e' },
+  { bg: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300', hex: '#f97316' },
+  { bg: 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300', hex: '#14b8a6' },
+  { bg: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300', hex: '#6366f1' },
+  { bg: 'bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-300', hex: '#ec4899' },
+  { bg: 'bg-lime-100 text-lime-700 dark:bg-lime-900/40 dark:text-lime-300', hex: '#84cc16' },
+  { bg: 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300', hex: '#0ea5e9' },
+  { bg: 'bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/40 dark:text-fuchsia-300', hex: '#d946ef' },
+];
+
+interface CustomCategory {
+  name: string;     // lowercase slug used as task_type
+  label: string;    // display name
+  colorIdx: number; // index into CUSTOM_CATEGORY_COLORS
+}
+
+const CUSTOM_CATEGORIES_KEY = 'oe-task-custom-categories';
+
+function loadCustomCategories(): CustomCategory[] {
+  try {
+    const raw = localStorage.getItem(CUSTOM_CATEGORIES_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveCustomCategories(categories: CustomCategory[]): void {
+  try {
+    localStorage.setItem(CUSTOM_CATEGORIES_KEY, JSON.stringify(categories));
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+/* ── Custom Status Columns (Kanban) ──────────────────────────────────── */
+
+interface CustomStatus {
+  name: string;     // lowercase slug used as task status value
+  label: string;    // display name
+  colorIdx: number; // index into CUSTOM_CATEGORY_COLORS
+}
+
+const CUSTOM_STATUSES_KEY = 'oe-task-custom-statuses';
+
+function loadCustomStatuses(): CustomStatus[] {
+  try {
+    const raw = localStorage.getItem(CUSTOM_STATUSES_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveCustomStatuses(statuses: CustomStatus[]): void {
+  try {
+    localStorage.setItem(CUSTOM_STATUSES_KEY, JSON.stringify(statuses));
+  } catch { /* Ignore */ }
+}
+
+const BUILTIN_STATUSES: TaskStatus[] = ['draft', 'open', 'in_progress', 'completed'];
+
+/**
+ * Allowed status transitions — kept in lockstep with the backend state
+ * machine (`backend/app/modules/tasks/service.py:_TASK_STATUS_TRANSITIONS`).
+ * The dropdown only offers the current status plus its legal targets so
+ * the UI never produces a transition the server rejects with HTTP 400.
+ */
+const STATUS_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
+  draft: ['open'],
+  open: ['in_progress', 'completed', 'draft'],
+  in_progress: ['completed', 'open'],
+  completed: ['open', 'in_progress'],
+};
+
+/** Built-in status options to show for a task currently in `current`:
+ *  the current value itself plus every legal next state. */
+function STATUS_OPTIONS_FOR(current: string): TaskStatus[] {
+  const cur = current as TaskStatus;
+  const targets = STATUS_TRANSITIONS[cur] ?? [];
+  const known = BUILTIN_STATUSES.includes(cur);
+  // For an unknown/custom current status keep the full built-in list so
+  // the user can move the task back onto a standard track.
+  const base = known ? [cur, ...targets] : [...BUILTIN_STATUSES];
+  return Array.from(new Set(base));
+}
+
+/** Get the color class for any task type, including custom categories. */
+function getTypeColor(taskType: string, customCategories: CustomCategory[]): string {
+  if (BUILTIN_TYPE_COLOR[taskType]) return BUILTIN_TYPE_COLOR[taskType]!;
+  const custom = customCategories.find((c) => c.name === taskType);
+  if (custom) return CUSTOM_CATEGORY_COLORS[custom.colorIdx % CUSTOM_CATEGORY_COLORS.length]!.bg;
+  // Fallback for unknown types
+  return 'bg-gray-100 text-gray-700 dark:bg-gray-800/40 dark:text-gray-300';
+}
+
+
+const PRIORITY_BADGE: Record<TaskPriority, { variant: 'neutral' | 'blue' | 'warning' | 'error'; cls: string }> = {
+  low: { variant: 'neutral', cls: '' },
+  normal: { variant: 'blue', cls: '' },
+  high: { variant: 'warning', cls: '' },
+  urgent: { variant: 'error', cls: '' },
+};
+
+const STATUS_HEADER_CLS: Record<TaskStatus, string> = {
+  draft: 'bg-gray-100 text-gray-700 dark:bg-gray-800/50 dark:text-gray-400',
+  open: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+  in_progress: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+  completed: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+};
+
+const inputCls =
+  'h-10 w-full rounded-lg border border-border bg-surface-primary px-3 text-sm focus:outline-none focus:ring-2 focus:ring-oe-blue/30 focus:border-oe-blue';
+const textareaCls =
+  'w-full rounded-lg border border-border bg-surface-primary px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-oe-blue/30 focus:border-oe-blue resize-none';
+
+/* ── Add Task Modal ────────────────────────────────────────────────────── */
+
+interface TaskFormData {
+  title: string;
+  description: string;
+  task_type: TaskType;
+  priority: TaskPriority;
+  assigned_to: string;
+  due_date: string;
+}
+
+const EMPTY_FORM: TaskFormData = {
+  title: '',
+  description: '',
+  task_type: 'task',
+  priority: 'normal',
+  assigned_to: '',
+  due_date: '',
+};
+
+function AddTaskModal({
+  onClose,
+  onSubmit,
+  isPending,
+  projectName,
+  initialData,
+  customCategories,
+}: {
+  onClose: () => void;
+  onSubmit: (data: TaskFormData) => void;
+  isPending: boolean;
+  projectName?: string;
+  initialData?: TaskFormData | null;
+  customCategories: CustomCategory[];
+}) {
+  const { t } = useTranslation();
+  const [form, setForm] = useState<TaskFormData>(initialData || EMPTY_FORM);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const set = <K extends keyof TaskFormData>(key: K, value: TaskFormData[K]) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+    if (errors[key]) setErrors((prev) => { const next = { ...prev }; delete next[key]; return next; });
+  };
+
+  const canSubmit = form.title.trim().length > 0;
+
+  const validate = (): boolean => {
+    const e: Record<string, string> = {};
+    if (!form.title.trim()) e.title = t('validation.required', { defaultValue: 'This field is required' });
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const handleSubmit = () => {
+    if (!validate()) return;
+    onSubmit(form);
+  };
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-lg animate-fade-in">
+      <div className="w-full max-w-2xl bg-surface-elevated rounded-xl shadow-xl border border-border animate-card-in mx-4 max-h-[90vh] overflow-y-auto" role="dialog" aria-label={t('tasks.new_task', { defaultValue: 'New Task' })}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border-light">
+          <div>
+            <h2 className="text-lg font-semibold text-content-primary">
+              {t('tasks.new_task', { defaultValue: 'New Task' })}
+            </h2>
+            {projectName && (
+              <p className="text-xs text-content-tertiary mt-0.5">
+                {t('common.creating_in_project', {
+                  defaultValue: 'In {{project}}',
+                  project: projectName,
+                })}
+              </p>
+            )}
+          </div>
+          <button
+            onClick={onClose}
+            aria-label={t('common.close', { defaultValue: 'Close' })}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-content-tertiary hover:bg-surface-secondary hover:text-content-primary transition-colors"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Form */}
+        <div className="px-6 py-4 space-y-5">
+          {/* ── Type selector with icons ── */}
+          <div>
+            <label className="block text-sm font-medium text-content-primary mb-2">
+              {t('tasks.field_type', { defaultValue: 'Type' })}
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {BUILTIN_TASK_TYPES.map((tt) => {
+                const TypeIcon = TYPE_CARD_ICON[tt] ?? ListTodo;
+                const selected = form.task_type === tt;
+                return (
+                  <button
+                    key={tt}
+                    type="button"
+                    onClick={() => set('task_type', tt)}
+                    className={clsx(
+                      'flex flex-col items-center gap-1.5 rounded-lg border-2 px-2 py-2.5 text-center transition-all min-w-[72px]',
+                      selected
+                        ? (BUILTIN_TYPE_COLOR[tt] ?? '') + ' border-current ring-2 ring-oe-blue/30'
+                        : 'border-border bg-surface-primary text-content-tertiary hover:border-border-light hover:bg-surface-secondary',
+                    )}
+                  >
+                    <TypeIcon size={18} />
+                    <span className="text-2xs font-medium leading-tight">
+                      {t(`tasks.type_${tt}`, {
+                        defaultValue: tt.charAt(0).toUpperCase() + tt.slice(1),
+                      })}
+                    </span>
+                  </button>
+                );
+              })}
+              {customCategories.map((cat) => {
+                const selected = form.task_type === cat.name;
+                const colorCls = CUSTOM_CATEGORY_COLORS[cat.colorIdx % CUSTOM_CATEGORY_COLORS.length]?.bg ?? '';
+                return (
+                  <button
+                    key={cat.name}
+                    type="button"
+                    onClick={() => set('task_type', cat.name as TaskType)}
+                    className={clsx(
+                      'flex flex-col items-center gap-1.5 rounded-lg border-2 px-2 py-2.5 text-center transition-all min-w-[72px]',
+                      selected
+                        ? colorCls + ' border-current ring-2 ring-oe-blue/30'
+                        : 'border-border bg-surface-primary text-content-tertiary hover:border-border-light hover:bg-surface-secondary',
+                    )}
+                  >
+                    <ListTodo size={18} />
+                    <span className="text-2xs font-medium leading-tight">
+                      {cat.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ── Task Details ── */}
+          <div className="flex items-center gap-2 pt-2 pb-1">
+            <ClipboardList size={14} className="text-content-tertiary" />
+            <span className="text-xs font-semibold uppercase tracking-wider text-content-tertiary">
+              {t('tasks.section_details', { defaultValue: 'Task Details' })}
+            </span>
+            <div className="flex-1 h-px bg-border-light" />
+          </div>
+
+          {/* Title */}
+          <div>
+            <label className="block text-sm font-medium text-content-primary mb-1.5">
+              {t('tasks.field_title', { defaultValue: 'Title' })}{' '}
+              <span className="text-semantic-error">*</span>
+            </label>
+            <input
+              value={form.title}
+              onChange={(e) => set('title', e.target.value)}
+              placeholder={t('tasks.title_placeholder', {
+                defaultValue: 'e.g. Review structural drawings for Level 5',
+              })}
+              className={clsx(
+                'h-12 w-full rounded-lg border border-border bg-surface-primary px-3 text-base font-medium focus:outline-none focus:ring-2 focus:ring-oe-blue/30 focus:border-oe-blue',
+                errors.title &&
+                  'border-semantic-error focus:ring-red-300 focus:border-semantic-error',
+              )}
+              autoFocus
+            />
+            {errors.title && (
+              <p className="mt-1 text-xs text-semantic-error">
+                {errors.title}
+              </p>
+            )}
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-sm font-medium text-content-primary mb-1.5">
+              {t('tasks.field_description', { defaultValue: 'Description' })}
+            </label>
+            <textarea
+              value={form.description}
+              onChange={(e) => set('description', e.target.value)}
+              rows={3}
+              className={textareaCls}
+              placeholder={t('tasks.description_placeholder', {
+                defaultValue: 'Provide details about what needs to be done...',
+              })}
+            />
+          </div>
+
+          {/* ── Priority (visual badges) ── */}
+          <div>
+            <label className="block text-sm font-medium text-content-primary mb-2">
+              {t('tasks.field_priority', { defaultValue: 'Priority' })}
+            </label>
+            <div className="grid grid-cols-4 gap-2">
+              {(['low', 'normal', 'high', 'urgent'] as TaskPriority[]).map((p) => {
+                const selected = form.priority === p;
+                const colorMap: Record<string, string> = {
+                  low: 'text-gray-600 bg-gray-50 border-gray-200 dark:text-gray-400 dark:bg-gray-800/50 dark:border-gray-700',
+                  normal: 'text-blue-600 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-950/30 dark:border-blue-800',
+                  high: 'text-amber-600 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-950/30 dark:border-amber-800',
+                  urgent: 'text-red-600 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-950/30 dark:border-red-800',
+                };
+                return (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => set('priority', p)}
+                    className={clsx(
+                      'rounded-lg border-2 px-3 py-2 text-center text-sm font-semibold transition-all',
+                      selected
+                        ? colorMap[p] + ' ring-2 ring-oe-blue/30'
+                        : 'border-border bg-surface-primary text-content-tertiary hover:border-border-light',
+                    )}
+                  >
+                    {t(`tasks.priority_${p}`, {
+                      defaultValue: p.charAt(0).toUpperCase() + p.slice(1),
+                    })}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ── Assignment & Schedule ── */}
+          <div className="flex items-center gap-2 pt-2 pb-1">
+            <Calendar size={14} className="text-content-tertiary" />
+            <span className="text-xs font-semibold uppercase tracking-wider text-content-tertiary">
+              {t('tasks.section_schedule', { defaultValue: 'Assignment & Schedule' })}
+            </span>
+            <div className="flex-1 h-px bg-border-light" />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-content-primary mb-1.5">
+                {t('tasks.field_assignee', { defaultValue: 'Assignee' })}
+              </label>
+              <input
+                value={form.assigned_to}
+                onChange={(e) => set('assigned_to', e.target.value)}
+                className={inputCls}
+                placeholder={t('tasks.assignee_placeholder', {
+                  defaultValue: 'Name or email',
+                })}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-content-primary mb-1.5">
+                {t('tasks.field_due_date', { defaultValue: 'Due Date' })}
+              </label>
+              <input
+                type="date"
+                value={form.due_date}
+                onChange={(e) => set('due_date', e.target.value)}
+                className={inputCls}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border-light">
+          <Button variant="ghost" onClick={onClose} disabled={isPending}>
+            {t('common.cancel', { defaultValue: 'Cancel' })}
+          </Button>
+          <Button variant="primary" onClick={handleSubmit} disabled={isPending || !canSubmit}>
+            {isPending ? (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2 shrink-0" />
+            ) : (
+              <Plus size={16} className="mr-1.5 shrink-0" />
+            )}
+            <span>{t('tasks.create_task', { defaultValue: 'Create Task' })}</span>
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Task Card ─────────────────────────────────────────────────────────── */
+
+const TaskCard = React.memo(function TaskCard({
+  task,
+  onComplete,
+  onEdit,
+  onDelete,
+  onStatusChange,
+  customCategories,
+  customStatuses,
+  onDragStart,
+  isDragging,
+}: {
+  task: Task;
+  onComplete: (id: string) => void;
+  onEdit: (task: Task) => void;
+  onDelete: (id: string) => void;
+  onStatusChange: (id: string, status: TaskStatus) => void;
+  customCategories: CustomCategory[];
+  customStatuses: CustomStatus[];
+  onDragStart?: (e: React.DragEvent, taskId: string) => void;
+  isDragging?: boolean;
+}) {
+  const { t } = useTranslation();
+
+  // Authoritative overdue flag is computed server-side (string date
+  // compare in UTC, "due today" is NOT overdue). The old client-side
+  // `new Date(due_date) < new Date()` flagged same-day tasks as overdue.
+  const isOverdue = task.is_overdue;
+
+  const checklistTotal = task.checklist?.length ?? 0;
+  const checklistDone =
+    task.checklist?.filter((c) => c.completed).length ?? 0;
+  const checklistPercent =
+    checklistTotal > 0 ? Math.round((checklistDone / checklistTotal) * 100) : 0;
+
+  const pb = PRIORITY_BADGE[task.priority as TaskPriority] ?? PRIORITY_BADGE.normal;
+
+  return (
+    <Card
+      data-task-id={task.id}
+      draggable
+      onDragStart={(e: React.DragEvent) => onDragStart?.(e, task.id)}
+      role="listitem"
+      aria-grabbed={isDragging ?? false}
+      aria-label={task.title}
+      className={clsx(
+        'px-2.5 py-2 mb-1.5 hover:shadow-md transition-all group cursor-grab active:cursor-grabbing',
+        'hover:border-border hover:-translate-y-px',
+        isDragging && 'opacity-40 scale-[0.97] shadow-none',
+        isOverdue && 'bg-red-50/40 dark:bg-red-950/15',
+      )}
+    >
+      {/* Top row: type icon + title + priority */}
+      <div className="flex items-start gap-1.5">
+        {(() => {
+          const TypeIcon = TYPE_CARD_ICON[task.task_type] ?? ListTodo;
+          return (
+            <div className={clsx(
+              'flex items-center justify-center w-5 h-5 rounded shrink-0 mt-px',
+              getTypeColor(task.task_type, customCategories),
+            )}>
+              <TypeIcon size={11} />
+            </div>
+          );
+        })()}
+        <div className="flex-1 min-w-0">
+          <h4
+            className={clsx(
+              'text-xs font-semibold line-clamp-2 leading-snug',
+              task.status === 'completed'
+                ? 'text-content-tertiary line-through'
+                : isOverdue
+                  ? 'text-semantic-error'
+                  : 'text-content-primary',
+            )}
+          >
+            {task.title}
+          </h4>
+        </div>
+        <Badge variant={pb.variant} size="sm" className="shrink-0 text-[9px] px-1 py-0">
+          {t(`tasks.priority_${task.priority}`, {
+            defaultValue: task.priority.charAt(0).toUpperCase() + task.priority.slice(1),
+          })}
+        </Badge>
+      </div>
+
+      {/* Source / BIM indicators — inline, compact */}
+      {(task.meeting_id || (task.metadata && typeof task.metadata.source === 'string') || (task.bim_element_ids && task.bim_element_ids.length > 0)) && (
+        <div className="flex items-center gap-2 mt-1 ml-6">
+          {(task.meeting_id || (task.metadata && typeof task.metadata.source === 'string')) && (
+            <span className="inline-flex items-center gap-0.5 text-[9px] text-content-quaternary">
+              <Link2 size={8} className="shrink-0" />
+              {task.meeting_id
+                ? t('tasks.from_meeting', { defaultValue: 'Meeting' })
+                : String(task.metadata?.source) === 'rfi'
+                  ? t('tasks.from_rfi', { defaultValue: 'RFI' })
+                  : String(task.metadata?.source) === 'inspection'
+                    ? t('tasks.from_inspection', { defaultValue: 'Inspection' })
+                    : t('tasks.source_linked', { defaultValue: 'Linked' })}
+            </span>
+          )}
+          <ViewInBIMButton
+            elementIds={task.bim_element_ids ?? []}
+            iconSize={8}
+            className="inline-flex items-center gap-0.5 text-[9px] text-emerald-700 dark:text-emerald-400 hover:underline"
+          />
+        </div>
+      )}
+
+      {/* Bottom row: assignee + due date + actions */}
+      <div className="flex items-center justify-between mt-1.5 pt-1.5 border-t border-border-light/60">
+        <div className="flex items-center gap-2 min-w-0">
+          {/* Assignee — prefer the resolved user name, fall back to the
+              free-text name stored in metadata.assignee_name so typed names
+              like "John Doe" don't vanish after save. */}
+          {(() => {
+            const meta = (task.metadata ?? {}) as Record<string, unknown>;
+            const metaName = typeof meta.assignee_name === 'string' ? meta.assignee_name : '';
+            const display = task.assigned_to_name || metaName;
+            if (!display) {
+              return (
+                <span className="text-[10px] text-content-quaternary flex items-center gap-0.5">
+                  <User size={9} />
+                </span>
+              );
+            }
+            return (
+              <div className="flex items-center gap-1 min-w-0">
+                <div className="h-4 w-4 rounded-full bg-oe-blue/10 text-oe-blue flex items-center justify-center text-[8px] font-bold shrink-0">
+                  {display.charAt(0).toUpperCase()}
+                </div>
+                <span className="text-[10px] text-content-tertiary truncate max-w-[70px]">
+                  {display}
+                </span>
+              </div>
+            );
+          })()}
+          {/* Due date */}
+          {task.due_date && (
+            <div
+              className={clsx(
+                'flex items-center gap-0.5 text-[10px]',
+                isOverdue ? 'text-semantic-error font-medium' : 'text-content-quaternary',
+              )}
+            >
+              <Calendar size={9} />
+              <DateDisplay value={task.due_date} />
+            </div>
+          )}
+        </div>
+
+        {/* Actions — visible on hover */}
+        <div className="flex items-center gap-0 opacity-0 group-hover:opacity-100 transition-opacity">
+          {task.status !== 'completed' ? (
+            <>
+              <Button variant="ghost" size="sm" onClick={() => onComplete(task.id)} className="!p-0.5 text-green-600 hover:text-green-700 h-auto" title={t('tasks.mark_complete', { defaultValue: 'Complete' })} aria-label={t('tasks.mark_complete', { defaultValue: 'Complete' })}>
+                <CheckCircle2 size={10} />
+              </Button>
+              {/* Only offer transitions the backend state machine accepts
+                  (see service._TASK_STATUS_TRANSITIONS). Offering illegal
+                  targets just produces a 400 + optimistic rollback that
+                  reads as "drag/dropdown does nothing". Custom statuses
+                  have no server-side guard so they're always allowed. */}
+              <select
+                value={task.status}
+                onChange={(e) => onStatusChange(task.id, e.target.value as TaskStatus)}
+                onClick={(e) => e.stopPropagation()}
+                aria-label={t('tasks.change_status', { defaultValue: 'Change status' })}
+                className="text-[9px] py-0 px-0.5 rounded border border-border-light bg-surface-secondary text-content-tertiary focus:outline-none focus:ring-1 focus:ring-oe-blue h-4"
+              >
+                {STATUS_OPTIONS_FOR(task.status).map((s) => (
+                  <option key={s} value={s}>
+                    {t(`tasks.status_${s}`, {
+                      defaultValue: s
+                        .split('_')
+                        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                        .join(' '),
+                    })}
+                  </option>
+                ))}
+                {customStatuses.map((cs) => (
+                  <option key={cs.name} value={cs.name}>{cs.label}</option>
+                ))}
+              </select>
+            </>
+          ) : (
+            <CheckCircle2 size={10} className="text-green-500" />
+          )}
+          {task.status !== 'completed' && (
+            <Button variant="ghost" size="sm" onClick={() => onEdit(task)} className="!p-0.5 text-content-quaternary hover:text-oe-blue h-auto" title={t('common.edit', { defaultValue: 'Edit' })} aria-label={t('common.edit', { defaultValue: 'Edit' })}>
+              <Pencil size={10} />
+            </Button>
+          )}
+          <Button variant="ghost" size="sm" onClick={() => onDelete(task.id)} className="!p-0.5 text-content-quaternary hover:text-red-500 h-auto" title={t('common.delete', { defaultValue: 'Delete' })} aria-label={t('common.delete', { defaultValue: 'Delete' })}>
+            <Trash2 size={10} />
+          </Button>
+        </div>
+      </div>
+
+      {/* Checklist progress — ultra compact */}
+      {checklistTotal > 0 && (
+        <div className="mt-1.5 flex items-center gap-2">
+          <div className="flex-1 h-1 rounded-full bg-surface-tertiary overflow-hidden">
+            <div
+              className="h-full rounded-full bg-oe-blue transition-all"
+              style={{ width: `${checklistPercent}%` }}
+            />
+          </div>
+          <span className="text-[9px] text-content-quaternary tabular-nums shrink-0">
+            {checklistDone}/{checklistTotal}
+          </span>
+        </div>
+      )}
+    </Card>
+  );
+});
+
+/* ── Main Page ─────────────────────────────────────────────────────────── */
+
+export function TasksPage() {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { projectId: routeProjectId } = useParams<{ projectId: string }>();
+  const qc = useQueryClient();
+  const addToast = useToastStore((s) => s.addToast);
+  const activeProjectId = useProjectContextStore((s) => s.activeProjectId);
+
+  // State
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importPending, setImportPending] = useState(false);
+  const [importResult, setImportResult] = useState<{ imported: number; skipped: number; errors: { row: number; error: string; data: Record<string, string> }[]; total_rows: number } | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState<TaskType | ''>('');
+  const [myTasksOnly, setMyTasksOnly] = useState(false);
+
+  // Drag-and-drop between columns
+  const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
+  const [dropTargetStatus, setDropTargetStatus] = useState<TaskStatus | null>(null);
+
+  // Custom categories (task types)
+  const [customCategories, setCustomCategories] = useState<CustomCategory[]>(loadCustomCategories);
+  const [showAddCategory, setShowAddCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryColorIdx, setNewCategoryColorIdx] = useState(0);
+  const addCategoryInputRef = useRef<HTMLInputElement>(null);
+
+  // Custom status columns (Kanban)
+  const [customStatuses, setCustomStatuses] = useState<CustomStatus[]>(loadCustomStatuses);
+  const [showAddStatus, setShowAddStatus] = useState(false);
+  const [newStatusName, setNewStatusName] = useState('');
+  const [newStatusColorIdx, setNewStatusColorIdx] = useState(2);
+
+  const allStatuses = useMemo<string[]>(
+    () => [...BUILTIN_STATUSES, ...customStatuses.map((s) => s.name)],
+    [customStatuses],
+  );
+
+  const handleAddStatus = useCallback(() => {
+    const label = newStatusName.trim();
+    if (!label) return;
+    const slug = label.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+    if (!slug || BUILTIN_STATUSES.includes(slug as TaskStatus) || customStatuses.some((s) => s.name === slug)) {
+      addToast({ type: 'warning', title: t('tasks.status_exists', { defaultValue: 'This status already exists' }) });
+      return;
+    }
+    const updated = [...customStatuses, { name: slug, label, colorIdx: newStatusColorIdx }];
+    setCustomStatuses(updated);
+    saveCustomStatuses(updated);
+    setNewStatusName('');
+    setNewStatusColorIdx((prev) => (prev + 1) % CUSTOM_CATEGORY_COLORS.length);
+    setShowAddStatus(false);
+    addToast({ type: 'success', title: t('tasks.status_created', { defaultValue: 'Column "{{name}}" created', name: label }) });
+  }, [newStatusName, newStatusColorIdx, customStatuses, addToast, t]);
+
+  const handleRemoveStatus = useCallback((slug: string) => {
+    const updated = customStatuses.filter((s) => s.name !== slug);
+    setCustomStatuses(updated);
+    saveCustomStatuses(updated);
+  }, [customStatuses]);
+
+  // Column reordering via drag
+  const [draggedColumn, setDraggedColumn] = useState<string | null>(null);
+  const [columnDropTarget, setColumnDropTarget] = useState<string | null>(null);
+
+  const handleColumnReorderDragStart = useCallback(
+    (e: React.DragEvent, status: string) => {
+      // Only allow reordering custom columns
+      if (BUILTIN_STATUSES.includes(status as TaskStatus)) return;
+      setDraggedColumn(status);
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('application/x-column', status);
+    },
+    [],
+  );
+
+  const handleColumnReorderDragOver = useCallback(
+    (e: React.DragEvent, targetStatus: string) => {
+      if (!draggedColumn || draggedColumn === targetStatus) return;
+      // Only allow dropping on custom columns (reorder within custom set)
+      if (BUILTIN_STATUSES.includes(targetStatus as TaskStatus)) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      setColumnDropTarget(targetStatus);
+    },
+    [draggedColumn],
+  );
+
+  const handleColumnReorderDrop = useCallback(
+    (e: React.DragEvent, targetStatus: string) => {
+      e.preventDefault();
+      if (!draggedColumn || draggedColumn === targetStatus) {
+        setDraggedColumn(null);
+        setColumnDropTarget(null);
+        return;
+      }
+      const fromIdx = customStatuses.findIndex((s) => s.name === draggedColumn);
+      const toIdx = customStatuses.findIndex((s) => s.name === targetStatus);
+      if (fromIdx === -1 || toIdx === -1) {
+        setDraggedColumn(null);
+        setColumnDropTarget(null);
+        return;
+      }
+      const updated = [...customStatuses];
+      const [moved] = updated.splice(fromIdx, 1);
+      updated.splice(toIdx, 0, moved!);
+      setCustomStatuses(updated);
+      saveCustomStatuses(updated);
+      setDraggedColumn(null);
+      setColumnDropTarget(null);
+    },
+    [draggedColumn, customStatuses],
+  );
+
+  const handleColumnReorderEnd = useCallback(() => {
+    setDraggedColumn(null);
+    setColumnDropTarget(null);
+  }, []);
+
+  const handleAddCategory = useCallback(() => {
+    const label = newCategoryName.trim();
+    if (!label) return;
+    const slug = label.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+    if (!slug) return;
+    // Avoid duplicates
+    if (BUILTIN_TASK_TYPES.includes(slug as BuiltinTaskType) || customCategories.some((c) => c.name === slug)) {
+      addToast({ type: 'warning', title: t('tasks.category_exists', { defaultValue: 'This category already exists' }) });
+      return;
+    }
+    const updated = [...customCategories, { name: slug, label, colorIdx: newCategoryColorIdx }];
+    setCustomCategories(updated);
+    saveCustomCategories(updated);
+    setNewCategoryName('');
+    setNewCategoryColorIdx((prev) => (prev + 1) % CUSTOM_CATEGORY_COLORS.length);
+    setShowAddCategory(false);
+    addToast({ type: 'success', title: t('tasks.category_created', { defaultValue: 'Category "{{name}}" created', name: label }) });
+  }, [newCategoryName, newCategoryColorIdx, customCategories, addToast, t]);
+
+  const handleRemoveCategory = useCallback((slug: string) => {
+    const updated = customCategories.filter((c) => c.name !== slug);
+    setCustomCategories(updated);
+    saveCustomCategories(updated);
+    if (typeFilter === slug) setTypeFilter('');
+  }, [customCategories, typeFilter]);
+
+  // Deep-link auto-scroll: Cmd+Shift+K global semantic search lands here
+  // with `?id=<task_id>` — scroll the matching task card into view and
+  // briefly highlight it.  Cleared from the URL after one shot so a
+  // refresh doesn't keep re-scrolling.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const deepLinkTaskId = searchParams.get('id');
+  useEffect(() => {
+    if (!deepLinkTaskId) return;
+    // Defer until the next tick so the task list has had a chance to
+    // render after the data fetch finishes.
+    const timer = setTimeout(() => {
+      const node = document.querySelector(
+        `[data-task-id="${CSS.escape(deepLinkTaskId)}"]`,
+      );
+      if (node) {
+        node.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        node.classList.add('ring-2', 'ring-oe-blue', 'ring-offset-2');
+        setTimeout(() => {
+          node.classList.remove('ring-2', 'ring-oe-blue', 'ring-offset-2');
+        }, 2500);
+      }
+      const next = new URLSearchParams(searchParams);
+      next.delete('id');
+      setSearchParams(next, { replace: true });
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [deepLinkTaskId, searchParams, setSearchParams]);
+
+  // "n" shortcut → open new task form
+  useCreateShortcut(
+    useCallback(() => setShowAddModal(true), []),
+    !showAddModal && !showImportModal,
+  );
+
+  // Escape key handler for import modal
+  useEffect(() => {
+    if (!showImportModal) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowImportModal(false);
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [showImportModal]);
+
+  // Data
+  const { data: projects = [] } = useQuery({
+    queryKey: ['projects'],
+    queryFn: () => apiGet<Project[]>('/v1/projects/'),
+    staleTime: 5 * 60_000,
+  });
+
+  const projectId = routeProjectId || activeProjectId || projects[0]?.id || '';
+  const projectName = projects.find((p) => p.id === projectId)?.name || '';
+
+  // "My Tasks" is resolved server-side from the JWT (the client doesn't
+  // carry the user UUID), so it uses a different endpoint and cache key.
+  const {
+    data: tasks = [],
+    isLoading,
+    isError: tasksError,
+    error: tasksErrorValue,
+    refetch: refetchTasks,
+  } = useQuery({
+    queryKey: myTasksOnly
+      ? ['tasks', 'mine']
+      : ['tasks', projectId, typeFilter],
+    queryFn: () =>
+      myTasksOnly
+        ? fetchMyTasks()
+        : fetchTasks({
+            project_id: projectId,
+            task_type: typeFilter || undefined,
+          }),
+    enabled: myTasksOnly || !!projectId,
+  });
+
+  // Client-side filters
+  const filtered = useMemo(() => {
+    let list = tasks;
+    // When "My Tasks" is active the type tabs still narrow the cross-
+    // project list (the my-tasks endpoint isn't type-filtered server-side).
+    if (myTasksOnly && typeFilter) {
+      list = list.filter((item) => item.task_type === typeFilter);
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(
+        (item) =>
+          item.title.toLowerCase().includes(q) ||
+          (item.description ?? '').toLowerCase().includes(q) ||
+          (item.assigned_to_name && item.assigned_to_name.toLowerCase().includes(q)),
+      );
+    }
+    // Note: the actual "assigned to / created by me" filtering happens
+    // server-side via the my-tasks endpoint (see the query above). The
+    // old client-side heuristic ("any task with an assignee or creator")
+    // matched essentially every task and was effectively a no-op.
+    return list;
+  }, [tasks, searchQuery, myTasksOnly, typeFilter]);
+
+  // Group by status (built-in + custom)
+  const grouped = useMemo(() => {
+    const map = new Map<string, Task[]>();
+    for (const s of allStatuses) map.set(s, []);
+    for (const item of filtered) {
+      const col = map.get(item.status);
+      if (col) col.push(item);
+      else {
+        // Task has a status not in our columns — put in first column
+        const first = map.get(allStatuses[0]!);
+        if (first) first.push(item);
+      }
+    }
+    return map;
+  }, [filtered, allStatuses]);
+
+  // Invalidation
+  const invalidateAll = useCallback(() => {
+    qc.invalidateQueries({ queryKey: ['tasks'] });
+  }, [qc]);
+
+  // Mutations
+  const createMut = useMutation({
+    mutationFn: (data: CreateTaskPayload) => createTask(data),
+    onSuccess: () => {
+      invalidateAll();
+      setShowAddModal(false);
+      addToast({
+        type: 'success',
+        title: t('tasks.created', { defaultValue: 'Task created successfully' }),
+      });
+    },
+    onError: (e: Error) =>
+      addToast({
+        type: 'error',
+        title: t('tasks.create_failed', { defaultValue: 'Failed to create task' }),
+        message: e.message,
+      }),
+  });
+
+  const exportMut = useMutation({
+    mutationFn: () => exportTasks(projectId),
+    onSuccess: () =>
+      addToast({
+        type: 'success',
+        title: t('tasks.export_success', { defaultValue: 'Tasks exported successfully' }),
+        message: t('tasks.export_success_msg', { defaultValue: 'Excel file has been downloaded.' }),
+      }),
+    onError: (e: Error) =>
+      addToast({
+        type: 'error',
+        title: t('tasks.export_failed', { defaultValue: 'Failed to export tasks' }),
+        message: e.message,
+      }),
+  });
+
+  const completeMut = useMutation({
+    mutationFn: (id: string) => completeTask(id),
+    onSuccess: () => {
+      invalidateAll();
+      addToast({
+        type: 'success',
+        title: t('tasks.completed', { defaultValue: 'Task marked as completed' }),
+      });
+    },
+    onError: (e: Error) =>
+      addToast({
+        type: 'error',
+        title: t('tasks.complete_failed', { defaultValue: 'Failed to complete task' }),
+        message: e.message,
+      }),
+  });
+
+  const handleCreateSubmit = useCallback(
+    (formData: TaskFormData) => {
+      if (!projectId) {
+        addToast({ type: 'error', title: t('requiresProject.title'), message: t('common.select_project_first', { defaultValue: 'Please select a project first' }) });
+        return;
+      }
+      const assignee = formData.assigned_to.trim();
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(assignee);
+      createMut.mutate({
+        project_id: projectId,
+        title: formData.title,
+        description: formData.description || undefined,
+        task_type: formData.task_type,
+        priority: formData.priority,
+        responsible_id: isUuid ? assignee : undefined,
+        metadata: assignee && !isUuid ? { assignee_name: assignee } : undefined,
+        due_date: formData.due_date || undefined,
+      });
+    },
+    [createMut, projectId, addToast, t],
+  );
+
+  const editMut = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: TaskFormData }) => {
+      const assignee = data.assigned_to.trim();
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(assignee);
+      const baseMeta = (editingTask?.metadata ?? {}) as Record<string, unknown>;
+      // The assignee field is a single text input prefilled with the user's
+      // DISPLAY NAME (the form has no UUID). If the user did not touch it, the
+      // field still equals that display name, so naively writing
+      // responsible_id=null would silently demote a real-user assignment to
+      // free text and break my-tasks linkage + notifications. Detect the
+      // unchanged case and preserve the original responsible_id UUID.
+      const originalDisplay =
+        editingTask?.assigned_to_name ||
+        (typeof baseMeta.assignee_name === 'string' ? (baseMeta.assignee_name as string) : '') ||
+        '';
+      const unchangedRealUser =
+        !!editingTask?.responsible_id && !isUuid && assignee === originalDisplay.trim();
+
+      // Preserve any non-task metadata the task already carried (e.g.
+      // `source`, DWG pins) and only overwrite the assignee_name slot.
+      const { assignee_name: _drop, ...keepMeta } = baseMeta;
+      const metadata: Record<string, unknown> = { ...keepMeta };
+      // Keep the display-name mirror only when the assignee is a free-text name
+      // (not a preserved real-user link).
+      if (assignee && !isUuid && !unchangedRealUser) metadata.assignee_name = assignee;
+
+      const responsible_id = unchangedRealUser
+        ? editingTask!.responsible_id
+        : isUuid
+          ? assignee
+          : null;
+
+      return updateTask(id, {
+        title: data.title,
+        description: data.description || undefined,
+        task_type: data.task_type,
+        priority: data.priority,
+        responsible_id,
+        metadata,
+        due_date: data.due_date || null,
+      });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tasks'] });
+      setShowAddModal(false);
+      setEditingTask(null);
+      addToast({ type: 'success', title: t('tasks.updated', { defaultValue: 'Task updated' }) });
+    },
+    onError: () => {
+      addToast({ type: 'error', title: t('tasks.update_failed', { defaultValue: 'Update failed' }) });
+    },
+  });
+
+  const handleEditSubmit = useCallback(
+    (formData: TaskFormData) => {
+      if (!editingTask) return;
+      editMut.mutate({ id: editingTask.id, data: formData });
+    },
+    [editMut, editingTask],
+  );
+
+  const { confirm, ...confirmProps } = useConfirm();
+
+  const handleComplete = useCallback(
+    async (id: string) => {
+      const ok = await confirm({
+        title: t('tasks.confirm_complete_title', { defaultValue: 'Complete task?' }),
+        message: t('tasks.confirm_complete_msg', { defaultValue: 'This task will be marked as completed.' }),
+        confirmLabel: t('tasks.mark_complete', { defaultValue: 'Complete' }),
+        variant: 'warning',
+      });
+      if (ok) completeMut.mutate(id);
+    },
+    [completeMut, confirm, t],
+  );
+
+  const handleEditTask = useCallback((task: Task) => {
+    setEditingTask(task);
+    setShowAddModal(true);
+  }, []);
+
+  const deleteMut = useMutation({
+    mutationFn: async (id: string) => {
+      const { deleteTask } = await import('./api');
+      return deleteTask(id);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tasks'] });
+      addToast({ type: 'success', title: t('tasks.deleted', { defaultValue: 'Task deleted' }) });
+    },
+    onError: () => {
+      addToast({ type: 'error', title: t('tasks.delete_failed', { defaultValue: 'Delete failed' }) });
+    },
+  });
+
+  const handleDeleteTask = useCallback(
+    async (id: string) => {
+      const ok = await confirm({
+        title: t('tasks.confirm_delete_title', { defaultValue: 'Delete task?' }),
+        message: t('tasks.confirm_delete_msg', { defaultValue: 'This task will be permanently deleted.' }),
+        confirmLabel: t('common.delete', { defaultValue: 'Delete' }),
+        variant: 'danger',
+      });
+      if (ok) deleteMut.mutate(id);
+    },
+    [deleteMut, confirm, t],
+  );
+
+  // Status change with optimistic update so the dragged card moves to the
+  // target column INSTANTLY — without waiting for the backend roundtrip and
+  // the subsequent React-Query refetch. Without this the UX reads as
+  // "drag does nothing": the card stays put for ~150-400ms while the PATCH
+  // is in flight, and on a slow network the user gives up before they see
+  // the move land. Rollback restores the original state if the server
+  // rejects the change.
+  const statusMut = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: string }) =>
+      updateTask(id, { status: status as TaskStatus }),
+    onMutate: async ({ id, status }) => {
+      await qc.cancelQueries({ queryKey: ['tasks'] });
+      const snapshots = qc.getQueriesData<Task[]>({ queryKey: ['tasks'] });
+      for (const [key, list] of snapshots) {
+        if (!list) continue;
+        qc.setQueryData<Task[]>(
+          key,
+          list.map((t) => (t.id === id ? { ...t, status: status as TaskStatus } : t)),
+        );
+      }
+      return { snapshots };
+    },
+    onError: (_err, _vars, ctx) => {
+      // Rollback every cached query we touched.
+      if (ctx?.snapshots) {
+        for (const [key, snapshot] of ctx.snapshots) {
+          qc.setQueryData(key, snapshot);
+        }
+      }
+      addToast({
+        type: 'error',
+        title: t('tasks.status_update_failed', { defaultValue: 'Could not change status' }),
+      });
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ['tasks'] });
+    },
+  });
+
+  const handleStatusChange = useCallback(
+    (id: string, status: TaskStatus | string) => {
+      const current = tasks.find((tsk) => tsk.id === id);
+      if (current && current.status === status) return; // no-op
+
+      // Reject illegal built-in transitions up-front with a precise
+      // message instead of letting the optimistic update flash and roll
+      // back behind a generic "Could not change status" toast. Custom
+      // statuses have no server-side state machine, so any move that
+      // touches a non-built-in status is allowed through.
+      const curStatus = (current?.status ?? '') as TaskStatus;
+      const bothBuiltin =
+        BUILTIN_STATUSES.includes(curStatus) &&
+        BUILTIN_STATUSES.includes(status as TaskStatus);
+      if (current && bothBuiltin) {
+        const allowed = STATUS_TRANSITIONS[curStatus] ?? [];
+        if (!allowed.includes(status as TaskStatus)) {
+          addToast({
+            type: 'warning',
+            title: t('tasks.illegal_transition', {
+              defaultValue: 'Cannot move from "{{from}}" to "{{to}}"',
+              from: t(`tasks.status_${curStatus}`, { defaultValue: curStatus }),
+              to: t(`tasks.status_${status}`, { defaultValue: String(status) }),
+            }),
+          });
+          return;
+        }
+      }
+
+      if (status === 'completed') {
+        handleComplete(id);
+      } else {
+        statusMut.mutate({ id, status });
+      }
+    },
+    [statusMut, handleComplete, tasks, addToast, t],
+  );
+
+  // Drag-and-drop handlers
+  const handleCardDragStart = useCallback(
+    (e: React.DragEvent, taskId: string) => {
+      setDraggedTaskId(taskId);
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', taskId);
+    },
+    [],
+  );
+
+  const handleColumnDragOver = useCallback(
+    (e: React.DragEvent, status: TaskStatus | string) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      setDropTargetStatus(status as TaskStatus);
+    },
+    [],
+  );
+
+  const handleColumnDragLeave = useCallback(() => {
+    setDropTargetStatus(null);
+  }, []);
+
+  const handleColumnDrop = useCallback(
+    (e: React.DragEvent, targetStatus: TaskStatus | string) => {
+      e.preventDefault();
+      const taskId = e.dataTransfer.getData('text/plain');
+      setDraggedTaskId(null);
+      setDropTargetStatus(null);
+      if (!taskId) return;
+      const task = tasks.find((tsk) => tsk.id === taskId);
+      if (!task || task.status === targetStatus) return;
+      handleStatusChange(taskId, targetStatus);
+    },
+    [tasks, handleStatusChange],
+  );
+
+  const handleDragEnd = useCallback(() => {
+    setDraggedTaskId(null);
+    setDropTargetStatus(null);
+  }, []);
+
+  const handleImportFile = async () => {
+    if (!importFile || !projectId) return;
+    setImportPending(true);
+    setImportError(null);
+    try {
+      const token = useAuthStore.getState().accessToken;
+      const formData = new FormData();
+      formData.append('file', importFile);
+
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const response = await fetch(
+        `/api/v1/tasks/import/file/?project_id=${encodeURIComponent(projectId)}`,
+        { method: 'POST', headers, body: formData },
+      );
+
+      if (!response.ok) {
+        let detail = 'Import failed';
+        try {
+          const body = await response.json();
+          detail = extractErrorMessageFromBody(body) ?? detail;
+        } catch { /* ignore */ }
+        throw new Error(detail);
+      }
+
+      const result = await response.json();
+      setImportResult(result);
+      invalidateAll();
+    } catch (err: unknown) {
+      setImportError(err instanceof Error ? err.message : 'Import failed');
+    } finally {
+      setImportPending(false);
+    }
+  };
+
+  const handleDownloadTemplate = async () => {
+    try {
+      const token = useAuthStore.getState().accessToken;
+      const headers: Record<string, string> = { Accept: 'application/octet-stream' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const response = await fetch('/api/v1/tasks/template/', { method: 'GET', headers });
+      if (!response.ok) throw new Error('Failed to download template');
+
+      const blob = await response.blob();
+      triggerDownload(blob, 'tasks_import_template.xlsx');
+    } catch (e: unknown) {
+      addToast({
+        type: 'error',
+        title: t('tasks.template_download_failed', { defaultValue: 'Failed to download template' }),
+        message: e instanceof Error ? e.message : t('tasks.template_error_generic', { defaultValue: 'An unexpected error occurred while downloading the import template.' }),
+      });
+    }
+  };
+
+  return (
+    <div className="space-y-5 animate-fade-in">
+      {/* Breadcrumb */}
+      <Breadcrumb
+        items={[
+          ...(projectName
+            ? [{ label: projectName, to: `/projects/${projectId}` }]
+            : []),
+          { label: t('tasks.title', { defaultValue: 'Tasks' }) },
+        ]}
+      />
+
+      {/* Header — module name + icon live in the global top bar; project
+          selection lives there too, so no in-page project picker (canon §2/§4).
+          The page reads the shared project context (or the route param). */}
+      <PageHeader
+        srTitle={t('tasks.title', { defaultValue: 'Tasks' })}
+        subtitle={t('tasks.subtitle', {
+          defaultValue: 'Track assignments, deadlines, and progress across your team',
+        })}
+        actions={
+          <>
+            <ModuleGuideButton
+              content={tasksGuide}
+              onCta={() => setShowAddModal(true)}
+            />
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={
+                exportMut.isPending ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Download size={14} />
+                )
+              }
+              onClick={() => exportMut.mutate()}
+              disabled={!projectId || exportMut.isPending}
+            >
+              {t('tasks.export', { defaultValue: 'Export' })}
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<Upload size={14} />}
+              onClick={() => {
+                setShowImportModal(true);
+                setImportFile(null);
+                setImportResult(null);
+                setImportError(null);
+              }}
+              disabled={!projectId}
+            >
+              {t('tasks.import', { defaultValue: 'Import' })}
+            </Button>
+            <VoiceEntry
+              projectId={projectId}
+              target="task"
+              triggerLabel={t('voice.trigger_task', { defaultValue: 'Voice task' })}
+              onConfirm={async (d) => {
+                await createMut.mutateAsync({
+                  project_id: projectId,
+                  title: getField(d.fields, 'title'),
+                  description: getField(d.fields, 'description') || undefined,
+                  task_type: 'task',
+                  priority: (getField(d.fields, 'priority') || 'normal') as TaskPriority,
+                  due_date: getField(d.fields, 'due_date') || undefined,
+                });
+              }}
+            />
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setShowAddModal(true)}
+              disabled={!projectId}
+              title={!projectId ? t('common.select_project_first', { defaultValue: 'Please select a project first' }) : undefined}
+              icon={<Plus size={14} />}
+            >
+              {t('tasks.new_task', { defaultValue: 'New Task' })}
+            </Button>
+          </>
+        }
+      />
+
+      {/* Cross-module navigation — connects the planning value chain.
+          Rendered BELOW the header so the canonical breadcrumb > header > info
+          order is preserved (audit S4). */}
+      <PlanningCrossLinks active="tasks" />
+
+      {/* How Tasks connects to the rest of the platform */}
+      <DismissibleInfo
+        storageKey="tasks"
+        title={t('tasks.intro_title', {
+          defaultValue: 'Loose ends that actually get closed',
+        })}
+        more={
+          t('tasks.intro_more', { defaultValue: '' })
+            ? <IntroRichText text={t('tasks.intro_more')} />
+            : undefined
+        }
+        links={[
+          {
+            label: t('nav.schedule', { defaultValue: '4D Schedule' }),
+            onClick: () => navigate('/schedule'),
+          },
+          {
+            label: t('nav.meetings', { defaultValue: 'Meetings' }),
+            onClick: () => navigate('/meetings'),
+          },
+        ]}
+      >
+        {t('tasks.intro_body', {
+          defaultValue:
+            'Capture lightweight action items, decisions and follow-ups with an assignee, due date, priority and checklist, separate from the 4D Schedule that plans the build timeline. Create them from meetings, pin them to BIM elements, and use My Tasks for a cross-project list of everything on your plate. They complement Last Planner weekly commitments rather than replace them.',
+        })}
+      </DismissibleInfo>
+
+      {/* No-project warning — suppressed in "My Tasks" mode, which is
+          cross-project and doesn't require a selected project. */}
+      {!projectId && !myTasksOnly && (
+        <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 px-4 py-3">
+          <AlertTriangle size={18} className="text-amber-600 shrink-0" />
+          <div>
+            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">{t('requiresProject.title')}</p>
+            <p className="text-xs text-amber-600 dark:text-amber-400">{t('common.select_project_hint', { defaultValue: 'Select a project from the header to view and manage items.' })}</p>
+          </div>
+        </div>
+      )}
+
+      {projectId || myTasksOnly ? (
+      <>
+      {/* Type filter tabs */}
+      <div className="flex items-center gap-1 overflow-x-auto pb-1">
+        <button
+          onClick={() => setTypeFilter('')}
+          className={clsx(
+            'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors whitespace-nowrap',
+            typeFilter === ''
+              ? 'bg-oe-blue-subtle text-oe-blue-text'
+              : 'text-content-tertiary hover:text-content-secondary hover:bg-surface-secondary',
+          )}
+        >
+          {t('tasks.filter_all', { defaultValue: 'All' })}
+        </button>
+        {BUILTIN_TASK_TYPES.map((tt) => (
+          <button
+            key={tt}
+            onClick={() => setTypeFilter(tt)}
+            className={clsx(
+              'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors whitespace-nowrap',
+              typeFilter === tt
+                ? BUILTIN_TYPE_COLOR[tt]
+                : 'text-content-tertiary hover:text-content-secondary hover:bg-surface-secondary',
+            )}
+          >
+            {t(`tasks.type_${tt}`, {
+              defaultValue: tt.charAt(0).toUpperCase() + tt.slice(1),
+            })}
+          </button>
+        ))}
+        {/* Custom category tabs */}
+        {customCategories.map((cat) => (
+          <div key={cat.name} className="relative group flex items-center">
+            <button
+              onClick={() => setTypeFilter(cat.name)}
+              className={clsx(
+                'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors whitespace-nowrap',
+                typeFilter === cat.name
+                  ? CUSTOM_CATEGORY_COLORS[cat.colorIdx % CUSTOM_CATEGORY_COLORS.length]?.bg ?? ''
+                  : 'text-content-tertiary hover:text-content-secondary hover:bg-surface-secondary',
+              )}
+            >
+              {cat.label}
+            </button>
+            <button
+              onClick={() => handleRemoveCategory(cat.name)}
+              className="hidden group-hover:flex items-center justify-center w-4 h-4 rounded-full bg-surface-tertiary text-content-tertiary hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-950/40 dark:hover:text-red-400 transition-colors -ml-1"
+              title={t('tasks.remove_category', { defaultValue: 'Remove category' })}
+              aria-label={t('tasks.remove_category_named', { defaultValue: 'Remove {{name}} category', name: cat.label })}
+            >
+              <X size={10} />
+            </button>
+          </div>
+        ))}
+
+        {/* Add category button + popover */}
+        <div className="relative">
+          <button
+            onClick={() => {
+              setShowAddCategory((prev) => !prev);
+              setTimeout(() => addCategoryInputRef.current?.focus(), 50);
+            }}
+            className="flex items-center justify-center w-8 h-8 rounded-lg text-content-tertiary hover:text-content-secondary hover:bg-surface-secondary transition-colors"
+            title={t('tasks.add_category', { defaultValue: 'Add category' })}
+          >
+            <Plus size={16} />
+          </button>
+          {showAddCategory && (
+            <div className="absolute left-0 top-full mt-1 z-20 w-64 rounded-xl border border-border bg-surface-elevated shadow-lg p-3 animate-fade-in">
+              <p className="text-xs font-semibold text-content-primary mb-2">
+                {t('tasks.new_category', { defaultValue: 'New Category' })}
+              </p>
+              <input
+                ref={addCategoryInputRef}
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                placeholder={t('tasks.category_name_placeholder', { defaultValue: 'e.g. Safety, QA Review...' })}
+                className={inputCls + ' !h-8 !text-xs mb-2'}
+                maxLength={50}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleAddCategory();
+                  if (e.key === 'Escape') setShowAddCategory(false);
+                }}
+              />
+              {/* Color picker */}
+              <div className="flex items-center gap-1 mb-2">
+                <span className="text-2xs text-content-tertiary mr-1">
+                  {t('tasks.category_color', { defaultValue: 'Color:' })}
+                </span>
+                {CUSTOM_CATEGORY_COLORS.map((c, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setNewCategoryColorIdx(idx)}
+                    className={clsx(
+                      'w-5 h-5 rounded-full border-2 transition-all',
+                      newCategoryColorIdx === idx
+                        ? 'border-content-primary scale-110'
+                        : 'border-transparent hover:scale-105',
+                    )}
+                    style={{ backgroundColor: c.hex }}
+                  />
+                ))}
+              </div>
+              <div className="flex items-center justify-end gap-2">
+                <button
+                  onClick={() => setShowAddCategory(false)}
+                  className="text-xs text-content-tertiary hover:text-content-secondary"
+                >
+                  {t('common.cancel', { defaultValue: 'Cancel' })}
+                </button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleAddCategory}
+                  disabled={!newCategoryName.trim()}
+                >
+                  {t('common.add', { defaultValue: 'Add' })}
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Toolbar */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        {/* Search */}
+        <div className="relative flex-1 max-w-sm">
+          <Search
+            size={16}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-content-tertiary"
+          />
+          <input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={t('tasks.search_placeholder', {
+              defaultValue: 'Search tasks...',
+            })}
+            className={inputCls + ' pl-9'}
+          />
+        </div>
+
+        {/* My Tasks toggle */}
+        <label className="flex items-center gap-2 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={myTasksOnly}
+            onChange={() => setMyTasksOnly((prev) => !prev)}
+            className="h-4 w-4 rounded border-border text-oe-blue focus:ring-oe-blue"
+          />
+          <span className="text-sm text-content-secondary">
+            {t('tasks.my_tasks', { defaultValue: 'My Tasks' })}
+          </span>
+        </label>
+      </div>
+
+      {/* Board / Columns */}
+      <div onDragEnd={() => { handleDragEnd(); handleColumnReorderEnd(); }}>
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3" aria-hidden="true">
+            {Array.from({ length: 4 }).map((_, colIdx) => (
+              <div key={colIdx} className="flex flex-col">
+                <div className="rounded-md px-2.5 py-1.5 mb-2 bg-surface-secondary animate-pulse h-7" />
+                {Array.from({ length: 2 }).map((_, cardIdx) => (
+                  <div
+                    key={cardIdx}
+                    className="rounded-xl border border-border-light bg-surface-elevated px-2.5 py-2 mb-1.5 space-y-2"
+                  >
+                    <div className="flex items-start gap-1.5">
+                      <div className="animate-pulse rounded bg-surface-secondary h-5 w-5 shrink-0" />
+                      <div className="flex-1 space-y-1">
+                        <div className="animate-pulse rounded bg-surface-secondary h-3.5 w-full" />
+                        <div className="animate-pulse rounded bg-surface-secondary h-3.5 w-2/3" />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="animate-pulse rounded-full bg-surface-secondary h-4 w-4" />
+                      <div className="animate-pulse rounded bg-surface-secondary h-3 w-12" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        ) : tasksError ? (
+          <RecoveryCard error={tasksErrorValue} onRetry={() => refetchTasks()} />
+        ) : filtered.length === 0 ? (
+          <EmptyState
+            icon={<ClipboardList size={28} strokeWidth={1.5} />}
+            title={
+              searchQuery || typeFilter || myTasksOnly
+                ? t('tasks.no_results', { defaultValue: 'No matching tasks' })
+                : t('tasks.no_tasks', { defaultValue: 'No tasks yet' })
+            }
+            description={
+              searchQuery || typeFilter || myTasksOnly
+                ? t('tasks.no_results_hint', {
+                    defaultValue: 'Try adjusting your search or filters to find what you are looking for.',
+                  })
+                : t('tasks.no_tasks_hint', {
+                    defaultValue: 'Create your first task to track assignments, deadlines, and progress across your team.',
+                  })
+            }
+            action={
+              !searchQuery && !typeFilter && !myTasksOnly
+                ? {
+                    label: t('tasks.new_task', { defaultValue: 'New Task' }),
+                    onClick: () => setShowAddModal(true),
+                  }
+                : undefined
+            }
+          />
+        ) : (
+          <div className="flex gap-3 overflow-x-auto pb-2" role="list" aria-label={t('tasks.kanban_board', { defaultValue: 'Task board' })}>
+            {allStatuses.map((status) => {
+              const colItems = grouped.get(status) ?? [];
+              const isDropTarget = draggedTaskId != null && dropTargetStatus === status;
+              const isBuiltin = BUILTIN_STATUSES.includes(status as TaskStatus);
+              const customStatus = customStatuses.find((s) => s.name === status);
+              const headerCls = STATUS_HEADER_CLS[status as TaskStatus]
+                ?? (customStatus ? CUSTOM_CATEGORY_COLORS[customStatus.colorIdx % CUSTOM_CATEGORY_COLORS.length]?.bg ?? 'bg-gray-100 text-gray-700' : 'bg-gray-100 text-gray-700 dark:bg-gray-800/50 dark:text-gray-400');
+              const displayLabel = isBuiltin
+                ? t(`tasks.status_${status}`, { defaultValue: status.split('_').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') })
+                : customStatus?.label ?? status;
+              const isColumnDragging = draggedColumn === status;
+              const isColumnDropTarget = draggedColumn != null && columnDropTarget === status;
+
+              return (
+                <div
+                  key={status}
+                  className={clsx(
+                    'flex flex-col min-w-[240px] flex-1 transition-all duration-150',
+                    isColumnDragging && 'opacity-50',
+                    isColumnDropTarget && 'border-l-2 border-oe-blue',
+                  )}
+                  onDragOver={(e) => {
+                    // Distinguish card drags from column reorder drags
+                    if (draggedColumn) {
+                      handleColumnReorderDragOver(e, status);
+                    } else {
+                      handleColumnDragOver(e, status as TaskStatus);
+                    }
+                  }}
+                  onDragLeave={() => {
+                    handleColumnDragLeave();
+                    setColumnDropTarget(null);
+                  }}
+                  onDrop={(e) => {
+                    if (e.dataTransfer.types.includes('application/x-column')) {
+                      handleColumnReorderDrop(e, status);
+                    } else {
+                      handleColumnDrop(e, status as TaskStatus);
+                    }
+                  }}
+                  onDragEnd={() => {
+                    handleDragEnd();
+                    handleColumnReorderEnd();
+                  }}
+                  role="group"
+                  aria-label={t('tasks.column_label', { defaultValue: '{{name}} column, {{count}} tasks', name: displayLabel, count: colItems.length })}
+                >
+                  {/* Column header */}
+                  <div
+                    draggable={!isBuiltin}
+                    onDragStart={(e) => handleColumnReorderDragStart(e, status)}
+                    className={clsx(
+                      'rounded-md px-2.5 py-1.5 mb-2 flex items-center justify-between select-none',
+                      !isBuiltin && 'cursor-grab active:cursor-grabbing',
+                      headerCls,
+                    )}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      {!isBuiltin && (
+                        <GripVertical size={12} className="opacity-40 shrink-0" />
+                      )}
+                      <span className="text-xs font-semibold">{displayLabel}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span
+                        className="text-[10px] font-bold rounded-full px-1.5 py-0.5 bg-white/30 tabular-nums"
+                        aria-label={t('tasks.task_count', { defaultValue: '{{count}} tasks', count: colItems.length })}
+                      >
+                        {colItems.length}
+                      </span>
+                      {!isBuiltin && (
+                        <button
+                          onClick={() => handleRemoveStatus(status)}
+                          className="h-4 w-4 flex items-center justify-center rounded text-current opacity-50 hover:opacity-100 hover:bg-white/30 transition-opacity"
+                          title={t('tasks.remove_column', { defaultValue: 'Remove column' })}
+                          aria-label={t('tasks.remove_column_named', { defaultValue: 'Remove {{name}} column', name: displayLabel })}
+                        >
+                          <X size={10} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Column items -- drop zone */}
+                  <div
+                    className={clsx(
+                      'flex-1 min-h-[60px] rounded-lg transition-all duration-150',
+                      isDropTarget && 'bg-oe-blue/5 border-2 border-dashed border-oe-blue/30',
+                    )}
+                    aria-dropeffect={draggedTaskId ? 'move' : 'none'}
+                    role="list"
+                  >
+                    {colItems.length === 0 ? (
+                      <div className={clsx(
+                        'flex items-center justify-center py-6 text-[10px]',
+                        isDropTarget ? 'text-oe-blue font-medium' : 'text-content-quaternary',
+                      )}>
+                        {isDropTarget
+                          ? t('tasks.drop_here', { defaultValue: 'Drop here' })
+                          : t('tasks.column_empty', { defaultValue: 'No tasks' })}
+                      </div>
+                    ) : (
+                      colItems.map((task) => (
+                        <TaskCard
+                          key={task.id}
+                          task={task}
+                          onComplete={handleComplete}
+                          onEdit={handleEditTask}
+                          onDelete={handleDeleteTask}
+                          onStatusChange={handleStatusChange}
+                          customCategories={customCategories}
+                          customStatuses={customStatuses}
+                          onDragStart={handleCardDragStart}
+                          isDragging={draggedTaskId === task.id}
+                        />
+                      ))
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Add new status column */}
+            <div className="min-w-[200px] flex flex-col">
+              {showAddStatus ? (
+                <div className="rounded-lg border-2 border-dashed border-oe-blue/30 bg-oe-blue/5 p-3 space-y-2">
+                  <input
+                    type="text"
+                    value={newStatusName}
+                    onChange={(e) => setNewStatusName(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleAddStatus(); if (e.key === 'Escape') setShowAddStatus(false); }}
+                    placeholder={t('tasks.new_column_name', { defaultValue: 'Column name...' })}
+                    aria-label={t('tasks.new_column_name', { defaultValue: 'Column name...' })}
+                    className="w-full text-xs px-2.5 py-1.5 rounded-md border border-border-light bg-surface-primary focus:outline-none focus:ring-1 focus:ring-oe-blue"
+                    autoFocus
+                  />
+                  <div className="flex gap-1">
+                    {CUSTOM_CATEGORY_COLORS.map((c, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setNewStatusColorIdx(i)}
+                        className={clsx(
+                          'w-5 h-5 rounded-full border-2 transition-transform',
+                          newStatusColorIdx === i ? 'scale-125 border-content-primary' : 'border-transparent',
+                        )}
+                        style={{ backgroundColor: c.hex }}
+                      />
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={handleAddStatus} className="flex-1 text-[10px] font-semibold py-1.5 rounded-md bg-oe-blue text-white hover:bg-oe-blue-dark transition-colors">
+                      {t('common.add', { defaultValue: 'Add' })}
+                    </button>
+                    <button onClick={() => setShowAddStatus(false)} className="flex-1 text-[10px] font-semibold py-1.5 rounded-md bg-surface-secondary text-content-secondary hover:bg-surface-tertiary transition-colors">
+                      {t('common.cancel', { defaultValue: 'Cancel' })}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowAddStatus(true)}
+                  className="rounded-md border-2 border-dashed border-border-medium px-4 py-3 flex items-center justify-center gap-2 text-xs text-content-tertiary hover:text-oe-blue hover:border-oe-blue/30 hover:bg-oe-blue/5 transition-all"
+                >
+                  <Plus size={14} />
+                  {t('tasks.add_column', { defaultValue: 'Add column' })}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+      </>
+      ) : (
+        <RequiresProject
+          emptyHint={t('tasks.select_project', { defaultValue: 'Select a project from the header to view and manage tasks, assignments, and deadlines.' })}
+        >{null}</RequiresProject>
+      )}
+
+      {/* Add / Edit Modal */}
+      {showAddModal && (
+        <AddTaskModal
+          onClose={() => { setShowAddModal(false); setEditingTask(null); }}
+          onSubmit={editingTask ? handleEditSubmit : handleCreateSubmit}
+          isPending={createMut.isPending || editMut.isPending}
+          projectName={projectName}
+          initialData={editingTask ? {
+            title: editingTask.title,
+            description: editingTask.description || '',
+            task_type: editingTask.task_type,
+            priority: editingTask.priority,
+            assigned_to:
+              editingTask.assigned_to_name ||
+              (typeof (editingTask.metadata as Record<string, unknown> | undefined)?.assignee_name === 'string'
+                ? ((editingTask.metadata as Record<string, unknown>).assignee_name as string)
+                : '') ||
+              '',
+            due_date: editingTask.due_date || '',
+          } : (typeFilter
+              // When the create dialog opens while a type tab is active
+              // (Topic / Information / Decision / Personal / custom), pre-fill
+              // task_type with that tab's value. Otherwise the new task lands
+              // under "Task" by default and silently disappears from the tab
+              // the user thought they were creating it on.
+              ? { ...EMPTY_FORM, task_type: typeFilter as TaskFormData['task_type'] }
+              : null)}
+          customCategories={customCategories}
+        />
+      )}
+
+      {/* Import Modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-lg animate-fade-in">
+          <div className="w-full max-w-lg bg-surface-elevated rounded-xl shadow-xl border border-border animate-card-in mx-4 max-h-[90vh] overflow-y-auto" role="dialog" aria-label={t('tasks.import_tasks', { defaultValue: 'Import Tasks' })}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border-light">
+              <h2 className="text-lg font-semibold text-content-primary">
+                {t('tasks.import_tasks', { defaultValue: 'Import Tasks' })}
+              </h2>
+              <button
+                onClick={() => setShowImportModal(false)}
+                aria-label={t('common.close', { defaultValue: 'Close' })}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-content-tertiary hover:bg-surface-secondary hover:text-content-primary transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="px-6 py-4 space-y-4">
+              {/* Template download */}
+              <div className="flex items-center gap-2 rounded-lg bg-surface-secondary p-3">
+                <FileDown size={16} className="text-oe-blue shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm text-content-secondary">
+                    {t('tasks.import_template_hint', { defaultValue: 'Download the import template to see the expected format.' })}
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleDownloadTemplate}
+                >
+                  {t('tasks.download_template', { defaultValue: 'Template' })}
+                </Button>
+              </div>
+
+              {/* File drop area */}
+              <div
+                className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-colors cursor-pointer border-border hover:border-oe-blue/50"
+                onClick={() => {
+                  const input = document.createElement('input');
+                  input.type = 'file';
+                  input.accept = '.xlsx,.csv,.xls';
+                  input.onchange = (e) => {
+                    const f = (e.target as HTMLInputElement).files?.[0];
+                    if (f) setImportFile(f);
+                  };
+                  input.click();
+                }}
+              >
+                <Upload size={24} className="text-content-tertiary mb-2" />
+                <p className="text-sm text-content-secondary text-center">
+                  {importFile
+                    ? importFile.name
+                    : t('tasks.drop_file', { defaultValue: 'Drop Excel or CSV file here, or click to browse' })}
+                </p>
+                <p className="text-xs text-content-quaternary mt-1">
+                  {t('tasks.import_columns_hint', { defaultValue: 'Columns: Title, Type, Status, Priority, Due Date, Description' })}
+                </p>
+              </div>
+
+              {importError && (
+                <div className="rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 p-3 text-sm text-semantic-error">
+                  {importError}
+                </div>
+              )}
+              {importResult && (
+                <div className="rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 p-3 text-sm text-content-primary space-y-1">
+                  <p>
+                    {t('tasks.import_result', {
+                      defaultValue: 'Imported: {{imported}}, Skipped: {{skipped}}, Errors: {{errors}}',
+                      imported: importResult.imported,
+                      skipped: importResult.skipped,
+                      errors: importResult.errors.length,
+                    })}
+                  </p>
+                  {importResult.errors.length > 0 && (
+                    <details className="text-xs text-content-tertiary">
+                      <summary className="cursor-pointer">
+                        {t('tasks.show_errors', { defaultValue: 'Show error details' })}
+                      </summary>
+                      <ul className="mt-1 space-y-0.5 max-h-32 overflow-y-auto">
+                        {importResult.errors.slice(0, 20).map((err) => (
+                          <li key={`row-${err.row}`}>
+                            {t('tasks.import_row_error', {
+                              defaultValue: 'Row {{row}}: {{error}}',
+                              row: err.row,
+                              error: err.error,
+                            })}
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border-light">
+              <Button variant="ghost" onClick={() => setShowImportModal(false)}>
+                {importResult
+                  ? t('common.close', { defaultValue: 'Close' })
+                  : t('common.cancel', { defaultValue: 'Cancel' })}
+              </Button>
+              {!importResult && (
+                <Button
+                  variant="primary"
+                  onClick={handleImportFile}
+                  disabled={!importFile || importPending}
+                >
+                  {importPending ? (
+                    <Loader2 size={16} className="animate-spin mr-1.5" />
+                  ) : (
+                    <Upload size={16} className="mr-1.5" />
+                  )}
+                  <span>{t('tasks.import_btn', { defaultValue: 'Import' })}</span>
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog {...confirmProps} />
+    </div>
+  );
+}

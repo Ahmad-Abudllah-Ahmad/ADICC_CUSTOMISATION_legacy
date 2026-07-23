@@ -1,0 +1,25 @@
+{
+  "default": {"high": 80, "medium": 60},
+  "languages": {
+    "en": {"high": 80, "medium": 60},
+    "de": {"high": 80, "medium": 60},
+    "fr": {"high": 78, "medium": 58},
+    "es": {"high": 78, "medium": 58},
+    "it": {"high": 78, "medium": 58},
+    "pt": {"high": 78, "medium": 58},
+    "pl": {"high": 70, "medium": 50},
+    "ru": {"high": 70, "medium": 50},
+    "uk": {"high": 70, "medium": 50},
+    "fi": {"high": 70, "medium": 50},
+    "tr": {"high": 70, "medium": 50},
+    "cs": {"high": 72, "medium": 52},
+    "sk": {"high": 72, "medium": 52},
+    "hu": {"high": 70, "medium": 50},
+    "ar": {"high": 74, "medium": 54},
+    "zh": {"high": 75, "medium": 55},
+    "ja": {"high": 75, "medium": 55},
+    "ko": {"high": 75, "medium": 55},
+    "th": {"high": 75, "medium": 55},
+    "vi": {"high": 78, "medium": 58}
+  }
+}

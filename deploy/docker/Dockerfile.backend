@@ -1,0 +1,43 @@
+FROM python:3.12-slim AS base
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN groupadd -r oe && useradd -r -g oe -d /app -s /sbin/nologin oe
+
+WORKDIR /app
+
+# Copy the whole backend (pyproject.toml + README.md + all source) before
+# installing. pip needs the app/ package present to build the wheel.
+COPY backend/ backend/
+
+# Install non-editable with server extras (asyncpg/celery/boto3). ezdxf for
+# DXF takeoff is already in the base dependencies, so no separate install.
+RUN pip install --no-cache-dir "./backend[server]"
+
+# Persistent data volume. OE_DATA_DIR pins the unified data-dir resolver
+# (app.core.storage.resolve_data_dir) at /data so BIM geometry and other
+# artifacts land on the mounted volume, not the ephemeral container layer
+# (where the wheel/site-packages default ~/.openestimate would put them,
+# leaving the DB row "ready" but the geometry endpoint 404 after a
+# container recreate). Operators can override OE_DATA_DIR at run time.
+RUN mkdir -p /data && chown oe:oe /data
+
+RUN chown -R oe:oe /app
+USER oe
+
+WORKDIR /app/backend
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    OE_DATA_DIR=/data
+
+EXPOSE 8000
+
+VOLUME ["/data"]
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')" || exit 1
+
+CMD ["uvicorn", "app.main:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000"]

@@ -1,0 +1,31 @@
+{
+  "rule_pack_id": "ccdc_2",
+  "name": "CCDC 2 — Stipulated Price Contract (2020)",
+  "name_fr-CA": "CCDC 2 — Contrat à prix forfaitaire (2020)",
+  "standard": "CCDC 2-2020",
+  "jurisdiction": "CA",
+  "regulator": "Canadian Construction Documents Committee",
+  "publication_year": 2020,
+  "applies_to": ["projects", "boq", "tendering", "validation"],
+  "description": "Validates that a project's commercial structure matches the CCDC 2-2020 stipulated price (lump sum) contract: Agreement Articles A-1..A-6 present, Definitions complete, General Conditions GC 1..12 referenced, Supplementary Conditions documented, Ready-for-Takeover milestone defined, prompt-payment schedule, holdback percentage per provincial Construction Act, change-order workflow (GC 6) and bonding requirements (GC 11.1 / 11.2) all populated before tender release.",
+  "description_fr-CA": "Vérifie que la structure commerciale du projet correspond au contrat CCDC 2-2020 à prix forfaitaire : Articles A-1..A-6 présents, Définitions complètes, Conditions générales CG 1..12 référencées, Conditions supplémentaires documentées, jalon Prêt-pour-prise-en-charge défini, échéancier de paiement rapide, pourcentage de retenue selon la Loi sur la construction provinciale, processus d'avenant (CG 6) et exigences de cautionnement (CG 11.1 / 11.2) renseignés avant la mise en appel d'offres.",
+  "severity_overrides": {},
+  "enables_rule_ids": [
+    "ccdc2.articles_a1_to_a6_present",
+    "ccdc2.definitions_complete",
+    "ccdc2.general_conditions_gc1_to_gc12_referenced",
+    "ccdc2.supplementary_conditions_documented",
+    "ccdc2.ready_for_takeover_milestone_defined",
+    "ccdc2.payment_schedule_prompt_payment_compliant",
+    "ccdc2.holdback_percentage_per_provincial_act",
+    "ccdc2.change_order_workflow_gc6_enabled",
+    "ccdc2.bonding_gc11_1_performance_set",
+    "ccdc2.bonding_gc11_2_labour_material_set",
+    "ccdc2.insurance_gc11_1_civil_liability_set",
+    "ccdc2.dispute_resolution_gc8_set",
+    "ccdc2.warranty_gc12_set",
+    "boq_quality.position_has_unit_rate",
+    "boq_quality.position_has_quantity",
+    "boq_quality.total_mismatch"
+  ]
+}

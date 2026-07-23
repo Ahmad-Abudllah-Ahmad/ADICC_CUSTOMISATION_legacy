@@ -1,0 +1,39 @@
+{
+  "rule_pack_id": "osha_1926",
+  "name": "OSHA 29 CFR 1926 — Safety & Health Regulations for Construction",
+  "standard": "29 CFR Part 1926",
+  "jurisdiction": "US",
+  "edition": "Current as of 2024 (continuously updated by OSHA rulemaking)",
+  "description": "Enables OCERP built-in validation rules that check project HSE plans, daily reports, and tender packages for OSHA 29 CFR 1926 mandatory provisions: OSHA 10/30-hour cards, Site-Specific Safety Plan (SSSP), Subpart C General Safety, Subpart E PPE, Subpart M Fall Protection, Subpart P Excavations, Subpart Q Concrete & Masonry, Subpart R Steel Erection, Subpart S Underground Construction, Subpart X Stairways & Ladders. Several states (CA Cal/OSHA, MI MIOSHA, WA DOSH, etc.) operate their own approved plans — these rules flag where state plan deltas may apply.",
+  "issuer": "U.S. Department of Labor — Occupational Safety and Health Administration (OSHA)",
+  "key_subparts": {
+    "Subpart C": "1926.20-1926.35 General Safety & Health Provisions",
+    "Subpart E": "1926.95-1926.107 Personal Protective & Life Saving Equipment",
+    "Subpart M": "1926.500-1926.503 Fall Protection (6 ft trigger)",
+    "Subpart P": "1926.650-1926.652 Excavations (5 ft protective system trigger)",
+    "Subpart Q": "1926.700-1926.706 Concrete & Masonry Construction",
+    "Subpart R": "1926.750-1926.761 Steel Erection",
+    "Subpart X": "1926.1050-1926.1060 Stairways and Ladders"
+  },
+  "enables_rule_ids": [
+    "osha.1926.sssp_present",
+    "osha.1926.osha_10_card_workers_present",
+    "osha.1926.osha_30_card_supervisors_present",
+    "osha.1926.competent_person_designated",
+    "osha.1926.qualified_person_designated_for_steel",
+    "osha.1926.subpart_c_hazard_communication_set",
+    "osha.1926.subpart_e_ppe_assessment_done",
+    "osha.1926.subpart_m_fall_protection_plan_above_6ft",
+    "osha.1926.subpart_p_excavation_protection_above_5ft",
+    "osha.1926.subpart_p_competent_person_daily_inspection",
+    "osha.1926.subpart_q_concrete_formwork_drawings_approved",
+    "osha.1926.subpart_q_post_tensioning_exclusion_zone",
+    "osha.1926.subpart_r_steel_erection_plan_present",
+    "osha.1926.subpart_x_ladder_inspection_log",
+    "osha.1926.silica_exposure_control_plan_present",
+    "osha.1926.crystalline_silica_table_1_referenced",
+    "osha.1926.heat_illness_prevention_plan_in_high_heat_states",
+    "osha.1926.injury_log_300_300A_present",
+    "osha.1926.state_plan_addendum_when_state_plan_state"
+  ]
+}

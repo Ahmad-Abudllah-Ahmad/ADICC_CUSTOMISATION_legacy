@@ -1,0 +1,14 @@
+{
+  "rule_pack_id": "vivienda_social_infonavit",
+  "name": "Vivienda Social (INFONAVIT, FOVISSSTE, CONAVI)",
+  "standard": "Social-housing finance and policy framework",
+  "jurisdiction": "MX",
+  "regulator": "INFONAVIT, FOVISSSTE, CONAVI",
+  "description": "Mexican social-housing context for the vivienda pilot. INFONAVIT finances housing for private-sector workers, FOVISSSTE for public-sector workers, and CONAVI sets national housing policy, subsidies and technical guidelines. The pack surfaces these bodies for project setup and keeps the universal completeness checks on; programme-specific budget and unit-typology gates are on the roadmap.",
+  "applies_to": ["projects", "validation"],
+  "bodies": ["INFONAVIT", "FOVISSSTE", "CONAVI"],
+  "enables_rule_ids": [
+    "boq_quality.section_without_items",
+    "boq_quality.cost_concentration"
+  ]
+}

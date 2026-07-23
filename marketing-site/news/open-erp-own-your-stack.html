@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>An open construction ERP for teams who want to own their stack - OpenConstructionERP</title>
+<meta name="description" content="OpenConstructionERP v5.2.0 - an open-source construction ERP that covers estimating, BIM take-off, 4D/5D scheduling, procurement and site billing in one self-hosted system under AGPL-3.0. 116 modules, 55,000+ CWICR cost items across 11 regions, 57 validation rules, BIM connectors, 27 UI languages." />
+<meta name="robots" content="index,follow" />
+<link rel="canonical" href="https://adicc-uae.com/news/open-erp-own-your-stack.html" />
+
+<meta property="og:type" content="article" />
+<meta property="og:site_name" content="OpenConstructionERP" />
+<meta property="og:url" content="https://adicc-uae.com/news/open-erp-own-your-stack.html" />
+<meta property="og:title" content="An open construction ERP for teams who want to own their stack" />
+<meta property="og:description" content="Estimating, CAD/BIM take-off, 4D/5D scheduling, procurement and site billing - in one self-hosted system under AGPL-3.0. Production-grade as of v5.2.0. 116 modules, 55,000+ cost items across 11 regions." />
+<meta property="og:image" content="https://adicc-uae.com/news/assets/open-erp-own-your-stack/images/hero-overview.jpg" />
+<meta property="article:published_time" content="2026-05-25T00:00:00Z" />
+<meta property="article:author" content="Artem Boiko" />
+<meta property="article:tag" content="Concept paper" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="An open construction ERP for teams who want to own their stack" />
+<meta name="twitter:description" content="A self-hosted construction ERP under AGPL-3.0. 116 modules, 55,000+ cost items across 11 regions, 57 validation rules, BIM connectors, 27 UI languages." />
+<meta name="twitter:image" content="https://adicc-uae.com/news/assets/open-erp-own-your-stack/images/hero-overview.jpg" />
+
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "An open construction ERP for teams who want to own their stack",
+  "datePublished": "2026-05-25",
+  "author": { "@type": "Person", "name": "Artem Boiko" },
+  "publisher": {
+    "@type": "Organization",
+    "name": "DataDrivenConstruction",
+    "logo": { "@type": "ImageObject", "url": "https://adicc-uae.com/favicon.svg" }
+  },
+  "image": "https://adicc-uae.com/news/assets/open-erp-own-your-stack/images/hero-overview.jpg",
+  "mainEntityOfPage": "https://adicc-uae.com/news/open-erp-own-your-stack.html"
+}
+</script>
+
+<style>
+  @font-face { font-family: 'Inter'; src: url('assets/open-erp-own-your-stack/fonts/Inter.ttf'); font-weight: 100 900; font-style: normal; }
+  @font-face { font-family: 'Newsreader'; src: url('assets/open-erp-own-your-stack/fonts/Newsreader.ttf'); font-weight: 200 800; font-style: normal; }
+  @font-face { font-family: 'Newsreader'; src: url('assets/open-erp-own-your-stack/fonts/Newsreader-Italic.ttf'); font-weight: 200 800; font-style: italic; }
+
+  * { box-sizing: border-box; }
+  html { background: #ECEEF2; }
+  body {
+    font-family: 'Newsreader', Georgia, serif;
+    font-size: 12pt;
+    line-height: 1.6;
+    color: #1a1a1a;
+    margin: 0;
+    padding: 0 20px 60px 20px;
+    font-weight: 400;
+  }
+  img { max-width: 100%; display: block; }
+
+  /* ─── TOP NAV - same visual language as the main marketing site ─── */
+  .topnav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(248, 250, 252, 0.92);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4);
+            backdrop-filter: blur(14px) saturate(1.4);
+    border-bottom: 1px solid rgba(15, 23, 42, 0.09);
+    margin: 0 -20px 30px;
+  }
+  .topnav-inner {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 12px clamp(20px, 4vw, 48px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+  .topnav-left { display: flex; align-items: center; gap: 14px; }
+  .topnav .brand {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: baseline;
+    font-weight: 700;
+    font-size: 17px;
+    letter-spacing: -0.015em;
+  }
+  .topnav .brand-seg-1 { color: #0b1220; }
+  .topnav .brand-seg-2 { color: #475569; }
+  .topnav .brand-seg-3 { color: #2d5e8e; font-weight: 800; }
+  .topnav-links {
+    display: flex;
+    gap: clamp(10px, 1.6vw, 22px);
+    align-items: center;
+    font-size: 14px;
+  }
+  .topnav-links a {
+    color: #475569;
+    font-weight: 500;
+    padding: 6px 4px;
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+  .topnav-links a:hover, .topnav-links a.is-active { color: #2d5e8e; }
+  .topnav-links a.is-active { font-weight: 600; }
+  .topnav-right { display: flex; align-items: center; gap: 10px; }
+  .topnav-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.2s ease;
+  }
+  .topnav-pill.github {
+    border: 1px solid rgba(15, 23, 42, 0.14);
+    color: #1e293b;
+    background: transparent;
+  }
+  .topnav-pill.github:hover { border-color: #2d5e8e; color: #2d5e8e; }
+  .topnav-pill.cta {
+    background: linear-gradient(135deg, #2d5e8e 0%, #244c74 100%);
+    color: #ffffff;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.3) inset,
+      0 8px 18px -8px rgba(45, 94, 142, 0.5);
+  }
+  .topnav-pill.cta:hover { transform: translateY(-1px); color: #fff; }
+  .topnav-pill .arrow { transition: transform 0.15s ease; }
+  .topnav-pill:hover .arrow { transform: translateX(2px); }
+  @media (max-width: 980px) {
+    .topnav-links a:not(.news-link), .topnav-pill.github { display: none; }
+  }
+
+  .stage { max-width: 880px; margin: 0 auto; }
+
+  .banner {
+    font-family: 'Inter', sans-serif;
+    font-size: 9pt;
+    color: #64748B;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin: 0 0 14px 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 500;
+  }
+  .banner .right { color: #94A3B8; }
+
+  /* The sheet */
+  .sheet {
+    background: #ffffff;
+    box-shadow: 0 2px 4px rgba(15,23,42,0.04), 0 12px 32px rgba(15,23,42,0.08);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  /* Hero with logo + tagline */
+  .hero {
+    background: linear-gradient(135deg, #1E40AF 0%, #1E3A8A 100%);
+    color: #ffffff;
+    padding: 40px 56px 36px 56px;
+    position: relative;
+  }
+  .hero .hero-row {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 22px;
+  }
+  .hero .hero-logo {
+    background: #ffffff;
+    border-radius: 4px;
+    padding: 6px 10px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+  }
+  .hero .hero-logo img { height: 30px; width: auto; }
+  .hero .hero-issue {
+    font-family: 'Inter', sans-serif;
+    font-size: 8.5pt;
+    color: rgba(255,255,255,0.7);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .hero h1 {
+    font-family: 'Newsreader', serif;
+    font-size: 30pt;
+    line-height: 1.12;
+    font-weight: 500;
+    margin: 0 0 12px 0;
+    letter-spacing: -0.02em;
+    color: #ffffff;
+  }
+  .hero h1 em {
+    font-style: italic;
+    font-weight: 400;
+    color: #BFDBFE;
+  }
+  .hero .hero-deck {
+    font-family: 'Inter', sans-serif;
+    font-size: 11pt;
+    line-height: 1.55;
+    color: rgba(255,255,255,0.88);
+    margin: 0;
+    max-width: 580px;
+    font-weight: 400;
+  }
+
+  /* Mail header inside white area */
+  .content { padding: 38px 56px 46px 56px; }
+
+  .mail-head {
+    border-bottom: 0.5px solid #1a1a1a;
+    padding-bottom: 18px;
+    margin-bottom: 22px;
+  }
+  .mail-head dl {
+    margin: 0;
+    display: grid;
+    grid-template-columns: 70px 1fr;
+    gap: 4px 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 9.5pt;
+    line-height: 1.55;
+  }
+  .mail-head dt {
+    color: #94A3B8;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 8pt;
+    font-weight: 600;
+    padding-top: 3px;
+  }
+  .mail-head dd { margin: 0; color: #334155; }
+  .mail-head dd .accent { color: #1a1a1a; font-weight: 500; }
+
+  .subject-alt {
+    font-family: 'Inter', sans-serif;
+    font-size: 8.5pt;
+    color: #94A3B8;
+    letter-spacing: 0.04em;
+    margin: 0 0 22px 0;
+  }
+  .subject-alt span.label {
+    color: #94A3B8;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-weight: 600;
+    margin-right: 6px;
+  }
+
+  .greeting {
+    font-family: 'Newsreader', serif;
+    font-size: 17pt;
+    font-weight: 500;
+    color: #1a1a1a;
+    margin: 0 0 14px 0;
+    letter-spacing: -0.01em;
+  }
+
+  /* Body paragraphs */
+  .body p {
+    margin: 0 0 14px 0;
+    text-align: left;
+    hyphens: auto;
+    font-size: 11.5pt;
+    line-height: 1.6;
+  }
+  .body p.lead {
+    font-size: 13.5pt;
+    line-height: 1.5;
+    color: #2a2a27;
+    font-weight: 350;
+    margin-bottom: 18px;
+  }
+  .body p.lead em {
+    font-style: italic;
+    color: #1E40AF;
+    font-weight: 400;
+  }
+  .body strong { font-weight: 600; color: #1a1a1a; }
+  .body em { font-style: italic; }
+
+  /* Kicker section header */
+  h3.kicker {
+    font-family: 'Inter', sans-serif;
+    font-size: 9pt;
+    font-weight: 600;
+    color: #1E40AF;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    margin: 32px 0 10px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  h3.kicker::after {
+    content: "";
+    flex: 1;
+    height: 0.5px;
+    background: #CBD5E1;
+  }
+
+  /* Big section title */
+  h2.bigtitle {
+    font-family: 'Newsreader', serif;
+    font-size: 22pt;
+    font-weight: 500;
+    line-height: 1.18;
+    color: #1a1a1a;
+    margin: 0 0 12px 0;
+    letter-spacing: -0.018em;
+  }
+  h2.bigtitle em { font-style: italic; color: #1E40AF; font-weight: 400; }
+
+  /* Figure (image with caption) */
+  figure.fig {
+    margin: 18px 0 22px 0;
+  }
+  figure.fig img {
+    width: 100%;
+    height: auto;
+    border-radius: 3px;
+    border: 0.5px solid #E2E8F0;
+  }
+  figure.fig figcaption {
+    font-family: 'Inter', sans-serif;
+    font-size: 8.5pt;
+    color: #64748B;
+    margin-top: 8px;
+    line-height: 1.45;
+    font-style: normal;
+  }
+  figure.fig figcaption b {
+    color: #1a1a1a;
+    font-weight: 600;
+    margin-right: 4px;
+  }
+
+  /* Hero overview image - full bleed */
+  .full-bleed {
+    margin: 0 -56px;
+  }
+  .full-bleed img { border-radius: 0; border-left: 0; border-right: 0; }
+
+  /* Facts list */
+  ul.facts {
+    list-style: none;
+    margin: 4px 0 18px 0;
+    padding: 0;
+  }
+  ul.facts li {
+    padding: 9px 0 9px 22px;
+    border-bottom: 0.5px solid #E2E8F0;
+    position: relative;
+    font-family: 'Newsreader', serif;
+    font-size: 11.5pt;
+    line-height: 1.5;
+    color: #1a1a1a;
+  }
+  ul.facts li:last-child { border-bottom: none; }
+  ul.facts li::before {
+    content: "-";
+    position: absolute;
+    left: 0;
+    top: 9px;
+    color: #1E40AF;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+  }
+  ul.facts li b {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 10.5pt;
+    color: #1a1a1a;
+    margin-right: 4px;
+  }
+
+  /* Modules navigation - 4 cols, 4 rows of category tiles */
+  .modnav {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin: 14px 0 20px 0;
+  }
+  .modnav .mc {
+    background: #F8FAFC;
+    border: 0.5px solid #E2E8F0;
+    border-radius: 2px;
+    padding: 9px 9px 9px 11px;
+  }
+  .modnav .mc .ct {
+    font-family: 'Inter', sans-serif;
+    font-size: 7.5pt;
+    font-weight: 700;
+    color: #1E40AF;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+  .modnav .mc .cs {
+    font-family: 'Inter', sans-serif;
+    font-size: 7.5pt;
+    color: #64748B;
+    line-height: 1.35;
+  }
+  .modnav .mc .cs b { color: #1a1a1a; font-weight: 600; }
+
+  /* Feature blocks - image with text */
+  .feature {
+    margin: 22px 0 28px 0;
+    padding: 22px 0 0 0;
+    border-top: 0.5px solid #E2E8F0;
+  }
+  .feature .ftitle {
+    font-family: 'Inter', sans-serif;
+    font-size: 14pt;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0 0 10px 0;
+    letter-spacing: -0.01em;
+  }
+  .feature .ftitle .num {
+    color: #1E40AF;
+    font-weight: 700;
+    margin-right: 8px;
+  }
+  .feature p.intro {
+    font-family: 'Newsreader', serif;
+    font-size: 11.5pt;
+    line-height: 1.55;
+    color: #334155;
+    margin: 0 0 14px 0;
+  }
+  .feature ul.bullets {
+    list-style: none;
+    margin: 12px 0 0 0;
+    padding: 0;
+  }
+  .feature ul.bullets li {
+    padding: 5px 0 5px 16px;
+    position: relative;
+    font-family: 'Inter', sans-serif;
+    font-size: 10pt;
+    line-height: 1.5;
+    color: #334155;
+  }
+  .feature ul.bullets li::before {
+    content: "·";
+    position: absolute;
+    left: 4px;
+    top: 5px;
+    color: #1E40AF;
+    font-weight: 700;
+    font-size: 12pt;
+  }
+  .feature ul.bullets li b { color: #1a1a1a; font-weight: 600; }
+
+  /* Cost callout */
+  .costnote {
+    background: #F8FAFC;
+    border-left: 3px solid #1E40AF;
+    padding: 18px 22px;
+    margin: 18px 0 8px 0;
+    font-family: 'Inter', sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.55;
+    color: #334155;
+    border-radius: 0 3px 3px 0;
+  }
+  .costnote .label {
+    font-family: 'Inter', sans-serif;
+    font-size: 7.5pt;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #1E40AF;
+    font-weight: 700;
+    display: block;
+    margin-bottom: 6px;
+  }
+  .costnote strong { color: #1a1a1a; }
+  .costnote .src {
+    color: #94A3B8;
+    font-size: 8.5pt;
+    font-style: italic;
+    display: block;
+    margin-top: 6px;
+  }
+
+  /* Big number callouts (TCO comparison) */
+  .tco {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 18px 0;
+  }
+  .tco .card {
+    background: #ffffff;
+    border: 0.5px solid #E2E8F0;
+    border-top: 3px solid #1E40AF;
+    border-radius: 2px;
+    padding: 16px 16px 14px 16px;
+    text-align: left;
+  }
+  .tco .card .l {
+    font-family: 'Inter', sans-serif;
+    font-size: 7.5pt;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #64748B;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .tco .card .v {
+    font-family: 'Inter', sans-serif;
+    font-size: 22pt;
+    font-weight: 700;
+    color: #1E40AF;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    margin-bottom: 6px;
+  }
+  .tco .card .d {
+    font-family: 'Inter', sans-serif;
+    font-size: 8.5pt;
+    line-height: 1.45;
+    color: #334155;
+  }
+
+  /* Clients credibility block */
+  .clients-block { margin: 18px 0 8px 0; }
+  .clients-lead {
+    font-family: 'Inter', sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.55;
+    color: #334155;
+    margin: 0 0 14px 0;
+  }
+  .clients-lead strong { color: #1a1a1a; font-weight: 600; }
+  .clients-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin: 0 0 12px 0;
+  }
+  .clients-grid .tile {
+    background: #ffffff;
+    border: 0.5px solid #E2E8F0;
+    border-top: 2.5px solid #EFF6FF;
+    border-radius: 2px;
+    padding: 10px 6px 8px 6px;
+    text-align: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 9pt;
+    font-weight: 600;
+    color: #1a1a1a;
+    line-height: 1.2;
+    min-height: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .clients-grid .tile .sub {
+    font-size: 7pt;
+    font-weight: 400;
+    color: #94A3B8;
+    margin-top: 2px;
+    letter-spacing: 0.04em;
+  }
+  .clients-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    padding-top: 12px;
+    margin-top: 4px;
+    border-top: 0.5px solid #E2E8F0;
+    font-family: 'Inter', sans-serif;
+  }
+  .clients-stats .stat .num {
+    font-size: 20pt;
+    font-weight: 700;
+    color: #1E40AF;
+    line-height: 1;
+    letter-spacing: -0.01em;
+  }
+  .clients-stats .stat .lbl {
+    font-size: 8pt;
+    color: #64748B;
+    margin-top: 5px;
+    line-height: 1.4;
+  }
+
+  /* Solutions row */
+  .solutions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin: 6px 0 14px 0;
+  }
+  .solutions .sol {
+    background: #F8FAFC;
+    border: 0.5px solid #E2E8F0;
+    border-left: 2px solid #1E40AF;
+    padding: 12px 14px;
+    border-radius: 0 2px 2px 0;
+  }
+  .solutions .sol-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 9pt;
+    font-weight: 700;
+    color: #1E40AF;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+  }
+  .solutions .sol-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 9.5pt;
+    line-height: 1.5;
+    color: #334155;
+  }
+  .solutions .sol-text strong { color: #1a1a1a; font-weight: 600; }
+  .solutions .sol-text em { color: #1E40AF; font-style: italic; }
+
+  /* Quote block */
+  .quote {
+    margin: 22px 0 18px 0;
+    padding: 0 0 0 22px;
+    border-left: 2px solid #1E40AF;
+  }
+  .quote p {
+    font-family: 'Newsreader', serif;
+    font-style: italic;
+    font-size: 13pt;
+    line-height: 1.55;
+    color: #334155;
+    margin: 0 0 6px 0;
+  }
+  .quote cite {
+    font-family: 'Inter', sans-serif;
+    font-size: 9pt;
+    color: #64748B;
+    font-style: normal;
+  }
+
+  /* Paths list */
+  ol.paths {
+    list-style: none;
+    margin: 4px 0 20px 0;
+    padding: 0;
+    counter-reset: pathnum;
+  }
+  ol.paths li {
+    counter-increment: pathnum;
+    padding: 14px 0 14px 64px;
+    border-top: 0.5px solid #CBD5E1;
+    position: relative;
+    font-size: 10.5pt;
+    line-height: 1.55;
+    font-family: 'Newsreader', serif;
+    color: #334155;
+  }
+  ol.paths li:last-child { border-bottom: 0.5px solid #CBD5E1; }
+  ol.paths li::before {
+    content: "STEP " counter(pathnum);
+    position: absolute;
+    left: 0;
+    top: 16px;
+    font-family: 'Inter', sans-serif;
+    font-size: 8pt;
+    font-weight: 700;
+    color: #1E40AF;
+    letter-spacing: 0.14em;
+  }
+  ol.paths li b {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    color: #1a1a1a;
+    font-size: 10.5pt;
+    display: block;
+    margin-bottom: 2px;
+  }
+  ol.paths li code {
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
+    font-size: 9.5pt;
+    color: #1E40AF;
+    background: #EFF6FF;
+    padding: 1px 6px;
+    border-radius: 2px;
+  }
+
+  /* CTA button */
+  .cta-row {
+    text-align: center;
+    margin: 24px 0 4px 0;
+  }
+  .cta-btn {
+    display: inline-block;
+    background: #1E40AF;
+    color: #ffffff;
+    font-family: 'Inter', sans-serif;
+    font-size: 10.5pt;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-decoration: none;
+    padding: 14px 28px;
+    border-radius: 3px;
+    box-shadow: 0 2px 6px rgba(30,64,175,0.18);
+  }
+  .cta-text {
+    margin-top: 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 9.5pt;
+    color: #64748B;
+  }
+
+  /* Generic button row + button styles */
+  .btn-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 14px 0 8px 0;
+    align-items: center;
+  }
+  .btn-row.center { justify-content: center; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 10pt;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+    padding: 10px 18px;
+    border-radius: 3px;
+    line-height: 1;
+    transition: opacity .15s;
+  }
+  .btn:hover { opacity: 0.92; }
+  .btn .ico {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    line-height: 1;
+  }
+  .btn-yt {
+    background: #FF0000;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(255,0,0,0.18);
+  }
+  .btn-gh {
+    background: #0F172A;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(15,23,42,0.18);
+  }
+  .btn-outline {
+    background: #ffffff;
+    color: #1a1a1a;
+    border: 1px solid #CBD5E1;
+  }
+  .btn-blue {
+    background: #1E40AF;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(30,64,175,0.18);
+  }
+
+  /* Video thumbnail block */
+  .video-block {
+    margin: 18px 0 4px 0;
+    page-break-inside: avoid;
+  }
+  .video-thumb {
+    display: block;
+    position: relative;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 0.5px solid #E2E8F0;
+    box-shadow: 0 6px 24px rgba(15,23,42,0.10);
+    text-decoration: none;
+  }
+  .video-thumb img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .video-thumb .play-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0) 60%, rgba(0,0,0,0.35) 100%);
+    pointer-events: none;
+  }
+  .video-thumb .badge {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    background: rgba(15,23,42,0.85);
+    color: #ffffff;
+    font-family: 'Inter', sans-serif;
+    font-size: 8.5pt;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 5px 10px;
+    border-radius: 2px;
+  }
+  .video-thumb .duration {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background: rgba(15,23,42,0.88);
+    color: #ffffff;
+    font-family: 'Inter', sans-serif;
+    font-size: 9pt;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 2px;
+  }
+  .video-meta {
+    font-family: 'Inter', sans-serif;
+    font-size: 9pt;
+    color: #64748B;
+    margin-top: 10px;
+    line-height: 1.5;
+  }
+  .video-meta b { color: #1a1a1a; font-weight: 600; }
+
+  /* Attachment chip */
+  .attach {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    background: #EFF6FF;
+    border: 0.5px solid #1E40AF;
+    border-radius: 3px;
+    font-family: 'Inter', sans-serif;
+    font-size: 10pt;
+    color: #1E40AF;
+    margin: 4px 0 22px 0;
+  }
+  .attach .icon {
+    width: 26px;
+    height: 32px;
+    background: #ffffff;
+    border: 1px solid #1E40AF;
+    border-radius: 1px;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .attach .icon::after {
+    content: "PDF";
+    position: absolute;
+    bottom: 3px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 7pt;
+    font-weight: 700;
+    color: #1E40AF;
+    letter-spacing: 0.04em;
+  }
+  .attach .meta b { font-weight: 600; color: #1a1a1a; }
+  .attach .meta { line-height: 1.45; }
+  .attach .size { color: #64748B; font-size: 9pt; }
+
+  /* Signature */
+  .sig {
+    border-top: 0.5px solid #CBD5E1;
+    padding-top: 22px;
+    margin-top: 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 9.5pt;
+    line-height: 1.55;
+    color: #334155;
+  }
+  .sig .greet {
+    font-family: 'Newsreader', serif;
+    font-size: 12pt;
+    color: #1a1a1a;
+    margin-bottom: 14px;
+  }
+  .sig .name {
+    font-family: 'Inter', sans-serif;
+    font-size: 11pt;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 2px;
+  }
+  .sig .role { color: #64748B; margin-bottom: 8px; }
+  .sig .contact { color: #475569; }
+  .sig .contact a { color: #1E40AF; text-decoration: none; border-bottom: 0.5px solid #CBD5E1; }
+
+  /* Bottom dark band */
+  .footer-band {
+    background: #0F172A;
+    color: #94A3B8;
+    padding: 24px 56px;
+    font-family: 'Inter', sans-serif;
+    font-size: 8.5pt;
+    line-height: 1.55;
+  }
+  .footer-band .links { color: #BFDBFE; margin-bottom: 6px; }
+  .footer-band .links a { color: #BFDBFE; text-decoration: none; margin-right: 14px; }
+
+  .footnote {
+    max-width: 760px;
+    margin: 22px auto 0 auto;
+    font-family: 'Inter', sans-serif;
+    font-size: 8.5pt;
+    color: #94A3B8;
+    line-height: 1.55;
+    padding: 0 4px;
+  }
+  .footnote a { color: #64748B; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- TOP NAV - main site menu                                      -->
+<!-- ============================================================ -->
+<nav class="topnav" aria-label="Primary">
+  <div class="topnav-inner">
+    <div class="topnav-left">
+      <a class="brand" href="/">
+        <span class="brand-seg-1">Open</span><span class="brand-seg-2">Construction</span><span class="brand-seg-3">ERP</span>
+      </a>
+    </div>
+    <div class="topnav-links">
+      <a href="/services.html">Practices</a>
+      <a href="/industries.html">Industries</a>
+      <a href="/standards.html">Standards</a>
+      <a href="/maturity.html">Maturity</a>
+      <a href="/partners.html">Partners</a>
+      <a href="/news.html" class="news-link is-active">News</a>
+      <a href="/docs.html">Docs</a>
+    </div>
+    <div class="topnav-right">
+      <a class="topnav-pill github" href="https://adicc-uae.com" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M12 0.5C5.65 0.5 0.5 5.65 0.5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.36-3.87-1.36-.52-1.32-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.47.11-3.05 0 0 .97-.31 3.18 1.18A11 11 0 0 1 12 6.8a11 11 0 0 1 2.9.39c2.2-1.5 3.17-1.18 3.17-1.18.63 1.58.24 2.76.12 3.05.74.81 1.18 1.84 1.18 3.1 0 4.43-2.7 5.4-5.27 5.69.42.36.78 1.07.78 2.15v3.19c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg>
+        <span>GitHub</span>
+      </a>
+      <a class="topnav-pill cta" href="/demo">
+        <span>Try demo</span>
+        <svg class="arrow" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+  </div>
+</nav>
+
+<div class="stage">
+
+  <div class="banner">
+    <span><a href="/news.html" style="color:inherit;text-decoration:none;">← Back to news</a></span>
+    <span class="right">Concept paper · Published 26 May 2026</span>
+  </div>
+
+  <div class="sheet">
+
+    <!-- ============== HERO ============== -->
+    <div class="hero">
+      <div class="hero-row">
+        <div class="hero-logo"><img src="assets/open-erp-own-your-stack/images/logo.png" alt="DataDrivenConstruction logo"></div>
+        <div class="hero-issue">Concept Paper · May 2026 · v5.2.0</div>
+      </div>
+      <h1>An open construction ERP <em>for teams who want to own their stack</em></h1>
+      <p class="hero-deck">Estimating, CAD/BIM take-off, 4D/5D scheduling, procurement and site billing in one self-hosted system - licensed under AGPL-3.0, no recurring fees. Production-grade as of v5.2.0. 116 modules, 55,000+ cost items across 11 regions, 57 validation rules over 16 rule sets.</p>
+    </div>
+
+    <!-- ============== CONTENT ============== -->
+    <div class="content">
+
+    <h2 class="greeting">An open construction ERP for construction firms and design offices.</h2>
+
+    <div class="body">
+
+      <p class="lead">The leading proprietary platforms in the European construction software market are functionally strong. The price is high licence cost and permanent lock-in to a single vendor. <strong>OpenConstructionERP</strong> is a working demonstration that an alternative base architecture is possible without giving up construction-domain depth.</p>
+
+      <p>The platform has been built since 2024 in response to a specific observation: mid-size construction firms can run an estimating, BIM take-off, procurement and site-billing stack <em>without</em> renting it from a single vendor in perpetuity. The result is a modular construction ERP that covers the full life cycle of a project - from the first estimate to the final invoice - on the customer's own infrastructure, with all source code public on GitHub under <strong>AGPL-3.0</strong>.</p>
+
+      <p>It is in production as of <strong>v5.2.8</strong>, with a live demo at <a href="https://adicc-uae.com/demo" style="color:#1E40AF;border-bottom:0.5px solid #CBD5E1;">adicc-uae.com/demo</a> and one-command local install. At the time of this paper it comprises <strong>116 modules</strong> (frontend, backend and plugins combined) and is backed by a cost database with 55,000 items across eleven regions. The rest of this article walks through what that means in practice - what ships, how a real project flows through the platform, what it replaces and what it doesn't, the architecture, the five-year cost picture, and who already works with our open tools.</p>
+
+      <figure class="fig">
+        <img src="assets/open-erp-own-your-stack/images/hero-overview.jpg" alt="OpenConstructionERP - platform overview dashboard">
+        <figcaption><b>Fig. 1</b> Project dashboard in OpenConstructionERP - central view across estimating, models, schedules and costs. All data lives on the customer's own database.</figcaption>
+      </figure>
+
+      <!-- ============== VIDEO WALKTHROUGH ============== -->
+      <h3 class="kicker">A 12-minute tour of the platform</h3>
+
+      <p>Before reading the spec sheet - see the system in motion. The walkthrough covers a real project from BIM import to BoQ to procurement, in twelve minutes.</p>
+
+      <div class="video-block">
+        <a class="video-thumb" href="https://www.youtube.com/@datadrivenconstruction" target="_blank" rel="noopener">
+          <img src="assets/open-erp-own-your-stack/images/youtube-walkthrough.jpg" alt="OpenConstructionERP - video walkthrough thumbnail">
+          <div class="play-overlay"></div>
+          <span class="badge">▶ Video Walkthrough</span>
+          <span class="duration">12:00</span>
+        </a>
+        <div class="video-meta"><b>OpenConstructionERP - full platform tour.</b> BOQ &amp; Estimates · Cost Databases · CAD/BIM &amp; AI Estimation · 4D/5D Planning · Tendering · Validation Engine · BI Explorer.</div>
+
+        <div class="btn-row">
+          <a class="btn btn-yt" href="https://www.youtube.com/@datadrivenconstruction" target="_blank" rel="noopener">
+            <span class="ico">▶</span> Watch on YouTube
+          </a>
+          <a class="btn btn-outline" href="https://www.youtube.com/@datadrivenconstruction" target="_blank" rel="noopener">
+            Subscribe to channel
+          </a>
+          <a class="btn btn-blue" href="https://adicc-uae.com/demo" target="_blank" rel="noopener">
+            Open live demo →
+          </a>
+        </div>
+      </div>
+
+      <!-- ============== WHAT SHIPS ============== -->
+      <h3 class="kicker">What ships today</h3>
+
+      <ul class="facts">
+        <li><b>116 modules</b> in v5.2.0 (frontend, backend, plugins) across estimating, BIM take-off, 4D/5D, procurement and site billing - 33 core modules plus over 80 specialised and regional modules.</li>
+        <li><b>55,000+ items</b> in the <strong>CWICR</strong> cost database across 11 regional price baselines (DACH, UK, US, France, Russia, LATAM and more), with 7,000+ resources (materials, labour, equipment).</li>
+        <li><b>57 validation rules</b> across 16 rule sets - DIN 276, GAEB, NRM, MasterFormat, ÖNORM, SIA, GB/T 50500, BC3 / FIEBDC-3 and other regional standards.</li>
+        <li><b>GAEB DA XML</b> (X83 / X84 / X89), <b>IFC 4</b>, <b>IDS</b>, <b>BCF</b>, <b>OpenCDE</b>; native connectors for the common BIM/CAD file formats: <code>.rvt</code>, <code>.ifc</code>, <code>.dwg</code>, <code>.dgn</code>.</li>
+        <li><b>27 UI languages</b>; runs from a 2 GB VPS (~€10/month); 17 modules active by default per user role; custom modules via the documented plugin architecture.</li>
+      </ul>
+
+      <!-- ============== THE 16 AREAS ============== -->
+      <h3 class="kicker">The 16 areas of the platform</h3>
+
+      <p>The left navigation of the platform groups every module under one of 16 functional areas. Estimators, BIM coordinators, project managers and site supervisors each operate from their own subset - but all data sits in the same database, so handoffs are not exports.</p>
+
+      <div class="modnav">
+        <div class="mc"><div class="ct">Overview</div><div class="cs">Dashboard · Projects · Project files</div></div>
+        <div class="mc"><div class="ct">Estimating</div><div class="cs">BoQ Editor · Element match · AI estimate · Dashboard</div></div>
+        <div class="mc"><div class="ct">Catalogs &amp; Ref.</div><div class="cs">Cost database · Resource catalog · Assemblies</div></div>
+        <div class="mc"><div class="ct">Take-off</div><div class="cs">PDF · DWG · BIM 3D · CAD/BIM BI explorer</div></div>
+
+        <div class="mc"><div class="ct">Model coord.</div><div class="cs">Coord. hub · Federations · Clash · BIM rules · EIR · Geo Hub</div></div>
+        <div class="mc"><div class="ct">AI &amp; Tools</div><div class="cs">AI Agents · AI Cost Advisor · AI Chat</div></div>
+        <div class="mc"><div class="ct">Commercial</div><div class="cs">CRM · Contracts · Subcontractors · Tendering · Bids</div></div>
+        <div class="mc"><div class="ct">Real-estate dev.</div><div class="cs">Project dev. · Housing · Developer dashboards · Templates</div></div>
+
+        <div class="mc"><div class="ct">Planning</div><div class="cs">4D schedule · Advanced sched. · Tasks · 5D cost · Risk</div></div>
+        <div class="mc"><div class="ct">Site operations</div><div class="cs">Site diary · Equipment · Resources · Service · Sub-portal</div></div>
+        <div class="mc"><div class="ct">Quality</div><div class="cs">Validation · Inspections · NCRs · Punch lists · QM</div></div>
+        <div class="mc"><div class="ct">HSE</div><div class="cs">Safety · HSE management · CO₂ &amp; ESG</div></div>
+
+        <div class="mc"><div class="ct">Communication</div><div class="cs">Contacts · Meetings · RFIs · Submittals · Correspondence</div></div>
+        <div class="mc"><div class="ct">Documentation</div><div class="cs">CDE · Photos · Markups</div></div>
+        <div class="mc"><div class="ct">Finance &amp; Proc.</div><div class="cs">Finance · Procurement · Variations</div></div>
+        <div class="mc"><div class="ct">Analytics</div><div class="cs">Reports · BI dashboards · Snapshots · Architecture map</div></div>
+      </div>
+
+      <p style="font-family:'Inter',sans-serif;font-size:9.5pt;color:#64748B;margin:8px 0 0 0;">Every module above is open-source and self-hostable. The full code, issue tracker and release notes are public.</p>
+
+      <div class="btn-row">
+        <a class="btn btn-gh" href="https://adicc-uae.com" target="_blank" rel="noopener">
+          <span class="ico">★</span> View on GitHub
+        </a>
+        <a class="btn btn-outline" href="https://adicc-uae.com" target="_blank" rel="noopener">
+          Release notes
+        </a>
+        <a class="btn btn-outline" href="https://github.com/datadrivenconstruction" target="_blank" rel="noopener">
+          All DDC repositories
+        </a>
+      </div>
+
+      <!-- ============== HOW A PROJECT FLOWS ============== -->
+      <h3 class="kicker">How a real project flows through the platform</h3>
+
+      <h2 class="bigtitle">One database, <em>not five different exports</em></h2>
+
+      <p>In a classical mid-size construction-firm setup, each phase of a project runs in a different piece of software: a BIM authoring tool for the model, a separate estimating package for the BoQ, a separate scheduling tool, and a separate accounting system for the billing. Every handover between phases is an export-import; every change has to be pulled through every system by hand. The work between tools is its own line item in the project budget.</p>
+
+      <p>OpenConstructionERP runs those phases on <strong>one database</strong>. The IFC model imported from a BIM authoring tool, the BoQ assembled on top of it, the schedule that drives material orders, the variation that updates the contract value - all sit in the same PostgreSQL instance, all the way through to the final invoice. A model update is applied on next import to the dependent quantities, estimates and tender packages automatically. There remains one source of truth - and it does not sit with a software vendor, but inside the company.</p>
+
+      <p>For a typical project - say, a €5 Mio office building - the sequence looks like this: import the IFC and native BIM models, run automatic quantity take-off from geometry, apply the firm's own CWICR-anchored rates to the BoQ, drive the 4D / 5D schedule from the BoQ structure, generate GAEB X83 tender packages for subcontractors, compare bids, award contracts, run site billing and variations against the same contract object. Five tools collapse into five views of the same data.</p>
+
+      <!-- ============== FEATURE 1: BOQ ============== -->
+      <div class="feature">
+        <h3 class="kicker">Feature 01 - Estimating</h3>
+        <h2 class="bigtitle">Bill of Quantities - with live cost data <em>and an AI second opinion</em></h2>
+        <p class="intro">The BoQ editor sits at the heart of the platform. It runs on AG Grid, so even five-figure-row tenders stay responsive; it pulls live unit prices from the CWICR database, and a built-in AI cost advisor proposes rates in regions where you don't have historic data yet - but every figure waits for your approval before it lands in the tender.</p>
+        <figure class="fig">
+          <img src="assets/open-erp-own-your-stack/images/feature-boq.jpg" alt="BoQ editor with AG Grid, integrated CWICR search and AI cost advisor">
+          <figcaption><b>Fig. 2</b> BoQ editor with integrated CWICR search (55,000+ items) and AI cost advisor. Source: adicc-uae.com/demo.</figcaption>
+        </figure>
+        <ul class="bullets">
+          <li><b>Live CWICR lookup</b> - type a description, get matching catalog items with regional prices in milliseconds.</li>
+          <li><b>AI cost advisor</b> - proposes unit rates with reasoning; never auto-applies, always requires human review.</li>
+          <li><b>GAEB DA XML in/out</b> (X83 / X84 / X89) - direct exchange with German-speaking public-sector tenders.</li>
+          <li><b>Element traceability</b> - every line item links back to its origin: BIM element, PDF take-off, or manual entry.</li>
+        </ul>
+      </div>
+
+      <!-- ============== FEATURE 2: TAKE-OFF ============== -->
+      <div class="feature">
+        <h3 class="kicker">Feature 02 - BIM / CAD Take-off</h3>
+        <h2 class="bigtitle">From the model straight into the tender <em>- no manual transcription</em></h2>
+        <p class="intro">Most construction firms lose hours not to producing data, but to moving it between tools. OpenConstructionERP's CAD/BIM take-off matches elements from RVT, IFC, DWG and DGN directly to BoQ positions, proposes mappings via the AI layer, and keeps the trace from element to line item.</p>
+        <figure class="fig">
+          <img src="assets/open-erp-own-your-stack/images/feature-takeoff-ai.jpg" alt="CAD/BIM take-off - element matching from 3D model to BoQ">
+          <figcaption><b>Fig. 3</b> CAD/BIM take-off - element matching from the 3D model to BoQ positions, with AI suggestion and manual approval.</figcaption>
+        </figure>
+        <ul class="bullets">
+          <li><b>Multi-format</b> - <code>.rvt</code>, IFC 2x3/4, DWG, DGN, all via open converters built in-house (<code style="font-family:monospace;font-size:9.5pt;background:#EFF6FF;padding:1px 5px;border-radius:2px;color:#1E40AF;">cad2data</code>).</li>
+          <li><b>AI-assisted matching</b> - model elements suggested-mapped to BoQ items; you review and confirm.</li>
+          <li><b>Round-trip updates</b> - when the model changes, dependent quantities and prices update on next import.</li>
+          <li><b>Open data model</b> - exports back to XLSX, JSON, or a federated database for downstream BI tools.</li>
+        </ul>
+      </div>
+
+      <!-- ============== FEATURE 3: COST DATABASE ============== -->
+      <div class="feature">
+        <h3 class="kicker">Feature 03 - Cost Database</h3>
+        <h2 class="bigtitle">CWICR - 55,000+ items across 11 regional price baselines</h2>
+        <p class="intro">CWICR is the cost-data backbone of the platform. Pre-loaded with catalog items in nine languages and eleven regional pricing systems, it can be extended with your own firm-specific positions, and every search is indexable - both as full-text and as vector embeddings, so a take-off search finds matching positions even when the wording differs.</p>
+        <figure class="fig">
+          <img src="assets/open-erp-own-your-stack/images/feature-databases.jpg" alt="CWICR cost database - 55,000+ items across 11 regions">
+          <figcaption><b>Fig. 4</b> CWICR cost database - 55,000+ items across 11 regional price baselines, with full-text and vector search.</figcaption>
+        </figure>
+        <ul class="bullets">
+          <li><b>11 regions</b> - DACH (DIN 276 / ÖNORM / SIA), UK (NRM), US (MasterFormat), France (DPGF), and more.</li>
+          <li><b>9 catalog languages</b> - descriptions auto-translated where the regional standard allows.</li>
+          <li><b>Vector search</b> - semantic matching across positions even when wording diverges (powered by LanceDB / Qdrant).</li>
+          <li><b>Customer extensions</b> - add your own catalog branches without forking the database.</li>
+        </ul>
+      </div>
+
+      <!-- ============== WHAT IT REPLACES ============== -->
+      <h3 class="kicker">What the platform replaces, what it complements, what it doesn't cover</h3>
+
+      <p>An honest inventory matters more here than a sweeping promise. OpenConstructionERP <strong>replaces</strong> one set of today's typical tools, <strong>complements</strong> another, and is simply <strong>not in scope</strong> for a third. A stack combination that works in practice for a mid-size European construction firm: a BIM authoring tool for modelling, OpenConstructionERP for estimating / tendering / site billing, a dedicated financial-accounting system, optionally a dedicated payroll system. The interfaces between these are well-established - IFC export from the BIM tool, GAEB XML for tendering, the standard accounting-XML formats for booking.</p>
+
+      <ul class="facts">
+        <li><b>Replaced - proprietary estimating &amp; tendering systems</b>: BoQ editor, estimating, tendering, on-site measurement, final invoicing.</li>
+        <li><b>Replaced - proprietary 4D/5D modules</b>: 4D schedule and 5D cost model with EVM, SPI/CPI, S-curve.</li>
+        <li><b>Replaced - proprietary BIM quantity-take-off tools</b>: element matching from RVT/IFC files, with AI suggestion and manual approval.</li>
+        <li><b>Complemented - BIM authoring tools</b>: modelling stays in those tools. OpenConstructionERP reads the resulting IFC / native files.</li>
+        <li><b>Complemented - financial-accounting systems</b>: via documented interfaces. Own bookkeeping covers construction billing only, not full P&amp;L or balance sheet.</li>
+        <li><b>Complemented - CAD authoring tools</b>: the <code style="font-family:monospace;font-size:10pt;background:#EFF6FF;padding:1px 5px;border-radius:2px;color:#1E40AF;">cad2data</code> pipeline reads DWG/DGN; it does not produce them.</li>
+        <li><b>Not covered - HR, payroll, time tracking</b>: out of scope. Interfaces to existing systems are possible.</li>
+      </ul>
+
+      <!-- ============== THE ECONOMICS ============== -->
+      <h3 class="kicker">What adoption actually costs</h3>
+
+      <h2 class="bigtitle">Licence cost drops to zero. <em>The real cost line items are honest.</em></h2>
+
+      <p>Licence cost is the first question asked in a construction firm. Here is the honest answer, including the items where cost <em>does</em> arise.</p>
+
+      <p>Across the leading proprietary platforms in the European construction software market, the annual maintenance fee - according to independent user-review averages - typically sits around <strong>20-25% of purchase price</strong>. On a typical 10-seat acquisition of around €200,000, that translates into an additional roughly <strong>€40,000-50,000 per year</strong>, for maintenance alone - no new modules, no training. External project-based rental licences - for instance those mandated for external design offices on large public works - typically run to <strong>€15,000-25,000 per year</strong> for three full-time users, and end the moment the project ends.</p>
+
+      <p>The question is not whether OpenConstructionERP is <em>cheaper</em>. The question is how the money is deployed: <strong>once into your own infrastructure and know-how</strong>, or perpetually as rental fees to an external vendor.</p>
+
+      <div class="tco">
+        <div class="card">
+          <div class="l">Year 1 - Proprietary</div>
+          <div class="v">€248k</div>
+          <div class="d">Licence + first-year maintenance + setup, typical 10-seat deployment.</div>
+        </div>
+        <div class="card">
+          <div class="l">Year 1 - OpenConstructionERP</div>
+          <div class="v">~€40k</div>
+          <div class="d">Setup, hosting, optional consulting. No licence fee. Source code stays in-house.</div>
+        </div>
+        <div class="card">
+          <div class="l">5-year gap</div>
+          <div class="v">€240k+</div>
+          <div class="d">Re-invested into customization, training and IT staff that stays with you.</div>
+        </div>
+      </div>
+
+      <p style="font-family:'Inter',sans-serif;font-size:10pt;color:#334155;margin:18px 0 6px 0;font-weight:600;">Concrete cost lines, with no marketing fog:</p>
+
+      <ul class="facts">
+        <li><b>Software licence</b> - <strong>€0</strong> (AGPL-3.0). Full functionality, no restrictions, no user limit, perpetual.</li>
+        <li><b>Commercial licence</b> - on request. For firms that cannot accept AGPL obligations (e.g. embedded SaaS use).</li>
+        <li><b>Server / infrastructure</b> - from <strong>~€10 / month</strong>. A 2 GB VPS is enough for the core. Own servers possible; no cloud requirement.</li>
+        <li><b>Initial setup</b> - self-service or 1-2 days. Docker quickstart in ~5 minutes locally; guided setup via DDC or a partner institute is optional.</li>
+        <li><b>Training &amp; workshops</b> - <strong>€3,500 / day (net)</strong>, optional. Typical scope for a mid-size firm: 2-3 days initial training plus follow-up.</li>
+        <li><b>Maintenance</b> - no recurring fee. Updates via GitHub releases (every 2-3 weeks); maintenance contracts optional via the institute or DDC.</li>
+      </ul>
+
+      <div class="costnote">
+        <span class="label">Over five years</span>
+        The gap between a maintenance-free self-hosted stack and a vendor-locked one runs into the mid-to-high six figures. That money can instead flow into in-house customizations, IT staff and training - and stays inside the company.
+        <span class="src">Comparison basis: independent public user-review averages for leading proprietary construction-ERP platforms in DACH (2024-2025); industry-published market-share figures.</span>
+      </div>
+
+      <!-- ============== ARCHITECTURE ============== -->
+      <h3 class="kicker">Architecture &amp; data sovereignty</h3>
+
+      <h2 class="bigtitle">Where the data sits, and who can read it</h2>
+
+      <p>This section is written for IT leads. It describes how OpenConstructionERP is operated and which data flows can be expected.</p>
+
+      <p><strong>Deployment.</strong> The platform runs as a self-hosted web application. Three deployment variants are common: <em>on-premise</em> on your own server, <em>private cloud</em> at a European provider (Hetzner, IONOS, OVHcloud), or <em>hybrid</em>. The minimum hardware for the core is 2 GB RAM and 20 GB storage - a footprint every VPS provider supplies for under €10 per month. For project portfolios with more than 50 active projects in parallel, a slightly larger configuration is recommended.</p>
+
+      <p><strong>Technical stack.</strong> Backend: Python 3.12 with FastAPI. Frontend: React 18 with TypeScript. Database: PostgreSQL 16 (SQLite also supported for development). Vector search for the cost database: LanceDB or Qdrant. All of these are standard open-source components and can be operated in any data centre. No dependency on proprietary cloud services. AI functions are vendor-agnostic via REST connectors to Anthropic, OpenAI, Gemini, Mistral, Groq, DeepSeek and further LLM providers - including self-hosted via Ollama or vLLM.</p>
+
+      <p><strong>Data export &amp; sovereignty.</strong> All data is fully exportable at any time: GAEB XML (X83, X84, X89) for construction tendering, Excel and CSV for standard reporting, JSON via the documented REST API, PostgreSQL dump for full database transfer. The data model is documented in source code and versionable.</p>
+
+      <p><strong>Security &amp; code audit.</strong> The entire source code lives publicly on GitHub under AGPL-3.0. A security review - by your own IT team or an external auditor - is possible at any time. The platform implements RBAC (role-based access control) and Single Sign-On via the standard protocols (OIDC, SAML). Updates are published every 2-3 weeks as versioned GitHub releases; each release ships with a documented changelog and reversible migrations.</p>
+
+      <!-- ============== WHY NOW ============== -->
+      <h3 class="kicker">Why this approach, why now</h3>
+
+      <p>Three developments make this the right moment for an open construction ERP.</p>
+
+      <p><strong>BIM has become a precondition for public-sector tenders, not a recommendation.</strong> With the <em>Masterplan BIM für Bundesbauten</em> (BMI, September 2021), Building Information Modeling has been made mandatory for German federal building construction in stages: Level I from late 2022 for all newly planned federal building projects (needs planning, design phase, commissioning); Level II from 2023 for projects above €50 Mio; since 2025, Level II also applies to all federal buildings above €500,000 construction volume. In federal infrastructure (road, bridge, rail) BIM has been mandatory since late 2020. For contractors on federal public construction, BIM is no longer optional - it is a precondition for participating in tenders. OpenConstructionERP supports IFC 4 and IDS (openBIM), BCF, OpenCDE as well as the common native formats RVT, DWG, DGN out of the box.</p>
+
+      <p><strong>The proprietary vendor landscape is consolidating.</strong> Publicly available industry analyses indicate that a single large proprietary platform covers an estimated <strong>~80% of construction projects above €1 Mio</strong> budget and <strong>~90% of public-sector administrations</strong> in the DACH region. Several large proprietary vendors have been steadily acquiring smaller players over the past years. Licence costs are rising faster than construction prices; the cost of switching from one stack to another is high. This market structure produces a growing demand for alternatives that do not sit inside the same consolidation logic.</p>
+
+      <p><strong>An institutional gap has just opened.</strong> The German federal programme <em>Mittelstand-Digital Zentrum Bau</em> (2022-2025, €5 Mio funding) ended in October 2025 after reaching around 1,500 people in the construction and real-estate industry. With its closure, an institutional gap opens up in the practical dissemination of open BIM and data standards to mid-size firms. OpenConstructionERP is actively in contact with universities and industry associations that want to fill this gap.</p>
+
+      <div class="costnote">
+        <span class="label">What this is NOT about</span>
+        This article is not a critique of individual vendors. <strong>The leading proprietary construction-software platforms are functionally strong and serve their users well.</strong> The point is the structural dependency that an exclusively proprietary market creates - and the possibility of mitigating it through an open alternative.
+      </div>
+
+      <!-- ============== CLIENTS ============== -->
+      <h3 class="kicker">Who already works with our open tools</h3>
+
+      <div class="clients-block">
+        <p class="clients-lead">Over the past decade <strong>DataDrivenConstruction</strong> - the team behind OpenConstructionERP - has worked with 24 construction, engineering and infrastructure organisations across four continents on workshops, pilot pipelines, custom development and data consulting:</p>
+
+        <div class="clients-grid">
+          <div class="tile">AECOM</div>
+          <div class="tile">Drees &amp; Sommer</div>
+          <div class="tile">VINCI Energies</div>
+          <div class="tile">Lindner Group</div>
+
+          <div class="tile">Artelia</div>
+          <div class="tile">Bechtle</div>
+          <div class="tile">Merck</div>
+          <div class="tile">RBS wave</div>
+
+          <div class="tile">Shapemaker</div>
+          <div class="tile">Scholze-Thost</div>
+          <div class="tile">VRAME</div>
+          <div class="tile">AXIA Energia<div class="sub">Eletrobras</div></div>
+
+          <div class="tile">AFRY</div>
+          <div class="tile">Hofschröer</div>
+          <div class="tile">TDF</div>
+          <div class="tile">Renaissance Construction</div>
+
+          <div class="tile">Hyundai AutoEver</div>
+          <div class="tile">Sintagma</div>
+          <div class="tile">Trafikverket</div>
+          <div class="tile">TMM Group</div>
+
+          <div class="tile">Dar Al Riyadh</div>
+          <div class="tile">pbs Ingenieure</div>
+          <div class="tile">ZPP Engineering</div>
+          <div class="tile">SCON GmbH</div>
+        </div>
+
+        <div class="clients-stats">
+          <div class="stat">
+            <div class="num">24</div>
+            <div class="lbl">Construction, engineering &amp; infrastructure organisations</div>
+          </div>
+          <div class="stat">
+            <div class="num">10+</div>
+            <div class="lbl">Years of open tools, datasets and AI workflows</div>
+          </div>
+          <div class="stat">
+            <div class="num">4</div>
+            <div class="lbl">Continents - Europe · Americas · Asia · Middle East</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============== WHAT DDC DELIVERS ============== -->
+      <h3 class="kicker">What DataDrivenConstruction delivers - beyond the ERP</h3>
+
+      <div class="solutions">
+        <div class="sol">
+          <div class="sol-title">Pipelines &amp; Workflows</div>
+          <div class="sol-text"><strong>cad2data</strong> open converters for RVT, IFC, DWG, DGN · automated quantity take-off · validation pipelines against GAEB / DIN / IFC · <em>n8n templates ready to fork</em>.</div>
+        </div>
+        <div class="sol">
+          <div class="sol-title">AI Agents</div>
+          <div class="sol-text">Specialised agents for estimating, compliance checks and document search - wired to <strong>Anthropic, OpenAI, Mistral, Groq, DeepSeek</strong> and local LLMs (Ollama, vLLM).</div>
+        </div>
+        <div class="sol">
+          <div class="sol-title">Open Platforms</div>
+          <div class="sol-text"><strong>OpenConstructionERP</strong> (AGPL-3.0) · <strong>CWICR</strong> cost database · Resource Catalog · DDC Excel plugin - all self-hostable, no recurring license fees.</div>
+        </div>
+        <div class="sol">
+          <div class="sol-title">Training &amp; Consulting</div>
+          <div class="sol-text">Two-day on-site workshops using <em>your</em> project data · pilot guidance · the book <em>Data-Driven Construction</em> in 30+ languages.</div>
+        </div>
+      </div>
+
+      <!-- ============== ROADMAP / WORKSHOPS ============== -->
+      <h3 class="kicker">Your path in the data-driven construction industry</h3>
+
+      <p>Adopting open construction tools is not a one-step migration - it is a journey across five phases, from the fundamentals of construction data through automation, advanced analytics and full ERP integration. DDC's workshop programme is built around exactly this roadmap, with every workshop using <strong>your own project data</strong>, not synthetic examples.</p>
+
+      <figure class="fig">
+        <img src="assets/open-erp-own-your-stack/images/ddc-roadmap.jpg" alt="Your path in the data-driven construction industry - 5-phase journey">
+        <figcaption><b>Fig. 5</b> The five-phase journey from CAD/BIM fundamentals to fully integrated ERP systems - and the 14 building blocks DDC covers across them. Source: datadrivenconstruction.io.</figcaption>
+      </figure>
+
+      <div class="btn-row">
+        <a class="btn btn-blue" href="https://datadrivenconstruction.io" target="_blank" rel="noopener">
+          Explore the roadmap →
+        </a>
+        <a class="btn btn-outline" href="mailto:info@datadrivenconstruction.io?subject=Workshop%20enquiry">
+          Request a workshop
+        </a>
+      </div>
+
+      <!-- ============== FAQ ============== -->
+      <h3 class="kicker">Frequently asked questions</h3>
+
+      <ul class="facts">
+        <li><b>Is the core really free and open source?</b> Yes. The core is AGPL-3.0 on GitHub. You can self-host permanently, review every line, fork or run it in production. For firms that cannot use AGPL, a commercial licence is available.</li>
+        <li><b>Does the platform work without an internet connection?</b> Yes. AI features are optional; the core functions (BoQ editor, take-off, estimating, tendering) run fully offline.</li>
+        <li><b>What maintenance should a firm plan for?</b> Updates via GitHub releases every 2-3 weeks, migrations reversible. Self-maintenance is feasible for any team with one DevOps-capable engineer; optional maintenance contracts exist.</li>
+        <li><b>Can data be migrated from existing proprietary estimating systems?</b> Via GAEB XML in most cases without extra effort. Specialised migration paths are in the pilot-project set-up.</li>
+      </ul>
+
+      <!-- ============== FOUR PATHS ============== -->
+      <h3 class="kicker">Four ways a first contact can unfold</h3>
+
+      <p>Four paths, from the lowest commitment to a deeper engagement. Each step stands on its own - combinations are possible but not required.</p>
+
+      <ol class="paths">
+        <li>
+          <b>Run it yourself</b>
+          Install locally - two commands, Python or Docker, done in 5 minutes. The bundled demo data lets you walk through the full functionality without further preparation. Repository &amp; instructions: <code>adicc-uae.com</code>
+        </li>
+        <li>
+          <b>Guided demo call</b>
+          A guided walk-through of the platform with focus on your firm's actual workflows. Typical length: 60-90 minutes, online or on site. Arranged directly or via a partner institute.
+        </li>
+        <li>
+          <b>Workshop</b>
+          A two-day hands-on workshop with your firm's actual project data. Covered: data extraction from existing BIM models, building a custom cost database, integration with your existing tools. Fee €3,500 / day (net).
+        </li>
+        <li>
+          <b>Pilot project</b>
+          Guided implementation on a real construction project at your firm, with a partner institute providing the domain support. Scope and milestones agreed together. Suitable for firms that, after the demo, are convinced and want to test productive use.
+        </li>
+      </ol>
+
+      <!-- ============== CTA ============== -->
+      <div class="cta-row">
+        <a class="cta-btn" href="mailto:info@datadrivenconstruction.io?subject=OpenConstructionERP%20%E2%80%94%20initial%20conversation">Reply to set up a call</a>
+        <div class="cta-text">A short reply is enough - I'll come back within one working day with time slots.</div>
+      </div>
+
+      <div class="btn-row center" style="margin-top: 18px;">
+        <a class="btn btn-yt" href="https://www.youtube.com/@datadrivenconstruction" target="_blank" rel="noopener">
+          <span class="ico">▶</span> Watch walkthrough
+        </a>
+        <a class="btn btn-gh" href="https://adicc-uae.com" target="_blank" rel="noopener">
+          <span class="ico">★</span> GitHub repository
+        </a>
+        <a class="btn btn-outline" href="https://adicc-uae.com/demo" target="_blank" rel="noopener">
+          Try the live demo
+        </a>
+      </div>
+
+      <!-- ============== TRADEMARK NOTICE ============== -->
+      <p style="font-family:'Inter',sans-serif;font-size:9pt;color:#94a3b8;margin:32px 0 0 0;line-height:1.5;border-top:1px solid #e2e8f0;padding-top:16px;">
+        <strong>Trademark notice.</strong> All product names, file-format extensions (e.g. <code>.rvt</code>, <code>.ifc</code>, <code>.dwg</code>, <code>.dgn</code>), open-standard identifiers (GAEB, DIN&nbsp;276, NRM, MasterFormat, ÖNORM, SIA, IFC, BCF, OpenCDE, IDS) and company names referenced in this article are the property of their respective owners. Their use here is descriptive and refers to interoperability or industry context only. No affiliation, endorsement, sponsorship or partnership with OpenConstructionERP or DataDrivenConstruction is implied unless explicitly stated.
+      </p>
+
+    </div>
+
+    <!-- Contact strip -->
+    <div class="sig">
+      <div class="contact">
+        Get in touch: <a href="mailto:info@datadrivenconstruction.io">info@datadrivenconstruction.io</a> &nbsp;·&nbsp;
+        <a href="https://datadrivenconstruction.io">datadrivenconstruction.io</a> &nbsp;·&nbsp;
+        <a href="https://adicc-uae.com">adicc-uae.com</a>
+      </div>
+    </div>
+
+    </div>
+    <!-- end .content -->
+
+    <!-- ============== DARK FOOTER BAND ============== -->
+    <div class="footer-band">
+      <div class="links">
+        <a href="https://adicc-uae.com">GitHub</a>
+        <a href="https://adicc-uae.com/demo">Live demo</a>
+        <a href="https://datadrivenconstruction.io">DDC site</a>
+        <a href="mailto:info@datadrivenconstruction.io">Email</a>
+      </div>
+      DataDrivenConstruction · Graben-Neudorf, near Karlsruhe, Germany · OpenConstructionERP is licensed under AGPL-3.0 · You received this because we have prior contact or you registered interest at adicc-uae.com.
+    </div>
+
+  </div>
+
+  <p class="footnote">
+    Published under AGPL-3.0. Full source on <a href="https://adicc-uae.com">adicc-uae.com</a>. Numbers reflect v5.2.8 as of 27 May 2026 - the live <a href="https://adicc-uae.com">adicc-uae.com</a> tracks the newest release. · <a href="/news.html">All news</a>
+  </p>
+
+</div>
+
+<script src="/news/assets/related-articles.js" defer></script>
+
+</body>
+</html>

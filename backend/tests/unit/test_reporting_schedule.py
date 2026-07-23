@@ -1,0 +1,332 @@
+"""Unit tests for scheduled report templates (v2.3.0).
+
+Exercises ``ReportingService.schedule_template``, ``list_due_templates``
+and ``mark_template_ran`` against PostgreSQL so we can verify the
+next-run computation, pause semantics and clean-up on invalid crons
+without having to spin up the full app lifespan. Each test runs inside
+an outer transaction that is rolled back on teardown, giving per-test
+isolation on the shared, fully-migrated test database.
+
+Router-level tests live under ``tests/integration/`` because they need
+the auth + project fixtures.
+"""
+
+from __future__ import annotations
+
+import uuid
+from datetime import UTC, datetime, timedelta
+from unittest.mock import AsyncMock
+
+import pytest
+import pytest_asyncio
+from fastapi import HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.modules.reporting.models import GeneratedReport, ReportTemplate
+from app.modules.reporting.schemas import ReportScheduleRequest
+from app.modules.reporting.service import ReportingService
+from tests._pg import transactional_session
+
+
+@pytest_asyncio.fixture
+async def session() -> AsyncSession:
+    """PostgreSQL session inside a rolled-back outer transaction.
+
+    Per-test isolation: the shared test database already carries the
+    full schema, and any data committed by the service is undone on
+    teardown because the surrounding transaction is rolled back.
+    """
+    async with transactional_session() as s:
+        yield s
+
+
+async def _make_template(session: AsyncSession, **overrides) -> ReportTemplate:
+    template = ReportTemplate(
+        name=overrides.pop("name", "Weekly Cost"),
+        report_type=overrides.pop("report_type", "cost_report"),
+        description="test",
+        template_data={},
+        is_system=False,
+        metadata_={},
+        **overrides,
+    )
+    session.add(template)
+    await session.flush()
+    await session.refresh(template)
+    return template
+
+
+class TestScheduleTemplate:
+    @pytest.mark.asyncio
+    async def test_attaches_cron_and_computes_next_run(self, session):
+        template = await _make_template(session)
+        service = ReportingService(session)
+
+        req = ReportScheduleRequest(
+            schedule_cron="0 9 * * 1",  # Mon 09:00 UTC
+            recipients=["ops@example.com"],
+            project_id_scope=None,
+            is_scheduled=True,
+        )
+        updated = await service.schedule_template(template.id, req)
+
+        assert updated.schedule_cron == "0 9 * * 1"
+        assert updated.recipients == ["ops@example.com"]
+        assert updated.is_scheduled is True
+        # next_run_at is an ISO string ending in Z; it must be strictly
+        # in the future.
+        assert updated.next_run_at is not None
+        assert updated.next_run_at.endswith("Z")
+        next_dt = datetime.strptime(updated.next_run_at, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=UTC)
+        assert next_dt > datetime.now(UTC) - timedelta(seconds=5)
+        # And it lands on a Monday at 09:00.
+        assert next_dt.weekday() == 0
+        assert next_dt.hour == 9
+        assert next_dt.minute == 0
+
+    @pytest.mark.asyncio
+    async def test_null_cron_clears_schedule(self, session):
+        template = await _make_template(
+            session,
+            schedule_cron="0 9 * * 1",
+            is_scheduled=True,
+            next_run_at="2026-05-01T09:00:00Z",
+            recipients=["ops@example.com"],
+        )
+        service = ReportingService(session)
+
+        req = ReportScheduleRequest(
+            schedule_cron=None,
+            recipients=[],
+            project_id_scope=None,
+            is_scheduled=False,
+        )
+        updated = await service.schedule_template(template.id, req)
+
+        assert updated.schedule_cron is None
+        assert updated.next_run_at is None
+        assert updated.is_scheduled is False
+        assert updated.recipients == []
+
+    @pytest.mark.asyncio
+    async def test_pause_without_clearing_cron(self, session):
+        """``is_scheduled=False`` with a cron set keeps the expression
+        but stops the worker from picking it up (empty next_run_at list)."""
+        template = await _make_template(session)
+        service = ReportingService(session)
+
+        req = ReportScheduleRequest(
+            schedule_cron="0 9 * * 1",
+            recipients=["ops@example.com"],
+            is_scheduled=False,
+        )
+        updated = await service.schedule_template(template.id, req)
+
+        assert updated.schedule_cron == "0 9 * * 1"
+        assert updated.is_scheduled is False
+        # next_run_at is still populated so a re-enable doesn't force a
+        # re-compute — but because is_scheduled is False, list_due won't
+        # include it.
+        assert updated.next_run_at is not None
+
+    @pytest.mark.asyncio
+    async def test_invalid_cron_raises_400(self, session):
+        template = await _make_template(session)
+        service = ReportingService(session)
+        req = ReportScheduleRequest(
+            schedule_cron="not a cron",
+            recipients=[],
+        )
+        with pytest.raises(HTTPException) as excinfo:
+            await service.schedule_template(template.id, req)
+        assert excinfo.value.status_code == 400
+
+    @pytest.mark.asyncio
+    async def test_missing_template_raises_404(self, session):
+        service = ReportingService(session)
+        missing = uuid.uuid4()
+        req = ReportScheduleRequest(schedule_cron="0 9 * * *")
+        with pytest.raises(HTTPException) as excinfo:
+            await service.schedule_template(missing, req)
+        assert excinfo.value.status_code == 404
+
+
+class TestListDueTemplates:
+    @pytest.mark.asyncio
+    async def test_due_templates_returned_only_when_scheduled(self, session):
+        await _make_template(
+            session,
+            name="Due-Scheduled",
+            schedule_cron="0 9 * * 1",
+            is_scheduled=True,
+            next_run_at="2026-04-01T09:00:00Z",
+        )
+        await _make_template(
+            session,
+            name="Due-But-Paused",
+            schedule_cron="0 9 * * 1",
+            is_scheduled=False,
+            next_run_at="2026-04-01T09:00:00Z",
+        )
+        await _make_template(
+            session,
+            name="Future-Scheduled",
+            schedule_cron="0 9 * * 1",
+            is_scheduled=True,
+            next_run_at="2099-01-01T09:00:00Z",
+        )
+        await _make_template(session, name="Never-Scheduled")
+
+        service = ReportingService(session)
+        due = await service.list_due_templates(
+            as_of=datetime(2026, 5, 1, 0, 0, tzinfo=UTC),
+        )
+        names = {t.name for t in due}
+        assert names == {"Due-Scheduled"}
+
+    @pytest.mark.asyncio
+    async def test_empty_when_no_templates_scheduled(self, session):
+        await _make_template(session)
+        service = ReportingService(session)
+        due = await service.list_due_templates(
+            as_of=datetime(2026, 5, 1, 0, 0, tzinfo=UTC),
+        )
+        assert due == []
+
+
+class TestMarkTemplateRan:
+    @pytest.mark.asyncio
+    async def test_recomputes_next_run_after_run(self, session):
+        template = await _make_template(
+            session,
+            schedule_cron="0 9 * * 1",
+            is_scheduled=True,
+            next_run_at="2026-04-20T09:00:00Z",
+        )
+        service = ReportingService(session)
+        ran_at = datetime(2026, 4, 20, 9, 0, 30, tzinfo=UTC)
+        updated = await service.mark_template_ran(template, ran_at=ran_at)
+
+        assert updated.last_run_at == "2026-04-20T09:00:30Z"
+        # Next Monday is 2026-04-27.
+        assert updated.next_run_at == "2026-04-27T09:00:00Z"
+
+    @pytest.mark.asyncio
+    async def test_paused_template_clears_next_run(self, session):
+        template = await _make_template(
+            session,
+            schedule_cron="0 9 * * 1",
+            is_scheduled=False,
+            next_run_at="2026-04-20T09:00:00Z",
+        )
+        service = ReportingService(session)
+        updated = await service.mark_template_ran(
+            template,
+            ran_at=datetime(2026, 4, 20, 9, 0, tzinfo=UTC),
+        )
+        assert updated.next_run_at is None
+        assert updated.last_run_at == "2026-04-20T09:00:00Z"
+
+    @pytest.mark.asyncio
+    async def test_invalid_cron_pauses_template(self, session):
+        """If the stored cron stopped being valid (ops ran a bad
+        migration, user force-edited DB), worker must not loop forever.
+        ``mark_template_ran`` clears next_run_at and flips off is_scheduled.
+        """
+        template = await _make_template(
+            session,
+            schedule_cron="not a cron",  # Saved without validation (simulates a stale row).
+            is_scheduled=True,
+            next_run_at="2026-04-20T09:00:00Z",
+        )
+        service = ReportingService(session)
+        updated = await service.mark_template_ran(
+            template,
+            ran_at=datetime(2026, 4, 20, 9, 0, tzinfo=UTC),
+        )
+        assert updated.next_run_at is None
+        assert updated.is_scheduled is False
+
+
+async def _run_scheduler_tick(service: ReportingService, as_of: datetime) -> None:
+    """Replica of the dispatch decision in ``_reports_scheduler`` (main.py).
+
+    Kept in lock-step with the worker loop body so the test asserts the
+    exact guard the scheduler uses: a due template with recipients
+    triggers ``dispatch_report_email``; one without does not. The DB
+    side-effects (generate/mark) are mocked so the unit stays focused on
+    the dispatch wiring rather than re-testing render+storage.
+    """
+    due = await service.list_due_templates(as_of)
+    for template in due:
+        if template.project_id_scope is None:
+            continue
+        report = await service.generate_report(None)
+        await service.mark_template_ran(template)
+        if template.recipients:
+            await service.dispatch_report_email(report, list(template.recipients))
+
+
+class TestScheduledDispatch:
+    @pytest.mark.asyncio
+    async def test_due_template_with_recipients_dispatches(self, session):
+        await _make_template(
+            session,
+            name="Due-With-Recipients",
+            report_type="progress_report",
+            schedule_cron="0 9 * * 1",
+            is_scheduled=True,
+            next_run_at="2026-04-01T09:00:00Z",
+            recipients=["owner@example.com"],
+            project_id_scope=uuid.uuid4(),
+        )
+        service = ReportingService(session)
+        fake_report = GeneratedReport(title="Progress")
+        service.generate_report = AsyncMock(return_value=fake_report)
+        service.mark_template_ran = AsyncMock()
+        service.dispatch_report_email = AsyncMock(return_value=1)
+
+        await _run_scheduler_tick(
+            service,
+            as_of=datetime(2026, 5, 1, 0, 0, tzinfo=UTC),
+        )
+
+        service.dispatch_report_email.assert_awaited_once()
+        _, recipients = service.dispatch_report_email.await_args.args
+        assert recipients == ["owner@example.com"]
+
+    @pytest.mark.asyncio
+    async def test_due_template_without_recipients_skips_dispatch(self, session):
+        await _make_template(
+            session,
+            name="Due-No-Recipients",
+            report_type="progress_report",
+            schedule_cron="0 9 * * 1",
+            is_scheduled=True,
+            next_run_at="2026-04-01T09:00:00Z",
+            recipients=[],
+            project_id_scope=uuid.uuid4(),
+        )
+        service = ReportingService(session)
+        service.generate_report = AsyncMock(return_value=GeneratedReport(title="Progress"))
+        service.mark_template_ran = AsyncMock()
+        service.dispatch_report_email = AsyncMock(return_value=0)
+
+        await _run_scheduler_tick(
+            service,
+            as_of=datetime(2026, 5, 1, 0, 0, tzinfo=UTC),
+        )
+
+        service.dispatch_report_email.assert_not_awaited()
+
+
+class TestListScheduledTemplates:
+    @pytest.mark.asyncio
+    async def test_includes_paused_but_with_cron(self, session):
+        await _make_template(session, name="Active", schedule_cron="0 9 * * 1", is_scheduled=True)
+        await _make_template(session, name="Paused", schedule_cron="0 9 * * 1", is_scheduled=False)
+        await _make_template(session, name="None", schedule_cron=None)
+        service = ReportingService(session)
+        templates = await service.list_scheduled_templates()
+        names = {t.name for t in templates}
+        assert names == {"Active", "Paused"}

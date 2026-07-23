@@ -1,0 +1,1474 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Construction Digital Maturity Assessment — OpenConstructionERP</title>
+  <meta name="description" content="11-question assessment for AEC firms — covers estimating, BIM integration, cost data, validation, collaboration and open standards. Generates a per-dimension band, peer benchmark and a prioritised next-step plan. Free, no sign-up." />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+  <meta name="author" content="DataDrivenConstruction" />
+  <link rel="canonical" href="https://adicc-uae.com/maturity.html" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="OpenConstructionERP" />
+  <meta property="og:url" content="https://adicc-uae.com/maturity.html" />
+  <meta property="og:title" content="Construction Digital Maturity Assessment — OpenConstructionERP" />
+  <meta property="og:description" content="11-question assessment for AEC firms — estimating, BIM, cost data, validation, collaboration, open standards. Free, no sign-up." />
+  <meta property="og:image" content="https://adicc-uae.com/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Construction Digital Maturity Assessment" />
+  <meta name="twitter:description" content="11-question assessment for AEC firms — estimating, BIM, cost data, validation, collaboration, open standards. Free, no sign-up." />
+  <meta name="twitter:image" content="https://adicc-uae.com/og-image.png" />
+
+  <link rel="manifest" href="/site.webmanifest" />
+  <meta name="theme-color" content="#0284c7" />
+
+  <link rel="alternate" hreflang="x-default" href="https://adicc-uae.com/maturity.html" />
+  <link rel="alternate" hreflang="en" href="https://adicc-uae.com/maturity.html?lang=en" />
+  <link rel="alternate" hreflang="de" href="https://adicc-uae.com/maturity.html?lang=de" />
+  <link rel="alternate" hreflang="fr" href="https://adicc-uae.com/maturity.html?lang=fr" />
+  <link rel="alternate" hreflang="es" href="https://adicc-uae.com/maturity.html?lang=es" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Home",     "item": "https://adicc-uae.com/" },
+          { "@type": "ListItem", "position": 2, "name": "Maturity", "item": "https://adicc-uae.com/maturity.html" }
+        ]
+      },
+      {
+        "@type": "WebPage",
+        "@id": "https://adicc-uae.com/maturity.html#webpage",
+        "url": "https://adicc-uae.com/maturity.html",
+        "name": "Construction Digital Maturity Assessment — OpenConstructionERP",
+        "description": "Free 11-question self-assessment for AEC firms covering estimating, BIM/CAD, cost data, validation, collaboration and open standards. Results give a per-dimension band and prioritised next-step plan.",
+        "inLanguage": "en",
+        "isPartOf": { "@type": "WebSite", "@id": "https://adicc-uae.com/#website", "url": "https://adicc-uae.com/", "name": "OpenConstructionERP" },
+        "primaryImageOfPage": { "@type": "ImageObject", "url": "https://adicc-uae.com/og-image.png", "width": 1200, "height": 630 },
+        "mainEntity": {
+          "@type": "Quiz",
+          "name": "Construction Digital Maturity Assessment",
+          "about": "Digital maturity in AEC firms — estimating, BIM/CAD, cost data, validation, collaboration, open standards",
+          "educationalLevel": "Professional",
+          "audience": { "@type": "Audience", "audienceType": "AEC firms — general contractors, QSs, estimators, BIM managers" },
+          "isAccessibleForFree": true,
+          "numberOfQuestions": 11,
+          "timeRequired": "PT5M",
+          "inLanguage": "en"
+        }
+      }
+    ]
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Inter:wght@400;500&family=Fraunces:ital,opsz,wght@1,9..144,300..500&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg-0: #fafafa;
+      --bg-1: #ffffff;
+      --bg-2: #f4f4f6;
+      --bg-3: #e9eef5;
+      --ink-0: #0b1220;
+      --ink-1: #1f2937;
+      --ink-2: #475569;
+      --ink-3: #94a3b8;
+      --ink-4: #cbd5e1;
+      --line-0: #ececec;
+      --line-1: #e2e8f0;
+      --line-2: #cbd5e1;
+      --accent: #0284c7;
+      --accent-2: #0ea5e9;
+      --accent-3: #2563eb;
+      --accent-soft: #e0f2fe;
+      --warn: #f59e0b;
+      --good: #16a34a;
+      --bad: #dc2626;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg-0);
+      color: var(--ink-1);
+      line-height: 1.55;
+      font-size: 15px;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .wrap { max-width: 980px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 40px); }
+    .narrow { max-width: 760px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 40px); }
+
+    /* ─── HEADER ─────────────────────────────────────────────────── */
+    .topbar {
+      padding: 22px 0;
+      border-bottom: 1px solid var(--line-0);
+      background: var(--bg-1);
+    }
+    .topbar-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    .topbar a.brand {
+      font-family: 'Inter Tight', sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: -0.02em;
+      color: var(--ink-0);
+      text-decoration: none;
+    }
+    .topbar a.brand b { color: var(--accent); }
+    .topbar nav { display: flex; gap: 22px; font-size: 13.5px; }
+    .topbar nav a { color: var(--ink-2); }
+    .topbar nav a:hover { color: var(--ink-0); text-decoration: none; }
+
+    /* ─── HERO ───────────────────────────────────────────────────── */
+    .hero { padding: 64px 0 32px; }
+    .eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin: 0 0 16px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .eyebrow::before {
+      content: "";
+      display: inline-block;
+      width: 22px; height: 1.5px;
+      background: var(--accent);
+    }
+    h1 {
+      font-family: 'Inter Tight', sans-serif;
+      font-size: clamp(36px, 5.4vw, 64px);
+      font-weight: 700;
+      letter-spacing: -0.035em;
+      line-height: 1.04;
+      color: var(--ink-0);
+      margin: 0 0 22px;
+    }
+    h1 em {
+      font-family: 'Fraunces', 'Instrument Serif', serif;
+      font-style: italic;
+      font-weight: 400;
+      letter-spacing: -0.025em;
+      background: linear-gradient(110deg, var(--accent-2) 5%, var(--accent) 45%, var(--accent-3) 95%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .lede {
+      font-size: 17px;
+      line-height: 1.62;
+      color: var(--ink-2);
+      max-width: 64ch;
+      margin: 0 0 26px;
+    }
+    .lede b { color: var(--ink-0); font-weight: 600; }
+    .meta-row {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--ink-3);
+      letter-spacing: 0.02em;
+      padding-top: 14px;
+      border-top: 1px dashed var(--line-1);
+    }
+    .meta-row span b { color: var(--ink-1); font-weight: 600; }
+
+    /* ─── DIMENSIONS LEGEND ──────────────────────────────────────── */
+    .dim-legend {
+      margin: 40px 0 24px;
+      padding: 24px 28px;
+      border-radius: 16px;
+      background: var(--bg-1);
+      border: 1px solid var(--line-1);
+    }
+    .dim-legend h3 {
+      font-family: 'Inter Tight', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--ink-2);
+      margin: 0 0 14px;
+    }
+    .dim-legend-list {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+    @media (max-width: 740px) {
+      .dim-legend-list { grid-template-columns: repeat(2, 1fr); }
+    }
+    .dim-pill {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: var(--bg-2);
+    }
+    .dim-pill-name {
+      font-family: 'Inter Tight', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--ink-0);
+      letter-spacing: -0.005em;
+    }
+    .dim-pill-meta {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      color: var(--ink-3);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    /* ─── PROGRESS BAR ───────────────────────────────────────────── */
+    .progress-sticky {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: color-mix(in oklab, var(--bg-1) 92%, transparent);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line-1);
+      padding: 14px 0;
+      margin-bottom: 32px;
+    }
+    .progress-row {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+    .progress-track {
+      flex: 1;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--bg-3);
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-2), var(--accent), var(--accent-3));
+      border-radius: 3px;
+      transition: width 0.35s cubic-bezier(.2,.7,.3,1);
+    }
+    .progress-count {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--ink-1);
+      letter-spacing: 0.02em;
+      min-width: 64px;
+      text-align: right;
+    }
+    .progress-count b { color: var(--accent); font-weight: 700; }
+
+    /* ─── QUESTION CARD ──────────────────────────────────────────── */
+    .question {
+      padding: 28px 32px 24px;
+      margin-bottom: 18px;
+      border-radius: 16px;
+      background: var(--bg-1);
+      border: 1px solid var(--line-1);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .question.is-answered {
+      border-color: color-mix(in oklab, var(--accent) 28%, var(--line-1));
+      box-shadow: 0 6px 18px -10px color-mix(in oklab, var(--accent) 28%, transparent);
+    }
+    .question-head {
+      display: flex;
+      gap: 18px;
+      align-items: baseline;
+      margin-bottom: 18px;
+    }
+    .question-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      font-size: 12px;
+      color: var(--ink-3);
+      letter-spacing: 0.04em;
+      min-width: 30px;
+    }
+    .question-text {
+      flex: 1;
+      font-family: 'Inter Tight', sans-serif;
+      font-weight: 600;
+      font-size: 17px;
+      letter-spacing: -0.015em;
+      line-height: 1.4;
+      color: var(--ink-0);
+    }
+    .question-dim {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: var(--bg-2);
+    }
+    .question-options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: var(--bg-2);
+      border: 1.5px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .option:hover {
+      background: color-mix(in oklab, var(--accent) 6%, var(--bg-2));
+      border-color: color-mix(in oklab, var(--accent) 18%, transparent);
+    }
+    .option input[type="radio"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      border: 1.8px solid var(--ink-4);
+      flex-shrink: 0;
+      margin-top: 2px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      position: relative;
+    }
+    .option input[type="radio"]:checked {
+      border-color: var(--accent);
+      background: var(--accent);
+      box-shadow: inset 0 0 0 4px var(--bg-1);
+    }
+    .option:has(input:checked) {
+      background: color-mix(in oklab, var(--accent) 10%, var(--bg-2));
+      border-color: color-mix(in oklab, var(--accent) 35%, transparent);
+    }
+    .option-body { flex: 1; }
+    .option-label {
+      font-size: 14.5px;
+      line-height: 1.45;
+      color: var(--ink-1);
+    }
+    .option-label b { color: var(--ink-0); font-weight: 600; }
+    .option-score {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      color: var(--ink-3);
+      letter-spacing: 0.05em;
+      margin-top: 4px;
+    }
+
+    /* ─── RESULTS CTA ────────────────────────────────────────────── */
+    .reveal-row {
+      margin-top: 32px;
+      padding: 28px 32px;
+      border-radius: 16px;
+      background: linear-gradient(135deg,
+        color-mix(in oklab, var(--accent) 8%, var(--bg-1)) 0%,
+        color-mix(in oklab, var(--accent-3) 6%, var(--bg-1)) 100%);
+      border: 1px solid color-mix(in oklab, var(--accent) 20%, var(--line-1));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .reveal-row p {
+      margin: 0;
+      font-size: 15px;
+      color: var(--ink-1);
+    }
+    .reveal-row p b { color: var(--ink-0); }
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 24px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent-2), var(--accent), var(--accent-3));
+      color: #fff;
+      font-family: 'Inter Tight', sans-serif;
+      font-size: 14.5px;
+      font-weight: 600;
+      letter-spacing: -0.005em;
+      border: 0;
+      cursor: pointer;
+      box-shadow: 0 12px 28px -10px color-mix(in oklab, var(--accent) 50%, transparent);
+      transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+      text-decoration: none;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.08);
+      box-shadow: 0 18px 38px -10px color-mix(in oklab, var(--accent) 60%, transparent);
+      text-decoration: none;
+    }
+    .btn-primary:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+      filter: grayscale(0.4);
+    }
+    .btn-primary svg { width: 16px; height: 16px; }
+
+    /* ─── RESULTS PANEL ──────────────────────────────────────────── */
+    .results {
+      margin-top: 40px;
+      padding: 40px 36px 36px;
+      border-radius: 22px;
+      background: var(--bg-1);
+      border: 1px solid var(--line-1);
+      box-shadow: 0 30px 80px -32px rgba(8, 15, 35, 0.18);
+      display: none;
+    }
+    .results.is-visible { display: block; animation: resultsIn 0.55s cubic-bezier(.2,.7,.3,1); }
+    @keyframes resultsIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .results-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      margin: 0 0 10px;
+    }
+    .results-band {
+      font-family: 'Inter Tight', sans-serif;
+      font-size: clamp(34px, 4.4vw, 52px);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      color: var(--ink-0);
+      margin: 0 0 8px;
+    }
+    .results-band em {
+      font-family: 'Fraunces', serif;
+      font-style: italic;
+      font-weight: 400;
+      background: linear-gradient(110deg, var(--accent-2) 5%, var(--accent) 45%, var(--accent-3) 95%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .results-score {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--ink-2);
+      margin: 0 0 22px;
+    }
+    .results-score b { color: var(--ink-0); font-weight: 600; }
+    .results-summary {
+      font-size: 16px;
+      line-height: 1.62;
+      color: var(--ink-1);
+      max-width: 64ch;
+      margin: 0 0 32px;
+      padding-bottom: 28px;
+      border-bottom: 1px dashed var(--line-1);
+    }
+    .results-summary b { color: var(--ink-0); }
+
+    .dim-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 32px;
+    }
+    .dim-bar {
+      display: grid;
+      grid-template-columns: 200px 1fr 60px;
+      gap: 16px;
+      align-items: center;
+    }
+    @media (max-width: 720px) {
+      .dim-bar { grid-template-columns: 1fr; gap: 6px; }
+    }
+    .dim-bar-name {
+      font-family: 'Inter Tight', sans-serif;
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--ink-0);
+    }
+    .dim-bar-track {
+      height: 10px;
+      background: var(--bg-3);
+      border-radius: 5px;
+      overflow: hidden;
+      position: relative;
+    }
+    .dim-bar-fill {
+      height: 100%;
+      border-radius: 5px;
+      background: linear-gradient(90deg, var(--accent-2), var(--accent), var(--accent-3));
+      transition: width 0.6s cubic-bezier(.2,.7,.3,1);
+    }
+    .dim-bar-score {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink-1);
+      text-align: right;
+    }
+    .dim-bar-score small { color: var(--ink-3); font-weight: 400; }
+
+    .recos {
+      margin-top: 8px;
+      padding-top: 28px;
+      border-top: 1px dashed var(--line-1);
+    }
+    .recos h3 {
+      font-family: 'Inter Tight', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink-0);
+      margin: 0 0 6px;
+    }
+    .recos p.intro {
+      font-size: 14px;
+      color: var(--ink-2);
+      margin: 0 0 22px;
+    }
+    .reco-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .reco {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 14px;
+      padding: 14px 0;
+      border-top: 1px solid var(--line-0);
+    }
+    .reco:first-child { border-top: 0; padding-top: 0; }
+    .reco-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+      padding-top: 2px;
+    }
+    .reco-body { font-size: 14.5px; line-height: 1.55; color: var(--ink-1); }
+    .reco-body b { color: var(--ink-0); font-weight: 600; }
+
+    .results-foot {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px dashed var(--line-1);
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 20px;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--ink-1);
+      border: 1.5px solid var(--line-2);
+      font-family: 'Inter Tight', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-decoration: none;
+    }
+    .btn-ghost:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    /* ─── BENCHMARK NOTE ─────────────────────────────────────────── */
+    .bench-note {
+      margin-top: 32px;
+      padding: 22px 26px;
+      border-radius: 14px;
+      background: var(--bg-2);
+      border-left: 3px solid var(--accent);
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: var(--ink-2);
+    }
+    .bench-note b { color: var(--ink-0); }
+
+    /* ─── FOOTER ─────────────────────────────────────────────────── */
+    footer {
+      margin-top: 96px;
+      padding: 40px 0;
+      border-top: 1px solid var(--line-1);
+      background: var(--bg-1);
+    }
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      gap: 22px;
+      font-size: 13px;
+      color: var(--ink-3);
+      flex-wrap: wrap;
+    }
+    .footer-inner a { color: var(--ink-2); }
+
+    /* ─── BAND LADDER (5-step visual progression) ─── */
+    .band-ladder {
+      margin: 28px 0 8px;
+      padding: 28px 32px;
+      border-radius: 16px;
+      background: var(--bg-1);
+      border: 1px solid var(--line-1);
+    }
+    .band-ladder-head {
+      display: flex; align-items: baseline; justify-content: space-between;
+      gap: 18px; margin-bottom: 18px; flex-wrap: wrap;
+    }
+    .band-ladder-eyebrow {
+      font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600;
+      letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .band-ladder-eyebrow::before {
+      content: ""; width: 22px; height: 1.5px; background: var(--accent);
+    }
+    .band-ladder-scale {
+      font-family: 'JetBrains Mono', monospace; font-size: 11px;
+      color: var(--ink-3); letter-spacing: 0.04em;
+    }
+    .band-ladder-scale b { color: var(--ink-1); font-weight: 600; }
+    .band-rail {
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px;
+      margin-bottom: 18px;
+    }
+    .band-step {
+      position: relative;
+      padding: 14px 12px 16px;
+      border-radius: 10px;
+      background: var(--bg-2);
+      border: 1px solid transparent;
+      transition: all 0.18s ease;
+      text-align: left;
+    }
+    .band-step:nth-child(1) { background: color-mix(in oklab, var(--bad) 6%, var(--bg-2)); }
+    .band-step:nth-child(2) { background: color-mix(in oklab, var(--warn) 6%, var(--bg-2)); }
+    .band-step:nth-child(3) { background: color-mix(in oklab, var(--accent-2) 7%, var(--bg-2)); }
+    .band-step:nth-child(4) { background: color-mix(in oklab, var(--accent) 8%, var(--bg-2)); }
+    .band-step:nth-child(5) { background: color-mix(in oklab, var(--accent-3) 9%, var(--bg-2)); }
+    .band-step-label {
+      font-family: 'JetBrains Mono', monospace; font-size: 10px;
+      font-weight: 600; letter-spacing: 0.06em; color: var(--ink-3);
+      margin-bottom: 4px;
+    }
+    .band-step-name {
+      font-family: 'Inter Tight', sans-serif; font-weight: 700;
+      font-size: 14px; letter-spacing: -0.005em;
+      color: var(--ink-0); line-height: 1.2; margin-bottom: 4px;
+    }
+    .band-step-range {
+      font-family: 'JetBrains Mono', monospace; font-size: 10.5px;
+      color: var(--ink-2); letter-spacing: 0.02em;
+    }
+    .band-step.is-foundation .band-step-name { color: #dc2626; }
+    .band-step.is-developing .band-step-name { color: #b45309; }
+    .band-step.is-established .band-step-name { color: #0284c7; }
+    .band-step.is-advanced .band-step-name { color: #0284c7; }
+    .band-step.is-leader .band-step-name {
+      background: linear-gradient(110deg, var(--accent-2), var(--accent), var(--accent-3));
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .band-track {
+      height: 6px; border-radius: 3px;
+      background: var(--bg-3);
+      overflow: hidden; position: relative;
+      margin-top: 6px;
+    }
+    .band-track-fill {
+      position: absolute; top: 0; left: 0; height: 100%;
+      background: linear-gradient(90deg, #fee2e2 0%, #fed7aa 25%, #bae6fd 55%, #93c5fd 80%, #2563eb 100%);
+      width: 100%; border-radius: 3px; opacity: 0.85;
+    }
+    .band-ladder-hint {
+      margin-top: 4px;
+      font-size: 13px; color: var(--ink-2); line-height: 1.55;
+      max-width: 70ch;
+    }
+    .band-ladder-hint b { color: var(--ink-0); font-weight: 600; }
+
+    /* ─── SCORE GAUGE (radial) ─── */
+    .score-gauge-wrap {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 32px;
+      align-items: center;
+      margin: 0 0 32px;
+      padding-bottom: 28px;
+      border-bottom: 1px dashed var(--line-1);
+    }
+    @media (max-width: 720px) {
+      .score-gauge-wrap { grid-template-columns: 1fr; gap: 18px; }
+    }
+    .score-gauge {
+      width: 200px; height: 200px;
+      position: relative;
+      margin: 0 auto;
+    }
+    .score-gauge svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+    .score-gauge-track {
+      fill: none; stroke: var(--bg-3); stroke-width: 14;
+    }
+    .score-gauge-fill {
+      fill: none; stroke-width: 14; stroke-linecap: round;
+      stroke: url(#gaugeGrad);
+      stroke-dasharray: 0 1000;
+      transition: stroke-dasharray 1.2s cubic-bezier(.2,.7,.3,1);
+    }
+    .score-gauge-text {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+    }
+    .score-gauge-num {
+      font-family: 'Inter Tight', sans-serif; font-weight: 700;
+      font-size: 56px; color: var(--ink-0);
+      letter-spacing: -0.03em; line-height: 1;
+    }
+    .score-gauge-num em {
+      font-family: 'Fraunces', serif; font-style: italic; font-weight: 400;
+      background: linear-gradient(110deg, var(--accent-2) 5%, var(--accent) 45%, var(--accent-3) 95%);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .score-gauge-of {
+      font-family: 'JetBrains Mono', monospace; font-size: 11px;
+      color: var(--ink-3); letter-spacing: 0.06em; margin-top: 4px;
+    }
+    .score-gauge-band {
+      font-family: 'Inter Tight', sans-serif; font-weight: 600;
+      font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase;
+      margin-top: 8px;
+      padding: 4px 10px; border-radius: 4px;
+      background: color-mix(in oklab, var(--accent) 12%, transparent);
+      color: var(--accent);
+    }
+
+    /* ─── BAND POINTER (animated arrow showing where user lands) ─── */
+    .band-rail-wrap {
+      position: relative;
+    }
+    .band-pointer {
+      position: absolute;
+      top: -36px;
+      left: 0;
+      transform: translateX(-50%);
+      transition: left 1.2s cubic-bezier(.4, 0, .2, 1);
+      opacity: 0;
+      pointer-events: none;
+    }
+    .band-pointer.is-active { opacity: 1; }
+    .band-pointer-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 11px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--accent-2), var(--accent), var(--accent-3));
+      color: #fff;
+      font-family: 'Inter Tight', sans-serif;
+      font-weight: 700;
+      font-size: 11.5px;
+      letter-spacing: -0.005em;
+      box-shadow: 0 6px 18px -8px color-mix(in oklab, var(--accent) 60%, transparent);
+      white-space: nowrap;
+      animation: pointerBob 2s ease-in-out infinite;
+    }
+    .band-pointer-arrow {
+      display: block;
+      margin: 4px auto 0;
+      width: 0; height: 0;
+      border-left: 7px solid transparent;
+      border-right: 7px solid transparent;
+      border-top: 8px solid var(--accent);
+    }
+    @keyframes pointerBob {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-3px); }
+    }
+    .band-step.is-target {
+      animation: bandTargetPulse 1.6s ease-in-out infinite;
+      border-color: var(--accent) !important;
+    }
+    @keyframes bandTargetPulse {
+      0%, 100% {
+        box-shadow: 0 0 0 0 color-mix(in oklab, var(--accent) 40%, transparent);
+      }
+      50% {
+        box-shadow: 0 0 0 6px color-mix(in oklab, var(--accent) 0%, transparent);
+      }
+    }
+
+    /* answer-feedback animation */
+    .option {
+      position: relative;
+    }
+    .option input[type="radio"]:checked ~ .option-body::before {
+      content: "✓";
+      position: absolute;
+      right: 14px; top: 50%;
+      transform: translateY(-50%) scale(0);
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 13px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      animation: checkPop 0.4s cubic-bezier(.34, 1.56, .64, 1) forwards;
+    }
+    @keyframes checkPop {
+      0%   { transform: translateY(-50%) scale(0) rotate(-180deg); }
+      100% { transform: translateY(-50%) scale(1) rotate(0deg); }
+    }
+
+    /* universal scroll-reveal */
+    .reveal-up {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s cubic-bezier(.4,0,.2,1), transform 0.6s cubic-bezier(.4,0,.2,1);
+    }
+    .reveal-up.is-in { opacity: 1; transform: translateY(0); }
+
+    /* progress-fill subtle pulse when updated */
+    .progress-fill {
+      position: relative;
+      overflow: visible;
+    }
+    .progress-fill::after {
+      content: "";
+      position: absolute;
+      top: 0; right: 0; bottom: 0;
+      width: 6px;
+      background: var(--accent);
+      box-shadow: 0 0 12px 2px var(--accent);
+      opacity: 0.7;
+      animation: progressGlow 1.2s ease-in-out infinite;
+    }
+    @keyframes progressGlow {
+      0%, 100% { opacity: 0.4; }
+      50%      { opacity: 0.95; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ─── TOP BAR ─── -->
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a href="/" class="brand"><b>OC</b>ERP</a>
+      <nav>
+        <a href="/services.html">Services</a>
+        <a href="/industries.html">Industries</a>
+        <a href="/standards.html">Standards</a>
+        <a href="/partners.html">Partners</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ─── HERO ─── -->
+  <section class="hero">
+    <div class="wrap">
+      <p class="eyebrow">Construction Digital Maturity Assessment</p>
+      <h1>Where does your firm <em>actually stand</em> on digital construction?</h1>
+      <p class="lede">
+        Eleven questions, six minutes. Built from a decade of construction
+        estimating practice — covers BOQ workflow, BIM/CAD integration, cost
+        data, validation, collaboration and open standards. <b>You'll get a
+        per-dimension band, peer benchmark and a prioritised next-step plan.</b>
+        No sign-up. No data leaves your browser unless you choose to share.
+      </p>
+      <div class="meta-row">
+        <span><b>11</b> questions</span>
+        <span><b>~6</b> minutes</span>
+        <span><b>5</b> dimensions</span>
+        <span><b>0</b> sign-up required</span>
+        <span><b>PDF</b> export available</span>
+      </div>
+
+      <div class="dim-legend">
+        <h3>Dimensions covered</h3>
+        <div class="dim-legend-list">
+          <div class="dim-pill"><span class="dim-pill-name">Estimating workflow</span><span class="dim-pill-meta">Q1–Q2</span></div>
+          <div class="dim-pill"><span class="dim-pill-name">BIM &amp; CAD integration</span><span class="dim-pill-meta">Q3–Q4</span></div>
+          <div class="dim-pill"><span class="dim-pill-name">Cost data &amp; rates</span><span class="dim-pill-meta">Q5–Q6</span></div>
+          <div class="dim-pill"><span class="dim-pill-name">Validation &amp; compliance</span><span class="dim-pill-meta">Q7–Q8</span></div>
+          <div class="dim-pill"><span class="dim-pill-name">Collaboration &amp; openness</span><span class="dim-pill-meta">Q9–Q11</span></div>
+        </div>
+      </div>
+
+      <!-- ─── BAND LADDER (5-step visual progression) ─── -->
+      <div class="band-ladder">
+        <div class="band-ladder-head">
+          <span class="band-ladder-eyebrow">Five bands · 0 – 44 score range</span>
+          <span class="band-ladder-scale">where will <b>your firm</b> land?</span>
+        </div>
+        <div class="band-rail-wrap">
+          <div class="band-pointer" id="band-pointer">
+            <span class="band-pointer-pill">YOU ARE HERE · <span id="band-pointer-name">—</span></span>
+            <span class="band-pointer-arrow"></span>
+          </div>
+          <div class="band-rail">
+            <div class="band-step is-foundation" data-band="0">
+              <div class="band-step-label">▸ Band 1</div>
+              <div class="band-step-name">Foundation</div>
+              <div class="band-step-range">0 – 11</div>
+            </div>
+            <div class="band-step is-developing" data-band="1">
+              <div class="band-step-label">▸ Band 2</div>
+              <div class="band-step-name">Developing</div>
+              <div class="band-step-range">12 – 22</div>
+            </div>
+            <div class="band-step is-established" data-band="2">
+              <div class="band-step-label">▸ Band 3</div>
+              <div class="band-step-name">Established</div>
+              <div class="band-step-range">23 – 32</div>
+            </div>
+            <div class="band-step is-advanced" data-band="3">
+              <div class="band-step-label">▸ Band 4</div>
+              <div class="band-step-name">Advanced</div>
+              <div class="band-step-range">33 – 39</div>
+            </div>
+            <div class="band-step is-leader" data-band="4">
+              <div class="band-step-label">▸ Band 5</div>
+              <div class="band-step-name">Leader</div>
+              <div class="band-step-range">40 – 44</div>
+            </div>
+          </div>
+        </div>
+        <div class="band-track"><span class="band-track-fill"></span></div>
+        <p class="band-ladder-hint">
+          <b>Foundation</b> firms still email Excel BoQs and re‑measure on every model revision. <b>Leader</b>
+          firms bind takeoff, BOQ and validation into one continuous workflow with full audit trail.
+          Most firms land in <b>Developing</b> or <b>Established</b> — and that's where the biggest gains live.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── PROGRESS STICKY ─── -->
+  <div class="progress-sticky">
+    <div class="wrap progress-row">
+      <div class="progress-track"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+      <div class="progress-count"><b id="prog-count">0</b> / 11</div>
+    </div>
+  </div>
+
+  <!-- ─── QUIZ ─── -->
+  <section>
+    <div class="wrap">
+
+      <form id="maturity-quiz">
+
+        <!-- Q1 -->
+        <article class="question" data-dim="estimating" data-q="1">
+          <div class="question-head">
+            <span class="question-num">Q1</span>
+            <div class="question-text">For a typical mid-size project, how do you produce a Bill of Quantities?</div>
+            <span class="question-dim">Estimating</span>
+          </div>
+          <div class="question-options">
+            <label class="option"><input type="radio" name="q1" value="0" /><div class="option-body"><div class="option-label"><b>Excel from scratch.</b> Each project starts empty. Rates pasted from old quotes or judged by the lead estimator.</div></div></label>
+            <label class="option"><input type="radio" name="q1" value="1" /><div class="option-body"><div class="option-label"><b>Excel templates with a rate card.</b> Standard sheet, rates copied from an internal price-list workbook updated annually.</div></div></label>
+            <label class="option"><input type="radio" name="q1" value="2" /><div class="option-body"><div class="option-label"><b>Dedicated estimating software</b> - a commercial estimating package with a central rate library. Rates and assemblies stored centrally.</div></div></label>
+            <label class="option"><input type="radio" name="q1" value="3" /><div class="option-body"><div class="option-label"><b>Database-backed estimating with assemblies and historical rates.</b> System suggests assemblies based on project type; rates trace back to past projects.</div></div></label>
+            <label class="option"><input type="radio" name="q1" value="4" /><div class="option-body"><div class="option-label"><b>AI-assisted</b>. Specs and drawings are auto-classified into BOQ items; estimator reviews suggestions with confidence scores rather than building from scratch.</div></div></label>
+          </div>
+        </article>
+
+        <!-- Q2 -->
+        <article class="question" data-dim="estimating" data-q="2">
+          <div class="question-head">
+            <span class="question-num">Q2</span>
+            <div class="question-text">When unit rates change (material price hike, new subbie quote, regional shift) — how do those updates propagate to in-flight projects?</div>
+            <span class="question-dim">Estimating</span>
+          </div>
+          <div class="question-options">
+            <label class="option"><input type="radio" name="q2" value="0" /><div class="option-body"><div class="option-label"><b>They don't.</b> Each project is frozen at quote time. Variations get priced manually if the client asks.</div></div></label>
+            <label class="option"><input type="radio" name="q2" value="1" /><div class="option-body"><div class="option-label"><b>Manual copy across files</b> when an estimator notices. No formal cascade.</div></div></label>
+            <label class="option"><input type="radio" name="q2" value="2" /><div class="option-body"><div class="option-label"><b>Updated on the next project</b> from a refreshed rate card. In-flight projects stay frozen.</div></div></label>
+            <label class="option"><input type="radio" name="q2" value="3" /><div class="option-body"><div class="option-label"><b>Centralised rate database.</b> Projects opt-in to updates per category; senior estimator approves before propagation.</div></div></label>
+            <label class="option"><input type="radio" name="q2" value="4" /><div class="option-body"><div class="option-label"><b>Real-time</b> with version control + audit trail. Every BOQ position knows which rate version it was priced against and can be revalued at a click.</div></div></label>
+          </div>
+        </article>
+
+        <!-- Q3 -->
+        <article class="question" data-dim="bim" data-q="3">
+          <div class="question-head">
+            <span class="question-num">Q3</span>
+            <div class="question-text">When you receive a 3D model (IFC, RVT or another BIM format) - how do quantities get from the model into the BOQ?</div>
+            <span class="question-dim">BIM &amp; CAD</span>
+          </div>
+          <div class="question-options">
+            <label class="option"><input type="radio" name="q3" value="0" /><div class="option-body"><div class="option-label"><b>We don't get models.</b> Tendering off 2D PDFs only — manual takeoff with measure-on-screen tools.</div></div></label>
+            <label class="option"><input type="radio" name="q3" value="1" /><div class="option-body"><div class="option-label"><b>Manual after BIM/IFC export.</b> Schedules dropped to Excel, estimator manually maps quantities to BOQ rows.</div></div></label>
+            <label class="option"><input type="radio" name="q3" value="2" /><div class="option-body"><div class="option-label"><b>QTO plugin in our CAD tool</b> - a quantity-takeoff add-in inside the BIM authoring or coordination environment. Lives inside the model authoring environment.</div></div></label>
+            <label class="option"><input type="radio" name="q3" value="3" /><div class="option-body"><div class="option-label"><b>Automated extraction from IFC</b> via a custom pipeline. Element-level quantities flow into the cost system, classified against DIN 276 / NRM / MasterFormat.</div></div></label>
+            <label class="option"><input type="radio" name="q3" value="4" /><div class="option-body"><div class="option-label"><b>Bi-directional sync.</b> Model changes automatically update BOQ; BOQ flags model gaps (missing classifications, unpriceable elements) back to the modeller.</div></div></label>
+          </div>
+        </article>
+
+        <!-- Q4 -->
+        <article class="question" data-dim="bim" data-q="4">
+          <div class="question-head">
+            <span class="question-num">Q4</span>
+            <div class="question-text">CAD format reality — across projects you see DWG, DGN, RVT, IFC, sketches, photos. How is the variety handled?</div>
+            <span class="question-dim">BIM &amp; CAD</span>
+          </div>
+          <div class="question-options">
+            <label class="option"><input type="radio" name="q4" value="0" /><div class="option-body"><div class="option-label"><b>One format only.</b> If the client doesn't deliver in the format we accept, we ask them to convert before sending.</div></div></label>
+            <label class="option"><input type="radio" name="q4" value="1" /><div class="option-body"><div class="option-label"><b>Manual conversion per file</b> using a CAD tool we happen to have. Bottlenecked on whoever knows the tool.</div></div></label>
+            <label class="option"><input type="radio" name="q4" value="2" /><div class="option-body"><div class="option-label"><b>Single-vendor toolchain</b> (locked to a single authoring vendor). Works inside the family, breaks outside.</div></div></label>
+            <label class="option"><input type="radio" name="q4" value="3" /><div class="option-body"><div class="option-label"><b>Multi-format pipeline</b> with a canonical conversion step (DWG/DGN/RVT/IFC → unified data). Same downstream workflow regardless of source.</div></div></label>
+            <label class="option"><input type="radio" name="q4" value="4" /><div class="option-body"><div class="option-label"><b>Format-agnostic.</b> Auto-detect on upload, route to the right converter, full canonical model with provenance. Including raster/vector PDF and photos via CV/OCR.</div></div></label>
+          </div>
+        </article>
+
+        <!-- Q5 -->
+        <article class="question" data-dim="cost" data-q="5">
+          <div class="question-head">
+            <span class="question-num">Q5</span>
+            <div class="question-text">Where do your unit rates come from on a fresh tender?</div>
+            <span class="question-dim">Cost data</span>
+          </div>
+          <div class="question-options">
+            <label class="option"><input type="radio" name="q5" value="0" /><div class="option-body"><div class="option-label"><b>Last project's rates,</b> nudged by gut feel. No formal source.</div></div></label>
+            <label class="option"><input type="radio" name="q5" value="1" /><div class="option-body"><div class="option-label"><b>Subbie quotes only.</b> No internal rate database — every line item triggers an outbound RFQ.</div></div></label>
+            <label class="option"><input type="radio" name="q5" value="2" /><div class="option-body"><div class="option-label"><b>Published price book.</b> RSMeans (US), Sirados (DE), Spon's (UK), BCIS, BKI — refreshed annually.</div></div></label>
+            <label class="option"><input type="radio" name="q5" value="3" /><div class="option-body"><div class="option-label"><b>Internal historical database</b> + benchmarks. Rates per region, per material grade, traceable back to the project they came from.</div></div></label>
+            <label class="option"><input type="radio" name="q5" value="4" /><div class="option-body"><div class="option-label"><b>Live market data + ML-driven adjustment</b> by region, season, project size band. Rates auto-adjust to indices (BCIS, Destatis BAU, ENR CCI).</div></div></label>
+          </div>
+        </article>
+
+        <!-- Q6 -->
+        <article class="question" data-dim="cost" data-q="6">
+          <div class="question-head">
+            <span class="question-num">Q6</span>
+            <div class="question-text">For regional / inflation / market-volatility adjustments — how do you handle that on a multi-region or long-duration project?</div>
+            <span class="question-dim">Cost data</span>
+          </div>
+          <div class="question-options">
+            <label class="option"><input type="radio" name="q6" value="0" /><div class="option-body"><div class="option-label"><b>Flat percentage markup</b> for the whole project. One number for "uncertainty".</div></div></label>
+            <label class="option"><input type="radio" name="q6" value="1" /><div class="option-body"><div class="option-label"><b>Manual region multipliers.</b> Estimator's spreadsheet has columns like "× 1.12 for München".</div></div></label>
+            <label class="option"><input type="radio" name="q6" value="2" /><div class="option-body"><div class="option-label"><b>Indexed against published indices</b> (BCIS, Destatis BAU, BKI, ENR CCI, INE Construcción). Refreshed quarterly.</div></div></label>
+            <label class="option"><input type="radio" name="q6" value="3" /><div class="option-body"><div class="option-label"><b>Region-specific cost databases</b> per project, with line-item-level escalation curves over the construction period.</div></div></label>
+            <label class="option"><input type="radio" name="q6" value="4" /><div class="option-body"><div class="option-label"><b>Real-time index feeds + AI-driven regional models.</b> Forward-looking escalation per trade and per region, validated against actual procurement data.</div></div></label>
+          </div>
+        </article>
+
+        <!-- Q7 -->
+        <article class="question" data-dim="validation" data-q="7">
+          <div class="question-head">
+            <span class="question-num">Q7</span>
+            <div class="question-text">How do you verify that a finished BOQ meets the relevant compliance standard (DIN 276, GAEB X83, NRM 1/2, MasterFormat, ÖNORM B 2063, DPGF, BC3)?</div>
+            <span class="question-dim">Validation</span>
+          </div>
+          <div class="question-options">
+            <label class="option"><input type="radio" name="q7" value="0" /><div class="option-body"><div class="option-label"><b>We don't formally check.</b> Submitted as-is; client/QS catches errors if any.</div></div></label>
+            <label class="option"><input type="radio" name="q7" value="1" /><div class="option-body"><div class="option-label"><b>Senior estimator manual review</b> before submission. Checklist lives in their head.</div></div></label>
+            <label class="option"><input type="radio" name="q7" value="2" /><div class="option-body"><div class="option-label"><b>Documented checklist.</b> Reviewer ticks items against a written process — but it's still manual reading.</div></div></label>
+            <label class="option"><input type="radio" name="q7" value="3" /><div class="option-body"><div class="option-label"><b>Rule-based validation engine.</b> Software flags missing cost groups, wrong code formats, unrealistic unit rates, structural compliance gaps automatically.</div></div></label>
+            <label class="option"><input type="radio" name="q7" value="4" /><div class="option-body"><div class="option-label"><b>ML-based anomaly detection + standards compliance + drill-down.</b> System learns from past errors, flags suspicious lines with confidence scores, links each issue back to the source drawing/element.</div></div></label>
+          </div>
+        </article>
+
+        <!-- Q8 -->
+        <article class="question" data-dim="validation" data-q="8">
+          <div class="question-head">
+            <span class="question-num">Q8</span>
+            <div class="question-text">When you find an estimating error after the bid is in (or worse, after award) — how do you prevent the same class of error next time?</div>
+            <span class="question-dim">Validation</span>
+          </div>
+          <div class="question-options">
+            <label class="option"><input type="radio" name="q8" value="0" /><div class="option-body"><div class="option-label"><b>Tell the estimator.</b> Goodwill that they remember next time.</div></div></label>
+            <label class="option"><input type="radio" name="q8" value="1" /><div class="option-body"><div class="option-label"><b>Update the internal checklist.</b> Lessons-learned document gets a new bullet point.</div></div></label>
+            <label class="option"><input type="radio" name="q8" value="2" /><div class="option-body"><div class="option-label"><b>Project-level lessons-learned doc</b> shared at the next team meeting. Hit-or-miss adoption.</div></div></label>
+            <label class="option"><input type="radio" name="q8" value="3" /><div class="option-body"><div class="option-label"><b>Add a validation rule</b> — codified in software — that runs automatically on all future BOQs.</div></div></label>
+            <label class="option"><input type="radio" name="q8" value="4" /><div class="option-body"><div class="option-label"><b>Active rule mining</b> from historical errors → AI suggests new rules; senior estimator approves; rules deploy across all projects.</div></div></label>
+          </div>
+        </article>
+
+        <!-- Q9 -->
+        <article class="question" data-dim="collab" data-q="9">
+          <div class="question-head">
+            <span class="question-num">Q9</span>
+            <div class="question-text">How do you share BOQ updates with the wider project team (PMs, client, QS, subcontractors)?</div>
+            <span class="question-dim">Collaboration</span>
+          </div>
+          <div class="question-options">
+            <label class="option"><input type="radio" name="q9" value="0" /><div class="option-body"><div class="option-label"><b>Email the Excel attachment.</b> Filename suffix `_v3_FINAL_clientcomments` is the version control.</div></div></label>
+            <label class="option"><input type="radio" name="q9" value="1" /><div class="option-body"><div class="option-label"><b>Shared drive</b> (Dropbox, OneDrive, SharePoint) with naming convention. Stakeholders fetch the latest manually.</div></div></label>
+            <label class="option"><input type="radio" name="q9" value="2" /><div class="option-body"><div class="option-label"><b>Project portal</b> with read-only access. Stakeholders see the current state but can't comment in-line.</div></div></label>
+            <label class="option"><input type="radio" name="q9" value="3" /><div class="option-body"><div class="option-label"><b>Live collaborative BOQ.</b> Multiple users edit simultaneously, comment per line, full audit log.</div></div></label>
+            <label class="option"><input type="radio" name="q9" value="4" /><div class="option-body"><div class="option-label"><b>Real-time sync</b> across BOQ + 3D model + schedule + cost dashboard. Change a window spec and the impact propagates to costs and timeline live.</div></div></label>
+          </div>
+        </article>
+
+        <!-- Q10 -->
+        <article class="question" data-dim="collab" data-q="10">
+          <div class="question-head">
+            <span class="question-num">Q10</span>
+            <div class="question-text">A stakeholder asks for a cost rollup by floor / system / trade / cost group on Tuesday morning — how fast can you turn it around?</div>
+            <span class="question-dim">Reporting</span>
+          </div>
+          <div class="question-options">
+            <label class="option"><input type="radio" name="q10" value="0" /><div class="option-body"><div class="option-label"><b>Days.</b> Need to recompute manually from scratch if the BOQ wasn't structured for that view.</div></div></label>
+            <label class="option"><input type="radio" name="q10" value="1" /><div class="option-body"><div class="option-label"><b>Hours.</b> Filter and pivot the Excel, sanity-check, send.</div></div></label>
+            <label class="option"><input type="radio" name="q10" value="2" /><div class="option-body"><div class="option-label"><b>Minutes.</b> Software supports the view natively; toggle a filter and export.</div></div></label>
+            <label class="option"><input type="radio" name="q10" value="3" /><div class="option-body"><div class="option-label"><b>Instant.</b> Pre-built dashboards refresh on demand; the stakeholder can self-serve via a shared link.</div></div></label>
+            <label class="option"><input type="radio" name="q10" value="4" /><div class="option-body"><div class="option-label"><b>Predictive what-if.</b> One click to model "what if we substitute this material across all floors" — cost, schedule and CO₂ impact returned.</div></div></label>
+          </div>
+        </article>
+
+        <!-- Q11 -->
+        <article class="question" data-dim="collab" data-q="11">
+          <div class="question-head">
+            <span class="question-num">Q11</span>
+            <div class="question-text">If your current estimating / ERP vendor went out of business tomorrow, what's your migration path?</div>
+            <span class="question-dim">Open standards</span>
+          </div>
+          <div class="question-options">
+            <label class="option"><input type="radio" name="q11" value="0" /><div class="option-body"><div class="option-label"><b>We'd be stuck.</b> Proprietary format, no real export. Reconstructing data would take months.</div></div></label>
+            <label class="option"><input type="radio" name="q11" value="1" /><div class="option-body"><div class="option-label"><b>Manual export to Excel</b> per project. Lose all relationships, history, audit trail.</div></div></label>
+            <label class="option"><input type="radio" name="q11" value="2" /><div class="option-body"><div class="option-label"><b>Standard exports</b> — CSV, Excel, simple XML. Most data preserved, some semantics lost.</div></div></label>
+            <label class="option"><input type="radio" name="q11" value="3" /><div class="option-body"><div class="option-label"><b>Open standards</b> end-to-end — GAEB X83/X84/X85, IFC 4, well-documented JSON schemas. Migration to another vendor is a weekend job.</div></div></label>
+            <label class="option"><input type="radio" name="q11" value="4" /><div class="option-body"><div class="option-label"><b>Fully open data + open source.</b> The platform itself is open-source — we could clone the database, the API and the source code and self-host indefinitely.</div></div></label>
+          </div>
+        </article>
+
+      </form>
+
+      <!-- REVEAL CTA -->
+      <div class="reveal-row">
+        <p>Answer all 11 questions to unlock your maturity band, per-dimension breakdown and recommended next steps.</p>
+        <button type="button" class="btn-primary" id="reveal-btn" disabled>
+          See my results
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </div>
+
+      <!-- RESULTS PANEL -->
+      <div class="results" id="results-panel" aria-live="polite">
+        <p class="results-eyebrow">Your maturity band</p>
+
+        <!-- ─── SCORE GAUGE (radial) ─── -->
+        <div class="score-gauge-wrap">
+          <div class="score-gauge" aria-hidden="true">
+            <svg viewBox="0 0 200 200">
+              <defs>
+                <linearGradient id="gaugeGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%"   stop-color="#0ea5e9"/>
+                  <stop offset="55%"  stop-color="#0284c7"/>
+                  <stop offset="100%" stop-color="#2563eb"/>
+                </linearGradient>
+              </defs>
+              <circle class="score-gauge-track" cx="100" cy="100" r="84"/>
+              <circle class="score-gauge-fill" id="gauge-arc" cx="100" cy="100" r="84"/>
+            </svg>
+            <div class="score-gauge-text">
+              <div class="score-gauge-num"><em id="gauge-num">0</em></div>
+              <div class="score-gauge-of">of 44</div>
+              <div class="score-gauge-band" id="gauge-band">—</div>
+            </div>
+          </div>
+          <div>
+            <h2 class="results-band" id="band-title" style="margin-bottom:8px;">—</h2>
+            <p class="results-score" id="band-score" style="margin-bottom:14px;">—</p>
+            <p class="results-summary" id="band-summary" style="border-bottom:0; padding-bottom:0; margin-bottom:0;">—</p>
+          </div>
+        </div>
+
+        <div class="dim-bars" id="dim-bars"></div>
+
+        <div class="recos">
+          <h3>Recommended next steps</h3>
+          <p class="intro">Three highest-leverage moves for a firm in your band, ordered by typical ROI.</p>
+          <div class="reco-list" id="reco-list"></div>
+        </div>
+
+        <div class="results-foot">
+          <button type="button" class="btn-primary" onclick="window.print()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Print / save as PDF
+          </button>
+          <a href="/partners.html" class="btn-ghost">Talk to a partner about your gaps</a>
+          <a href="/services.html" class="btn-ghost">Explore relevant practices</a>
+        </div>
+
+        <div class="bench-note">
+          <b>About the bands.</b> The five bands are a self-assessment
+          rubric, not a population benchmark — we don't publish
+          industry-wide percentages because we don't have honest data
+          to back them. The score reflects only what you answered today;
+          the value is in the per-dimension breakdown, not the label.
+          <br><br>
+          <b>Time to take it.</b> ~5 minutes for the 11 questions, ~10
+          minutes if you read the rationale on each option. Re-take it
+          every 6 months — the per-dimension deltas are usually more
+          interesting than the band itself.
+          <br><br>
+          <b>What to do next.</b> Pick the <em>two lowest dimensions</em>
+          from the breakdown and treat them as next quarter's focus.
+          Most firms move one band on a single dimension within
+          12–18 months when they pick a concrete initiative
+          (e.g. "switch BOQ from Excel to a structured tool" rather
+          than "improve digital maturity").
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap footer-inner">
+      <span>© 2026 DataDrivenConstruction · OpenConstructionERP · AGPL-3.0 + Commercial</span>
+      <span><a href="/">adicc-uae.com</a> · <a href="https://adicc-uae.com">GitHub</a></span>
+    </div>
+  
+      <div class="wrap">
+        <p class="footer-trademarks" style="margin-top:12px;font-size:11px;line-height:1.55;opacity:.55;max-width:none;">All product names, logos and brands are the property of their respective owners and are used for identification purposes only. Their use does not imply any affiliation with or endorsement by them.</p>
+      </div>
+  </footer>
+
+  <script>
+    // ─── Maturity Assessment logic ───────────────────────────────
+    (function () {
+      const form = document.getElementById('maturity-quiz');
+      const progFill = document.getElementById('prog-fill');
+      const progCount = document.getElementById('prog-count');
+      const revealBtn = document.getElementById('reveal-btn');
+      const panel = document.getElementById('results-panel');
+      const bandTitle = document.getElementById('band-title');
+      const bandScore = document.getElementById('band-score');
+      const bandSummary = document.getElementById('band-summary');
+      const dimBars = document.getElementById('dim-bars');
+      const recoList = document.getElementById('reco-list');
+
+      const TOTAL_Q = 11;
+      const MAX_PER_Q = 4;
+      const MAX_TOTAL = TOTAL_Q * MAX_PER_Q;
+
+      const DIMS = {
+        estimating: { label: 'Estimating workflow',     count: 2 },
+        bim:        { label: 'BIM & CAD integration',   count: 2 },
+        cost:       { label: 'Cost data & rates',       count: 2 },
+        validation: { label: 'Validation & compliance', count: 2 },
+        collab:     { label: 'Collaboration & openness', count: 3 },
+      };
+
+      const BANDS = [
+        {
+          name: 'Foundation', range: [0, 11],
+          summary: 'Spreadsheets and email-driven. Most firms operate here — there is no shame in it; it just means digital leverage hasn\'t been compounding yet. The single biggest upgrade is structured cost data: once rates live in a database (not in workbooks), every other gain unlocks faster.',
+          recos: [
+            { t: 'Centralise your rate library', d: 'Move from per-project Excel rate-cards to a single price database with version history. Even a structured Google Sheet is a leap; a real DB is a transformation. Payback usually inside 60 days.' },
+            { t: 'Adopt one open exchange format', d: 'Pick the standard your region uses (GAEB X83 in DACH, NRM 1/2 in UK, MasterFormat in US, BC3 in ES, DPGF in FR) and require all incoming/outgoing BOQs to round-trip through it. Cuts rework on every tender.' },
+            { t: 'Get one BIM model on a real takeoff workflow', d: 'Don\'t boil the ocean — pick one IFC-capable project this quarter, run quantities through a structured pipeline, and prove the time-saving against your manual baseline.' },
+          ]
+        },
+        {
+          name: 'Developing', range: [12, 22],
+          summary: 'Tools are in place but they\'re disconnected silos. Estimating in one app, BIM in another, costs in a third — and the integration is humans copy-pasting. Your next gates are validation rules (so the same error doesn\'t recur) and a canonical data layer (so the silos stop being silos).',
+          recos: [
+            { t: 'Codify your top 10 estimating errors as validation rules', d: 'Mine the last 12 months of bid post-mortems. Each recurring error becomes a hard rule that runs on every BOQ before submission. Stops the most expensive class of mistakes — the ones you already know about.' },
+            { t: 'Establish a canonical data layer', d: 'One place where BOQ, cost data, classifications, and CAD-extracted quantities all join. Doesn\'t need to be one product — but it needs to be one schema, and round-trippable.' },
+            { t: 'Pilot AI-assisted classification on one project', d: 'Take an inbound spec PDF and let an LLM auto-suggest cost group / classification mapping. Estimator reviews. Measure how much faster the BOQ build is. If it\'s 2× — scale it.' },
+          ]
+        },
+        {
+          name: 'Established', range: [23, 32],
+          summary: 'You\'ve built a solid digital workflow. Estimating is structured, BIM and cost are connected, validation is automated, collaboration is real-time. From here, optimisation moves to higher-leverage ML: predictive cost models, anomaly detection, and reducing the cycle time from drawing to priced bid.',
+          recos: [
+            { t: 'Predictive cost modelling per region', d: 'You probably have the historical data already. Train a regional model that auto-adjusts rates by city / project type / season — and compare its predictions to your post-bid actuals to keep it honest.' },
+            { t: 'Active rule mining from BOQ history', d: 'Move from manually-codified validation rules to ML that proposes new rules from anomalies in your archive. Senior estimator approves; new rules deploy site-wide.' },
+            { t: 'Open up the platform for partner extensions', d: 'You have leverage now. Let trusted subcontractors / QSs / regional offices plug into your data via APIs or a module marketplace. You become the platform, not just the customer.' },
+          ]
+        },
+        {
+          name: 'Advanced', range: [33, 39],
+          summary: 'Top-decile firm. Likely a large GC, a specialised consultancy, or a tech-forward developer. Your platform is internally well-connected; the gain now is external — turning your operational maturity into a product. Either to spin out internal tooling, contribute it to the open ecosystem, or to drive standards work in your region.',
+          recos: [
+            { t: 'Productise your internal tooling', d: 'The estimating workbench, the validation rules, the regional cost models — package them. Either as a sellable add-on to your peers, or as a contribution to an open-source platform that compounds your influence.' },
+            { t: 'Lead a standards working group', d: 'You have data and credibility. Get a seat on a buildingSMART chapter, GAEB committee, RICS digital working group, or AICCM equivalent. Shape the next version of the standard your peers will adopt.' },
+            { t: 'Open-source non-differentiating layers', d: 'Your moat is the data and the workflow — not the file format converters or the validation engine. Open-sourcing those raises the floor for the whole industry and aligns your stack with future hires\' expectations.' },
+          ]
+        },
+        {
+          name: 'Leader', range: [40, 44],
+          summary: 'You\'re defining the category. Likely already running an open-standards platform with in-house ML, and probably already publishing thought leadership in the space. The question shifts from "how do we get more digital?" to "how do we keep the rest of the industry moving forward with us?" — because being a category leader on a stagnant industry is a lonely place.',
+          recos: [
+            { t: 'Anchor an open ecosystem', d: 'Sponsor or steward an open-source AEC platform that other firms can adopt. Lock-in is yesterday\'s play; ecosystem leverage is today\'s. Open-source is the most credible way to build it.' },
+            { t: 'Publish your benchmarks publicly', d: 'You have unique data. A quarterly construction-cost index, a yearly BIM-adoption benchmark, a regional productivity report — these become reference documents the rest of the industry quotes. Pure thought leadership.' },
+            { t: 'Build the talent pipeline', d: 'The constraint on the industry now is people, not technology. Sponsor university programs, contribute to open curricula, run an apprenticeship pipeline. Your hires get better; the industry\'s ceiling goes up.' },
+          ]
+        },
+      ];
+
+      function tally() {
+        const data = new FormData(form);
+        const answered = [...form.querySelectorAll('input[type="radio"]:checked')];
+        const count = answered.length;
+        const pct = Math.round((count / TOTAL_Q) * 100);
+        progFill.style.width = pct + '%';
+        progCount.innerHTML = '<b>' + count + '</b>';
+        revealBtn.disabled = count < TOTAL_Q;
+
+        // Mark answered cards
+        document.querySelectorAll('.question').forEach((q) => {
+          const i = q.dataset.q;
+          const a = form.querySelector(`input[name="q${i}"]:checked`);
+          q.classList.toggle('is-answered', !!a);
+        });
+      }
+
+      function compute() {
+        const data = new FormData(form);
+        let total = 0;
+        const dimSums = {};
+        Object.keys(DIMS).forEach((k) => dimSums[k] = 0);
+        document.querySelectorAll('.question').forEach((q) => {
+          const i = q.dataset.q;
+          const v = parseInt(data.get('q' + i) || '0', 10);
+          total += v;
+          dimSums[q.dataset.dim] += v;
+        });
+        return { total, dimSums };
+      }
+
+      function bandFor(score) {
+        return BANDS.find((b) => score >= b.range[0] && score <= b.range[1]);
+      }
+
+      function reveal() {
+        const { total, dimSums } = compute();
+        const band = bandFor(total);
+        bandTitle.innerHTML = `You are <em>${band.name}</em>.`;
+        bandScore.innerHTML = `Score: <b>${total} / ${MAX_TOTAL}</b> · ${Math.round((total / MAX_TOTAL) * 100)}% maturity`;
+        bandSummary.innerHTML = band.summary;
+
+        // Score gauge — radial fill (animated count-up + arc)
+        const gaugeNum = document.getElementById('gauge-num');
+        const gaugeArc = document.getElementById('gauge-arc');
+        const gaugeBand = document.getElementById('gauge-band');
+        if (gaugeNum && gaugeArc && gaugeBand) {
+          const pct = total / MAX_TOTAL;
+          const circumference = 2 * Math.PI * 84;
+          gaugeBand.textContent = band.name;
+          // animate the number too
+          const startTime = performance.now();
+          const animDuration = 1100;
+          const tick = (now) => {
+            const t = Math.min(1, (now - startTime) / animDuration);
+            const eased = 1 - Math.pow(1 - t, 3);
+            gaugeNum.textContent = Math.round(total * eased);
+            if (t < 1) requestAnimationFrame(tick);
+          };
+          setTimeout(() => {
+            gaugeArc.style.strokeDasharray = `${circumference * pct} ${circumference}`;
+            requestAnimationFrame(tick);
+          }, 120);
+        }
+
+        // Band pointer — slide to user's band, highlight that step
+        const bandIdx = BANDS.indexOf(band);
+        const pointer = document.getElementById('band-pointer');
+        const pointerName = document.getElementById('band-pointer-name');
+        const allSteps = document.querySelectorAll('.band-step');
+        if (pointer && pointerName && allSteps.length) {
+          // step center: each step takes 1/5 of width; center = (idx + 0.5) / 5
+          const centerPct = ((bandIdx + 0.5) / 5) * 100;
+          pointer.style.left = centerPct + '%';
+          pointerName.textContent = band.name;
+          setTimeout(() => pointer.classList.add('is-active'), 150);
+          allSteps.forEach((s, i) => {
+            s.classList.toggle('is-target', i === bandIdx);
+          });
+        }
+
+        // Per-dimension bars
+        dimBars.innerHTML = '';
+        Object.entries(DIMS).forEach(([k, meta]) => {
+          const max = meta.count * MAX_PER_Q;
+          const score = dimSums[k];
+          const pct = (score / max) * 100;
+          const row = document.createElement('div');
+          row.className = 'dim-bar';
+          row.innerHTML = `
+            <div class="dim-bar-name">${meta.label}</div>
+            <div class="dim-bar-track"><div class="dim-bar-fill" style="width:${pct}%"></div></div>
+            <div class="dim-bar-score">${score}<small>/${max}</small></div>
+          `;
+          dimBars.appendChild(row);
+        });
+
+        // Recommendations
+        recoList.innerHTML = '';
+        band.recos.forEach((r, i) => {
+          const row = document.createElement('div');
+          row.className = 'reco';
+          row.innerHTML = `
+            <div class="reco-num">0${i + 1}</div>
+            <div class="reco-body"><b>${r.t}.</b> ${r.d}</div>
+          `;
+          recoList.appendChild(row);
+        });
+
+        panel.classList.add('is-visible');
+        setTimeout(() => {
+          panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+      }
+
+      form.addEventListener('change', tally);
+      revealBtn.addEventListener('click', reveal);
+      tally();
+    })();
+  </script>
+
+</body>
+</html>

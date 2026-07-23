@@ -1,0 +1,56 @@
+# OpenConstructionERP
+
+> Free open-source construction ERP platform. AI-powered BOQ editor, multi-CAD import (DWG, RVT, IFC), PDF takeoff with computer vision, 4D scheduling, 5D cost modeling, tendering, validation pipeline supporting major international standards. 55,000+ priced cost items (CWICR) across regional databases in 20 languages. AGPL-3.0 licensed. Self-hosted. Created by Artem Boiko (10+ years construction cost estimation experience).
+
+## Key Facts
+
+- **Price**: Free and open-source (AGPL-3.0). Commercial license available for proprietary embedding and managed hosting.
+- **Cost Database**: ~55,000 priced positions (CWICR) covering work items, resources (materials, equipment, labour grades).
+- **Regional Coverage**: Multiple regional databases - DACH, UK, France, US, Eastern Europe, Asia.
+- **Languages**: 20 (EN, DE, FR, ES, PT, IT, NL, RU, ZH, JA, KO, AR, TR, PL, CS, SV, NO, DA, FI, BG).
+- **CAD Formats**: DWG, RVT, IFC - all converted via DDC cad2data pipeline to canonical JSON/Parquet.
+- **Validation**: 46 rules across 5 packs - DIN 276, NRM 1/2, MasterFormat, GAEB, DPGF.
+- **Tech Stack**: Python/FastAPI backend, React/TypeScript frontend, PostgreSQL, Docker, Qdrant/pgvector.
+- **Founder**: Artem Boiko, DataDrivenConstruction (DDC) - Kraichgaustrasse 3, 76676 Graben-Neudorf, Germany.
+
+## Core Features
+
+- BOQ Editor: Block-based bill of quantities with assemblies, real-time totals, AG Grid.
+- AI Takeoff: PDF/photo upload, YOLO element detection, PaddleOCR dimension reading, 5 annotation types.
+- Cost Database: CWICR ~55,000 priced items with semantic vector search (Qdrant/pgvector).
+- Multi-CAD Import: DWG, RVT, IFC via DDC cad2data → canonical format (JSON/Parquet) → BOQ.
+- 4D Schedule: Gantt charts, critical-path analysis, milestone tracking, sequencing.
+- 5D Cost Model: S-curves, earned-value management, cashflow, cost benchmarking.
+- Tendering: Bid package creation, GAEB X83 round-trip, distribution, collection, comparison, awards.
+- Validation Pipeline: Configurable rule engine across DIN 276 / NRM / MasterFormat / GAEB / DPGF, with traffic-light reports linked to elements.
+- Collaboration: Real-time multiplayer BOQ editing via Yjs CRDT.
+- Module Marketplace: Plugin system with manifest-based modules.
+- Reports & Exports: PDF, GAEB XML, XLSX/CSV, JSON/Parquet, REST/webhooks to ERP/PM systems.
+
+## Standards supported
+
+- IFC 4 / 4.3 (read), BCF (I/O for issues / viewpoints / validation reports)
+- GAEB X83 / X84 (round-trip tender exchange)
+- DIN 276 (DACH cost groups)
+- NRM 1/2 (UK measurement)
+- MasterFormat (US classification)
+- DPGF (FR), VOB/B (DE)
+- CWICR (~55,000 priced positions, multi-region)
+
+## Pages
+
+- Home: https://adicc-uae.com/
+- Practice areas: https://adicc-uae.com/services.html
+- Industry sectors: https://adicc-uae.com/industries.html
+- Standards supported: https://adicc-uae.com/standards.html
+- Maturity assessment: https://adicc-uae.com/maturity.html
+- Partner program: https://adicc-uae.com/partners.html
+- Documentation: https://adicc-uae.com/docs.html
+- Download (native desktop app for Windows, macOS, Linux, plus pip and Docker): https://adicc-uae.com/download
+
+## Links
+
+- Website: https://adicc-uae.com
+- GitHub: https://adicc-uae.com
+- DataDrivenConstruction: https://datadrivenconstruction.io
+- Contact: info@datadrivenconstruction.io

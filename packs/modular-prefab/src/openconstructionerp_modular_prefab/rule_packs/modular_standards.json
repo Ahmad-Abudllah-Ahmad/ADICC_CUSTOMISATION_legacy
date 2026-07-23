@@ -1,0 +1,28 @@
+{
+  "rule_pack_id": "modular_standards",
+  "name": "Modular construction standards — ICC/MBI 1200 + 1205 / CSA A277 / NEN 9090 / DfMA",
+  "standard": "ICC/MBI 1200-2021 (Off-site construction — Planning, design, fabrication and assembly) + ICC/MBI 1205-2021 (Inspection and regulatory compliance) + CSA A277:2016 (Procedure for factory certification of buildings) + NEN 9090 (Netherlands — prefab dimensional coordination) + Buildoffsite DfMA principles (UK)",
+  "jurisdiction": "INTL",
+  "description": "Enables OCERP built-in validation rules covering the procedural standards for off-site / modular construction in the major regulated markets. ICC/MBI 1200 sets fabrication and assembly requirements (US); ICC/MBI 1205 covers third-party inspection and AHJ regulatory compliance; CSA A277 is the Canadian factory-certification procedure (mandatory in most provinces for non-site-built buildings); NEN 9090 governs dimensional coordination for prefab in the Netherlands; Buildoffsite DfMA (Design for Manufacture and Assembly) principles cover the 7-step DfMA score (standardisation, modularisation, integration, simplification, repeatability, factory tolerance, lift/transport optimisation).",
+  "enables_rule_ids": [
+    "mbi1200.fabrication_process_documented",
+    "mbi1200.assembly_sequence_documented",
+    "mbi1200.module_identification_tag_applied",
+    "mbi1200.fabrication_drawing_revision_controlled",
+    "mbi1200.factory_environment_recorded",
+    "mbi1205.third_party_inspection_agency_engaged",
+    "mbi1205.in_plant_inspection_report_attached",
+    "mbi1205.ahj_acceptance_letter_attached",
+    "mbi1205.serial_label_applied",
+    "csa_a277.factory_certified_by_accredited_agency",
+    "csa_a277.quality_program_manual_approved",
+    "csa_a277.audit_frequency_min_4_per_year_evidenced",
+    "csa_a277.provincial_building_official_notification_filed",
+    "nen9090.dimensional_coordination_grid_set",
+    "nen9090.module_preferred_dimensions_applied",
+    "dfma.dfma_score_computed",
+    "dfma.standardisation_index_documented",
+    "dfma.repeatability_metric_recorded",
+    "dfma.iso_19650_information_delivery_plan_attached"
+  ]
+}

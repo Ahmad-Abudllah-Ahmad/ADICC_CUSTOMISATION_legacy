@@ -1,0 +1,40 @@
+{
+  "rule_pack_id": "sinapi_cost_db",
+  "name": "SINAPI — Sistema Nacional de Pesquisa de Custos e Indices da Construcao Civil",
+  "name_pt": "SINAPI — Sistema Nacional de Pesquisa de Custos e Indices da Construcao Civil",
+  "standard": "SINAPI",
+  "jurisdiction": "BR",
+  "regulator": "Caixa Economica Federal + IBGE",
+  "publication_cadence": "monthly",
+  "publication_format": "Excel + PDF Relatorio de Insumos / Composicoes",
+  "description": "Validates project unit rates against the current SINAPI reference cost index, by state (UF) and reference month. Verifies the 7-digit code format, distinguishes insumos from composicoes, enforces a BDI band per Acordao TCU 2622/2013, requires an explicit encargos sociais (desonerados vs nao-desonerados) flag, and rejects projects whose mes-ref is older than the freshness threshold.",
+  "description_pt": "Valida os precos unitarios do projeto contra a referencia SINAPI atual, por UF e mes de referencia. Verifica o formato de codigo de 7 digitos, distingue insumos de composicoes, exige BDI dentro da faixa do Acordao TCU 2622/2013, exige a marcacao explicita de encargos sociais (desonerados ou nao-desonerados) e rejeita projetos cujo mes-ref esteja desatualizado.",
+  "applies_to": ["projects", "boq", "costs", "validation"],
+  "severity_overrides": {
+    "boq_quality.no_zero_unit_rate": "ERROR",
+    "boq_quality.no_missing_quantity": "ERROR"
+  },
+  "config": {
+    "reference_freshness_months": 3,
+    "sinapi_code_pattern": "^\\d{7}$",
+    "encargos_modes": ["desonerados", "nao_desonerados"],
+    "bdi_default_band": {"min": 20.34, "max": 27.07},
+    "bdi_source": "Acordao TCU 2622/2013",
+    "regional_factor_required": true
+  },
+  "enables_rule_ids": [
+    "sinapi.reference_month_present",
+    "sinapi.reference_month_within_freshness",
+    "sinapi.state_index_applied",
+    "sinapi.unit_rate_within_band",
+    "sinapi.composicao_code_format",
+    "sinapi.insumo_vs_composicao_flagged",
+    "sinapi.bdi_present",
+    "sinapi.bdi_within_tcu_band",
+    "sinapi.encargos_sociais_mode_declared",
+    "sinapi.regional_adjustment_factor_present",
+    "boq_quality.no_zero_unit_rate",
+    "boq_quality.no_missing_quantity",
+    "boq_quality.no_duplicate_position"
+  ]
+}

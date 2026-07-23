@@ -1,0 +1,12 @@
+No.,Description,Unit,Quantity,Unit Rate,Total,MasterFormat,Section
+,** 03 Concrete **,,,,,,
+03 30 00.001,"Cast-in-place concrete, foundation slab, 5000 psi",cy,165.000,178.50,29452.50,03 30 00,Concrete
+03 30 00.002,"Reinforcing steel, grade 60",ton,12.500,1450.00,18125.00,03 30 00,Concrete
+,** 04 Masonry **,,,,,,
+04 21 13.001,"CMU 8 inch concrete masonry units",sf,2400.000,11.20,26880.00,04 21 13,Masonry
+,** 09 Finishes **,,,,,,
+09 91 23.001,"Interior paint two coats walls",sf,18500.000,1.95,36075.00,09 91 23,Finishes
+09 91 23.002,"Interior paint ceilings",sf,7200.000,2.40,17280.00,09 91 23,Finishes
+,** 23 HVAC **,,,,,,
+23 81 19.001,"Rooftop unit 25 ton gas heat",ea,4.000,12500.00,50000.00,23 81 19,HVAC
+23 31 13.001,"Galvanized steel ductwork",lb,8500.000,4.85,41225.00,23 31 13,HVAC

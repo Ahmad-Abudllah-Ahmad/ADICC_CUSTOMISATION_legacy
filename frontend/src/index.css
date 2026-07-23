@@ -1,0 +1,1606 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── OpenEstimate Design System ─────────────────────────────────────────── */
+/* Apple-inspired. Clean, spacious, precise. */
+
+:root {
+  /* DDC-CWICR-OE */
+  --ddc-sig: "44444332d435749435222";
+  --ddc-origin: "datadrivenconstruction.io";
+  /* internal compile-time constants — do not modify */
+  --__rev-c: "4443432d4357494352";
+  --__lc-rev: 0x4f452d3236;
+  /* Brand */
+  --oe-blue: #0071e3;
+  --oe-blue-hover: #0077ed;
+  --oe-blue-active: #006edb;
+  --oe-blue-dark: #005bb5;
+  /* Theme-aware blue intended for use as TEXT on tinted/lifted surfaces.
+     Pairs with --oe-blue-subtle and the semantic-info pills.
+     WCAG-AA contrast fix 2026-05-27 (sequel to v5.3.0): the v5.3.0 wave
+     replaced `text-oe-blue` → `text-oe-blue-dark` in 51 files. In light
+     mode that lands at #005bb5 (≈8:1 on the pill bg, perfect). But in
+     dark mode `--oe-blue-dark` is #1d4ed8 — only ~2:1 on lifted dark
+     surfaces, FAILS hard. This new token resolves separately per theme
+     so the same `text-oe-blue-text` class passes AA in both modes.
+       Light  #005bb5 → 7.4:1 on #fff, 7.0:1 on #f0f7ff
+       Dark   #93c5fd → 7.9:1 on #1e2130, 8.4:1 on #1a1d2b, 7.8:1 on
+                        flattened bg-oe-blue-subtle (rgba 0.15 over bg) */
+  --oe-blue-text: #005bb5;
+  /* WCAG-AA contrast fix 2026-05-27: was #e8f2fe (4.15:1 against
+     text-oe-blue #0071e3 — fails AA for normal text). Lightened to
+     #f0f7ff so the Apple-Blue brand colour passes AA on the pill
+     backgrounds used app-wide (badges, BETA chips, status tags).
+     before: #e8f2fe → 4.15:1   after: #f0f7ff → 4.70:1 (axe contrast-AA) */
+  --oe-blue-subtle: #f0f7ff;
+  /* Channel triplets for Tailwind alpha modifiers (bg-oe-blue/10,
+     border-oe-blue/30, hover:bg-surface-secondary/50, ...). Tailwind
+     cannot inject alpha into an opaque var(), so before these existed
+     every alpha-modified oe/surface utility was silently DROPPED from
+     the build - the class rendered nothing (found 2026-06-06, reported
+     as "info blocks have no background"). MUST stay in sync with the
+     hex values above/below. */
+  --oe-blue-ch: 0 113 227;
+
+  /* Surfaces */
+  --oe-bg: #ffffff;
+  --oe-bg-secondary: #f5f5f7;
+  --oe-bg-tertiary: #fbfbfd;
+  --oe-bg-elevated: #ffffff;
+  --oe-bg-ch: 255 255 255;
+  --oe-bg-secondary-ch: 245 245 247;
+  --oe-bg-tertiary-ch: 251 251 253;
+  --oe-bg-elevated-ch: 255 255 255;
+
+  /* Borders */
+  --oe-border: #d2d2d7;
+  --oe-border-light: #e8e8ed;
+  --oe-border-focus: var(--oe-blue);
+
+  /* Text — WCAG AA compliant against every light surface we render on.
+     Picked 2026-05-25 to clear axe-core color-contrast wherever the
+     token is composed with bg-surface-primary / -secondary / -tertiary
+     and the brand tints (oe-blue-subtle #e8f2fe, semantic-error-bg
+     #fef2f2). Was: tertiary #86868b (3.62:1 on white, fail),
+     quaternary #aeaeb2 (2.21:1 on white, fail). Now:
+       tertiary  #666b78 → 5.33:1 on #fff, 4.90:1 on #f5f5f7,
+                            4.71:1 on #e8f2fe, 4.87:1 on #fef2f2 — all pass
+       quaternary #696c78 → 5.23:1 on #fff, 4.80:1 on #f5f5f7,
+                            4.62:1 on #e8f2fe, 4.78:1 on #fef2f2 — all pass */
+  --oe-text-primary: #1d1d1f;
+  /* WCAG-AA contrast fix 2026-05-27: was #6e6e73 (Apple-system gray-2)
+     which landed at 4.27:1 against `bg-oe-blue-subtle` (#f0f7ff) and
+     4.39:1 against `bg-info-bg` (#eff9fe) — both fail AA for normal
+     text. The secondary token appears 2 500+ times across the app
+     (highest-traffic muted-label class after tertiary), and the tinted
+     surfaces it lands on are commonplace (Header chip, status pills,
+     dashboard mini-cards). Darkened a half-step so it clears AA on
+     every documented surface without becoming visually indistinct
+     from `text-content-primary` (#1d1d1f).
+       before: #6e6e73  4.94:1 on white, 4.27:1 on #f0f7ff (fail)
+       after:  #5b5e66  6.30:1 on white, 5.75:1 on #f0f7ff (pass),
+                         5.78:1 on #eff9fe, 5.86:1 on #ecfdf3,
+                         5.91:1 on #fff8ec, 5.83:1 on #fef2f2 */
+  --oe-text-secondary: #5b5e66;
+  --oe-text-tertiary: #666b78;
+  --oe-text-quaternary: #696c78;
+  --oe-text-inverse: #ffffff;
+
+  /* Semantic — WCAG-AA contrast fix 2026-05-27.
+     The Apple-saturation hues (#34c759 / #ff9f0a / #ff3b30 / #5ac8fa)
+     were fine as solid backgrounds with white text, but failed AA hard
+     when used as `text-semantic-*` on `bg-semantic-*-bg` pills:
+        success  #34c759 on #ecfdf3 → 1.70:1 (need 4.5)
+        warning  #ff9f0a on #fff8ec → 1.85:1
+        error    #ff3b30 on #fef2f2 → 3.24:1
+        info     #5ac8fa on #eff9fe → 1.75:1
+     Darkened to the Tailwind-700/800 family so the same tokens pass AA
+     on the subtle pill backgrounds AND on plain white text. Icons that
+     use `text-semantic-*` were already covered by the 3:1 non-text rule
+     and remain visually crisp at the darker hue.
+        success  #34c759 → #1d7a3a (5.20:1 on #ecfdf3, 5.70:1 on white)
+        warning  #ff9f0a → #b45309 (5.40:1 on #fff8ec, 5.80:1 on white)
+        error    #ff3b30 → #c41e10 (6.60:1 on #fef2f2, 7.30:1 on white)
+        info     #5ac8fa → #0369a1 (5.70:1 on #eff9fe, 6.10:1 on white) */
+  --oe-success: #1d7a3a;
+  --oe-success-bg: #ecfdf3;
+  --oe-warning: #b45309;
+  --oe-warning-bg: #fff8ec;
+  --oe-error: #c41e10;
+  --oe-error-bg: #fef2f2;
+  --oe-info: #0369a1;
+  --oe-info-bg: #eff9fe;
+  /* Solid-brand variants retained for callers that need the original
+     Apple-saturation hue on dark/coloured backgrounds (dots, solid
+     buttons, gradient fills). Use sparingly — prefer the AA-compliant
+     semantic tokens above for any text or text-adjacent surface. */
+  --oe-success-vivid: #34c759;
+  --oe-warning-vivid: #ff9f0a;
+  --oe-error-vivid: #ff3b30;
+  --oe-info-vivid: #5ac8fa;
+
+  /* Shadows — Apple uses very subtle, layered shadows */
+  --oe-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --oe-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --oe-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+  --oe-shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06);
+  --oe-shadow-xl: 0 24px 80px rgba(0, 0, 0, 0.14), 0 8px 24px rgba(0, 0, 0, 0.08);
+
+  /* Radius — Apple-current scale (iOS 17+ / macOS Sequoia / WWDC25 Liquid Glass).
+     Reduced 2026-05-11 to match styles-lab tighter values:
+       xs 4 (unchanged)  sm 8→6   md 12→8   lg 16→10   xl 20→12. */
+  --oe-radius-xs: 4px;
+  --oe-radius-sm: 6px;
+  --oe-radius-md: 8px;
+  --oe-radius-lg: 10px;
+  --oe-radius-xl: 12px;
+  --oe-radius-full: 9999px;
+
+  /* Spacing scale — 4px base */
+  --oe-space-1: 4px;
+  --oe-space-2: 8px;
+  --oe-space-3: 12px;
+  --oe-space-4: 16px;
+  --oe-space-5: 20px;
+  --oe-space-6: 24px;
+  --oe-space-8: 32px;
+  --oe-space-10: 40px;
+  --oe-space-12: 48px;
+  --oe-space-16: 64px;
+
+  /* Typography */
+  --oe-font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text',
+    'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --oe-font-mono: 'SF Mono', SFMono-Regular, ui-monospace, 'Cascadia Code', Menlo, Monaco,
+    Consolas, monospace;
+
+  /* Transitions */
+  --oe-transition-fast: 120ms cubic-bezier(0.25, 0.1, 0.25, 1);
+  --oe-transition-normal: 200ms cubic-bezier(0.25, 0.1, 0.25, 1);
+  --oe-transition-slow: 350ms cubic-bezier(0.25, 0.1, 0.25, 1);
+
+  /* Layout */
+  /* Tuned to 248px — wide enough to fit longer labels like
+     "Match Elements", "Specifications", "Communication" without
+     ellipsis truncation, narrow enough to give the user more room
+     in the main content area than the old 264px width did. */
+  --oe-sidebar-width: 248px;
+  --oe-header-height: 52px;
+  --oe-content-max-width: 1440px;
+}
+
+/* ── Dark Mode ─────────────────────────────────────────────────────────── */
+
+.dark {
+  /* Brand — slightly brighter for dark backgrounds.
+     `--oe-blue-dark` is the solid button hover/active background.
+     White button text needs a saturated blue here, not a tint;
+     theme-aware text uses `--oe-blue-text` instead. */
+  --oe-blue: #3b82f6;
+  --oe-blue-hover: #60a5fa;
+  --oe-blue-active: #2563eb;
+  --oe-blue-dark: #1e40af;
+  --oe-blue-subtle: rgba(59, 130, 246, 0.15);
+  /* See light-mode comment. Dark-mode swaps to Tailwind blue-300 so
+     `text-oe-blue-text` reads cleanly on lifted dark surfaces without
+     touching `bg-oe-blue-dark` (used as hover/active button bg). */
+  --oe-blue-text: #93c5fd;
+  /* Channel triplet - see the light-mode comment. Keep in sync. */
+  --oe-blue-ch: 59 130 246;
+
+  /* Surfaces — deep blue-gray palette */
+  --oe-bg: #0f1117;
+  --oe-bg-secondary: #161822;
+  --oe-bg-tertiary: #1a1d2b;
+  --oe-bg-elevated: #1e2130;
+  --oe-bg-ch: 15 17 23;
+  --oe-bg-secondary-ch: 22 24 34;
+  --oe-bg-tertiary-ch: 26 29 43;
+  --oe-bg-elevated-ch: 30 33 48;
+
+  /* Borders — subtle, low-contrast */
+  --oe-border: #2a2d3e;
+  --oe-border-light: #232638;
+  --oe-border-focus: var(--oe-blue);
+
+  /* Text — high contrast on dark, WCAG AA compliant against every
+     surface (bg, bg-secondary, bg-tertiary, bg-elevated #1e2130).
+     Quaternary intentionally barely-distinct from tertiary because
+     "more muted on dark = closer to bg = sub-AA"; both still pass.
+     Was: tertiary #6b6e80 (3.74:1 on bg, borderline; failed on lifted
+     surfaces), quaternary #4a4d5e (2.26:1, fail).
+     Now: tertiary #9499a8 → 5.61:1 on #1e2130 (worst dark surface).
+          quaternary #8b8e9d → 4.91:1 on #1e2130 (just over AA). */
+  --oe-text-primary: #f0f0f5;
+  --oe-text-secondary: #a0a3b5;
+  --oe-text-tertiary: #9499a8;
+  --oe-text-quaternary: #8b8e9d;
+  --oe-text-inverse: #0f1117;
+
+  /* Semantic — adjusted for dark backgrounds. WCAG-AA contrast bump
+     2026-05-27: against the worst-case lifted surface `#1e2130`
+     (L≈0.018), the previous Tailwind-500 hues sat at ~4.3:1 (just below
+     AA). Promoted one tier brighter to the 400 family so all four pass
+     AA on every dark surface (bg / bg-secondary / bg-tertiary /
+     bg-elevated). Pill backgrounds remain rgba(..., 0.12) — flattening
+     against #1e2130 they read effectively as ~#23262f, on which the
+     400-family hues clear AA comfortably.
+        success #22c55e → #4ade80 (4.30 → 5.50:1 on #1e2130)
+        warning #f59e0b → #fbbf24 (4.50 → 5.60:1 on #1e2130)
+        error   #ef4444 → #f87171 (4.30 → 5.30:1 on #1e2130)
+        info    #38bdf8 → #7dd3fc (4.40 → 6.00:1 on #1e2130) */
+  --oe-success: #4ade80;
+  --oe-success-bg: rgba(34, 197, 94, 0.12);
+  --oe-warning: #fbbf24;
+  --oe-warning-bg: rgba(245, 158, 11, 0.12);
+  --oe-error: #f87171;
+  --oe-error-bg: rgba(239, 68, 68, 0.12);
+  --oe-info: #7dd3fc;
+  --oe-info-bg: rgba(56, 189, 248, 0.12);
+  /* Solid-brand variants for dark — kept brighter for use as dots /
+     solid buttons / accent strips where the surface underneath is the
+     base bg, not a tinted pill. */
+  --oe-success-vivid: #22c55e;
+  --oe-warning-vivid: #f59e0b;
+  --oe-error-vivid: #ef4444;
+  --oe-info-vivid: #38bdf8;
+
+  /* Shadows — darker, more spread for depth on dark surfaces */
+  --oe-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --oe-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --oe-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2);
+  --oe-shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.3);
+  --oe-shadow-xl: 0 24px 80px rgba(0, 0, 0, 0.6), 0 8px 24px rgba(0, 0, 0, 0.4);
+
+  color-scheme: dark;
+}
+
+/* ── Base ────────────────────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Smooth background/color transition when toggling theme */
+html.theme-transition,
+html.theme-transition *,
+html.theme-transition *::before,
+html.theme-transition *::after {
+  transition: background-color 300ms ease, color 200ms ease, border-color 200ms ease,
+    box-shadow 200ms ease !important;
+  transition-delay: 0s !important;
+}
+
+body {
+  margin: 0;
+  font-family: var(--oe-font-sans);
+  color: var(--oe-text-primary);
+  background: var(--oe-bg-secondary);
+  line-height: 1.47059;
+  letter-spacing: -0.022em;
+}
+
+[dir='rtl'] {
+  direction: rtl;
+  text-align: right;
+}
+
+/* ── RTL Layout Mirroring ────────────────────────────────────────────────── */
+
+/* Sidebar: move from left edge to right edge in RTL */
+[dir='rtl'] .oe-sidebar {
+  left: auto;
+  right: 0;
+}
+
+/* Invert the off-screen slide animation for RTL.
+   Scoped to mobile only — the selector's specificity (0,1,2) would
+   otherwise beat Tailwind's `lg:translate-x-0` (0,1,0) on desktop
+   and park the sidebar off-screen in Arabic / Hebrew (GitHub #123). */
+@media (max-width: 1023.98px) {
+  [dir='rtl'] .oe-sidebar.-translate-x-full,
+  [dir='rtl'] .oe-sidebar.\-translate-x-full {
+    transform: translateX(100%);
+  }
+}
+
+/* Main content area: swap padding sides in RTL.
+   Wrapped in the same `lg` media query Tailwind uses for
+   `lg:pl-sidebar` so mobile RTL doesn't reserve sidebar width
+   while the drawer is closed (#123 follow-up). */
+@media (min-width: 1024px) {
+  [dir='rtl'] .lg\:pl-sidebar {
+    padding-left: 0;
+    padding-right: var(--oe-sidebar-width);
+  }
+}
+
+/* Print helper: swap padding side */
+[dir='rtl'] .pl-sidebar {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* Form inputs: align text to right in RTL contexts */
+[dir='rtl'] input[type='text'],
+[dir='rtl'] input[type='email'],
+[dir='rtl'] input[type='password'],
+[dir='rtl'] input[type='search'],
+[dir='rtl'] input[type='number'],
+[dir='rtl'] input[type='tel'],
+[dir='rtl'] textarea,
+[dir='rtl'] select {
+  text-align: right;
+}
+
+/* Flex rows that use gap: they inherit direction naturally, but rows with
+   explicit margin helpers need logical equivalents below. */
+
+/* ml-auto → margin-inline-start: auto in RTL (already correct via logical props,
+   but when ml-auto is used for badge push, we need to ensure it works) */
+[dir='rtl'] .ml-auto {
+  margin-left: unset;
+  margin-right: auto;
+}
+
+/* Tailwind mr-auto → flip in RTL */
+[dir='rtl'] .mr-auto {
+  margin-right: unset;
+  margin-left: auto;
+}
+
+/* Icons and chevrons that indicate directionality */
+[dir='rtl'] .lucide-chevron-right,
+[dir='rtl'] .lucide-arrow-right,
+[dir='rtl'] .lucide-chevron-left,
+[dir='rtl'] .lucide-arrow-left {
+  transform: scaleX(-1);
+}
+
+/* RTL-aware border radius: pill/rounded-l and rounded-r swap sides */
+[dir='rtl'] .rounded-l-lg { border-radius: 0 var(--oe-radius-md) var(--oe-radius-md) 0; }
+[dir='rtl'] .rounded-r-lg { border-radius: var(--oe-radius-md) 0 0 var(--oe-radius-md); }
+[dir='rtl'] .rounded-l-full { border-radius: 0 var(--oe-radius-full) var(--oe-radius-full) 0; }
+[dir='rtl'] .rounded-r-full { border-radius: var(--oe-radius-full) 0 0 var(--oe-radius-full); }
+
+/* Border side swaps */
+[dir='rtl'] .border-l { border-left: none; border-right-width: 1px; }
+[dir='rtl'] .border-r { border-right: none; border-left-width: 1px; }
+[dir='rtl'] .border-l-2 { border-left: none; border-right-width: 2px; }
+[dir='rtl'] .border-r-2 { border-right: none; border-left-width: 2px; }
+
+/* Padding side swaps for common Tailwind utilities used in the codebase */
+[dir='rtl'] .pl-4 { padding-left: 0; padding-right: 1rem; }
+[dir='rtl'] .pr-4 { padding-right: 0; padding-left: 1rem; }
+[dir='rtl'] .pl-3 { padding-left: 0; padding-right: 0.75rem; }
+[dir='rtl'] .pr-3 { padding-right: 0; padding-left: 0.75rem; }
+[dir='rtl'] .pl-6 { padding-left: 0; padding-right: 1.5rem; }
+[dir='rtl'] .pr-6 { padding-right: 0; padding-left: 1.5rem; }
+[dir='rtl'] .pl-8 { padding-left: 0; padding-right: 2rem; }
+[dir='rtl'] .pr-8 { padding-right: 0; padding-left: 2rem; }
+[dir='rtl'] .pl-10 { padding-left: 0; padding-right: 2.5rem; }
+[dir='rtl'] .pr-10 { padding-right: 0; padding-left: 2.5rem; }
+
+/* Margin side swaps */
+[dir='rtl'] .ml-2 { margin-left: 0; margin-right: 0.5rem; }
+[dir='rtl'] .mr-2 { margin-right: 0; margin-left: 0.5rem; }
+[dir='rtl'] .ml-3 { margin-left: 0; margin-right: 0.75rem; }
+[dir='rtl'] .mr-3 { margin-right: 0; margin-left: 0.75rem; }
+[dir='rtl'] .ml-4 { margin-left: 0; margin-right: 1rem; }
+[dir='rtl'] .mr-4 { margin-right: 0; margin-left: 1rem; }
+
+/* Left/right positioned elements */
+[dir='rtl'] .left-0 { left: auto; right: 0; }
+[dir='rtl'] .right-0 { right: auto; left: 0; }
+[dir='rtl'] .left-4 { left: auto; right: 1rem; }
+[dir='rtl'] .right-4 { right: auto; left: 1rem; }
+[dir='rtl'] .left-3 { left: auto; right: 0.75rem; }
+[dir='rtl'] .right-3 { right: auto; left: 0.75rem; }
+
+/* Text alignment */
+[dir='rtl'] .text-left { text-align: right; }
+[dir='rtl'] .text-right { text-align: left; }
+
+/* AG Grid RTL support */
+[dir='rtl'] .ag-theme-alpine {
+  direction: rtl;
+}
+
+/* Arabic font: use a system font stack that includes Arabic-script fonts */
+[dir='rtl'] body,
+[dir='rtl'] html {
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    'SF Arabic',
+    'Geeza Pro',
+    'Arabic UI Text',
+    'Noto Sans Arabic',
+    'Segoe UI',
+    Tahoma,
+    Arial,
+    sans-serif;
+}
+
+/* ── Typography — Apple SF Pro scale ─────────────────────────────────────── */
+
+h1 {
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.13;
+  letter-spacing: -0.04em;
+}
+
+h2 {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.18;
+  letter-spacing: -0.03em;
+}
+
+h3 {
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.21;
+  letter-spacing: -0.02em;
+}
+
+h4 {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.31;
+  letter-spacing: -0.015em;
+}
+
+/* ── Scrollbar — thin, subtle ──────────────────────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+  background-clip: content-box;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  background-clip: content-box;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+  background-clip: content-box;
+}
+
+/* ── Focus — accessible, Apple-style ring ────────────────────────────────── */
+
+:focus-visible {
+  outline: 3px solid var(--oe-blue);
+  outline-offset: 2px;
+  border-radius: var(--oe-radius-xs);
+}
+
+/* ── Selection ─────────────────────────────────────────────────────────── */
+
+::selection {
+  background: var(--oe-blue);
+  color: white;
+}
+
+/* ── AG Grid premium overrides ─────────────────────────────────────────── */
+
+.ag-theme-alpine {
+  --ag-font-family: var(--oe-font-sans);
+  --ag-font-size: 13px;
+  --ag-row-height: 40px;
+  --ag-header-height: 44px;
+  --ag-header-foreground-color: var(--oe-text-secondary);
+  --ag-header-background-color: var(--oe-bg-tertiary);
+  --ag-border-color: var(--oe-border-light);
+  --ag-row-border-color: var(--oe-border-light);
+  --ag-selected-row-background-color: var(--oe-blue-subtle);
+  --ag-range-selection-border-color: var(--oe-blue);
+  --ag-range-selection-background-color: rgba(0, 113, 227, 0.08);
+  --ag-cell-horizontal-padding: 8px;
+}
+
+.dark .ag-theme-alpine {
+  --ag-background-color: var(--oe-bg);
+  --ag-header-background-color: var(--oe-bg-tertiary);
+  --ag-header-foreground-color: var(--oe-text-secondary);
+  --ag-foreground-color: var(--oe-text-primary);
+  --ag-border-color: var(--oe-border-light);
+  --ag-row-border-color: var(--oe-border-light);
+  --ag-secondary-foreground-color: var(--oe-text-secondary);
+  --ag-selected-row-background-color: var(--oe-blue-subtle);
+  --ag-odd-row-background-color: var(--oe-bg-secondary);
+  --ag-range-selection-background-color: rgba(59, 130, 246, 0.1);
+}
+
+/* ── BOQ header density — shrink header text when many columns ─────────
+   Three tiers based on column count (computed in BOQGrid.tsx and applied
+   as a className alongside `ag-theme-quartz`):
+   - default        : ≤ 12 cols → 13px header text (AG Quartz default)
+   - oe-header-dense: 13–17 cols → 11.5px header text + tighter padding
+   - oe-header-xs   : ≥ 18 cols → 10.5px header text + minimum padding
+   Cell content keeps the original 13px — only the header label scales,
+   so numbers stay readable while header labels accommodate more cols.
+*/
+.oe-header-dense .ag-header-cell-text {
+  font-size: 11.5px;
+  line-height: 1.15;
+}
+.oe-header-dense .ag-header-cell {
+  padding-left: 6px;
+  padding-right: 6px;
+}
+.oe-header-xs .ag-header-cell-text {
+  font-size: 10.5px;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+.oe-header-xs .ag-header-cell {
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+/* ── AG Grid cell vertical alignment ─────────────────────────────────── */
+/* Ensure ALL cells vertically center their content, not just checkbox/actions.
+   The ag-cell-wrapper inside already uses flex, but the cell itself must also
+   be flex so the wrapper is centered within the full row-height cell. */
+.ag-theme-quartz .ag-cell {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* Ensure ordinal/pos column text doesn't overflow into description column */
+.ag-theme-quartz .ag-cell .ag-cell-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── BOQ numeric cell alignment (v3.0.4 fix) ────────────────────────────
+   When a column uses a custom `cellRenderer` (Quantity / Unit Rate / Total
+   here), AG Grid wraps the renderer output in `.ag-cell-wrapper` →
+   `.ag-cell-value`. Both default to `flex: 0 1 auto` which collapses them
+   to their content width, so `w-full` inside the renderer ends up only
+   as wide as the text — and right-aligned numbers visibly drift left by
+   whatever blank space remains. Force the wrapper + value spans to fill
+   the cell so the renderer's `w-full / justify-end / text-right` actually
+   reaches the cell's right padding edge. Right-aligned numeric columns
+   (`type: numericColumn`, or our explicit `text-right` cellClass) anchor
+   to the cell's right edge regardless of text width — positions and
+   resources line up on a single vertical baseline per column. */
+.ag-theme-quartz .ag-cell .ag-cell-wrapper,
+.ag-theme-quartz .ag-cell .ag-cell-value {
+  width: 100%;
+  flex: 1 1 auto;
+}
+
+/* ── AG Grid drag handle column ───────────────────────────────────────── */
+
+.oe-drag-handle-cell {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  padding: 0 !important;
+}
+
+/* ── Zero-padding icon-only columns (e.g. _expand resource toggle) ──────
+   AG Grid Quartz applies `.ag-ltr .ag-cell { padding: 0 15px }` whose
+   specificity (0,2,0) beats a Tailwind `p-0` utility (0,1,0), so a 32px
+   icon column is left with ~2px of content box and any fixed-size button
+   inside collapses to its glyph. Mirror `.oe-drag-handle-cell` to reclaim
+   the full column width and center the control. Scoped !important is the
+   correct tool for overriding a vendor theme's hardcoded cell padding on
+   specific utility columns. */
+.oe-icon-cell {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  padding: 0 !important;
+}
+
+/* Row drag handle icon — visible on hover only */
+.ag-theme-quartz .ag-row .ag-drag-handle {
+  opacity: 0;
+  cursor: grab;
+  transition: opacity 0.15s ease;
+}
+
+.ag-theme-quartz .ag-row:hover .ag-drag-handle {
+  opacity: 0.5;
+}
+
+.ag-theme-quartz .ag-row:hover .ag-drag-handle:hover {
+  opacity: 1;
+}
+
+/* Active dragging cursor */
+.ag-theme-quartz .ag-row-dragging .ag-drag-handle {
+  opacity: 1;
+  cursor: grabbing;
+}
+
+/* Highlight the drop target row */
+.ag-theme-quartz .ag-row-drag-over {
+  background-color: var(--ag-range-selection-background-color, rgba(0, 113, 227, 0.08));
+}
+
+/* ── AG Grid full-width section group rows ────────────────────────── */
+
+.ag-theme-quartz .ag-full-width-row.oe-section-group-row {
+  border-top: 2px solid var(--oe-border, #e0e0e0);
+  border-bottom: 1px solid var(--oe-border-light, #eee);
+  background: var(--oe-bg-secondary, #f8f9fa);
+}
+
+.dark .ag-theme-quartz .ag-full-width-row.oe-section-group-row {
+  background: var(--oe-bg-secondary, #1e293b);
+  border-top-color: var(--oe-border, #374151);
+}
+
+.ag-theme-quartz .ag-full-width-row.oe-section-group-row:hover {
+  background: var(--oe-bg-tertiary, #f0f2f5);
+}
+
+.dark .ag-theme-quartz .ag-full-width-row.oe-section-group-row:hover {
+  background: var(--oe-bg-tertiary, #273344);
+}
+
+/* ── Unpriced position rows (qty>0 but rate=0) ───────────────────────
+   Highlights positions that still need a unit rate so users can spot
+   incomplete work at a glance. The amber tint is subtle in light mode
+   and slightly stronger in dark mode for visibility. */
+
+.ag-theme-quartz .ag-row.oe-unpriced-row {
+  background: rgba(245, 158, 11, 0.06); /* amber-500/6% */
+  box-shadow: inset 3px 0 0 rgba(245, 158, 11, 0.7);
+}
+
+.ag-theme-quartz .ag-row.oe-unpriced-row:hover {
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.dark .ag-theme-quartz .ag-row.oe-unpriced-row {
+  background: rgba(245, 158, 11, 0.1);
+  box-shadow: inset 3px 0 0 rgba(251, 191, 36, 0.8);
+}
+
+.dark .ag-theme-quartz .ag-row.oe-unpriced-row:hover {
+  background: rgba(245, 158, 11, 0.18);
+}
+
+/* ── Validation status row accents ───────────────────────────────────
+   Left-border accent so estimators can scan validation state at a glance
+   across hundreds of BOQ rows. Pairs with the dot in OrdinalCellRenderer. */
+
+.ag-theme-quartz .ag-row.boq-row-error {
+  box-shadow: inset 2.5px 0 0 var(--color-red-400, #f87171);
+}
+
+.ag-theme-quartz .ag-row.boq-row-warning {
+  box-shadow: inset 2.5px 0 0 var(--color-amber-400, #fbbf24);
+}
+
+.dark .ag-theme-quartz .ag-row.boq-row-error {
+  box-shadow: inset 2.5px 0 0 var(--color-red-400, #f87171);
+}
+
+.dark .ag-theme-quartz .ag-row.boq-row-warning {
+  box-shadow: inset 2.5px 0 0 var(--color-amber-400, #fbbf24);
+}
+
+/* ── CWICR abstract-resource row accents ──────────────────────────────
+   4px left-edge bar so the user can scan a long BOQ and tell at a glance
+   which positions came from a multi-variant cost item. Mirrors the pill
+   colours rendered by DescriptionCellRenderer / UnitRateCellRenderer.
+   • boq-row-variant         → blue   (explicit pick)
+   • boq-row-variant-default → amber  (auto-applied average — refine!) */
+
+.ag-theme-quartz .ag-row.boq-row-variant {
+  box-shadow: inset 4px 0 0 var(--color-oe-blue, #3b82f6);
+}
+
+.ag-theme-quartz .ag-row.boq-row-variant-default {
+  box-shadow: inset 4px 0 0 var(--color-amber-500, #f59e0b);
+}
+
+.dark .ag-theme-quartz .ag-row.boq-row-variant {
+  box-shadow: inset 4px 0 0 var(--color-oe-blue, #60a5fa);
+}
+
+.dark .ag-theme-quartz .ag-row.boq-row-variant-default {
+  box-shadow: inset 4px 0 0 var(--color-amber-400, #fbbf24);
+}
+
+/* ── Premium Visual Polish ──────────────────────────────────────────── */
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ── Glass morphism ────────────────────────────────────────────────── */
+
+.glass {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.glass-strong {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.dark .glass {
+  background: rgba(15, 17, 23, 0.72);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.dark .glass-strong {
+  background: rgba(15, 17, 23, 0.85);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* ── Animated gradient text ────────────────────────────────────────── */
+
+.gradient-text {
+  background: linear-gradient(
+    135deg,
+    var(--oe-blue) 0%,
+    #5856d6 25%,
+    var(--oe-blue) 50%,
+    #5856d6 75%,
+    var(--oe-blue) 100%
+  );
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientText 6s ease-in-out infinite;
+}
+
+@keyframes gradientText {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* ── Button shimmer effect ─────────────────────────────────────────── */
+
+.btn-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.2) 45%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0.2) 55%,
+    transparent 70%
+  );
+  background-size: 200% 100%;
+  opacity: 0;
+  transition: opacity 300ms ease;
+  pointer-events: none;
+}
+
+.btn-shimmer:hover::after {
+  opacity: 1;
+  animation: btnShimmer 2s ease-in-out infinite;
+}
+
+@keyframes btnShimmer {
+  0% {
+    background-position: 200% center;
+  }
+  100% {
+    background-position: -200% center;
+  }
+}
+
+/* ── Stagger utilities ─────────────────────────────────────────────── */
+
+.stagger-1 { animation-delay: 60ms; }
+.stagger-2 { animation-delay: 120ms; }
+.stagger-3 { animation-delay: 180ms; }
+.stagger-4 { animation-delay: 240ms; }
+.stagger-5 { animation-delay: 300ms; }
+.stagger-6 { animation-delay: 360ms; }
+.stagger-7 { animation-delay: 420ms; }
+.stagger-8 { animation-delay: 480ms; }
+
+/* ── Table row stagger animation ───────────────────────────────────── */
+
+@keyframes staggerFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-enter {
+  animation: staggerFadeIn 400ms cubic-bezier(0.25, 0.1, 0.25, 1) both;
+}
+
+tbody tr {
+  animation: staggerFadeIn 300ms ease both;
+}
+tbody tr:nth-child(1)  { animation-delay: 0ms; }
+tbody tr:nth-child(2)  { animation-delay: 30ms; }
+tbody tr:nth-child(3)  { animation-delay: 60ms; }
+tbody tr:nth-child(4)  { animation-delay: 90ms; }
+tbody tr:nth-child(5)  { animation-delay: 120ms; }
+tbody tr:nth-child(6)  { animation-delay: 150ms; }
+tbody tr:nth-child(7)  { animation-delay: 180ms; }
+tbody tr:nth-child(8)  { animation-delay: 210ms; }
+tbody tr:nth-child(9)  { animation-delay: 240ms; }
+tbody tr:nth-child(10) { animation-delay: 270ms; }
+tbody tr:nth-child(11) { animation-delay: 300ms; }
+tbody tr:nth-child(12) { animation-delay: 330ms; }
+tbody tr:nth-child(13) { animation-delay: 360ms; }
+tbody tr:nth-child(14) { animation-delay: 390ms; }
+tbody tr:nth-child(15) { animation-delay: 420ms; }
+tbody tr:nth-child(16) { animation-delay: 450ms; }
+tbody tr:nth-child(17) { animation-delay: 480ms; }
+tbody tr:nth-child(18) { animation-delay: 510ms; }
+tbody tr:nth-child(19) { animation-delay: 540ms; }
+tbody tr:nth-child(20) { animation-delay: 570ms; }
+
+/* ── Pulse glow for active elements ──────────────────────────────── */
+
+@keyframes pulseGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 113, 227, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(0, 113, 227, 0);
+  }
+}
+
+/* ── Smooth number counter animation ─────────────────────────────── */
+
+@keyframes countUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Indeterminate progress bar ──────────────────────────────────── */
+
+@keyframes indeterminate {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}
+
+/* ── Subtle float for decorative elements ────────────────────────── */
+
+@keyframes floatGentle {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+/* ── Gradient shift for backgrounds ──────────────────────────────── */
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* ── Live status dot ───────────────────────────────────────────────── */
+
+/* Live status dot: 8px round indicator — non-text element, falls under
+   the 3:1 non-text contrast rule, so we use the vivid Apple-saturation
+   token to keep the brand "this is live" feel. The AA-compliant
+   `--oe-success` token would render as muddy dark-green here. */
+.live-dot {
+  position: relative;
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--oe-success-vivid);
+  animation: pulseLive 2s ease-in-out infinite;
+}
+
+.live-dot::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background-color: var(--oe-success-vivid);
+  opacity: 0.3;
+  animation: pulseLive 2s ease-in-out infinite;
+}
+
+@keyframes pulseLive {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.75);
+  }
+}
+
+/* ── Auth page background blobs ────────────────────────────────────── */
+
+.auth-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  will-change: transform;
+}
+
+/* ── Print styles — professional BOQ output ────────────────────────── */
+
+@media print {
+  /* Hide non-printable UI elements */
+  aside,
+  nav,
+  header,
+  .no-print,
+  button:not(.print-visible),
+  [data-no-print] {
+    display: none !important;
+  }
+
+  /* Full width for content — remove sidebar offset and padding */
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .pl-sidebar {
+    padding-left: 0 !important;
+  }
+
+  /* Professional table styling */
+  table {
+    width: 100% !important;
+    border-collapse: collapse;
+    font-size: 10pt;
+    page-break-inside: auto;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  /* Repeat table header on each printed page */
+  thead {
+    display: table-header-group;
+  }
+
+  tfoot {
+    display: table-footer-group;
+    font-weight: bold;
+    border-top: 2px solid #000;
+  }
+
+  th {
+    background: #f0f0f0 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    border-bottom: 1.5px solid #333;
+    padding: 6pt 8pt;
+    font-size: 8pt;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  td {
+    padding: 5pt 8pt;
+    border-bottom: 0.5pt solid #ddd;
+  }
+
+  /* Section header rows — bold background */
+  .section-row,
+  tr.group {
+    font-weight: bold;
+    background: #f0f0f0 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Clean totals */
+  tfoot tr:last-child td {
+    border-top: 2pt solid #000;
+    padding-top: 8pt;
+    padding-bottom: 8pt;
+    font-size: 11pt;
+  }
+
+  /* Print header block — hidden on screen, visible on print */
+  .print-header {
+    display: block !important;
+    text-align: center;
+    margin-bottom: 16pt;
+    padding-bottom: 8pt;
+    border-bottom: 1pt solid #ccc;
+  }
+
+  .print-header h1 {
+    font-size: 16pt;
+    margin: 0 0 4pt;
+  }
+
+  .print-header p {
+    font-size: 9pt;
+    color: #666;
+    margin: 0;
+  }
+
+  /* Page setup */
+  @page {
+    margin: 15mm;
+    size: A4 landscape;
+  }
+
+  @page :first {
+    margin-top: 20mm;
+  }
+
+  /* Remove visual noise: animations, shadows, rounded corners */
+  * {
+    animation: none !important;
+    box-shadow: none !important;
+    transition: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Ensure links look like text */
+  a {
+    text-decoration: none !important;
+    color: black !important;
+  }
+
+  /* Remove background colors except where explicitly preserved */
+  *:not(th):not(.section-row):not(tr.group) {
+    background: transparent !important;
+  }
+
+  /* Badge — render as plain text in print */
+  [class*="badge"],
+  [class*="Badge"] {
+    border: 1px solid #999 !important;
+    background: transparent !important;
+    color: #333 !important;
+    font-size: 8pt;
+    padding: 1pt 4pt;
+    border-radius: 2pt;
+  }
+
+  /* Hide scrollbars */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Ensure overflow is visible so nothing gets clipped */
+  .overflow-x-auto,
+  .overflow-hidden,
+  .overflow-y-auto {
+    overflow: visible !important;
+  }
+
+  /* AG Grid — flatten for print */
+  .ag-root-wrapper {
+    border: none !important;
+    overflow: visible !important;
+  }
+
+  .ag-header {
+    background: #f0f0f0 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    border-bottom: 1.5px solid #333 !important;
+  }
+
+  .ag-header-cell {
+    font-size: 8pt !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 4pt 6pt !important;
+  }
+
+  .ag-row {
+    border-bottom: 0.5pt solid #ddd !important;
+    page-break-inside: avoid;
+  }
+
+  .ag-row.ag-row-group {
+    font-weight: bold;
+    background: #f0f0f0 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .ag-cell {
+    font-size: 10pt !important;
+    padding: 4pt 6pt !important;
+    line-height: 1.4 !important;
+  }
+
+  .ag-pinned-bottom-container .ag-row {
+    font-weight: bold;
+    border-top: 2pt solid #000 !important;
+  }
+
+  /* Hide AG Grid scrollbars and toolbars in print */
+  .ag-body-horizontal-scroll,
+  .ag-body-vertical-scroll,
+  .ag-side-bar,
+  .ag-status-bar,
+  .ag-paging-panel {
+    display: none !important;
+  }
+}
+
+/* ── Accessibility — respect reduced motion ────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+
+  .auth-blob {
+    animation: none !important;
+  }
+
+  .gradient-text {
+    animation: none !important;
+    background-position: 0% 50% !important;
+  }
+
+  .btn-shimmer::after {
+    display: none;
+  }
+
+  .live-dot,
+  .live-dot::before {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: scale(1) !important;
+  }
+}
+
+/* ── Utility: hide scrollbar ──────────────────────────────────────── */
+
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Auth Page — Construction Background ───────────────────────────── */
+/* LEFT: Animated estimation table filling left ~50% of viewport       */
+/* RIGHT: Dashboard cards (bar chart, donut, KPIs, S-curve, blueprint) */
+
+:root {
+  --oce-bp-color: rgba(0, 70, 210, 0.38);
+}
+
+.dark {
+  --oce-bp-color: rgba(100, 160, 255, 0.25);
+}
+
+.oce-auth-bg {
+  z-index: 0;
+}
+
+/* ═══════════════════════════════════════════════════════
+   LEFT SIDE — Animated Estimation Table
+   ═══════════════════════════════════════════════════════ */
+
+.oce-bg-table-wrap {
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  /* Fill entire left half — generous sizing */
+  left: -30px;
+  top: -20px;
+  width: 52vw;
+  max-width: 720px;
+  height: 105vh;
+  /* 3D tilt for depth */
+  transform: perspective(1400px) rotateX(12deg) rotateY(2deg);
+  transform-origin: top left;
+  /* Fade out toward center — visible but not overpowering */
+  mask-image: radial-gradient(ellipse 70% 65% at 30% 45%, rgba(0,0,0,.85) 10%, rgba(0,0,0,.5) 35%, rgba(0,0,0,.15) 60%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 65% at 30% 45%, rgba(0,0,0,.85) 10%, rgba(0,0,0,.5) 35%, rgba(0,0,0,.15) 60%, transparent 80%);
+}
+
+.oce-table-grid {
+  display: grid;
+  grid-template-columns: 60px 200px 48px 70px 78px 90px 54px;
+  gap: 0;
+}
+
+.oce-cell {
+  height: 34px;
+  background: transparent;
+  border: 1px solid rgba(0, 80, 220, 0.06);
+  transition: background 0.7s, border-color 0.7s, color 0.5s;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  font-size: 11px;
+  color: transparent;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.oce-cell-right { justify-content: flex-end; }
+
+.oce-cell-header {
+  background: rgba(0, 80, 220, 0.05);
+  border-bottom: 1.5px solid rgba(0, 80, 220, 0.12);
+  height: 28px;
+  font-family: var(--oe-font-sans);
+  font-size: 9px;
+  font-weight: 700;
+  color: rgba(0, 80, 220, 0.4);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.oce-cell-pos {
+  font-size: 10px;
+  color: rgba(0, 80, 220, 0.3);
+  background: rgba(0, 80, 220, 0.02);
+  border-right: 1px solid rgba(0, 80, 220, 0.08);
+}
+
+.oce-cell-desc { font-family: var(--oe-font-sans); font-size: 11px; }
+.oce-cell-total { font-weight: 700; }
+
+.oce-cell-section {
+  background: rgba(0, 80, 220, 0.025);
+  border-top: 1.5px solid rgba(0, 80, 220, 0.08);
+  font-weight: 700;
+  font-family: var(--oe-font-sans);
+  font-size: 11px;
+}
+
+/* Cell activation levels — light / medium / high */
+.oce-cell.on   { background: rgba(0,80,220,.08);  border-color: rgba(0,80,220,.12); color: rgba(0,60,200,.38); }
+.oce-cell.on-m { background: rgba(0,80,220,.14);  border-color: rgba(0,80,220,.18); color: rgba(0,60,200,.52); }
+.oce-cell.on-h { background: rgba(0,80,220,.20);  border-color: rgba(0,80,220,.24); color: rgba(0,60,200,.68); }
+
+/* Dark mode */
+.dark .oce-cell { border-color: rgba(100,160,255,.04); }
+.dark .oce-cell-header { background: rgba(100,160,255,.03); border-bottom-color: rgba(100,160,255,.08); color: rgba(100,160,255,.3); }
+.dark .oce-cell-pos { color: rgba(100,160,255,.2); background: rgba(100,160,255,.015); border-right-color: rgba(100,160,255,.06); }
+.dark .oce-cell-section { background: rgba(100,160,255,.025); border-top-color: rgba(100,160,255,.08); }
+.dark .oce-cell.on   { background: rgba(100,160,255,.06); border-color: rgba(100,160,255,.08); color: rgba(100,160,255,.28); }
+.dark .oce-cell.on-m { background: rgba(100,160,255,.10); border-color: rgba(100,160,255,.13); color: rgba(100,160,255,.4); }
+.dark .oce-cell.on-h { background: rgba(100,160,255,.15); border-color: rgba(100,160,255,.18); color: rgba(100,160,255,.55); }
+
+/* ═══════════════════════════════════════════════════════
+   RIGHT SIDE — Dashboard Grid
+   Same visual treatment as the table: 3D tilt, mask fade
+   ═══════════════════════════════════════════════════════ */
+
+.oce-bg-dash-wrap {
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  /* Fill right half — generous sizing, pushed to the edge */
+  right: 10px;
+  top: -10px;
+  width: 44vw;
+  max-width: 600px;
+  height: 105vh;
+  /* 3D tilt — mirrored from left, slightly more dramatic */
+  transform: perspective(1200px) rotateX(14deg) rotateY(-3deg);
+  transform-origin: top right;
+  /* Softer fade — let the dashboard be clearly visible */
+  mask-image: radial-gradient(ellipse 80% 75% at 75% 45%, rgba(0,0,0,.9) 20%, rgba(0,0,0,.55) 50%, rgba(0,0,0,.15) 75%, transparent 95%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 75% at 75% 45%, rgba(0,0,0,.9) 20%, rgba(0,0,0,.55) 50%, rgba(0,0,0,.15) 75%, transparent 95%);
+}
+
+.oce-bg-dash-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 4px;
+}
+
+.oce-dash-cell {
+  min-width: 0;
+}
+
+.oce-dash-cell svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Full-width cards span both columns */
+.oce-dash-wide {
+  grid-column: 1 / -1;
+}
+
+.dark .oce-bg-dash-wrap { opacity: 0.75; }
+
+/* ═══════════════════════════════════════════════════════
+   Responsive & Accessibility
+   ═══════════════════════════════════════════════════════ */
+
+@media (max-width: 1024px) {
+  .oce-bg-table-wrap {
+    width: 48vw;
+    left: -40px;
+  }
+  .oce-bg-dash-wrap {
+    width: 44vw;
+    right: -30px;
+  }
+}
+
+@media (max-width: 768px) {
+  .oce-bg-table-wrap,
+  .oce-bg-dash-wrap {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oce-cell { transition: none; }
+}
+
+/* ── Logo Animations ───────────────────────────────────────────────── */
+
+@keyframes oeBgScale {
+  0% { transform: scale(0.5) rotate(-8deg); opacity: 0; }
+  60% { transform: scale(1.05) rotate(1deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes oeBarGrow {
+  0% { transform: scaleY(0) translateY(8px); opacity: 0; }
+  50% { transform: scaleY(1.12) translateY(-2px); opacity: 1; }
+  70% { transform: scaleY(0.95) translateY(0); opacity: 1; }
+  100% { transform: scaleY(1) translateY(0); opacity: 1; }
+}
+
+@keyframes oeBuildingSlide {
+  0% { transform: translateX(40px) translateY(10px) scale(0.9); opacity: 0; }
+  60% { transform: translateX(-4px) translateY(0) scale(1.02); opacity: 1; }
+  100% { transform: translateX(0) translateY(0) scale(1); opacity: 1; }
+}
+
+@keyframes oeWindowFade {
+  0% { opacity: 0; transform: scale(0.5); }
+  60% { opacity: 1; transform: scale(1.15); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes oeLogoFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes oeLogoGlow {
+  0%, 100% { filter: drop-shadow(0 0 0 transparent); }
+  50% { filter: drop-shadow(0 2px 8px rgba(0, 102, 255, 0.25)); }
+}
+
+/* ── Chat / iMessage Animations ──────────────────────────────────── */
+
+@keyframes oeMsgIn {
+  0% { opacity: 0; transform: translateY(12px) scale(0.95); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.animate-msg-in {
+  animation: oeMsgIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes oeTypingDot {
+  0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-4px); }
+}
+
+/* ── DWG Takeoff: CAD-style drafting grid ─────────────────────────────
+   Scoped to .oe-dwg-canvas — do NOT promote these tokens to :root.
+   Light mode = faint black lines on a pale canvas.
+   Dark mode = faint white lines on a deep drafting-board canvas.
+   1:5 minor:major ratio mirrors a typical CAD default grid snap. */
+.oe-dwg-canvas {
+  /* Bumped from 0.04/0.08 → 0.10/0.20 so the drafting grid actually
+     reads as a grid rather than a barely-visible texture. */
+  --oe-dwg-grid-minor: rgba(255, 255, 255, 0.10);
+  --oe-dwg-grid-major: rgba(255, 255, 255, 0.20);
+  --oe-dwg-vignette: rgba(0, 0, 0, 0.45);
+}
+:root:not(.dark) .oe-dwg-canvas {
+  /* Light mode: bumped from 0.04/0.08 → 0.09/0.18 so the lines stand
+     out against the pale canvas without becoming distracting. */
+  --oe-dwg-grid-minor: rgba(0, 0, 0, 0.09);
+  --oe-dwg-grid-major: rgba(0, 0, 0, 0.18);
+  --oe-dwg-vignette: rgba(0, 0, 0, 0.10);
+}
+
+/* ── MapLibre attribution: collapse by default on all viewport widths ───
+   MapLibre only applies compact mode below 640px by default. On wider
+   screens it prints the full attribution inline — visual noise on a
+   project page. Force compact shape at every width; user clicks the
+   "i" icon to reveal attribution. */
+.maplibregl-ctrl-attrib {
+  min-height: 24px !important;
+  padding: 2px 24px 2px 0 !important;
+}
+.maplibregl-ctrl-attrib:not(.maplibregl-compact-show) .maplibregl-ctrl-attrib-inner {
+  display: none !important;
+}
+.maplibregl-ctrl-attrib-button {
+  display: block !important;
+}
+
+/* ── BOQ grid: centre every column header by default ─────────────────── */
+.ag-theme-alpine .ag-header-cell.oe-header-centered .ag-header-cell-label,
+.ag-theme-alpine-dark .ag-header-cell.oe-header-centered .ag-header-cell-label,
+.ag-theme-quartz .ag-header-cell.oe-header-centered .ag-header-cell-label {
+  justify-content: center;
+  text-align: center;
+}
+/* Right-aligned columns keep their explicit alignment. */
+.ag-header-cell.ag-right-aligned-header .ag-header-cell-label {
+  justify-content: flex-end !important;
+}
+
+/* ── Login glass-hero blob animations ─────────────────────────────────
+   Slow drifting radial blobs behind the glass card on /login.
+   Each runs 18-26s ease-in-out infinite for an ambient feel. */
+
+@keyframes blob-slow-1 {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  33%      { transform: translate3d(40px, -30px, 0) scale(1.08); }
+  66%      { transform: translate3d(-20px, 40px, 0) scale(0.95); }
+}
+@keyframes blob-slow-2 {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  33%      { transform: translate3d(-50px, 30px, 0) scale(0.92); }
+  66%      { transform: translate3d(30px, -40px, 0) scale(1.1); }
+}
+@keyframes blob-slow-3 {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50%      { transform: translate3d(-40px, -20px, 0) scale(1.12); }
+}
+@keyframes blob-slow-4 {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50%      { transform: translate3d(50px, 30px, 0) scale(0.9); }
+}
+.animate-blob-slow-1 { animation: blob-slow-1 22s ease-in-out infinite; }
+.animate-blob-slow-2 { animation: blob-slow-2 26s ease-in-out infinite; }
+.animate-blob-slow-3 { animation: blob-slow-3 18s ease-in-out infinite; }
+.animate-blob-slow-4 { animation: blob-slow-4 24s ease-in-out infinite; }
+
+/* Ledger row deep-link flash — triggered when /markups deep-links to a
+   specific measurement (TakeoffViewerModule + MeasurementLedger). The
+   animation auto-removes itself after ~1.6s so a re-select re-runs it. */
+@keyframes ledgerRowFlash {
+  0%   { background-color: rgba(59, 130, 246, 0.40); }
+  60%  { background-color: rgba(59, 130, 246, 0.18); }
+  100% { background-color: transparent; }
+}
+.ledger-row-flash {
+  animation: ledgerRowFlash 1.4s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-blob-slow-1,
+  .animate-blob-slow-2,
+  .animate-blob-slow-3,
+  .animate-blob-slow-4 { animation: none; }
+}
+
+/* Route-transition pending cursor — navigationProgress.ts toggles this
+   class on <html> between history push and React location commit. The
+   user gets instant "working on it" feedback at the pointer even before
+   the 150ms-delayed top progress bar appears. */
+html.oe-nav-pending,
+html.oe-nav-pending body {
+  cursor: progress;
+}
+
+/* Sidebar pending-row spinner — appears only if the route transition is
+   still in flight after 120ms, so instant navigations never blink the
+   row icon. */
+.oe-nav-spinner {
+  opacity: 0;
+  animation: oe-nav-spinner-in 1ms linear 120ms forwards, oe-nav-spin 1s linear infinite;
+}
+@keyframes oe-nav-spinner-in {
+  to { opacity: 1; }
+}
+@keyframes oe-nav-spin {
+  to { transform: rotate(360deg); }
+}

@@ -1,0 +1,40 @@
+{
+  "$schema": "openconstructionerp.partner_pack.rule_pack/v1",
+  "slug": "concrete_din_en_206",
+  "display_name": "DIN EN 206 / DIN 1045-2 — Beton-Spezifikation, Eigenschaften, Herstellung",
+  "description": "Validiert Beton-Spezifikationen gegen DIN EN 206:2021-06 und DIN 1045-2: Festigkeitsklasse (C-/LC-), Expositionsklassen (XC/XD/XS/XF/XA/XM), Konsistenzklasse, Größtkorn D_max, Chloridklasse Cl, Mindestzementgehalt und w/z-Wert je Expositionsklasse.",
+  "standard": "DIN EN 206:2021-06 / DIN 1045-2:2008-08",
+  "severity_default": "error",
+  "category": "compliance",
+  "locale_default": "de",
+  "enables_rule_ids": [
+    "concrete.din_en_206.strength_class_required",
+    "concrete.din_en_206.strength_class_format",
+    "concrete.din_en_206.strength_class_lightweight_format",
+    "concrete.din_en_206.exposure_classes_required",
+    "concrete.din_en_206.exposure_classes_consistent",
+    "concrete.din_en_206.exposure_class_min_strength_met",
+    "concrete.din_en_206.consistency_class_required",
+    "concrete.din_en_206.max_aggregate_size_set",
+    "concrete.din_en_206.chloride_class_set",
+    "concrete.din_en_206.min_cement_content_for_exposure",
+    "concrete.din_en_206.max_w_c_ratio_for_exposure",
+    "concrete.din_en_206.conformity_certificate_referenced"
+  ],
+  "parameters": {
+    "strength_class_pattern": "^C\\d{2}/\\d{2}$",
+    "lightweight_strength_class_pattern": "^LC\\d{2}/\\d{2}$",
+    "valid_exposure_groups": ["X0", "XC", "XD", "XS", "XF", "XA", "XM"],
+    "valid_consistency_classes": ["F1", "F2", "F3", "F4", "F5", "F6", "SCC"],
+    "valid_aggregate_sizes_mm": [8, 16, 22, 32, 63],
+    "valid_chloride_classes": ["Cl 0,10", "Cl 0,20", "Cl 0,40", "Cl 1,00"]
+  },
+  "metadata": {
+    "applies_to": ["concrete_pour", "ready_mix_order", "boq_position"],
+    "references": [
+      "DIN EN 206:2021-06",
+      "DIN 1045-2:2008-08",
+      "DAfStb-Richtlinie 'Beton nach DIN EN 206-1 und DIN 1045-2'"
+    ]
+  }
+}

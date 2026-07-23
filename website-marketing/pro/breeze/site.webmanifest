@@ -1,0 +1,28 @@
+{
+  "name": "OpenConstructionERP",
+  "short_name": "OCERP",
+  "description": "Open-source construction ERP — estimates, BIM, BOQ, tenders. 55,000+ priced cost items. Self-hosted under AGPL-3.0.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f7fbff",
+  "theme_color": "#0284c7",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["business", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo-big.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

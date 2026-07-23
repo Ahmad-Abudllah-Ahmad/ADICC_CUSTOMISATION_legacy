@@ -1,0 +1,109 @@
+{
+  "$schema": "openconstructionerp.partner_pack.catalogue/v1",
+  "catalogue_type": "formwork_systems",
+  "partner": "doker-formwork",
+  "version": "0.1.0",
+  "currency_hint": "EUR",
+  "$note": "Reference inventory of common Doka / Doker formwork systems. Names, classes and reuse counts are typical-use defaults — replace with contract-specific figures before bidding.",
+  "systems": [
+    {
+      "id": "frami_xlife",
+      "name": "Frami Xlife",
+      "category": "wall_formwork",
+      "subcategory": "frame_panel",
+      "din_18218_class": "S2",
+      "max_fresh_concrete_pressure_kN_per_m2": 60,
+      "max_pour_height_m": 3.30,
+      "panel_modules_m": [0.30, 0.45, 0.60, 0.75, 0.90],
+      "typical_reuse_count": 100,
+      "manual_handling_kg_per_panel": 49,
+      "applications": ["residential", "small_commercial", "renovation"]
+    },
+    {
+      "id": "framax_xlife_plus",
+      "name": "Framax Xlife plus",
+      "category": "wall_formwork",
+      "subcategory": "frame_panel",
+      "din_18218_class": "S4",
+      "max_fresh_concrete_pressure_kN_per_m2": 80,
+      "max_pour_height_m": 3.30,
+      "panel_modules_m": [0.30, 0.45, 0.60, 0.75, 0.90, 1.35, 2.70],
+      "typical_reuse_count": 150,
+      "manual_handling_kg_per_panel": 88,
+      "requires_crane_above_kg": 80,
+      "applications": ["high_rise", "industrial", "infrastructure"]
+    },
+    {
+      "id": "alu_star_100",
+      "name": "Alu-Star 100",
+      "category": "wall_formwork",
+      "subcategory": "aluminium_frame",
+      "din_18218_class": "S2",
+      "max_fresh_concrete_pressure_kN_per_m2": 60,
+      "max_pour_height_m": 3.00,
+      "panel_modules_m": [0.30, 0.45, 0.60, 0.75, 0.90],
+      "typical_reuse_count": 80,
+      "manual_handling_kg_per_panel": 29,
+      "applications": ["residential", "manual_handling_only_sites"]
+    },
+    {
+      "id": "dokaflex_1_2_4",
+      "name": "Dokaflex 1-2-4",
+      "category": "slab_formwork",
+      "subcategory": "hand_set_table",
+      "max_slab_thickness_m": 0.30,
+      "max_support_height_m": 5.50,
+      "props_required": ["Eurex 20", "Eurex 30"],
+      "typical_reuse_count": 50,
+      "manual_handling_kg_per_part": 23,
+      "applications": ["residential_slabs", "small_commercial_slabs"]
+    },
+    {
+      "id": "dokamatic_table",
+      "name": "Dokamatic Tisch",
+      "category": "slab_formwork",
+      "subcategory": "table_form",
+      "max_slab_thickness_m": 0.40,
+      "table_size_m2_typical": 16.0,
+      "max_support_height_m": 6.55,
+      "typical_reuse_count": 200,
+      "applications": ["high_rise_slabs", "office_buildings"]
+    },
+    {
+      "id": "rs_xlife",
+      "name": "RS Xlife (Stützenschalung)",
+      "category": "column_formwork",
+      "subcategory": "adjustable_column",
+      "din_18218_class": "S4",
+      "max_fresh_concrete_pressure_kN_per_m2": 100,
+      "max_pour_height_m": 3.30,
+      "column_cross_section_min_cm": 20,
+      "column_cross_section_max_cm": 60,
+      "typical_reuse_count": 150,
+      "applications": ["rectangular_columns", "industrial_columns"]
+    },
+    {
+      "id": "ks_xclimb_60",
+      "name": "Xclimb 60 (Kletterschalung)",
+      "category": "climbing_formwork",
+      "subcategory": "crane_climbed",
+      "din_18218_class": "S4",
+      "max_fresh_concrete_pressure_kN_per_m2": 80,
+      "platform_load_class_din_en_12810": "3",
+      "typical_reuse_count": 80,
+      "wind_load_resistance_m_per_s": 28,
+      "applications": ["high_rise", "core_walls", "bridge_piers"]
+    },
+    {
+      "id": "staxo_100",
+      "name": "Staxo 100 (Traggerüst)",
+      "category": "falsework",
+      "subcategory": "shoring_tower",
+      "din_en_12812_load_class": "B1",
+      "leg_load_capacity_kN": 100,
+      "max_height_m": 25.0,
+      "typical_reuse_count": 200,
+      "applications": ["heavy_slabs", "bridge_decks", "transfer_slabs"]
+    }
+  ]
+}

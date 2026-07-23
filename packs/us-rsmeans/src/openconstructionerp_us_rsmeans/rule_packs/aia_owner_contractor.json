@@ -1,0 +1,34 @@
+{
+  "rule_pack_id": "aia_owner_contractor",
+  "name": "AIA Owner-Contractor Agreements (A101 / A102 / A103 / A104 / A141)",
+  "standard": "AIA Contract Family — Owner-Contractor",
+  "jurisdiction": "US",
+  "edition": "2017 series (A141 Design-Build is 2014)",
+  "description": "Enables OCERP built-in validation rules that check the chosen AIA Owner-Contractor agreement variant carries its mandatory articles, attachments, and complements AIA A201-2017 General Conditions (which is incorporated by reference into all of these).",
+  "issuer": "American Institute of Architects (AIA)",
+  "variants_covered": {
+    "A101-2017": "Owner-Contractor, Stipulated Sum (single lump-sum price)",
+    "A102-2017": "Owner-Contractor, Cost-Plus with Guaranteed Maximum Price (CM at Risk / GMP)",
+    "A103-2017": "Owner-Contractor, Cost-Plus without GMP (open-book)",
+    "A104-2017": "Owner-Contractor, Abbreviated form for small projects",
+    "A141-2014": "Owner-Design-Builder Agreement (with Exhibit A — Terms & Conditions)"
+  },
+  "enables_rule_ids": [
+    "aia.owner_contractor.variant_selected",
+    "aia.a101.contract_sum_present",
+    "aia.a101.unit_prices_attachment_if_applicable",
+    "aia.a102.gmp_amount_present",
+    "aia.a102.gmp_amendment_signed",
+    "aia.a102.cost_of_work_definitions_set",
+    "aia.a102.contractor_fee_method_selected",
+    "aia.a102.savings_split_method_selected",
+    "aia.a103.cost_of_work_definitions_set",
+    "aia.a103.no_gmp_disclaimer_present",
+    "aia.a104.scope_within_abbreviated_form_threshold",
+    "aia.a141.basis_of_design_documents_attached",
+    "aia.a141.owner_criteria_present",
+    "aia.owner_contractor.a201_general_conditions_referenced",
+    "aia.owner_contractor.exhibits_complete",
+    "aia.owner_contractor.signatures_witnessed_notarised"
+  ]
+}

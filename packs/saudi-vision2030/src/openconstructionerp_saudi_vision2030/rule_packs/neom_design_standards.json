@@ -1,0 +1,35 @@
+{
+  "rule_pack_id": "neom_design_standards",
+  "name": "NEOM — Design Standards & Net-Zero Sustainability",
+  "name_ar": "نيوم — معايير التصميم والاستدامة بصفر صافي",
+  "standard": "NEOM Design Standards (THE LINE / Oxagon / Trojena / Sindalah / Magna) + NEOM Building Code (Net-Zero)",
+  "jurisdiction": "SA-NEOM",
+  "regulator": "NEOM Authority — Urban Planning & Design Office",
+  "publication_year": 2024,
+  "applies_to": ["projects", "boq", "validation"],
+  "description": "Enables OCERP built-in validation rules that check submittals against the NEOM design-standards portfolio. NEOM mandates net-zero embodied + operational carbon, no internal-combustion vehicles inside developments, '15-minute city' walkability radius (everything within 5-min walk of THE LINE Vertical Module), 100% renewable energy supply, zero-waste-to-landfill targets, biodiversity protection at the Tabuk fringe, and a NEOM-Authority-internal approval chain that supersedes MoMRAH for NEOM territory. Subzone-aware: rules differentiate THE LINE (vertical) vs Oxagon (port/industrial) vs Trojena (mountain/winter sports) vs Sindalah (luxury island) vs Magna (Gulf of Aqaba coast).",
+  "description_ar": "تفعيل قواعد التحقق لمعايير تصميم نيوم — صفر صافي كربون، عدم استخدام محركات الاحتراق الداخلي، مدينة الخمس عشرة دقيقة، طاقة متجددة 100%، وموافقات هيئة نيوم.",
+  "severity_overrides": {
+    "neom.no_internal_combustion_vehicles_inside_zone": "ERROR",
+    "neom.net_zero_carbon_target_set": "ERROR"
+  },
+  "enables_rule_ids": [
+    "neom.subzone_assigned",
+    "neom.net_zero_carbon_target_set",
+    "neom.embodied_carbon_within_budget",
+    "neom.operational_carbon_within_budget",
+    "neom.renewable_energy_share_100pct",
+    "neom.no_internal_combustion_vehicles_inside_zone",
+    "neom.fifteen_minute_walkability_radius",
+    "neom.zero_waste_to_landfill_target",
+    "neom.biodiversity_impact_assessed",
+    "neom.mobility_corridor_setback_respected",
+    "neom.water_reuse_strategy_present",
+    "neom.the_line_vertical_module_compliance",
+    "neom.oxagon_port_industrial_zoning",
+    "neom.trojena_alpine_microclimate_design",
+    "neom.sindalah_island_marine_setback",
+    "neom.neom_authority_approval_chain_configured",
+    "neom.design_review_panel_drp_submission"
+  ]
+}

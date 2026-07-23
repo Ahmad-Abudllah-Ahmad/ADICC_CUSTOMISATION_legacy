@@ -1,0 +1,15 @@
+{
+  "rule_pack_id": "lopsrm_obra_publica",
+  "name": "LOPSRM Public Works",
+  "standard": "Ley de Obras Publicas y Servicios Relacionados con las Mismas (LOPSRM)",
+  "jurisdiction": "MX",
+  "regulator": "Secretaria de la Funcion Publica (SFP)",
+  "description": "Federal public-works framework. Contracts are awarded a precios unitarios, a precio alzado or mixto; unit prices are integrated per the reglamento; and cargos adicionales typically carry the cinco al millar (0.5 percent) inspection and oversight fee. Many states mirror the structure in their own obra publica statutes. Switches on the universal BOQ quality rules plus the Mexican APU and IVA checks today; full LOPSRM tender-evaluation gates are on the roadmap.",
+  "applies_to": ["tendering", "validation"],
+  "contract_types": ["precios unitarios", "precio alzado", "mixto"],
+  "enables_rule_ids": [
+    "mexico.apu_completeness",
+    "boq_quality.position_has_quantity",
+    "boq_quality.position_has_unit_rate"
+  ]
+}

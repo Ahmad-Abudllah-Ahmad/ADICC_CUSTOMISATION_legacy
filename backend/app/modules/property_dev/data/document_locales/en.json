@@ -1,0 +1,227 @@
+{
+  "common": {
+    "page_of": "Page {page} of {total}",
+    "generated_at": "Generated {timestamp} UTC",
+    "doc_ref": "Doc. Ref",
+    "developer": "Developer",
+    "unit_code": "Unit Code",
+    "watermark_draft": "DRAFT",
+    "currency": "Currency",
+    "amount": "Amount",
+    "date": "Date",
+    "signature": "Signature",
+    "place": "Place",
+    "buyer_signature": "Buyer Signature",
+    "developer_signature": "Developer Signature",
+    "witness": "Witness"
+  },
+  "reservation_receipt": {
+    "title": "Reservation Receipt",
+    "intro": "This receipt confirms reservation of the property described below. The deposit has been received and the unit is held off-market for the buyer until the cooling-off period expires or a Sale-Purchase Agreement is signed.",
+    "headings": {
+      "buyer": "Buyer",
+      "property": "Property",
+      "amount_paid": "Amount Paid",
+      "valid_until": "Valid Until",
+      "next_step": "Next Step",
+      "reservation_number": "Reservation No.",
+      "cooling_off": "Cooling-off Period",
+      "deposit_status": "Deposit Status",
+      "plot_details": "Plot Details"
+    },
+    "next_step_text": "Within {days} days the buyer must sign the Sale-Purchase Agreement and pay the next instalment, or this reservation will expire and be released back to the market.",
+    "cooling_off_text": "{days} days from receipt of this document.",
+    "footer_note": "Deposit is refundable in full only during the cooling-off period defined by the jurisdiction. After this period, refundability follows the applicable forfeiture rules."
+  },
+  "sales_contract": {
+    "title": "Sale-Purchase Agreement",
+    "subtitle": "Agreement No. {number}",
+    "preamble": "This Sale-Purchase Agreement (the \"Agreement\") is made and entered into on the date shown below between the Developer of record and the Buyer(s) listed below, for the sale of the property identified herein.",
+    "headings": {
+      "parties": "Parties to the Agreement",
+      "property": "The Property",
+      "price": "Purchase Price",
+      "payment_schedule": "Payment Schedule",
+      "clauses": "Terms and Conditions",
+      "instalments": "Instalments",
+      "signatures": "Signatures",
+      "co_ownership": "Co-Ownership",
+      "regulatory": "Regulatory Disclosures",
+      "annexes": "Annexes"
+    },
+    "parties_intro": "The Buyer(s) acquire the property jointly in the ownership percentages set out below. All parties are jointly and severally liable for the obligations under this Agreement unless explicitly stated otherwise.",
+    "instalment_columns": {
+      "sequence": "#",
+      "milestone": "Milestone",
+      "due_date": "Due Date",
+      "amount": "Amount",
+      "currency": "Currency"
+    },
+    "party_columns": {
+      "name": "Name",
+      "role": "Role",
+      "ownership_pct": "Ownership %",
+      "email": "Email"
+    },
+    "property_columns": {
+      "plot_number": "Plot Number",
+      "development": "Development",
+      "area_m2": "Area (m²)",
+      "house_type": "House Type"
+    },
+    "price_label": "Total Purchase Price",
+    "breakdown_label": "Price Breakdown",
+    "signature_note": "Signed in {place} on {date}. By signing below, the Buyer and Developer confirm they have read, understood, and agree to the terms set out in this Agreement, including all annexes."
+  },
+  "payment_receipt": {
+    "title": "Payment Receipt",
+    "intro": "This receipt acknowledges payment of an instalment under the Sale-Purchase Agreement referenced below.",
+    "headings": {
+      "spa_ref": "Agreement No.",
+      "instalment": "Instalment",
+      "milestone": "Milestone",
+      "amount_paid": "Amount Paid",
+      "payment_method": "Payment Method",
+      "payment_ref": "Payment Reference",
+      "paid_at": "Paid On",
+      "outstanding": "Outstanding Balance"
+    },
+    "footer_note": "This receipt is generated automatically and is valid without a manual signature. Retain for your records."
+  },
+  "handover_certificate": {
+    "title": "Certificate of Handover",
+    "intro": "This certificate records the handover of the property from the Developer to the Buyer(s). The Buyer accepts the unit subject to the snag list and warranty terms attached.",
+    "headings": {
+      "spa_ref": "Agreement No.",
+      "completed_at": "Handover Date",
+      "snag_count": "Open Snags",
+      "warranty_period": "Warranty Period",
+      "keys_handed_over": "Keys Handed Over",
+      "buyer_acceptance": "Buyer's Acceptance",
+      "developer_declaration": "Developer's Declaration"
+    },
+    "developer_declaration_text": "The Developer hereby confirms that the property has been constructed in accordance with the Sale-Purchase Agreement, that all required documentation has been delivered to the Buyer, and that the structural and finishing warranties commence on the date of this certificate.",
+    "buyer_acceptance_text": "The Buyer hereby accepts handover of the property subject to the snag list attached. The Buyer acknowledges receipt of keys, manuals, and all required documentation listed in the Annexes.",
+    "snag_note": "Open snag items will be remedied by the Developer within reasonable time per the SPA snag-fix clause."
+  },
+  "warranty_certificate": {
+    "title": "Warranty Certificate",
+    "intro": "This Certificate sets out the warranty obligations of the Developer with respect to the property handed over to the Buyer(s) on the date below.",
+    "headings": {
+      "spa_ref": "Agreement No.",
+      "handover_date": "Handover Date",
+      "structural": "Structural Warranty",
+      "finishing": "Finishing Warranty",
+      "structural_period": "Structural Period",
+      "finishing_period": "Finishing Period",
+      "warranty_expiry": "Warranty Expiry",
+      "scope": "Scope of Cover",
+      "exclusions": "Exclusions"
+    },
+    "structural_text": "The Developer warrants the structural integrity of the property - including the load-bearing structure, foundations, and waterproofing - for a period of {years} years from the date of handover.",
+    "finishing_text": "The Developer warrants the finishing works - including paint, fixtures, fittings, appliances installed by the Developer, and minor cosmetic items - for a period of {years} year(s) from the date of handover.",
+    "exclusions_text": "This warranty excludes damage caused by misuse, alterations performed by the Buyer or third parties, normal wear and tear, force majeure events, and items covered by separate manufacturer warranties.",
+    "claim_procedure": "To file a claim, the Buyer must submit a written notice to the Developer within the warranty period, describing the defect and providing reasonable supporting evidence."
+  },
+  "noc": {
+    "title": "No Objection Certificate",
+    "subtitle": "For Resale of Unit",
+    "intro": "This No Objection Certificate (NOC) is issued by the Developer to confirm there are no outstanding obligations of the Buyer that would prevent the resale of the unit identified below.",
+    "headings": {
+      "spa_ref": "Agreement No.",
+      "requested_by": "Requested By",
+      "issued_to": "Issued To",
+      "purpose": "Purpose",
+      "validity": "Validity",
+      "outstanding_balance": "Outstanding Balance",
+      "transfer_fee": "Transfer Fee"
+    },
+    "validity_text": "This NOC is valid for {days} days from the date of issue. After this period, a fresh NOC must be requested.",
+    "purpose_text": "Sale of the unit to a third-party buyer, subject to the Developer's standard transfer procedures.",
+    "no_outstanding": "All instalments up to the date of this NOC have been paid in full. No outstanding payments are recorded against this contract.",
+    "developer_statement": "The Developer hereby grants permission, subject to the standard transfer fee and procedures, for the Buyer to transfer ownership of the unit to a third party. This NOC does not waive any rights of the Developer under the Sale-Purchase Agreement."
+  },
+  "tenant_lease_agreement": {
+    "title": "Tenant Lease Agreement",
+    "intro": "This Lease Agreement is made between the Landlord (Developer) and the Tenant(s) named below for the residential rental of the property described herein.",
+    "tenant_signature": "Tenant Signature",
+    "headings": {
+      "lease_number": "Lease No.",
+      "tenant": "Tenant",
+      "property": "Property",
+      "term": "Term",
+      "monthly_rent": "Monthly Rent",
+      "security_deposit": "Security Deposit",
+      "use_clause": "Use of the Property",
+      "maintenance": "Maintenance",
+      "termination": "Termination"
+    },
+    "use_clause_text": "The Tenant shall use the Property solely as a private residence for the Tenant and immediate family. Sub-letting and commercial use are prohibited without the Landlord's prior written consent.",
+    "maintenance_text": "The Landlord is responsible for structural maintenance and major appliances installed by the Developer. The Tenant is responsible for day-to-day cleanliness, minor repairs under a reasonable threshold, and any damage caused by misuse.",
+    "termination_text": "Either party may terminate this Lease at the end of the term with written notice not less than 30 days before expiry. Early termination by the Tenant forfeits the security deposit unless the Landlord agrees in writing."
+  },
+  "move_in_checklist": {
+    "title": "Move-in Checklist",
+    "intro": "Room-by-room condition report recorded at the moment of handover. Both parties sign that the listed condition reflects the unit as inspected.",
+    "empty_rooms": "No room data supplied.",
+    "acceptance_text": "By signing below, both parties confirm that the room-by-room condition recorded above accurately reflects the unit at the moment of inspection.",
+    "headings": {
+      "spa_ref": "Agreement No.",
+      "inspection_date": "Inspection Date"
+    },
+    "columns": {
+      "item": "Item",
+      "condition": "Condition",
+      "notes": "Notes"
+    }
+  },
+  "mortgage_clearance_letter": {
+    "title": "Mortgage Clearance Letter",
+    "intro": "This letter is issued by the Developer at the request of the Buyer to confirm that the unit identified below carries no outstanding charges, mortgages, liens or encumbrances in favour of the Developer.",
+    "no_encumbrance_text": "The Developer hereby confirms that, as of the date of this letter, the above unit is held free and clear of any mortgage, charge, lien or encumbrance in favour of the Developer or any related party.",
+    "purpose_text": "This letter is issued solely for the purpose of the Buyer's mortgage application and any related due-diligence requested by the Bank named above. It does not waive any rights of the Developer under the Sale-Purchase Agreement.",
+    "headings": {
+      "bank": "Issued To (Bank)",
+      "spa_ref": "Agreement No.",
+      "unit": "Unit"
+    }
+  },
+  "title_deed_transfer_request": {
+    "title": "Title Deed Transfer Request",
+    "intro": "Formal request to the land registry to transfer the title of the unit described below from the Developer to the new owner(s) named in the Sale-Purchase Agreement.",
+    "request_text": "The Developer hereby requests that the Land Registry record the transfer of title to the above unit in favour of the new owner(s) listed, in the percentages indicated, with effect from the date of this request.",
+    "attachments_text": "Original Sale-Purchase Agreement (executed), final payment receipt, handover certificate, identity documents of all new owners, and any local stamp-duty receipts as required by the registry.",
+    "headings": {
+      "registry": "Land Registry",
+      "spa_ref": "Agreement No.",
+      "unit": "Unit",
+      "new_owners": "New Owner(s)",
+      "request_body": "Request",
+      "attachments": "Attachments"
+    }
+  },
+  "escrow_release_authorization": {
+    "title": "Escrow Release Authorization",
+    "intro": "Instruction to the Escrow Agent to release funds held in the escrow account identified below to the Developer, in respect of the milestone described.",
+    "instruction_text": "The Developer hereby authorises and instructs the Escrow Agent to release the above amount from the named escrow account to the Developer's operating account. This release follows the milestone certification recorded in the Sale-Purchase Agreement.",
+    "headings": {
+      "escrow_account": "Escrow Account No.",
+      "spa_ref": "Agreement No.",
+      "unit": "Unit",
+      "amount_to_release": "Amount to Release",
+      "release_reason": "Release Reason"
+    }
+  },
+  "refund_authorization": {
+    "title": "Refund Authorization",
+    "intro": "This document authorises the refund of the amount identified below in respect of the cancelled reservation or sales contract referenced.",
+    "authorisation_text": "The Developer hereby authorises the refund of the above amount via the stated payment method. Settlement timing follows the Developer's standard finance procedures and any cooling-off / forfeiture rules applicable to the original transaction.",
+    "headings": {
+      "reference": "Reference",
+      "unit": "Unit",
+      "amount": "Refund Amount",
+      "reason": "Reason",
+      "payment_method": "Payment Method"
+    }
+  }
+}

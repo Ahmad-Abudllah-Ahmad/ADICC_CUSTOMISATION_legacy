@@ -1,0 +1,59 @@
+# Accessibility clearance audit (DIN 18040-1 — barrier-free public buildings).
+#
+# - Corridors (IfcSpace where SpaceType=Corridor) must have a clear width
+#   of at least 1.50 m per DIN 18040-1 §4.3.6.
+# - Doors on barrier-free routes must have a clear opening width of at
+#   least 0.90 m per DIN 18040-1 §4.3.3.2.
+#
+# Both checks are property-based: the model author is expected to expose
+# `Width` (m) on IfcSpace and `ClearWidth` (m) on IfcDoor.
+schema_version: "1.0"
+pack:
+  id: clearance_corridor_door
+  name: DIN 18040-1 Corridor and Door Clearance
+  description: |
+    Validates barrier-free clearance dimensions for corridors and doors
+    per DIN 18040-1 (public buildings, accessible routes).
+  source: openconstructionerp
+  version: "1.0.0"
+  applies_to:
+    classifications: ["DIN276", "DIN18040"]
+    project_regions: ["DE", "AT", "CH"]
+
+rules:
+  - id: corridor_minimum_width
+    name: Corridor minimum clear width 1.50 m
+    severity: warning
+    rationale: |
+      DIN 18040-1 §4.3.6 — main corridors on accessible routes must allow
+      two wheelchair users to pass; minimum clear width is 1.50 m.
+    selector:
+      ifc_class: IfcSpace
+      properties:
+        - { key: SpaceType, op: eq, value: Corridor }
+    assertion:
+      property:
+        key: Width
+        op: gte
+        value: 1.5
+        unit: m
+    failure_message: "Corridor width {{Width}} m is below the 1.50 m DIN 18040-1 minimum."
+
+  - id: door_clear_width
+    name: Door clear opening width 0.90 m on accessible routes
+    severity: error
+    rationale: |
+      DIN 18040-1 §4.3.3.2 — doors on accessible routes require a clear
+      opening width of 0.90 m measured between the leaf at 90 ° and the
+      stop on the opposite jamb.
+    selector:
+      ifc_class: IfcDoor
+      properties:
+        - { key: OnAccessibleRoute, op: eq, value: true }
+    assertion:
+      property:
+        key: ClearWidth
+        op: gte
+        value: 0.9
+        unit: m
+    failure_message: "Door clear width {{ClearWidth}} m is below the 0.90 m DIN 18040-1 minimum."

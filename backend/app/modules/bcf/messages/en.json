@@ -1,0 +1,16 @@
+{
+  "bcf": {
+    "topic_not_found": "Topic not found",
+    "comment_not_found": "Comment not found",
+    "viewpoint_not_found": "Viewpoint not found",
+    "snapshot_not_found": "Snapshot not found",
+    "version_unsupported": "Unsupported BCF version '{version}'. Supported: {supported}.",
+    "upload_read_failed": "Could not read the uploaded file",
+    "upload_empty": "The uploaded file is empty",
+    "upload_too_large": "The uploaded archive is too large",
+    "archive_invalid": "The uploaded file is not a valid .bcfzip archive",
+    "import_passed": "Import completed successfully",
+    "import_warnings": "Import completed with warnings",
+    "import_errors": "Import failed - see issues for details"
+  }
+}

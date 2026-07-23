@@ -1,0 +1,115 @@
+# OpenConstructionERP — Single Unified Docker Image
+#
+# All-in-one image: FastAPI backend serves React frontend directly.
+# PostgreSQL is required (SQLite support was removed in v6.6.0) - the
+# container fails fast with a readable message when DATABASE_URL is
+# missing or not a PostgreSQL URL.
+#
+# One-command stack (this image + PostgreSQL 16, from the repo root):
+#   docker compose -f docker-compose.quickstart.yml up --build
+#
+# Standalone against your own PostgreSQL:
+#   docker build -t openconstructionerp -f deploy/docker/Dockerfile.unified .
+#   docker run -d -p 8080:8080 -v oe_data:/data \
+#     -e DATABASE_URL=postgresql+asyncpg://user:pass@host:5432/dbname \
+#     -e JWT_SECRET=$(openssl rand -hex 32) \
+#     openconstructionerp
+
+# ── Stage 1: Build frontend ──────────────────────────────────────────
+# Pinned to node:22-alpine — rollup-plugin-visualizer 7.x already
+# emits an EBADENGINE warning on node:20, and 8.x (already published)
+# requires node>=22 outright (BUG-B04).
+FROM node:22-alpine AS frontend-build
+
+WORKDIR /build
+# The Vite/Rollup build now exceeds Node's default ~4 GB heap and aborts with
+# exit 134 ("JavaScript heap out of memory"). Give it an 8 GB old-space ceiling.
+ENV NODE_OPTIONS=--max-old-space-size=8192
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci --ignore-scripts
+COPY frontend/ .
+RUN npm run build
+
+# ── Stage 2: Production image ────────────────────────────────────────
+FROM python:3.12-slim
+
+# Install system dependencies (libpq for PostgreSQL support)
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libpq-dev curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN groupadd -r oe && useradd -r -g oe -d /app -s /sbin/nologin oe
+
+WORKDIR /app
+
+# Copy backend source first (includes pyproject.toml + README.md + all code)
+COPY backend/ backend/
+
+# Create frontend dist directory for hatch force-include
+RUN mkdir -p /app/frontend/dist
+COPY --from=frontend-build /build/dist backend/app/_frontend_dist/
+
+# Install Python dependencies with server extras (asyncpg for PostgreSQL)
+RUN pip install --no-cache-dir "./backend[server]" && \
+    pip install --no-cache-dir "ezdxf>=0.18.0" || true
+
+# Copy data catalogs (for seed/enrichment)
+COPY data/ data/
+
+# Entrypoint validates DATABASE_URL (PostgreSQL required) then execs uvicorn
+COPY --chmod=0755 deploy/docker/entrypoint.sh /app/entrypoint.sh
+
+# Create data volume directory
+RUN mkdir -p /data && chown oe:oe /data
+
+# Set ownership
+RUN chown -R oe:oe /app
+
+USER oe
+
+# Environment defaults for single-image mode.
+#
+# DATABASE_URL is intentionally NOT set here - the backend is
+# PostgreSQL-only since v6.6.0 and hard-rejects anything else, so a baked
+# default could only ever be wrong (the previous sqlite+aiosqlite default
+# crash-looped every bare `docker run` of the published image). The
+# entrypoint validates it at startup and prints how to supply one.
+# OE_DATA_DIR pins the unified data-dir resolver (app.core.storage.
+# resolve_data_dir) at the mounted /data volume below. Without it the
+# resolver's wheel/site-packages branch defaults to ~/.openestimate INSIDE
+# the container = the ephemeral container layer: BIM geometry is written
+# there, the DB row stays "ready", and a container recreate/redeploy makes
+# the geometry endpoint 404. Operators can still override it at run time.
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    SERVE_FRONTEND=true \
+    VECTOR_BACKEND=lancedb \
+    OE_DATA_DIR=/data \
+    VECTOR_DATA_DIR=/data/vectors \
+    APP_ENV=production \
+    APP_DEBUG=false \
+    ALLOWED_ORIGINS=*
+
+# APP_ENV defaults to production so a bare `docker run` of the published
+# image is secure by default: the interactive API docs are hidden, a
+# wildcard CORS origin is stripped, and the JWT secret is validated. The
+# quickstart compose (docker-compose.quickstart.yml) sets APP_ENV=development
+# for a friendlier first-run; a real deployment keeps this default.
+#
+# JWT_SECRET is intentionally NOT baked into the image. When it is unset the
+# app auto-generates a strong random secret on first boot and persists it
+# under the data dir (/data/.jwt-secret, chmod 600), so the container boots
+# with zero configuration and still signs tokens with a secret that is NOT
+# the public repo default (BUG-D03). Because /data is a mounted volume that
+# secret survives restarts and redeploys. For a multi-replica deployment,
+# where every replica must share one signing key, set it explicitly:
+# `-e JWT_SECRET=$(openssl rand -hex 32)` on ``docker run`` or via compose .env.
+
+EXPOSE 8080
+VOLUME ["/data"]
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD curl -f http://localhost:8080/api/health || exit 1
+
+ENTRYPOINT ["/app/entrypoint.sh"]

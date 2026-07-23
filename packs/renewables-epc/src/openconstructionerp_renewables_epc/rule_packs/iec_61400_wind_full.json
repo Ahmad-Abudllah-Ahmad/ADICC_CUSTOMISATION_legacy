@@ -1,0 +1,32 @@
+{
+  "rule_pack_id": "iec_61400_wind_full",
+  "name": "IEC 61400 — Wind energy (deep) — design + site + measurement + grid",
+  "standard": "IEC 61400-1:2019 (Design requirements) + IEC 61400-3-1:2019 (Offshore) + IEC 61400-12-1:2022 (Power performance) + IEC 61400-13:2015 (Mechanical loads) + IEC 61400-21-1:2019 (Grid power quality) + IEC 61400-22:2010 (Conformity testing & certification) + MEASNET / IECRE OD-501",
+  "jurisdiction": "INTL",
+  "description": "Deep rule pack covering the full IEC 61400 family for utility-scale wind EPC: turbine class (IEC class I / II / III / S — V_ref of 50 / 42.5 / 37.5 m/s respectively; class S = site-specific), turbulence category (A+ / A / B / C — I_ref 0.18 / 0.16 / 0.14 / 0.12 at 15 m/s), site wind resource assessment (min 12-month on-site met mast at hub height per IEC 61400-12-1, or remote-sensing LiDAR per IEC 61400-12-1 Annex L), micrositing wake loss budget (< 8 % typical, Jensen / Park / DWM model), turbine type certificate per IEC 61400-22, project certificate per IECRE OD-501, foundation load envelope from DLB (Design Load Basis), lightning protection class LPL I or II per IEC 61400-24, planning ZVI (Zone of Visual Influence) analysis, residential dB(A) impact study, shadow-flicker hours/year < 30 h per residence (German standard).",
+  "enables_rule_ids": [
+    "iec61400_1.turbine_class_assigned",
+    "iec61400_1.turbulence_category_assigned",
+    "iec61400_1.design_load_basis_dlb_documented",
+    "iec61400_3.offshore_marine_growth_allowance_set",
+    "iec61400_3.offshore_scour_protection_designed",
+    "iec61400_12.met_mast_min_12_months_data_attached",
+    "iec61400_12.met_mast_at_hub_height",
+    "iec61400_12.lidar_alternative_per_annex_l",
+    "iec61400_12.wind_resource_assessment_p50_p90_p99",
+    "iec61400_13.mechanical_loads_measurement_campaign_documented",
+    "iec61400_21.grid_power_quality_measurement_attached",
+    "iec61400_22.turbine_type_certificate_attached",
+    "iecre.od_501_project_certificate_attached",
+    "wind.micrositing_wake_loss_within_8pct",
+    "wind.wake_model_jensen_park_or_dwm_documented",
+    "wind.foundation_load_envelope_set",
+    "iec61400_24.lightning_protection_class_lpl_i_or_ii",
+    "wind.zvi_zone_of_visual_influence_analysed",
+    "wind.residential_db_a_impact_study_attached",
+    "wind.shadow_flicker_under_30h_per_residence",
+    "wind.bird_bat_collision_risk_assessment_attached",
+    "wind.crane_pad_and_access_road_design_attached",
+    "wind.scada_oss_handover_to_o_and_m_planned"
+  ]
+}

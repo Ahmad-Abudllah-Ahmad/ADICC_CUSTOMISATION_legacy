@@ -1,0 +1,24 @@
+{
+  "rule_pack_id": "ontario_obc",
+  "name": "Ontario Building Code (O. Reg. 332/12)",
+  "name_fr-CA": "Code du bâtiment de l'Ontario (Règl. de l'Ont. 332/12)",
+  "standard": "OBC 2012 + amendments (O. Reg. 332/12)",
+  "jurisdiction": "CA-ON",
+  "regulator": "Ministry of Municipal Affairs and Housing (Ontario)",
+  "publication_year": 2024,
+  "applies_to": ["projects", "validation"],
+  "description": "Validates Ontario-specific compliance on top of NBC 2020: the project building permit is referenced, the Building Code Identification Number (BCIN) of the qualified designer is on file, WSIB Clearance Certificate is current for every contractor, prompt-payment per Construction Act (O.Reg. 304/18) is configured, and the Tarion enrolment is recorded for new-home builders.",
+  "description_fr-CA": "Vérifie la conformité particulière à l'Ontario en complément du CNB 2020 : le permis de construire est référencé, le numéro BCIN (Building Code Identification Number) du concepteur qualifié est consigné, le certificat de décharge WSIB est valide pour chaque entrepreneur, le paiement rapide selon la Loi sur la construction (Règl. 304/18) est configuré, et l'inscription Tarion est enregistrée pour les constructeurs de maisons neuves.",
+  "severity_overrides": {
+    "ontario_obc.wsib_clearance_required": "ERROR"
+  },
+  "enables_rule_ids": [
+    "ontario_obc.building_permit_referenced",
+    "ontario_obc.bcin_designer_on_file",
+    "ontario_obc.wsib_clearance_required",
+    "ontario_obc.construction_act_prompt_payment_configured",
+    "ontario_obc.tarion_enrolment_recorded",
+    "ontario_obc.electrical_safety_authority_permit_present",
+    "ontario_obc.tssa_permit_present_for_fuel_or_elevator_work"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "rule_pack_id": "iva_retenciones_cfdi",
+  "name": "IVA, Retenciones and CFDI 4.0",
+  "standard": "Ley del Impuesto al Valor Agregado and CFDI 4.0 (SAT)",
+  "jurisdiction": "MX",
+  "regulator": "Servicio de Administracion Tributaria (SAT)",
+  "description": "Mexican value-added tax and electronic invoicing. IVA is 16 percent, with 8 percent in the border region (region fronteriza) and 0 percent for zero-rated or export supplies. IVA and ISR retenciones may be withheld from subcontractor payments. CFDI 4.0 requires the issuer RFC, regimen fiscal and uso CFDI. The module exposes IVA and retencion calculators; the rules check the IVA rate is valid, that subcontract lines flag retenciones, and that CFDI issuer data is present for a tender export.",
+  "applies_to": ["tax", "tendering", "validation"],
+  "iva_rates_pct": { "standard": "16", "border_region": "8", "zero": "0" },
+  "enables_rule_ids": [
+    "mexico.iva_rate_valid",
+    "mexico.subcontract_retencion",
+    "mexico.cfdi_rfc_present"
+  ]
+}

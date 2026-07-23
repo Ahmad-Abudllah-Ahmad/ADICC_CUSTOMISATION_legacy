@@ -1,0 +1,576 @@
+// DDC-CWICR-OE: DataDrivenConstruction · OpenConstructionERP
+// Copyright (c) 2026 Artem Boiko / DataDrivenConstruction
+/**
+ * SelectionManager — handles click / hover selection with highlight materials.
+ *
+ * Uses raycasting against BIM element meshes. Supports:
+ * - Single click selection
+ * - Ctrl+click multi-select (toggle)
+ * - Shift+click add to selection
+ * - Double-click to isolate
+ * - Right-click context menu
+ * - Hover highlighting (temporary)
+ * - Programmatic selection from parent
+ */
+
+import * as THREE from 'three';
+import type { SceneManager } from './SceneManager';
+import type { ElementManager, BIMElementData } from './ElementManager';
+
+export interface SelectionCallbacks {
+  onElementSelect?: (elementId: string | null) => void;
+  onElementHover?: (elementId: string | null) => void;
+  /** Fired when the selection set changes (add/remove/clear). The parent
+   *  uses this to drive the floating selection toolbar and context menu. */
+  onSelectionChange?: (selectedIds: string[]) => void;
+  /** Fired on right-click over an element (or multi-selection). */
+  onContextMenu?: (event: MouseEvent, elementId: string | null) => void;
+  /** Fired on double-click on an element (isolate) or empty space (show all). */
+  onDoubleClick?: (elementId: string | null) => void;
+}
+
+const HIGHLIGHT_COLOR = 0x2979ff; // selection blue
+const HOVER_COLOR = 0x42a5f5;    // lighter hover blue
+const HIGHLIGHT_OPACITY = 0.95;
+const HOVER_OPACITY = 0.9;
+
+export class SelectionManager {
+  private sceneManager: SceneManager;
+  private elementManager: ElementManager;
+  private callbacks: SelectionCallbacks;
+  private raycaster = new THREE.Raycaster();
+
+  private selectedIds = new Set<string>();
+  private hoveredId: string | null = null;
+  /** When false, click / hover / right-click handling is skipped so another
+   *  tool (e.g. the measure tool) can own pointer interaction without the
+   *  selection machinery firing alongside it. */
+  private suspended = false;
+
+  /** Pending hover coordinates + the scheduled animation-frame id used to
+   *  coalesce a burst of `mousemove` events into a single hover raycast per
+   *  frame. A high-Hz mouse / trackpad fires far more move events than there
+   *  are rendered frames, and each hover previously raycast the ENTIRE scene
+   *  recursively — the dominant idle-interaction cost on a large model. We
+   *  now remember only the latest cursor position and resolve the hover once
+   *  on the next frame. */
+  private hoverRafId: number | null = null;
+  private pendingHoverCoords: THREE.Vector2 | null = null;
+
+  /** Store original materials so they can be restored after deselection. */
+  private originalMaterials = new Map<string, THREE.Material>();
+  private highlightMaterial: THREE.MeshStandardMaterial;
+  private hoverMaterial: THREE.MeshStandardMaterial;
+  /** Per-selection bounding-box outlines (RFC 19 §4.3) — one helper per
+   *  selected element, removed and disposed on deselect. */
+  private boxHelpers = new Map<string, THREE.BoxHelper>();
+
+  private canvas: HTMLCanvasElement;
+  private boundOnPointerDown: (e: PointerEvent) => void;
+  private boundOnPointerUp: (e: PointerEvent) => void;
+  private boundOnMouseMove: (e: MouseEvent) => void;
+  private boundOnContextMenu: (e: MouseEvent) => void;
+  private boundOnDblClick: (e: MouseEvent) => void;
+
+  /** Track pointer down position to distinguish clicks from drags. */
+  private pointerDownPos: { x: number; y: number } | null = null;
+  private pointerDownTime = 0;
+  private readonly CLICK_THRESHOLD = 5; // max px movement to count as click
+  private readonly CLICK_TIME_LIMIT = 500; // max ms between down and up
+
+  constructor(
+    sceneManager: SceneManager,
+    elementManager: ElementManager,
+    callbacks: SelectionCallbacks,
+  ) {
+    this.sceneManager = sceneManager;
+    this.elementManager = elementManager;
+    this.callbacks = callbacks;
+    this.canvas = sceneManager.renderer.domElement;
+
+    // Highlight materials
+    this.highlightMaterial = new THREE.MeshStandardMaterial({
+      color: HIGHLIGHT_COLOR,
+      roughness: 0.5,
+      metalness: 0.2,
+      transparent: true,
+      opacity: HIGHLIGHT_OPACITY,
+      emissive: new THREE.Color(HIGHLIGHT_COLOR),
+      emissiveIntensity: 0.15,
+    });
+
+    this.hoverMaterial = new THREE.MeshStandardMaterial({
+      color: HOVER_COLOR,
+      roughness: 0.6,
+      metalness: 0.1,
+      transparent: true,
+      opacity: HOVER_OPACITY,
+      emissive: new THREE.Color(HOVER_COLOR),
+      emissiveIntensity: 0.1,
+    });
+
+    // Bind event listeners.
+    // We use pointerdown+pointerup instead of 'click' because OrbitControls
+    // intercepts Ctrl+click / Shift+click for camera manipulation. By
+    // tracking the pointer ourselves, we can detect short stationary clicks
+    // (even with modifier keys) that OrbitControls would otherwise swallow.
+    this.boundOnPointerDown = this.onPointerDown.bind(this);
+    this.boundOnPointerUp = this.onPointerUp.bind(this);
+    this.boundOnMouseMove = this.onMouseMove.bind(this);
+    this.boundOnContextMenu = this.onContextMenu.bind(this);
+    this.boundOnDblClick = this.onDblClick.bind(this);
+    this.canvas.addEventListener('pointerdown', this.boundOnPointerDown);
+    this.canvas.addEventListener('pointerup', this.boundOnPointerUp);
+    this.canvas.addEventListener('mousemove', this.boundOnMouseMove);
+    this.canvas.addEventListener('contextmenu', this.boundOnContextMenu);
+    this.canvas.addEventListener('dblclick', this.boundOnDblClick);
+  }
+
+  private getMouseCoords(e: MouseEvent): THREE.Vector2 {
+    const rect = this.canvas.getBoundingClientRect();
+    return new THREE.Vector2(
+      ((e.clientX - rect.left) / rect.width) * 2 - 1,
+      -((e.clientY - rect.top) / rect.height) * 2 + 1,
+    );
+  }
+
+  private raycast(mouseCoords: THREE.Vector2): THREE.Intersection | null {
+    this.raycaster.setFromCamera(mouseCoords, this.sceneManager.camera);
+
+    // Raycast against the ENTIRE scene recursively. This catches:
+    // - Individual meshes (placeholder boxes)
+    // - DAE-loaded meshes still in scene graph
+    // - BatchedMesh objects (which replace individual meshes for perf)
+    // We cannot raycast against allDaeMeshes because batchMeshesByMaterial
+    // removes them from the scene graph (no valid world matrix).
+    const intersects = this.raycaster.intersectObjects(
+      this.sceneManager.scene.children,
+      true,
+    );
+
+    for (const hit of intersects) {
+      // Skip non-mesh hits (grid, lights, helpers)
+      if (!(hit.object instanceof THREE.Mesh)) continue;
+
+      // THREE.Raycaster does NOT automatically skip objects whose
+      // .visible is false — it still returns them in the intersects
+      // list. That means when the user has an element-group filter
+      // active (everything outside the group set to .visible=false),
+      // clicks would still land on the hidden outer element instead
+      // of the visible inner one. Filter explicitly here by walking
+      // up the tree: if the hit mesh OR any ancestor is invisible,
+      // skip this hit.
+      let visNode: THREE.Object3D | null = hit.object;
+      let anyHidden = false;
+      while (visNode) {
+        if (visNode.visible === false) { anyHidden = true; break; }
+        visNode = visNode.parent;
+      }
+      if (anyHidden) continue;
+
+      // Walk up hierarchy to find elementId
+      let obj: THREE.Object3D | null = hit.object;
+      while (obj) {
+        const eid = (obj.userData as { elementId?: string | null }).elementId;
+        if (eid) {
+          if (obj !== hit.object) {
+            (hit.object.userData as Record<string, unknown>).elementId = eid;
+          }
+          return hit;
+        }
+        obj = obj.parent;
+      }
+
+      // For BatchedMesh hits: try to resolve via instanceId
+      if ((hit as { instanceId?: number }).instanceId != null) {
+        // BatchedMesh — the individual mesh that was batched still lives
+        // in meshMap/allDaeMeshes with a batchHandle. Find it by scanning
+        // allDaeMeshes for one whose batchHandle.batchedMesh === hit.object.
+        const batchedObj = hit.object;
+        const instId = (hit as { instanceId?: number }).instanceId;
+        for (const mesh of this.elementManager.getAllMeshes()) {
+          const handle = (mesh.userData as { batchHandle?: { batched: unknown; instanceId: number } }).batchHandle;
+          if (handle && handle.batched === batchedObj && handle.instanceId === instId) {
+            const eid = (mesh.userData as { elementId?: string }).elementId;
+            if (eid) {
+              (hit.object.userData as Record<string, unknown>).elementId = eid;
+              return hit;
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  /** Raycast from a mouse event and return the element ID under the cursor. */
+  raycastElementId(e: MouseEvent): string | null {
+    const coords = this.getMouseCoords(e);
+    const hit = this.raycast(coords);
+    if (!hit) return null;
+    return (hit.object.userData as { elementId?: string }).elementId ?? null;
+  }
+
+  /** Turn click / hover / right-click selection handling on or off.
+   *  Used by the measure tool to avoid fighting over pointer clicks. */
+  setSuspended(suspended: boolean): void {
+    this.suspended = suspended;
+    if (suspended) {
+      this.cancelPendingHover();
+      if (this.hoveredId && !this.selectedIds.has(this.hoveredId)) {
+        this.restoreMaterial(this.hoveredId);
+      }
+      this.hoveredId = null;
+      this.canvas.style.cursor = '';
+    }
+  }
+
+  private onPointerDown(e: PointerEvent): void {
+    if (this.suspended) return;
+    if (e.button !== 0) return; // only left button
+    this.pointerDownPos = { x: e.clientX, y: e.clientY };
+    this.pointerDownTime = Date.now();
+  }
+
+  private onPointerUp(e: PointerEvent): void {
+    if (this.suspended) return;
+    if (e.button !== 0 || !this.pointerDownPos) return;
+
+    // Check if this was a click (short, stationary) or a drag
+    const dx = e.clientX - this.pointerDownPos.x;
+    const dy = e.clientY - this.pointerDownPos.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const elapsed = Date.now() - this.pointerDownTime;
+    this.pointerDownPos = null;
+
+    if (dist > this.CLICK_THRESHOLD || elapsed > this.CLICK_TIME_LIMIT) {
+      return; // was a drag, not a click
+    }
+
+    // This is a genuine click — handle selection
+    const coords = this.getMouseCoords(e);
+    const hit = this.raycast(coords);
+
+    if (!hit) {
+      // Click on empty space -- deselect all (unless Ctrl is held)
+      if (!e.ctrlKey && !e.metaKey) {
+        this.clearSelection();
+        this.callbacks.onElementSelect?.(null);
+        this.notifySelectionChange();
+      }
+      return;
+    }
+
+    const elementId = (hit.object.userData as { elementId?: string }).elementId;
+    if (!elementId) return;
+
+    if (e.ctrlKey || e.metaKey) {
+      // Multi-select toggle
+      if (this.selectedIds.has(elementId)) {
+        this.deselectElement(elementId);
+      } else {
+        this.selectElement(elementId);
+      }
+    } else if (e.shiftKey) {
+      // Shift+click: add to selection (no toggle -- always add)
+      if (!this.selectedIds.has(elementId)) {
+        this.selectElement(elementId);
+      }
+    } else {
+      // Single select -- clear others first
+      this.clearSelection();
+      this.selectElement(elementId);
+    }
+
+    // Report the most recently clicked element
+    this.callbacks.onElementSelect?.(elementId);
+    this.notifySelectionChange();
+  }
+
+  private onContextMenu(e: MouseEvent): void {
+    if (this.suspended) return;
+    e.preventDefault();
+    const coords = this.getMouseCoords(e);
+    const hit = this.raycast(coords);
+    const elementId = hit
+      ? (hit.object.userData as { elementId?: string }).elementId ?? null
+      : null;
+
+    // If right-clicking on an element not in the selection, select it
+    if (elementId && !this.selectedIds.has(elementId)) {
+      if (!e.ctrlKey && !e.metaKey) {
+        this.clearSelection();
+      }
+      this.selectElement(elementId);
+      this.callbacks.onElementSelect?.(elementId);
+      this.notifySelectionChange();
+    }
+
+    this.callbacks.onContextMenu?.(e, elementId);
+  }
+
+  private onDblClick(e: MouseEvent): void {
+    if (this.suspended) return;
+    const coords = this.getMouseCoords(e);
+    const hit = this.raycast(coords);
+    const elementId = hit
+      ? (hit.object.userData as { elementId?: string }).elementId ?? null
+      : null;
+
+    this.callbacks.onDoubleClick?.(elementId);
+  }
+
+  private onMouseMove(e: MouseEvent): void {
+    if (this.suspended) return;
+    // While any pointer button is held the user is orbiting / panning /
+    // dollying the camera, not hovering geometry. Skip the (whole-scene)
+    // hover raycast entirely during a drag and drop any lingering hover —
+    // this removes the per-move raycast that used to fire continuously while
+    // rotating a large model. `buttons` is the live bitmask of held buttons,
+    // so this covers left-rotate, right-pan and middle-dolly alike.
+    if (e.buttons !== 0) {
+      this.pendingHoverCoords = null;
+      this.clearHover();
+      return;
+    }
+    // Coalesce a burst of move events into at most one raycast per animation
+    // frame: remember the latest cursor position and resolve the hover on the
+    // next frame. Without a rAF (SSR / a test env with no shim) fall back to
+    // resolving synchronously so behaviour is unchanged where scheduling is
+    // unavailable.
+    this.pendingHoverCoords = this.getMouseCoords(e);
+    if (typeof requestAnimationFrame !== 'function') {
+      this.processPendingHover();
+      return;
+    }
+    if (this.hoverRafId === null) {
+      this.hoverRafId = requestAnimationFrame(() => {
+        this.hoverRafId = null;
+        this.processPendingHover();
+      });
+    }
+  }
+
+  /**
+   * Resolve the hover for the most recent cursor position. Split out of
+   * `onMouseMove` so the whole-scene raycast runs at most once per frame (see
+   * the rAF coalescing above) and so tests can drive it deterministically.
+   */
+  private processPendingHover(): void {
+    const coords = this.pendingHoverCoords;
+    this.pendingHoverCoords = null;
+    // A drag may have started or the tool been suspended between the move
+    // event that scheduled this and the frame it runs on — bail rather than
+    // apply a hover mid-drag.
+    if (!coords || this.suspended) return;
+    const hit = this.raycast(coords);
+    const elementId = hit
+      ? (hit.object.userData as { elementId?: string }).elementId ?? null
+      : null;
+
+    if (elementId === this.hoveredId) return;
+
+    // Remove previous hover
+    if (this.hoveredId && !this.selectedIds.has(this.hoveredId)) {
+      this.restoreMaterial(this.hoveredId);
+    }
+
+    this.hoveredId = elementId;
+
+    // Apply hover highlight (only if not already selected)
+    if (elementId && !this.selectedIds.has(elementId)) {
+      const mesh = this.elementManager.getMesh(elementId);
+      if (mesh) {
+        this.saveMaterial(elementId, mesh);
+        mesh.material = this.hoverMaterial;
+      }
+    }
+
+    this.canvas.style.cursor = elementId ? 'pointer' : 'default';
+    this.callbacks.onElementHover?.(elementId);
+  }
+
+  /** Drop any active hover highlight + cursor. Used when a drag starts so a
+   *  stale hover doesn't linger under the moving camera. Fires
+   *  `onElementHover(null)` once on the transition, never repeatedly. */
+  private clearHover(): void {
+    if (this.hoveredId === null) {
+      this.canvas.style.cursor = '';
+      return;
+    }
+    if (!this.selectedIds.has(this.hoveredId)) {
+      this.restoreMaterial(this.hoveredId);
+    }
+    this.hoveredId = null;
+    this.canvas.style.cursor = '';
+    this.callbacks.onElementHover?.(null);
+  }
+
+  /** Cancel any scheduled hover raycast and forget the pending coordinates.
+   *  Called on suspend / dispose so a queued frame can't fire against a
+   *  torn-down tool. */
+  private cancelPendingHover(): void {
+    if (this.hoverRafId !== null && typeof cancelAnimationFrame === 'function') {
+      cancelAnimationFrame(this.hoverRafId);
+    }
+    this.hoverRafId = null;
+    this.pendingHoverCoords = null;
+  }
+
+  /** Select an element programmatically. */
+  selectElement(elementId: string): void {
+    const mesh = this.elementManager.getMesh(elementId);
+    if (!mesh) return;
+
+    this.saveMaterial(elementId, mesh);
+    mesh.material = this.highlightMaterial;
+    this.selectedIds.add(elementId);
+    this.addBoxHelper(elementId, mesh);
+  }
+
+  /** Deselect an element. */
+  deselectElement(elementId: string): void {
+    this.restoreMaterial(elementId);
+    this.removeBoxHelper(elementId);
+    this.selectedIds.delete(elementId);
+  }
+
+  /** Clear all selections. */
+  clearSelection(): void {
+    for (const id of this.selectedIds) {
+      this.restoreMaterial(id);
+      this.removeBoxHelper(id);
+    }
+    this.selectedIds.clear();
+  }
+
+  /** Set selection from external (parent component). */
+  setSelection(elementIds: string[]): void {
+    this.clearSelection();
+    for (const id of elementIds) {
+      this.selectElement(id);
+    }
+  }
+
+  /**
+   * Programmatic batched selection used by W6.6 "Named Selection Sets".
+   *
+   * When ``options.exclusive`` is true (or omitted), behaves identically to
+   * ``setSelection`` — it clears the current selection first, then adds each
+   * of ``ids``. When ``exclusive`` is false, the ids are *added* to the
+   * existing selection (duplicates are no-ops).
+   *
+   * After the batch we fire a single ``onSelectionChange`` callback so the
+   * floating toolbar / right-panel listeners observe one update instead of
+   * one-per-element. The single ``onElementSelect`` argument tracks the LAST
+   * id in the batch (matches the click-flow contract: "most recently clicked
+   * element"); pass an empty list with ``exclusive=true`` to deselect all.
+   */
+  selectByIds(ids: string[], options?: { exclusive?: boolean }): void {
+    const exclusive = options?.exclusive !== false;
+    if (exclusive) {
+      this.clearSelection();
+    }
+    for (const id of ids) {
+      if (!this.selectedIds.has(id)) {
+        this.selectElement(id);
+      }
+    }
+    const last = ids.length > 0 ? ids[ids.length - 1] : null;
+    this.callbacks.onElementSelect?.(last ?? null);
+    this.notifySelectionChange();
+  }
+
+  /** Get currently selected element IDs. */
+  getSelectedIds(): string[] {
+    return Array.from(this.selectedIds);
+  }
+
+  /** Get count of selected elements. */
+  getSelectedCount(): number {
+    return this.selectedIds.size;
+  }
+
+  /** Get selected element data. */
+  getSelectedElements(): BIMElementData[] {
+    const result: BIMElementData[] = [];
+    for (const id of this.selectedIds) {
+      const data = this.elementManager.getElementData(id);
+      if (data) result.push(data);
+    }
+    return result;
+  }
+
+  private saveMaterial(elementId: string, mesh: THREE.Mesh): void {
+    if (!this.originalMaterials.has(elementId)) {
+      this.originalMaterials.set(elementId, mesh.material as THREE.Material);
+    }
+  }
+
+  private restoreMaterial(elementId: string): void {
+    const original = this.originalMaterials.get(elementId);
+    if (!original) return;
+    const mesh = this.elementManager.getMesh(elementId);
+    if (mesh) {
+      mesh.material = original;
+    }
+    // Always remove from map — even if the mesh was removed, keeping the
+    // entry would leak the material reference indefinitely.
+    this.originalMaterials.delete(elementId);
+  }
+
+  /** Attach a dashed white BoxHelper around the newly selected mesh. */
+  private addBoxHelper(elementId: string, mesh: THREE.Mesh): void {
+    const existing = this.boxHelpers.get(elementId);
+    if (existing) {
+      this.sceneManager.scene.remove(existing);
+      existing.geometry.dispose();
+      (existing.material as THREE.LineBasicMaterial).dispose();
+    }
+    const helper = new THREE.BoxHelper(mesh, 0xffffff);
+    const mat = helper.material as THREE.LineBasicMaterial;
+    mat.transparent = true;
+    mat.opacity = 0.8;
+    mat.depthTest = false;
+    helper.renderOrder = 999;
+    this.sceneManager.scene.add(helper);
+    this.boxHelpers.set(elementId, helper);
+    this.sceneManager.requestRender();
+  }
+
+  private removeBoxHelper(elementId: string): void {
+    const helper = this.boxHelpers.get(elementId);
+    if (!helper) return;
+    this.sceneManager.scene.remove(helper);
+    helper.geometry.dispose();
+    (helper.material as THREE.LineBasicMaterial).dispose();
+    this.boxHelpers.delete(elementId);
+    this.sceneManager.requestRender();
+  }
+
+  /** Notify parent about selection changes. */
+  private notifySelectionChange(): void {
+    this.callbacks.onSelectionChange?.(this.getSelectedIds());
+  }
+
+  /** Dispose event listeners and materials. */
+  dispose(): void {
+    this.cancelPendingHover();
+    this.canvas.removeEventListener('pointerdown', this.boundOnPointerDown);
+    this.canvas.removeEventListener('pointerup', this.boundOnPointerUp);
+    this.canvas.removeEventListener('mousemove', this.boundOnMouseMove);
+    this.canvas.removeEventListener('contextmenu', this.boundOnContextMenu);
+    this.canvas.removeEventListener('dblclick', this.boundOnDblClick);
+    this.highlightMaterial.dispose();
+    this.hoverMaterial.dispose();
+    for (const helper of this.boxHelpers.values()) {
+      this.sceneManager.scene.remove(helper);
+      helper.geometry.dispose();
+      (helper.material as THREE.LineBasicMaterial).dispose();
+    }
+    this.boxHelpers.clear();
+    this.originalMaterials.clear();
+    this.selectedIds.clear();
+    this.canvas.style.cursor = 'default';
+  }
+}

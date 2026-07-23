@@ -1,0 +1,67 @@
+# Modular & Prefab Pack — first-login onboarding wizard.
+# Streamed by /api/v1/partner-pack/onboarding-script and rendered by
+# the OnboardingWizard React component in place of the default steps.
+
+version: 2
+locale: en
+title: "Welcome to OpenConstructionERP — Modular & Prefab Edition"
+subtitle: "Six quick steps to align your workspace with off-site practice (EN 1090, ICC/MBI 1200+1205, CSA A277, DfMA)."
+
+steps:
+  - id: company_profile
+    title: "PMC company profile"
+    body: "Tell us about your factory and PMC operation so dispatch notes and handover dossiers are correctly attributed."
+    fields:
+      - { key: company_name, label: "Company name", type: text, required: true }
+      - { key: factory_location, label: "Primary factory location (city, country)", type: text, required: true }
+      - { key: factory_to_site_distance_km, label: "Default factory → site distance (km)", type: select, options: ["< 100 km", "100–300 km", "300–800 km", "800–2 000 km", "> 2 000 km (intercontinental)"], required: true, default: "100–300 km" }
+      - { key: factory_throughput, label: "Factory throughput", type: select, options: ["< 100 modules / year", "100–500 modules / year", "500–2 000 modules / year", "> 2 000 modules / year"], required: true }
+
+  - id: module_typology
+    title: "Module typology"
+    body: "Pick the dominant module type so takeoff templates and BOM starters match your product line."
+    fields:
+      - { key: module_type, label: "Module type", type: radio, options: ["Volumetric steel-frame", "Volumetric timber-frame (CLT / light-gauge)", "Volumetric concrete (precast)", "Panelised (2D)", "Hybrid (panelised + pods)", "ISO 668 container conversion"], required: true, default: "Volumetric steel-frame" }
+      - { key: primary_substrate, label: "Primary structural substrate", type: select, options: ["Steel (cold-formed / hot-rolled)", "Timber (CLT / glulam)", "Timber (light-gauge / SIPs)", "Concrete (precast)", "Hybrid steel + concrete"], required: true, default: "Steel (cold-formed / hot-rolled)" }
+      - { key: typical_module_lwh, label: "Typical module L × W × H (m)", type: text, required: false, default: "12.0 × 3.0 × 3.0" }
+      - { key: target_weight_per_module_t, label: "Target weight per module (tonnes)", type: select, options: ["< 5 t", "5–10 t", "10–20 t", "20–40 t", "> 40 t"], required: true, default: "10–20 t" }
+      - { key: stack_levels_max, label: "Maximum stack height (storeys)", type: select, options: ["1", "2", "3", "4", "5", "6+"], required: true, default: "4" }
+
+  - id: standards
+    title: "Compliance standards"
+    body: "Select the standards that should validate your factory and site documentation automatically. We pre-tick the ones that apply to your typology."
+    fields:
+      - { key: enable_en_1090, label: "EN 1090 — Execution of steel structures (EU)", type: checkbox, default: true }
+      - { key: enable_modular_standards, label: "ICC/MBI 1200 + 1205 / CSA A277 / NEN 9090 / DfMA principles", type: checkbox, default: true }
+      - { key: enable_as_5104, label: "AS 5104 / ISO 2394 — Structural reliability targets", type: checkbox, default: false }
+      - { key: enable_iso_3834, label: "ISO 3834 — Welding quality requirements", type: checkbox, default: true }
+      - { key: enable_factory_qc, label: "Factory QC schedule (line inspection checkpoints)", type: checkbox, default: true }
+      - { key: enable_factory_qc_tolerances, label: "Factory QC — dimensional & geometric tolerances (±3 mm module / ±10 mm building face)", type: checkbox, default: true }
+      - { key: enable_iso_19650, label: "ISO 19650 — BIM information management", type: checkbox, default: true }
+      - { key: bim_level, label: "Target BIM level", type: radio, options: ["BIM Level 2 (federated, separate models)", "BIM Level 3 (integrated single model, CDE)", "Not applicable"], required: true, default: "BIM Level 2 (federated, separate models)" }
+
+  - id: dfma_maturity
+    title: "DfMA maturity"
+    body: "Design for Manufacture and Assembly maturity influences tolerance budgets, repeatability targets and BOM auto-generation."
+    fields:
+      - { key: dfma_maturity_level, label: "DfMA maturity", type: radio, options: ["Level 1 — Component pre-assembly only (e.g. plumbing trees)", "Level 2 — Sub-assemblies (pods, panels)", "Level 3 — Volumetric modules, ad-hoc design", "Level 4 — Volumetric modules, standardised product platform", "Level 5 — Product-line manufacture, configurator-driven"], required: true, default: "Level 3 — Volumetric modules, ad-hoc design" }
+      - { key: standardisation_target_pct, label: "Target standardisation (% of repeated components)", type: select, options: ["< 20 %", "20–40 %", "40–60 %", "60–80 %", "> 80 %"], required: true, default: "40–60 %" }
+
+  - id: logistics
+    title: "Transport & logistics"
+    body: "Set defaults for how modules ship from factory to site so dispatch checks fire automatically. EU 96/53/EC: 2.55 m wide / 4 m high / 44 t intermodal. US Interstate: 8'-6'' (2.59 m) / 13'-6'' (4.11 m) / 80 000 lb (36 287 kg) before permits."
+    fields:
+      - { key: default_transport_mode, label: "Default transport mode", type: select, options: ["Road — standard trailer", "Road — abnormal-load escort", "Rail", "Sea (RoRo)", "Sea (container — ISO 668)", "Inland waterway barge"], required: true, default: "Road — standard trailer" }
+      - { key: regulatory_jurisdiction, label: "Primary transport jurisdiction", type: radio, options: ["EU — Directive 96/53/EC", "US — FHWA / STAA + state permits", "UK — Construction & Use Regulations + STGO", "AU — National Heavy Vehicle Regulator", "Other / multi-region"], required: true, default: "EU — Directive 96/53/EC" }
+      - { key: max_legal_width_m, label: "Maximum legal road width (m)", type: text, required: true, default: "3.0" }
+      - { key: max_legal_height_m, label: "Maximum legal road height (m)", type: text, required: true, default: "4.0" }
+      - { key: enable_route_survey, label: "Require route survey on every shipment", type: checkbox, default: true }
+
+  - id: review
+    title: "Review and finish"
+    body: "We will create your first modular & prefab workspace with EN 1090 + ICC/MBI 1200+1205 + CSA A277 + NEN 9090 + DfMA validation, factory QC checkpoints + tolerance rules, transport logistics checks and the phased module handover protocol enabled. You can change everything later in Settings."
+    action:
+      label: "Create my Modular & Prefab workspace"
+      apply:
+        - set_default_currency: EUR
+        - enable_rule_packs: [en_1090_steel, as_5104_modular, modular_standards, factory_qc_schedule, factory_qc_tolerances, transport_logistics, module_handover_protocol]

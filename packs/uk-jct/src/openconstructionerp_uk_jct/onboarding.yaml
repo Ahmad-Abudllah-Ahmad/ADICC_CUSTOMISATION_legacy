@@ -1,0 +1,76 @@
+# UK Construction Pack — first-login onboarding wizard.
+# Streamed by /api/v1/partner-pack/onboarding-script and rendered by
+# the OnboardingWizard React component in place of the default steps.
+
+version: 1
+locale: en-GB
+title: "Welcome to OpenConstructionERP — UK Edition"
+subtitle: "Six quick steps to align your workspace with UK practice (NRM, JCT 2024, BCIS, CDM 2015, Building Safety Act 2022)."
+
+steps:
+  - id: company_profile
+    title: "Company profile"
+    body: "Tell us about your firm so reports and tender documents are correctly attributed."
+    fields:
+      - { key: company_name, label: "Company name", type: text, required: true }
+      - { key: company_number, label: "Companies House number", type: text, required: false }
+      - { key: vat_number, label: "VAT registration number", type: text, required: false }
+      - { key: head_office_region, label: "Head-office region", type: select, options: ["London", "South East", "South West", "Midlands", "North West", "North East", "Yorkshire & Humber", "East of England", "Wales", "Scotland", "Northern Ireland"], required: true }
+      - { key: rics_membership, label: "RICS regulated firm", type: checkbox, default: false }
+
+  - id: measurement_standard
+    title: "Measurement standard (RICS NRM)"
+    body: "Choose which RICS New Rules of Measurement (2nd edition, 2021) you typically work to. The BOQ editor will validate against this standard."
+    fields:
+      - { key: primary_nrm, label: "Primary standard", type: radio, options: ["NRM 1 — Order of cost estimating & cost planning", "NRM 2 — Detailed measurement for building works", "Both (choose per project)"], required: true, default: "Both (choose per project)" }
+      - { key: enable_nrm3, label: "Also enable NRM 3 (maintenance & life-cycle cost planning)", type: checkbox, default: false }
+      - { key: enable_bcis_benchmarks, label: "Enable BCIS cost-per-m² benchmarks on the dashboard", type: checkbox, default: true }
+
+  - id: contract_suite
+    title: "Default contract suite (JCT 2024)"
+    body: "Pre-select your usual JCT 2024 contract type. You can override on every project. JCT 2024 replaced JCT 2016 in late 2023 and introduces BIM/CDE, sustainability, Building Safety Act alignment, modern slavery and updated dispute resolution provisions."
+    fields:
+      - { key: default_jct_contract, label: "Default JCT 2024 contract", type: select, options: ["JCT Standard Building Contract 2024 (SBC)", "JCT Intermediate Building Contract 2024 (IC)", "JCT Minor Works Building Contract 2024 (MW)", "JCT Design and Build Contract 2024 (DB)", "JCT Construction Management 2024 (CM)", "JCT Management Building Contract 2024 (MC)"], required: true, default: "JCT Standard Building Contract 2024 (SBC)" }
+      - { key: include_legacy_jct_2016, label: "Also keep JCT 2016 templates available for in-flight projects", type: checkbox, default: false }
+
+  - id: safety_regime
+    title: "Safety & compliance regime (CDM 2015 + Building Safety Act)"
+    body: "All UK construction is governed by CDM 2015. Higher-Risk Buildings (HRBs — ≥18 m, ≥7 storeys, with ≥2 residential units) are additionally governed by the Building Safety Act 2022 (BSA)."
+    fields:
+      - { key: cdm_principal_designer, label: "Default Principal Designer (CDM 2015)", type: text, required: false, placeholder: "Firm / individual normally appointed Principal Designer" }
+      - { key: cdm_principal_contractor, label: "Default Principal Contractor (CDM 2015)", type: text, required: false, placeholder: "Firm normally appointed Principal Contractor" }
+      - { key: f10_threshold_warning, label: "Auto-warn when F10 notification thresholds are likely (>30 days with >20 workers, or >500 person-days)", type: checkbox, default: true }
+      - { key: handles_hrb, label: "We deliver Higher-Risk Buildings (≥18 m or ≥7 storeys with ≥2 residential units)", type: checkbox, default: false }
+      - { key: bsa_principal_accountable_person, label: "Default Principal Accountable Person (BSA 2022, HRB only)", type: text, required: false }
+      - { key: bsa_golden_thread_format, label: "Golden Thread information format", type: select, options: ["Native OCERP (recommended)", "IFC + spreadsheet", "External CDE link"], default: "Native OCERP (recommended)" }
+
+  - id: cost_data
+    title: "Cost data sources"
+    body: "Confirm which UK cost regions and indices should be loaded into your cost database. The current marketplace ships a single UK-wide CWICR catalogue (cwicr-uk-gbp); regional adjustment is applied via the BCIS Location Factor."
+    fields:
+      - { key: cwicr_preload, label: "Preload UK CWICR catalogue (55,719 items in GBP, NRM-aligned)", type: checkbox, default: true }
+      - { key: primary_region_factor, label: "Primary region for BCIS Location Factor", type: select, options: ["London", "South East", "South West", "East of England", "East Midlands", "West Midlands", "North West", "North East", "Yorkshire & Humber", "Wales", "Scotland", "Northern Ireland"], default: "London", required: true }
+      - { key: bcis_subscription, label: "I have an active BCIS subscription (enables live TPI / Location Factor pulls)", type: checkbox, default: false }
+
+  - id: review
+    title: "Review and finish"
+    body: "We will create your first UK project workspace with NRM 1+2 (and optionally NRM 3) validation, the JCT 2024 contract template you chose, BCIS benchmarks on the dashboard, CDM 2015 document templates and Building Safety Act 2022 flags where applicable. You can change everything later in Settings."
+    action:
+      label: "Create my UK workspace"
+      apply:
+        - set_default_currency: GBP
+        - set_default_locale: en-GB
+        - set_tax_template: uk_vat_20
+        - enable_rule_packs:
+            - nrm_1_cost_planning
+            - nrm_2_detailed_measurement
+            - jct_2024_contract_clauses
+            - bcis_benchmarks
+            - cdm_2015
+            - bsa_2022
+        - conditionally_enable_rule_packs:
+            when: { field: enable_nrm3, equals: true }
+            packs: [nrm_3_maintenance]
+        - preload_cwicr_regions:
+            when: { field: cwicr_preload, equals: true }
+            regions: [cwicr-uk-gbp]

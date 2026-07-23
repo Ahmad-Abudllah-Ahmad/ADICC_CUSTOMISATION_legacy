@@ -1,0 +1,35 @@
+# Room-code naming convention.
+#
+# IfcSpace.Name must match the canonical "<DEPT>.<LEVEL>.<ROOM>" pattern,
+# e.g. "OR.02.001" for Operating Room, Level 02, Room 001. This is the
+# typical healthcare room-coding scheme used to bridge
+# architectural plans to FM systems and BIM data exports.
+schema_version: "1.0"
+pack:
+  id: room_naming_convention
+  name: Room-Code Naming Convention
+  description: |
+    Enforces the canonical "<DEPT>.<LEVEL>.<ROOM>" room-code naming
+    convention on IfcSpace.Name so downstream FM exports parse cleanly.
+  source: openconstructionerp
+  version: "1.0.0"
+  applies_to:
+    classifications: ["DIN276", "COBie"]
+    project_regions: []
+
+rules:
+  - id: space_name_matches_room_code_pattern
+    name: IfcSpace.Name follows "<DEPT>.<LEVEL>.<ROOM>" pattern
+    severity: warning
+    rationale: |
+      FM systems and COBie exports depend on the room-code structure to
+      key rooms across disciplines. Non-conforming names break the join
+      and force manual reconciliation.
+    selector:
+      ifc_class: IfcSpace
+    assertion:
+      property:
+        key: Name
+        op: regex
+        value: "^[A-Z]{2}\\.[0-9]{2}\\.[0-9]{3}$"
+    failure_message: "Space name '{{Name}}' does not match the <DEPT>.<LEVEL>.<ROOM> pattern (e.g. OR.02.001)."

@@ -1,0 +1,116 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "OpenConstructionERP",
+  "version": "11.12.0",
+  "identifier": "io.openconstructionerp.desktop",
+  "mainBinaryName": "OpenConstructionERP",
+  "build": {
+    "frontendDist": "../../frontend/dist",
+    "beforeBuildCommand": "",
+    "beforeDevCommand": ""
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "main",
+        "url": "splash.html",
+        "title": "OpenConstructionERP",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 1024,
+        "minHeight": 640,
+        "resizable": true,
+        "center": true,
+        "fullscreen": false,
+        "visible": true
+      }
+    ],
+    "trayIcon": {
+      "iconPath": "icons/icon.png",
+      "iconAsTemplate": false,
+      "tooltip": "OpenConstructionERP"
+    },
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "createUpdaterArtifacts": false,
+    "publisher": "DataDrivenConstruction",
+    "copyright": "Copyright DataDrivenConstruction. Licensed under AGPL-3.0.",
+    "category": "Business",
+    "shortDescription": "Open-source construction cost estimation and BOQ platform.",
+    "longDescription": "OpenConstructionERP is an open-source platform for construction cost estimation, bills of quantities, and data validation, with CAD/BIM quantity takeoff and multi-currency support across 27 locales. It runs fully local on an embedded database, so there is no Python install or extra setup to manage. Import, validate, estimate, and report from a single desktop app that works offline.",
+    "licenseFile": "../../LICENSE",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "externalBin": [
+      "binaries/openconstructionerp-server"
+    ],
+    "resources": {
+      "resources/converters": "converters"
+    },
+    "windows": {
+      "webviewInstallMode": {
+        "type": "embedBootstrapper"
+      },
+      "nsis": {
+        "installerIcon": "icons/icon.ico",
+        "headerImage": "installer/header.bmp",
+        "sidebarImage": "installer/sidebar.bmp",
+        "installMode": "perMachine",
+        "installerHooks": "windows/hooks.nsh",
+        "displayLanguageSelector": true,
+        "languages": [
+          "English",
+          "German",
+          "French",
+          "Spanish",
+          "SpanishInternational",
+          "Italian",
+          "Portuguese",
+          "PortugueseBR",
+          "Dutch",
+          "Polish",
+          "Norwegian",
+          "Swedish",
+          "Bulgarian",
+          "Russian",
+          "Turkish",
+          "Arabic",
+          "SimpChinese",
+          "TradChinese",
+          "Japanese",
+          "Korean",
+          "Vietnamese"
+        ]
+      }
+    },
+    "macOS": {
+      "minimumSystemVersion": "10.15",
+      "signingIdentity": "-"
+    },
+    "linux": {
+      "appimage": {
+        "bundleMediaFramework": false
+      },
+      "deb": {
+        "depends": ["libwebkit2gtk-4.1-0"],
+        "section": "science"
+      }
+    }
+  },
+  "plugins": {
+    "shell": {
+      "open": true
+    }
+  }
+}

@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openconstructionerp-south-africa"
+version = "0.1.0"
+description = "Pre-configured partner pack for South African construction: SANS 1200, ASAQS, CIDB grading, PPPFA 80/20 and 90/10, FIDPM infrastructure gates, ZAR and 15 percent VAT."
+readme = "README.md"
+license = { text = "AGPL-3.0-or-later" }
+requires-python = ">=3.11"
+authors = [
+    { name = "OpenConstructionERP", email = "info@datadrivenconstruction.io" },
+]
+keywords = [
+    "openconstructionerp", "ocerp", "partner-pack",
+    "south-africa", "africa", "sans1200", "asaqs", "cidb",
+    "pppfa", "fidpm", "zar", "vat",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Other Audience",
+    "Topic :: Office/Business",
+    "Natural Language :: English",
+]
+dependencies = [
+    "openconstructionerp>=8.0.0",
+]
+
+[project.urls]
+Source = "https://github.com/DataDrivenConstruction/openconstructionerp"
+
+# Registered under both the canonical Packs umbrella group and the legacy
+# partner_packs alias so older and newer cores both discover it.
+[project.entry-points."openconstructionerp.packs"]
+south-africa = "openconstructionerp_south_africa:MANIFEST"
+
+[project.entry-points."openconstructionerp.partner_packs"]
+south-africa = "openconstructionerp_south_africa:MANIFEST"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+openconstructionerp_south_africa = [
+    "logo.svg",
+    "onboarding.yaml",
+    "locales/*.json",
+    "rule_packs/*.json",
+]

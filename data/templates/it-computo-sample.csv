@@ -1,0 +1,12 @@
+No.,Description,Unit,Quantity,Unit Rate,Total,ComputoMetrico,Section
+,** 01 Demolizioni e Scavi **,,,,,,
+01.01.001,"Scavo di sbancamento eseguito con mezzi meccanici",mc,580.000,12.50,7250.00,01,Demolizioni
+01.02.001,"Demolizione di muratura in laterizio",mc,42.000,68.00,2856.00,01,Demolizioni
+,** 03 Strutture in C.A. **,,,,,,
+03.01.001,"Calcestruzzo Rck 30 per fondazioni",mc,128.000,142.00,18176.00,03,Strutture
+03.02.001,"Acciaio in barre ad aderenza migliorata B450C",kg,12500.000,1.30,16250.00,03,Strutture
+,** 08 Intonaci e Rivestimenti **,,,,,,
+08.01.001,"Intonaco civile per pareti interne",mq,2400.000,18.50,44400.00,08,Intonaci
+,** 15 Impianto Elettrico **,,,,,,
+15.01.001,"Quadro elettrico generale 400 V",cad,2.000,4200.00,8400.00,15,Impianti
+15.02.001,"Cavo unipolare FG7R 1x16 mmq",m,580.000,4.85,2813.00,15,Impianti

@@ -1,0 +1,109 @@
+{
+  "name": "de_bathroom",
+  "raw_request": "Badsanierung 5 m2, Vollverfliesung, schluesselfertig",
+  "mode_hint": "offline",
+  "expected_type": "bathroom_reno",
+  "answers": {
+    "floor_area_m2": 5.0,
+    "ceiling_height_m": 2.6,
+    "finish_level": "standard",
+    "demolition": true,
+    "full_tiling": true,
+    "waterproofing": true,
+    "fixtures_count": 3
+  },
+  "expected_params": {
+    "floor_area_m2": 5.0,
+    "ceiling_height_m": 2.6,
+    "finish_level": "standard",
+    "demolition": true,
+    "full_tiling": true,
+    "waterproofing": true,
+    "fixtures_count": 3
+  },
+  "expected_selected_packages": [
+    "commissioning",
+    "debris_removal",
+    "demo_strip",
+    "floor_screed",
+    "floor_tiling",
+    "wall_plaster",
+    "wall_tiling",
+    "waterproofing"
+  ],
+  "expected_stage_order": [
+    "demo",
+    "rough",
+    "close",
+    "finish",
+    "commission"
+  ],
+  "expected_quantities": {
+    "demo_strip": 5.0,
+    "floor_screed": 5.0,
+    "floor_tiling": 5.0
+  },
+  "golden_positions": {
+    "demo_strip": {
+      "collection_name": [
+        "Finishing works",
+        "Repair and construction works"
+      ],
+      "masterformat": [
+        "02"
+      ]
+    },
+    "floor_screed": {
+      "collection_name": [
+        "Floors",
+        "Finishing works"
+      ],
+      "masterformat": [
+        "03 35",
+        "09"
+      ]
+    },
+    "waterproofing": {
+      "collection_name": [
+        "Finishing works",
+        "Stucco work"
+      ],
+      "masterformat": [
+        "07 10",
+        "07"
+      ]
+    },
+    "wall_plaster": {
+      "collection_name": [
+        "Plastering work",
+        "Stucco work",
+        "Finishing works"
+      ],
+      "masterformat": [
+        "09 24",
+        "09 20",
+        "09"
+      ]
+    },
+    "wall_tiling": {
+      "collection_name": [
+        "Stucco work",
+        "Finishing works"
+      ],
+      "masterformat": [
+        "09 30",
+        "09"
+      ]
+    },
+    "floor_tiling": {
+      "collection_name": [
+        "Floors",
+        "Finishing works"
+      ],
+      "masterformat": [
+        "09 30",
+        "09"
+      ]
+    }
+  }
+}

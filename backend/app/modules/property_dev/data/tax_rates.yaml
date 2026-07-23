@@ -1,0 +1,298 @@
+# Property-dev jurisdiction-aware tax rates table.
+#
+# Format version: 1
+# Effective dates capture rate changes over time (e.g. UK SDLT band
+# shift on 2024-10-01, German Grunderwerbsteuer state revisions, etc.).
+# Source: HMRC, BMF, FTA, MoF UAE, CBIC, FNS RU — VERIFY before relying
+# on values for production billing. These tables ship as DEFAULTS and
+# can be overridden per-tenant in metadata. They are NOT legal advice.
+#
+# Currency conversion is intentionally out-of-scope: callers must
+# pass the contract amount already in the contract's currency.
+#
+# Schema convention:
+#   * ``vat.<class>.rate``: tax rate as a Decimal-safe fraction (0.20 = 20 %).
+#   * ``stamp_duty.bands``: progressive bands, each ``up_to`` exclusive
+#     of next band; final band uses ``up_to: null`` for the open-ended
+#     "anything above". Rates are marginal — applied only to the
+#     portion of the price within that band.
+#   * ``stamp_duty.by_state``: flat per-subregion rate (used by DACH).
+#   * ``transfer_fee``: flat % of price, no bands.
+#   * ``late_interest.compounding``: ``simple`` (HMRC) or ``daily``
+#     (rare; some jurisdictions compound monthly).
+
+format_version: 1
+
+jurisdictions:
+  # ── United Kingdom ──────────────────────────────────────────────
+  GB:
+    name: "United Kingdom"
+    vat:
+      standard: { rate: 0.20, effective_from: "2011-01-04" }
+      reduced: { rate: 0.05 }
+      zero: { rate: 0.00, applies_to: ["residential.new_build"] }
+    stamp_duty:
+      # SDLT — England + NI, bands as of 2025-04-01.
+      # Wales (LTT) and Scotland (LBTT) maintain their own tables —
+      # add WAL / SCO subkeys if the use-case ever requires devolved
+      # split. For now we model HM Treasury SDLT only.
+      bands:
+        - { up_to: 250000, rate: 0.00 }
+        - { up_to: 925000, rate: 0.05 }
+        - { up_to: 1500000, rate: 0.10 }
+        - { up_to: null, rate: 0.12 }
+      first_home_relief:
+        # First-time-buyer relief — 0 % up to £425k, 5 % up to £625k.
+        bands:
+          - { up_to: 425000, rate: 0.00 }
+          - { up_to: 625000, rate: 0.05 }
+          - { up_to: null, rate: 0.12 }
+        max_price: 625000  # No relief above £625k.
+      additional_property_surcharge: 0.03  # +3 % across all bands.
+    late_interest:
+      annual: 0.075       # HMRC late-payment rate (late 2024).
+      compounding: simple
+  # ── Germany ─────────────────────────────────────────────────────
+  DE:
+    name: "Germany"
+    vat:
+      standard: { rate: 0.19, effective_from: "2007-01-01" }
+      reduced: { rate: 0.07 }
+    grunderwerbsteuer:
+      # State-specific Grunderwerbsteuer (real-estate transfer tax).
+      # Verified rates as of 2025-Q1 — every Länder may revise.
+      by_state:
+        BW: 0.05    # Baden-Württemberg
+        BY: 0.035   # Bayern (Bavaria) — lowest in DE
+        BE: 0.06    # Berlin
+        BB: 0.065   # Brandenburg
+        HB: 0.05    # Bremen
+        HH: 0.055   # Hamburg
+        HE: 0.06    # Hessen
+        MV: 0.06    # Mecklenburg-Vorpommern
+        NI: 0.05    # Niedersachsen
+        NW: 0.065   # Nordrhein-Westfalen
+        RP: 0.05    # Rheinland-Pfalz
+        SL: 0.065   # Saarland
+        SN: 0.055   # Sachsen
+        ST: 0.05    # Sachsen-Anhalt
+        SH: 0.065   # Schleswig-Holstein
+        TH: 0.065   # Thüringen
+    notary_fee_pct: 0.015   # ~1.5 % notary + Grundbuch, average.
+    late_interest:
+      annual: 0.0612      # § 238 AO Abgabenordnung — 0.5 %/month.
+      compounding: simple
+  # ── Austria ─────────────────────────────────────────────────────
+  AT:
+    name: "Austria"
+    vat:
+      standard: { rate: 0.20 }
+      reduced: { rate: 0.10 }
+    grunderwerbsteuer:
+      flat: 0.035        # GrEStG § 7 — 3.5 % standard.
+    land_registry_fee: 0.011   # 1.1 % Eintragungsgebühr.
+    late_interest:
+      annual: 0.0388     # § 205 BAO Stundungszinsen ~3.88 %.
+      compounding: simple
+  # ── Switzerland (Kanton-specific; placeholder average) ─────────
+  CH:
+    name: "Switzerland"
+    vat:
+      standard: { rate: 0.081 }   # MwSt 8.1 % (2024+).
+      reduced: { rate: 0.026 }
+    transfer_tax:
+      # Handänderungssteuer is cantonal (0–3.3 %). Use placeholder
+      # average; production callers should pick a Kanton sub-rate.
+      by_state:
+        ZH: 0.0            # Zürich abolished 2005.
+        BE: 0.018          # Bern.
+        GE: 0.033          # Genève — highest in CH.
+        VD: 0.033          # Vaud.
+        VS: 0.025          # Valais.
+        TI: 0.011          # Ticino.
+    late_interest:
+      annual: 0.04          # Federal late-interest rate, 4 %.
+      compounding: simple
+  # ── United Arab Emirates ───────────────────────────────────────
+  AE:
+    name: "United Arab Emirates"
+    vat:
+      standard: { rate: 0.05 }
+      zero_rated:
+        rate: 0.00
+        applies_to: ["residential.first_sale", "exports"]
+      exempt:
+        applies_to: ["residential.subsequent_sale", "residential.lease"]
+    transfer_fee:
+      # Dubai Land Department (DLD) — flat % of price.
+      # Split conventionally: 2 % buyer + 2 % seller.
+      dubai: 0.04
+      abu_dhabi: 0.02
+      sharjah: 0.02
+      ajman: 0.02
+    late_interest:
+      annual: 0.09          # FTA penalty (capped) — illustrative.
+      compounding: simple
+  # ── Saudi Arabia ───────────────────────────────────────────────
+  SA:
+    name: "Saudi Arabia"
+    vat:
+      # Real-estate sales are subject to RETT (5 %) instead of VAT
+      # since 2020 reform; new residential first sale is zero-rated.
+      standard: { rate: 0.15 }     # General VAT, services etc.
+      zero_rated: { rate: 0.00, applies_to: ["residential.first_sale"] }
+    rett: 0.05                      # Real Estate Transaction Tax 5 %.
+    late_interest:
+      annual: 0.05
+      compounding: simple
+  # ── India ──────────────────────────────────────────────────────
+  IN:
+    name: "India"
+    gst:
+      # GST on under-construction property — ITC not available for
+      # the discounted rates (post-2019 reform).
+      affordable: { rate: 0.01, applies_when: ["residential.affordable.no_itc"] }
+      premium: { rate: 0.05, applies_when: ["residential.premium.no_itc"] }
+      commercial: { rate: 0.12 }
+      ready_to_move: { rate: 0.00 }   # No GST on completed property.
+    stamp_duty:
+      # State-specific stamp-duty.
+      by_state:
+        MH: 0.06    # Maharashtra
+        DL: 0.06    # Delhi
+        KA: 0.05    # Karnataka
+        UP: 0.07    # Uttar Pradesh
+        TN: 0.07    # Tamil Nadu
+        GJ: 0.049   # Gujarat
+        WB: 0.06    # West Bengal
+        AP: 0.05    # Andhra Pradesh
+        TS: 0.05    # Telangana
+        RJ: 0.06    # Rajasthan
+    registration_fee: 0.01            # +1 % nationwide.
+    late_interest:
+      annual: 0.18                    # 1.5 %/month under CGST § 50.
+      compounding: simple
+  # ── Russia ─────────────────────────────────────────────────────
+  RU:
+    name: "Russia"
+    vat:
+      standard: { rate: 0.20 }
+      exempt:
+        applies_to:
+          - "residential.transfer_between_individuals"
+          - "residential.escrow_protected_purchase"
+    state_duty: 2000.00              # Госпошлина — flat RUB.
+    escrow_required: true            # § 214-ФЗ — счета эскроу обязательны.
+    late_interest:
+      annual: 0.165                  # CBR key rate × N (placeholder).
+      compounding: simple
+  # ── Brazil ─────────────────────────────────────────────────────
+  BR:
+    name: "Brazil"
+    itbi:
+      # Imposto de Transmissão de Bens Imóveis — municipal. We
+      # default to 3 % (range across BR is 2–3 %). Production users
+      # should override per-municipality.
+      bands:
+        - { up_to: null, rate: 0.03 }
+    pis_cofins_residential: 0.0365   # PIS + COFINS on real-estate.
+    registration_fee: 0.01           # Cartório de Registro ~1 %.
+    late_interest:
+      annual: 0.12                   # Selic + 1 % a.m. — placeholder.
+      compounding: simple
+  # ── Singapore ──────────────────────────────────────────────────
+  SG:
+    name: "Singapore"
+    gst:
+      standard: { rate: 0.09 }       # GST 9 % from 2024-01-01.
+    bsd:
+      # Buyer's Stamp Duty progressive bands.
+      bands:
+        - { up_to: 180000, rate: 0.01 }
+        - { up_to: 360000, rate: 0.02 }
+        - { up_to: 1000000, rate: 0.03 }
+        - { up_to: 1500000, rate: 0.04 }
+        - { up_to: 3000000, rate: 0.05 }
+        - { up_to: null, rate: 0.06 }
+    absd:
+      # Additional Buyer's Stamp Duty (ABSD) — set 2023-04-27.
+      # Foreign buyers pay top-rate (60 %); SC2 = Singapore Citizen
+      # second residential; SPR = Permanent Resident.
+      sc_first: 0.00
+      sc_second: 0.20
+      spr_first: 0.05
+      spr_second: 0.30
+      foreigner: 0.60
+      entity: 0.65
+    late_interest:
+      annual: 0.05
+      compounding: simple
+  # ── United States ──────────────────────────────────────────────
+  US:
+    name: "United States"
+    # No federal real-estate transfer tax. Sales-tax / transfer-tax
+    # is per-state and per-municipality. Below are state-only
+    # placeholders — local taxes (NYC mansion tax etc.) must be
+    # layered in via metadata override.
+    state_transfer_tax:
+      by_state:
+        NY: 0.004   # NY state transfer 0.4 %.
+        CA: 0.0011  # CA documentary transfer 0.11 %.
+        FL: 0.007   # FL documentary stamp 0.7 %.
+        TX: 0.0     # No transfer tax.
+        WA: 0.0128  # WA REET ~1.28 %.
+        IL: 0.001   # IL state transfer.
+        PA: 0.01    # PA transfer 1 %.
+        MA: 0.00456 # MA deeds excise.
+        VA: 0.0025  # VA grantor + recordation.
+        MD: 0.005   # MD state transfer.
+    late_interest:
+      annual: 0.08              # IRS underpayment ~8 % (illustrative).
+      compounding: simple
+  # ── Australia ──────────────────────────────────────────────────
+  AU:
+    name: "Australia"
+    gst:
+      standard: { rate: 0.10 }
+    stamp_duty:
+      by_state:
+        NSW:
+          bands:
+            - { up_to: 17000, rate: 0.0125 }
+            - { up_to: 36000, rate: 0.015 }
+            - { up_to: 97000, rate: 0.0175 }
+            - { up_to: 364000, rate: 0.035 }
+            - { up_to: 1212000, rate: 0.045 }
+            - { up_to: null, rate: 0.055 }
+        VIC:
+          bands:
+            - { up_to: 25000, rate: 0.014 }
+            - { up_to: 130000, rate: 0.024 }
+            - { up_to: 960000, rate: 0.055 }
+            - { up_to: null, rate: 0.0655 }
+        QLD:
+          bands:
+            - { up_to: 5000, rate: 0.0 }
+            - { up_to: 75000, rate: 0.015 }
+            - { up_to: 540000, rate: 0.035 }
+            - { up_to: null, rate: 0.045 }
+        WA:
+          bands:
+            - { up_to: 120000, rate: 0.019 }
+            - { up_to: 150000, rate: 0.0285 }
+            - { up_to: 360000, rate: 0.038 }
+            - { up_to: null, rate: 0.049 }
+        SA:
+          bands:
+            - { up_to: 12000, rate: 0.01 }
+            - { up_to: 30000, rate: 0.02 }
+            - { up_to: 100000, rate: 0.03 }
+            - { up_to: 200000, rate: 0.035 }
+            - { up_to: null, rate: 0.055 }
+    foreign_buyer_surcharge:
+      NSW: 0.08
+      VIC: 0.08
+      QLD: 0.075
+    late_interest:
+      annual: 0.10            # ATO general interest charge ~10 %.
+      compounding: simple

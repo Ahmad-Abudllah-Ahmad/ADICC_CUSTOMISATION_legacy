@@ -1,0 +1,484 @@
+key	EN	RU	DE
+boq.add_child_position	Add Child Partida	Добавить подпозицию	Unterposition hinzufügen
+boq.add_sub_section	Add Sub-section	Добавить подраздел	Unterabschnitt hinzufügen
+boq.ai_no_answer	The assistant did not return an answer. Please rephrase or try again.‌⁠‍	Ассистент не вернул ответ. Переформулируйте запрос или повторите попытку.	Der Assistent hat keine Antwort zurückgegeben. Bitte umformulieren oder erneut versuchen.
+boq.compare_added	Added	Добавлено	Hinzugefügt
+boq.compare_against	Compare against	Сравнить с	Vergleichen mit
+boq.compare_btn	Compare	Сравнить	Vergleichen
+boq.compare_btn_hint	Compare this estimate against another BOQ	Сравнить эту смету с другой ведомостью	Dieses LV mit einem anderen vergleichen
+boq.compare_col_delta	Δ base	Δ базы	Δ Basis
+boq.compare_col_line	Line	Строка	Zeile
+boq.compare_col_qty	Qty	Кол-во	Menge
+boq.compare_col_rate	Rate	Цена	EP
+boq.compare_error	Could not compare these BOQs.	Не удалось сравнить эти ведомости.	Diese LVs konnten nicht verglichen werden.
+boq.compare_hide_unchanged	Hide unchanged lines	Скрыть неизменённые строки	Unveränderte Zeilen ausblenden
+boq.compare_no_diff	No differences between these BOQs.	Различий между этими ведомостями нет.	Keine Unterschiede zwischen diesen LVs.
+boq.compare_pick	— Select a BOQ —	— Выберите ведомость —	— LV auswählen —
+boq.compare_qty	Qty	Кол-во	Menge
+boq.compare_rate	Rate	Цена	EP
+boq.compare_removed	Removed	Удалено	Entfernt
+boq.compare_select_hint	Pick another BOQ above to see a line-by-line diff.	Выберите другую ведомость выше, чтобы увидеть построчное сравнение.	Wählen Sie oben ein weiteres LV, um einen zeilenweisen Vergleich zu sehen.
+boq.compare_unchanged	Unchanged	Без изменений	Unverändert
+boq.compare_ct_added	Added	Добавлено	Hinzugefügt
+boq.compare_ct_removed	Removed	Удалено	Entfernt
+boq.compare_ct_qty_changed	Qty	Кол-во	Menge
+boq.compare_ct_rate_changed	Rate	Цена	EP
+boq.compare_ct_changed	Changed	Изменено	Geändert
+boq.compare_ct_unchanged	Unchanged	Без изменений	Unverändert
+boq.model_link_action	Model link…	Связь с моделью…	Modellverknüpfung…
+boq.model_link_aggregation	Aggregation	Агрегация	Aggregation
+boq.model_link_agg_sum	Sum	Сумма	Summe
+boq.model_link_agg_max	Max	Макс	Max
+boq.model_link_agg_min	Min	Мин	Min
+boq.model_link_agg_count	Count	Количество	Anzahl
+boq.model_link_agg_first	First	Первый	Erster
+boq.model_link_create	Create link	Создать связь	Verknüpfung anlegen
+boq.model_link_created	Model link created	Связь с моделью создана	Modellverknüpfung angelegt
+boq.model_link_created_hint	The quantity is not changed yet — use “Refresh from model” then Apply to pull it in.	Объём ещё не обновлён — используйте «Обновить из модели», затем Применить, чтобы подтянуть его.	Die Menge wurde noch nicht aktualisiert — nutzen Sie „Aus Modell aktualisieren“ und dann Übernehmen, um sie zu übernehmen.
+boq.model_link_delete	Delete link	Удалить связь	Verknüpfung löschen
+boq.model_link_delete_failed	Could not remove model link	Не удалось удалить связь с моделью	Modellverknüpfung konnte nicht entfernt werden
+boq.model_link_deleted	Model link removed	Связь с моделью удалена	Modellverknüpfung entfernt
+boq.model_link_elem_count	{{count}} element(s)	{{count}} элемент(ов)	{{count}} Element(e)
+boq.model_link_elements	Elements ({{selected}} selected)	Элементы (выбрано {{selected}})	Elemente ({{selected}} ausgewählt)
+boq.model_link_existing	Existing links	Существующие связи	Bestehende Verknüpfungen
+boq.model_link_failed	Could not create model link	Не удалось создать связь с моделью	Modellverknüpfung konnte nicht angelegt werden
+boq.model_link_model	BIM model	BIM-модель	BIM-Modell
+boq.model_link_new	New link	Новая связь	Neue Verknüpfung
+boq.model_link_no_elements	This model has no elements.	В этой модели нет элементов.	Dieses Modell enthält keine Elemente.
+boq.model_link_no_models	This project has no BIM models yet.	В проекте пока нет BIM-моделей.	Für dieses Projekt sind noch keine BIM-Modelle vorhanden.
+boq.model_link_none	No model links yet for this position.	Для этой позиции пока нет связей с моделью.	Für diese Position bestehen noch keine Modellverknüpfungen.
+boq.model_link_pick_field	— Select a quantity —	— Выберите количество —	— Menge auswählen —
+boq.model_link_pick_model	— Select a model —	— Выберите модель —	— Modell auswählen —
+boq.model_link_quantity_field	Quantity field	Поле количества	Mengenfeld
+boq.model_link_status_active	In sync	Синхронизировано	Synchronisiert
+boq.model_link_status_stale	Stale	Устарело	Veraltet
+boq.model_link_status_broken	Broken	Нарушено	Unterbrochen
+boq.model_link_subtitle	Position {{ordinal}} — bind its quantity to BIM model elements	Позиция {{ordinal}} — привязать объём к элементам BIM-модели	Position {{ordinal}} — Menge an BIM-Modellelemente binden
+boq.model_link_title	Model link	Связь с моделью	Modellverknüpfung
+boq.model_link_version	model v{{v}}	модель v{{v}}	Modell v{{v}}
+boq.model_review_all_synced	All linked quantities are in sync with the model.	Все связанные объёмы синхронизированы с моделью.	Alle verknüpften Mengen sind mit dem Modell synchronisiert.
+boq.model_review_applied	{{count}} quantity update(s) applied	Применено обновлений объёма: {{count}}	{{count}} Mengenaktualisierung(en) übernommen
+boq.model_review_apply	Apply {{count}} selected	Применить выбранные ({{count}})	{{count}} ausgewählte übernehmen
+boq.model_review_apply_failed	Apply failed	Применение не удалось	Übernahme fehlgeschlagen
+boq.model_review_btn	Model sync	Синхр. с моделью	Modell-Sync
+boq.model_review_btn_hint	Re-pull quantities from linked BIM models	Пересчитать объёмы из связанных BIM-моделей	Mengen aus verknüpften BIM-Modellen neu laden
+boq.model_review_hint	Re-pulls bound quantities against the latest model version. Nothing changes until you Apply.	Пересчитывает связанные объёмы по последней версии модели. Ничего не меняется, пока вы не нажмёте Применить.	Lädt verknüpfte Mengen gegen die aktuelle Modellversion neu. Es wird nichts verändert, bis Sie Übernehmen drücken.
+boq.model_review_missing	{{count}} missing	{{count}} отсутствует	{{count}} fehlend
+boq.model_review_no_links	No model links in this BOQ	В этой ведомости нет связей с моделью	Keine Modellverknüpfungen in diesem LV
+boq.model_review_refresh	Refresh from model	Обновить из модели	Aus Modell aktualisieren
+boq.model_review_refresh_failed	Refresh from model failed	Не удалось обновить из модели	Aktualisierung aus Modell fehlgeschlagen
+boq.model_review_run	Run a refresh to see model-driven changes.	Запустите обновление, чтобы увидеть изменения от модели.	Aktualisierung ausführen, um modellgetriebene Änderungen zu sehen.
+boq.model_review_title	Model quantity review	Проверка объёмов модели	Modell-Mengenprüfung
+boq.position_added_edit_hint	Type the description, then Tab through unit, quantity & rate‌⁠‍	Введите описание, затем перейдите Tab по единице, количеству и цене	Beschreibung eingeben, dann mit Tab zu Einheit, Menge und EP wechseln
+boq.link_badge_instance	Linked instance of code {{code}} — edits to its definition will diverge it‌⁠‍	Связанная копия кода {{code}} — правка определения приведёт к расхождению	Verknüpfte Instanz von Code {{code}} — Änderungen an der Definition führen zu einer Divergenz
+boq.link_badge_master	Master of code {{code}} — {{count}} linked‌⁠‍	Эталон кода {{code}} — связано: {{count}}	Master von Code {{code}} — {{count}} verknüpft
+boq.link_master_badge	Master‌⁠‍	Эталон	Master
+boq.link_propagated_msg	Updated {{count}} linked position(s) across this project.‌⁠‍	Обновлено связанных позиций в проекте: {{count}}.	{{count}} verknüpfte Position(en) im Projekt aktualisiert.
+boq.link_propagated_title	Definition propagated‌⁠‍	Определение распространено	Definition übertragen
+boq.max_depth_reached_tooltip	Maximum nesting depth of {{max}} levels reached — flatten the structure or use fewer sub-levels.	Достигнута максимальная вложенность ({{max}} уровней) — упростите структуру или используйте меньше подуровней.	Maximale Schachtelungstiefe von {{max}} Ebenen erreicht — Struktur abflachen oder weniger Unterebenen verwenden.
+boq.resource_link_propagated_msg	Updated the shared resource on {{count}} other position(s) across this project.‌⁠‍	Общий ресурс обновлён в {{count}} других позициях проекта.	Geteilte Ressource an {{count}} weiteren Position(en) im Projekt aktualisiert.
+boq.resource_link_propagated_title	Resource definition propagated‌⁠‍	Определение ресурса распространено	Ressourcendefinition übertragen
+boq.link_role_instance	Linked instance‌⁠‍	Связанная копия	Verknüpfte Instanz
+boq.link_role_master	Master (definition of record)‌⁠‍	Эталон (запись определения)	Master (maßgebliche Definition)
+boq.link_unlinked_msg	Your edit changed this linked copy, so it no longer follows the shared code. If you did not mean to diverge it, change its code back instead.‌⁠‍	Ваша правка изменила эту связанную копию, и она больше не следует общему коду. Если расхождение не было намеренным — верните прежний код.	Ihre Änderung hat diese verknüpfte Kopie verändert, daher folgt sie dem gemeinsamen Code nicht mehr. Falls keine Divergenz beabsichtigt war, setzen Sie den Code zurück.
+boq.link_unlinked_title	Position unlinked from shared code‌⁠‍	Позиция отвязана от общего кода	Position vom geteilten Code getrennt
+boq.linked_positions_count	{{total}} positions share this code ({{instances}} linked instance(s)). The master is the definition of record; editing it propagates to every instance in this project.‌⁠‍	{{total}} позиций используют этот код ({{instances}} связанных копий). Эталон — запись определения; правка эталона распространяется на все копии в проекте.	{{total}} Positionen teilen diesen Code ({{instances}} verknüpfte Instanz(en)). Der Master ist die maßgebliche Definition; Änderungen daran wirken sich auf alle Instanzen im Projekt aus.
+boq.linked_positions_error	Could not load linked positions.‌⁠‍	Не удалось загрузить связанные позиции.	Verknüpfte Positionen konnten nicht geladen werden.
+boq.linked_positions_none	This position is standalone — no other position shares its code.‌⁠‍	Эта позиция автономна — другие позиции этот код не используют.	Diese Position ist eigenständig — kein anderer Eintrag teilt ihren Code.
+boq.linked_positions_subtitle	Code {{code}} — viewing from position {{ordinal}}	Код {{code}} — просмотр из позиции {{ordinal}}	Code {{code}} — Ansicht aus Position {{ordinal}}
+boq.linked_positions_title	Linked positions‌⁠‍	Связанные позиции	Verknüpfte Positionen
+boq.no_description	(no description)‌⁠‍	(без описания)	(keine Beschreibung)
+boq.reuse_code_action	Reuse Existing Code…	Повторно использовать код…	Vorhandenen Code wiederverwenden…
+boq.reuse_code_existing	Existing codes: {{codes}}	Существующие коды: {{codes}}	Vorhandene Codes: {{codes}}
+boq.reuse_code_msg	Linked instance created — {{count}} positions share this code. Its quantity is independently editable.‌⁠‍	Создана связанная копия — этот код используют {{count}} позиций. Количество редактируется независимо.	Verknüpfte Instanz angelegt — {{count}} Positionen teilen diesen Code. Die Menge ist unabhängig editierbar.
+boq.reuse_code_prompt	Enter an existing code to reuse it here (its definition & sub-items are copied; quantity stays independent):	Введите существующий код, чтобы повторно использовать его здесь (определение и подпозиции копируются; количество остаётся независимым):	Geben Sie einen vorhandenen Code ein, um ihn hier wiederzuverwenden (Definition und Unterpositionen werden kopiert; die Menge bleibt unabhängig):
+boq.reuse_code_title	Reused code {{code}}‌⁠‍	Код {{code}} переиспользован	Code {{code}} wiederverwendet
+boq.show_linked	Show Linked Positions	Показать связанные позиции	Verknüpfte Positionen anzeigen
+boq.unlink_done_msg	Code {{code}} kept. This position no longer follows the shared code; its values were preserved.‌⁠‍	Код {{code}} сохранён. Эта позиция больше не следует общему коду; её значения сохранены.	Code {{code}} beibehalten. Diese Position folgt dem gemeinsamen Code nicht mehr; ihre Werte wurden bewahrt.
+boq.unlink_done_title	Position unlinked‌⁠‍	Позиция отвязана	Position getrennt
+boq.unlink_failed	Failed to unlink position‌⁠‍	Не удалось отвязать позицию	Position konnte nicht getrennt werden
+boq.unlink_this	Unlink this position‌⁠‍	Отвязать эту позицию	Diese Position trennen
+login.github	GitHub	GitHub	GitHub
+login.github_sub	Source code	Исходный код	Quellcode
+login.community	Community	Сообщество	Community
+login.community_sub	Get help & discuss	Помощь и обсуждение	Hilfe und Austausch
+login.brand_edit	Customize logo	Настроить логотип	Logo anpassen
+login.brand_title	White-label branding	White-label оформление	White-Label-Branding
+login.brand_desc	Shown on this sign-in screen and across the app. Stored only in this browser.	Отображается на экране входа и во всём приложении. Сохраняется только в этом браузере.	Wird auf diesem Anmeldebildschirm und in der gesamten App angezeigt. Nur in diesem Browser gespeichert.
+login.brand_upload	Upload logo	Загрузить логотип	Logo hochladen
+login.brand_name_ph	Company name	Название компании	Firmenname
+login.brand_reset	Reset to default	Сбросить к умолчанию	Auf Standard zurücksetzen
+login.brand_too_big	Image too large (max 512 KB).	Изображение слишком большое (макс. 512 КБ).	Bild zu groß (max. 512 KB).
+login.brand_bad_type	Please choose a PNG, JPG, SVG or WebP image.	Выберите изображение PNG, JPG, SVG или WebP.	Bitte ein PNG-, JPG-, SVG- oder WebP-Bild auswählen.
+nav.project_route	Project route	Маршрут проекта	Projektablauf
+nav.phase_estimation	Estimation	Сметная оценка	Kalkulation
+nav.phase_planning	Planning	Планирование	Planung
+nav.phase_execution	Execution	Производство	Ausführung
+nav.phase_closure	Quality & Closure	Качество и закрытие	Qualität und Abschluss
+nav.clash_detection	Clash Detection	Поиск коллизий	Kollisionsprüfung
+nav.pipelines	Pipeline Builder	Конструктор пайплайнов	Pipeline-Builder
+schedule_advanced.master_hint	Select a master schedule to make it the working plan for the Phases, Look-Ahead, Weekly and Constraints tabs. Use the row actions to rename it, change its planned dates and status, or delete it.	Выберите главный график, чтобы сделать его рабочим планом для вкладок «Фазы», «Look-Ahead», «Недельный» и «Ограничения». Действия строки позволяют переименовать график, изменить плановые даты и статус или удалить его.	Wählen Sie einen Hauptterminplan, um ihn zum Arbeitsplan für die Tabs Phasen, Look-Ahead, Wochenplan und Constraints zu machen. Über die Zeilenaktionen können Sie ihn umbenennen, Termine und Status ändern oder löschen.
+schedule_advanced.no_master_yet_desc	The master schedule is the top-level plan that every phase plan, look-ahead and weekly work plan rolls up to. Create one to start pull-planning — you can rename it, change its dates, or delete it at any time.	Главный график — это план верхнего уровня, в который сворачиваются все фазовые планы, look-ahead и недельные планы работ. Создайте его для начала pull-планирования — переименовать, изменить даты или удалить можно в любой момент.	Der Hauptterminplan ist der oberste Plan, in den alle Phasenpläne, Look-Ahead- und Wochenpläne einfließen. Legen Sie einen an, um mit der Pull-Planung zu beginnen — Sie können ihn jederzeit umbenennen, Termine ändern oder löschen.
+schedule_advanced.active_selection	Working plan	Рабочий план	Arbeitsplan
+schedule_advanced.master_status.active	Active	Активен	Aktiv
+schedule_advanced.master_status.archived	Archived	В архиве	Archiviert
+schedule_advanced.edit_master	Edit master schedule	Редактировать главный график	Hauptterminplan bearbeiten
+schedule_advanced.master_updated	Master schedule updated	Главный график обновлён	Hauptterminplan aktualisiert
+schedule_advanced.master_deleted	Master schedule deleted	Главный график удалён	Hauptterminplan gelöscht
+schedule_advanced.delete_master_title	Delete master schedule?	Удалить главный график?	Hauptterminplan löschen?
+schedule_advanced.delete_master_message	\"{{name}}\" and everything under it — phase plans, look-aheads, weekly work plans, commitments and baselines — will be permanently deleted. This cannot be undone.	«{{name}}» и всё, что входит в него — фазовые планы, look-ahead, недельные планы работ, обязательства и базовые планы — будут безвозвратно удалены. Действие нельзя отменить.	„{{name}}“ und alles darunter — Phasenpläne, Look-Aheads, Wochenpläne, Commitments und Baselines — werden dauerhaft gelöscht. Dies kann nicht rückgängig gemacht werden.
+schedule_advanced.err_master_name_required	Master schedule name is required.	Укажите название главного графика.	Name des Hauptterminplans ist erforderlich.
+schedule_advanced.master_name_placeholder	e.g. Construction master schedule	напр., Главный график строительства	z. B. Bau-Hauptterminplan
+schedule_advanced.master_status_hint	Archive a schedule to keep its history without it being the working plan. Archived schedules can be reactivated here at any time.	Архивируйте график, чтобы сохранить его историю, не делая его рабочим планом. Архивные графики можно реактивировать здесь в любой момент.	Archivieren Sie einen Plan, um seine Historie zu behalten, ohne ihn als Arbeitsplan zu führen. Archivierte Pläne können hier jederzeit reaktiviert werden.
+schedule_advanced.master_notes_placeholder	Scope, contract reference, key milestones…	Объём, ссылка на договор, ключевые вехи…	Umfang, Vertragsreferenz, wichtige Meilensteine…
+files.cta.add_first_short	Add files	Добавить файлы	Dateien hinzufügen
+files.folder.files_count	files	файлов	Dateien
+files.folder.subfolders	{{count}} folders	{{count}} папок	{{count}} Ordner
+files.folder.share	{{pct}}% of total storage	{{pct}}% общего хранилища	{{pct}}% des gesamten Speichers
+notifications.safety.incident_created	Safety incident reported	Зарегистрирован инцидент по охране труда	Sicherheitsvorfall gemeldet
+notifications.safety.incident_created_body	Incident {{incident_number}} ({{severity}}): {{description}}	Инцидент {{incident_number}} ({{severity}}): {{description}}	Vorfall {{incident_number}} ({{severity}}): {{description}}
+notifications.safety.high_risk_observation	High-risk safety observation	Наблюдение по охране труда: высокий риск	Sicherheitsbeobachtung mit hohem Risiko
+notifications.safety.high_risk_body	Observation {{observation_number}} (risk {{risk_score}}): {{description}}	Наблюдение {{observation_number}} (риск {{risk_score}}): {{description}}	Beobachtung {{observation_number}} (Risiko {{risk_score}}): {{description}}
+notifications.bi.alert.title	Dashboard alert triggered	Сработал алерт на дашборде	Dashboard-Alarm ausgelöst
+notifications.bi.alert.body	{{alert_name}} — {{kpi_code}} is {{value}} ({{condition}} threshold {{threshold}}).	{{alert_name}} — {{kpi_code}} = {{value}} ({{condition}} порога {{threshold}}).	{{alert_name}} — {{kpi_code}} liegt bei {{value}} ({{condition}} Schwellwert {{threshold}}).
+notifications.bi.report.title	Scheduled report ready	Запланированный отчёт готов	Geplanter Bericht bereit
+notifications.bi.report.body	Report {{report_code}} generated with {{row_count}} rows.	Отчёт {{report_code}} сформирован, строк: {{row_count}}.	Bericht {{report_code}} mit {{row_count}} Zeilen erstellt.
+notifications.supplier_catalogs.po.sent.title	Purchase order sent	Заказ на закупку отправлен	Bestellung versendet
+notifications.supplier_catalogs.po.sent.body	PO sent to vendor {{vendor_id}} for {{total}} {{currency}}.	Заказ отправлен поставщику {{vendor_id}} на {{total}} {{currency}}.	Bestellung an Lieferant {{vendor_id}} über {{total}} {{currency}} versendet.
+notifications.supplier_catalogs.invoice.exception.title	Invoice exception	Расхождение в счёте	Rechnungsabweichung
+notifications.supplier_catalogs.invoice.exception.body	Invoice for PO {{po_id}} needs review: {{reason}}	Счёт по заказу {{po_id}} требует проверки: {{reason}}	Rechnung für Bestellung {{po_id}} muss geprüft werden: {{reason}}
+notifications.supplier_catalogs.stock.low.title	Low stock warning	Низкий складской остаток	Niedriger Lagerbestand
+notifications.supplier_catalogs.stock.low.body	{{sku}}: {{available_qty}} left, at or below reorder point {{reorder_point}}.	{{sku}}: осталось {{available_qty}}, на уровне или ниже точки заказа {{reorder_point}}.	{{sku}}: {{available_qty}} verfügbar, am oder unter Meldebestand {{reorder_point}}.
+notifications.supplier_catalogs.vendor.blacklisted.title	Vendor blacklisted	Поставщик внесён в чёрный список	Lieferant gesperrt
+notifications.supplier_catalogs.vendor.blacklisted.body	Vendor {{code}} was blacklisted: {{reason}}	Поставщик {{code}} внесён в чёрный список: {{reason}}	Lieferant {{code}} wurde gesperrt: {{reason}}
+notifications.supplier_catalogs.kyc.expired.title	Vendor compliance document expired	Документ соответствия поставщика просрочен	Compliance-Dokument des Lieferanten abgelaufen
+notifications.supplier_catalogs.kyc.expired.body	{{doc_type}} expired on {{expires_on}}.	{{doc_type}} истёк {{expires_on}}.	{{doc_type}} ist am {{expires_on}} abgelaufen.
+notifications.supplier_catalogs.kyc.expiring.title	Vendor compliance document expiring	Документ соответствия поставщика истекает	Compliance-Dokument des Lieferanten läuft ab
+notifications.supplier_catalogs.kyc.expiring.body	{{doc_type}} expires on {{expires_on}} ({{days_until_expiry}} days left).	{{doc_type}} истекает {{expires_on}} (осталось дней: {{days_until_expiry}}).	{{doc_type}} läuft am {{expires_on}} ab ({{days_until_expiry}} Tage verbleibend).
+notifications.resources.cert_expiring.title	Certification expiring	Истекает сертификат	Zertifizierung läuft ab
+notifications.resources.cert_expiring.body	{{resource_name}} — {{cert_type}} expires {{valid_until}} ({{days_left}} days left).	{{resource_name}} — {{cert_type}} истекает {{valid_until}} (осталось дней: {{days_left}}).	{{resource_name}} — {{cert_type}} läuft am {{valid_until}} ab ({{days_left}} Tage verbleibend).
+notifications.resources.assignment_proposed.title	Resource assignment proposed	Предложено назначение ресурса	Ressourcenzuweisung vorgeschlagen
+notifications.resources.assignment_proposed.body	Proposed for task {{task}} starting {{start}}.	Предложено на задачу {{task}} с {{start}}.	Vorschlag für Aufgabe {{task}} ab {{start}}.
+notifications.resources.assignment_confirmed.title	Resource assignment confirmed	Назначение ресурса подтверждено	Ressourcenzuweisung bestätigt
+notifications.resources.assignment_confirmed.body	Assignment confirmed for task {{task}}.	Назначение на задачу {{task}} подтверждено.	Zuweisung für Aufgabe {{task}} bestätigt.
+notifications.contracts.signed.title	Contract signed	Договор подписан	Vertrag unterzeichnet
+notifications.contracts.signed.body	Contract {{code}} signed for {{value}} {{currency}}.	Договор {{code}} подписан на {{value}} {{currency}}.	Vertrag {{code}} über {{value}} {{currency}} unterzeichnet.
+notifications.contracts.claim_submitted.title	Contract claim submitted	Подана претензия по договору	Nachtrag eingereicht
+notifications.contracts.claim_submitted.body	Claim submitted for {{amount}} {{currency}}.	Подана претензия на {{amount}} {{currency}}.	Nachtrag über {{amount}} {{currency}} eingereicht.
+notifications.contracts.claim_paid.title	Contract claim paid	Претензия по договору оплачена	Nachtrag bezahlt
+notifications.contracts.claim_paid.body	Claim paid: {{amount}} {{currency}}.	Оплачена претензия: {{amount}} {{currency}}.	Nachtrag bezahlt: {{amount}} {{currency}}.
+notifications.contracts.retention_released.title	Retention released	Удержание возвращено	Sicherheitseinbehalt freigegeben
+notifications.contracts.retention_released.body	Contract {{contract_code}}: {{amount_released}} released, {{remaining}} remaining.	Договор {{contract_code}}: возвращено {{amount_released}}, остаток {{remaining}}.	Vertrag {{contract_code}}: {{amount_released}} freigegeben, {{remaining}} verbleibend.
+notifications.crm.lead_qualified.title	Lead qualified	Лид квалифицирован	Lead qualifiziert
+notifications.crm.lead_qualified.body	Lead {{name}} has been qualified.	Лид {{name}} квалифицирован.	Lead {{name}} wurde qualifiziert.
+notifications.crm.opportunity_won.title	Opportunity won	Сделка выиграна	Opportunity gewonnen
+notifications.crm.opportunity_won.body	{{name}} won — value {{value}}.	{{name}} выиграна — сумма {{value}}.	{{name}} gewonnen — Wert {{value}}.
+notifications.crm.opportunity_scored.title	Opportunity scored	Сделка оценена	Opportunity bewertet
+notifications.crm.opportunity_scored.body	{{title}} scored {{score}} (band {{band}}).	{{title}} получила {{score}} (диапазон {{band}}).	{{title}} mit {{score}} bewertet (Band {{band}}).
+notifications.carbon.boq_position_assigned.title	Carbon factor assigned	Назначен углеродный коэффициент	CO₂-Faktor zugewiesen
+notifications.carbon.boq_position_assigned.body	BOQ position {{boq_position_id}}: {{carbon_kg}} kg CO₂e ({{stage}}).	Позиция BOQ {{boq_position_id}}: {{carbon_kg}} кг CO₂e ({{stage}}).	LV-Position {{boq_position_id}}: {{carbon_kg}} kg CO₂e ({{stage}}).
+notifications.property_dev.buyer_contracted.title	Buyer contracted	Покупатель оформлен по договору	Käufer unter Vertrag
+notifications.property_dev.buyer_contracted.body	{{buyer}} contracted for plot {{plot}}.	{{buyer}} заключил договор на участок {{plot}}.	{{buyer}} hat Grundstück {{plot}} unter Vertrag.
+notifications.property_dev.handover_completed.title	Handover completed	Передача завершена	Übergabe abgeschlossen
+notifications.property_dev.handover_completed.body	Plot {{plot}} handover completed.	Передача участка {{plot}} завершена.	Übergabe für Grundstück {{plot}} abgeschlossen.
+notifications.property_dev.warranty_raised.title	Warranty claim raised	Заявлено гарантийное требование	Gewährleistungsanspruch gemeldet
+notifications.property_dev.warranty_raised.body	{{category}} warranty claim raised for plot {{plot}}.	Гарантийное требование по {{category}} для участка {{plot}}.	{{category}}-Gewährleistungsanspruch für Grundstück {{plot}} gemeldet.
+notifications.bid_management.invitation_sent.title	Bid invitation sent	Отправлено приглашение к торгам	Ausschreibungseinladung versendet
+notifications.bid_management.invitation_sent.body	Invitation for {{package}} sent, due {{due}}.	Приглашение по пакету {{package}} отправлено, срок {{due}}.	Einladung für {{package}} versendet, Abgabe {{due}}.
+notifications.bid_management.awarded.title	Bid awarded	Подряд присуждён	Auftrag vergeben
+notifications.bid_management.awarded.body	{{package}} awarded for {{amount}}.	{{package}} присуждён за {{amount}}.	{{package}} für {{amount}} vergeben.
+notifications.schedule_advanced.constraint_cleared.title	Schedule constraint cleared	Ограничение графика снято	Terminplan-Constraint aufgehoben
+notifications.schedule_advanced.constraint_cleared.body	Task {{task}} is no longer blocked.	Задача {{task}} больше не заблокирована.	Aufgabe {{task}} ist nicht mehr blockiert.
+notifications.daily_diary.signed.title	Daily diary signed	Дневник работ подписан	Bautagebuch unterzeichnet
+notifications.daily_diary.signed.body	Diary for {{date}} has been signed.	Дневник за {{date}} подписан.	Tagebuch für {{date}} wurde unterzeichnet.
+notifications.service.ticket_dispatched.title	Service ticket dispatched	Сервисная заявка отправлена в работу	Service-Ticket disponiert
+notifications.service.ticket_dispatched.body	Ticket {{ticket_number}} dispatched ({{priority}} priority).	Заявка {{ticket_number}} отправлена в работу (приоритет {{priority}}).	Ticket {{ticket_number}} disponiert (Priorität {{priority}}).
+notifications.service.ticket_resolved.title	Service ticket resolved	Сервисная заявка закрыта	Service-Ticket gelöst
+notifications.service.ticket_resolved.body	Ticket {{ticket_number}} has been resolved.	Заявка {{ticket_number}} закрыта.	Ticket {{ticket_number}} wurde gelöst.
+notifications.service.work_order_billed.title	Work order billed	Наряд-заказ выставлен к оплате	Arbeitsauftrag abgerechnet
+notifications.service.work_order_billed.body	Work order {{wo_number}} billed for {{amount}} {{currency}}.	Наряд-заказ {{wo_number}} выставлен на {{amount}} {{currency}}.	Arbeitsauftrag {{wo_number}} über {{amount}} {{currency}} abgerechnet.
+notifications.subcontractors.prequal_submitted.title	Prequalification submitted	Подана преквалификация	Präqualifikation eingereicht
+notifications.subcontractors.prequal_submitted.body	{{subcontractor_name}} submitted a prequalification.	{{subcontractor_name}} подал преквалификацию.	{{subcontractor_name}} hat eine Präqualifikation eingereicht.
+notifications.subcontractors.payment_app_submitted.title	Payment application submitted	Подана заявка на оплату	Zahlungsantrag eingereicht
+notifications.subcontractors.payment_app_submitted.body	Application {{application_number}} submitted for {{net_amount}} {{currency}}.	Заявка {{application_number}} подана на {{net_amount}} {{currency}}.	Antrag {{application_number}} über {{net_amount}} {{currency}} eingereicht.
+notifications.subcontractors.retention_released.title	Subcontractor retention released	Удержание подрядчика возвращено	Nachunternehmer-Einbehalt freigegeben
+notifications.subcontractors.retention_released.body	{{amount}} {{currency}} retention released.	Возвращено удержание: {{amount}} {{currency}}.	{{amount}} {{currency}} Sicherheitseinbehalt freigegeben.
+notifications.equipment.assigned.title	Equipment assigned	Техника назначена	Gerät zugewiesen
+notifications.equipment.assigned.body	{{equipment_code}} assigned to {{project_name}}.	{{equipment_code}} назначена на {{project_name}}.	{{equipment_code}} {{project_name}} zugewiesen.
+notifications.equipment.damage_reported.title	Equipment damage reported	Сообщено о повреждении техники	Geräteschaden gemeldet
+notifications.equipment.damage_reported.body	{{equipment_code}} damage reported ({{severity}}).	{{equipment_code}}: повреждение ({{severity}}).	Schaden an {{equipment_code}} gemeldet ({{severity}}).
+notifications.portal.user_invited.title	Portal user invited	Приглашён пользователь портала	Portal-Benutzer eingeladen
+notifications.portal.user_invited.body	{{portal_user_email}} invited as {{portal_role}}.	{{portal_user_email}} приглашён как {{portal_role}}.	{{portal_user_email}} als {{portal_role}} eingeladen.
+match_elements.vector_status_disconnected_explainer	Semantic vector search is optional — it sharpens matches by meaning but needs a running Qdrant vector database. Use the \"Vector database\" panel below to start or install Qdrant natively (no Docker required), then retry.	Семантический векторный поиск — опциональная функция: она уточняет совпадения по смыслу, но требует запущенной векторной БД Qdrant. Используйте панель «Векторная БД» ниже, чтобы запустить или установить Qdrant нативно (без Docker), затем повторите попытку.	Die semantische Vektorsuche ist optional — sie verschärft Matches nach Bedeutung, benötigt aber eine laufende Qdrant-Vektordatenbank. Nutzen Sie das Panel „Vektordatenbank“ unten, um Qdrant nativ zu starten oder zu installieren (kein Docker erforderlich), und versuchen Sie es erneut.
+match_elements.vector_status_disconnected_fallback	You can still proceed now: matching automatically falls back to lexical (keyword) and rule-based scoring while the vector DB is offline.	Можно продолжить и сейчас: при отключённой векторной БД сопоставление автоматически переходит на лексический (по ключевым словам) и правиловый скоринг.	Sie können trotzdem fortfahren: Das Matching fällt automatisch auf lexikalische (Stichwort-) und regelbasierte Bewertung zurück, solange die Vektor-DB offline ist.
+match_elements.vector_status_retry	Retry connection	Повторить подключение	Verbindung erneut versuchen
+match_elements.vector_status_open_costs_long	Open cost-database tools	Открыть инструменты базы расценок	Werkzeuge der Kostendatenbank öffnen
+match_elements.pipeline.title	Match pipeline	Пайплайн сопоставления	Match-Pipeline
+match_elements.pipeline.subtitle	Seven steps from CAD file to priced BoQ — every step is visible and tunable	Семь шагов от CAD-файла до оценённой ВОР — каждый шаг виден и настраивается	Sieben Schritte von der CAD-Datei zum bepreisten LV — jeder Schritt sichtbar und justierbar
+match_elements.pipeline.done_suffix	done	готово	erledigt
+match_elements.pipeline.run_all	Run all stages	Выполнить все этапы	Alle Stufen ausführen
+match_elements.pipeline.running_all	Running all…	Выполняем все…	Alle werden ausgeführt…
+match_elements.pipeline.loading	Loading pipeline…	Загружаем пайплайн…	Pipeline wird geladen…
+match_elements.pipeline.load_failed	Could not load the pipeline.	Не удалось загрузить пайплайн.	Pipeline konnte nicht geladen werden.
+match_elements.pipeline.loading_prompts	Loading prompts…	Загружаем промпты…	Prompts werden geladen…
+match_elements.pipeline.run	Run	Выполнить	Ausführen
+match_elements.pipeline.rerun	Re-run	Перезапустить	Erneut ausführen
+match_elements.pipeline.adjust	Adjust	Настроить	Anpassen
+match_elements.pipeline.adjust_stage	Adjust stage	Настроить этап	Stufe anpassen
+match_elements.pipeline.rerun_from_here	Re-run from here	Перезапустить с этого шага	Ab hier erneut ausführen
+match_elements.pipeline.status_pending	Not run	Не выполнен	Nicht ausgeführt
+match_elements.pipeline.status_running	Running	Выполняется	Wird ausgeführt
+match_elements.pipeline.status_done	Done	Готово	Erledigt
+match_elements.pipeline.status_error	Error	Ошибка	Fehler
+match_elements.pipeline.status_stale	Needs re-run	Нужен перезапуск	Erneut ausführen
+match_elements.pipeline.status_skipped	Skipped	Пропущен	Übersprungen
+match_elements.pipeline.stale_hint	An earlier stage changed — re-run this step to refresh its output.	Один из предыдущих этапов изменился — перезапустите этот шаг, чтобы обновить результат.	Eine frühere Stufe hat sich geändert — führen Sie diesen Schritt erneut aus, um die Ausgabe zu aktualisieren.
+match_elements.pipeline.llm_badge	LLM	LLM	LLM
+match_elements.pipeline.llm_tunable	LLM-augmented — prompt is editable	LLM-усиленный — промпт редактируется	LLM-gestützt — Prompt ist editierbar
+match_elements.pipeline.group_by	Group by keys	Группировать по ключам	Nach Schlüsseln gruppieren
+match_elements.pipeline.group_by_hint	Comma-separated. RVT → category, type_name · IFC → ifc_class, predefined_type · DWG → layer, block_name	Через запятую. RVT → category, type_name · IFC → ifc_class, predefined_type · DWG → layer, block_name	Komma-getrennt. RVT → category, type_name · IFC → ifc_class, predefined_type · DWG → layer, block_name
+match_elements.pipeline.method	Method	Метод	Methode
+match_elements.pipeline.max_groups	Max groups	Макс. групп	Max. Gruppen
+match_elements.pipeline.llm_provider	LLM provider	Провайдер LLM	LLM-Anbieter
+match_elements.pipeline.prompt	Prompt	Промпт	Prompt
+match_elements.pipeline.system	system	system	System
+match_elements.pipeline.system_readonly	System prompt — read-only. Fork it to edit and tune for your company.	Системный промпт — только чтение. Форкните его, чтобы редактировать и настроить под свою компанию.	System-Prompt — schreibgeschützt. Forken Sie ihn, um ihn zu bearbeiten und für Ihr Unternehmen anzupassen.
+match_elements.pipeline.system_prompt	System prompt	Системный промпт	System-Prompt
+match_elements.pipeline.user_template	User template	Пользовательский шаблон	Benutzer-Vorlage
+match_elements.pipeline.variables	Variables the stage fills:	Переменные, которые заполняет этап:	Variablen, die die Stufe füllt:
+match_elements.pipeline.fork	Fork to edit	Форкнуть для редактирования	Zum Bearbeiten forken
+match_elements.pipeline.duplicate	Duplicate	Дублировать	Duplizieren
+match_elements.pipeline.save_prompt	Save prompt	Сохранить промпт	Prompt speichern
+match_elements.pipeline.revert	Revert	Откатить	Zurücksetzen
+match_elements.pipeline.run_failed	Stage run failed	Этап завершился с ошибкой	Stufenausführung fehlgeschlagen
+match_elements.pipeline.intro_title	Open the visible match pipeline	Открыть видимый пайплайн сопоставления	Sichtbare Match-Pipeline öffnen
+match_elements.pipeline.intro_blurb	Seven steps from CAD file to priced BoQ — Convert, Load, Schema, Filter, Group, Match, Rollup. Every step is visible, explained, and tunable (prompts, LLM provider, group keys).	Семь шагов от CAD-файла до оценённой ВОР — Конвертация, Загрузка, Схема, Фильтр, Группировка, Сопоставление, Сворачивание. Каждый шаг виден, описан и настраивается (промпты, LLM-провайдер, ключи группировки).	Sieben Schritte von der CAD-Datei zum bepreisten LV — Konvertieren, Laden, Schema, Filter, Gruppieren, Match, Rollup. Jeder Schritt ist sichtbar, erklärt und justierbar (Prompts, LLM-Anbieter, Gruppierungsschlüssel).
+match_elements.pipeline.intro_cta	Open the pipeline	Открыть пайплайн	Pipeline öffnen
+match_elements.pipeline.intro_resume	Resume last session	Продолжить последнюю сессию	Letzte Sitzung fortsetzen
+match_elements.pipeline.busy_hint	A stage is running — wait for it to finish before starting another.	Один из этапов выполняется — дождитесь его завершения, прежде чем запустить другой.	Eine Stufe wird ausgeführt — bitte warten, bevor Sie eine andere starten.
+match_elements.pipeline.step_convert	Convert	Конвертация	Konvertieren
+match_elements.pipeline.step_load	Load	Загрузка	Laden
+match_elements.pipeline.step_schema	Schema	Схема	Schema
+match_elements.pipeline.step_filter	Filter	Фильтр	Filter
+match_elements.pipeline.step_group	Group	Группировка	Gruppieren
+match_elements.pipeline.step_match	Match	Сопоставление	Match
+match_elements.pipeline.step_rollup	Rollup	Сворачивание	Rollup
+clash.title	Clash Detection	Поиск коллизий	Kollisionsprüfung
+clash.subtitle	Geometric interference & clearance coordination across federated BIM models — with a clash matrix and BCF export.	Геометрические пересечения и проверка зазоров по федеративным BIM-моделям — с матрицей коллизий и экспортом в BCF.	Geometrische Überschneidungs- und Abstandsprüfung über föderierte BIM-Modelle — mit Kollisionsmatrix und BCF-Export.
+clash.pick_project	Select a project	Выберите проект	Projekt auswählen
+clash.new_run	New clash run	Новый прогон	Neue Kollisionsprüfung
+clash.models	Models	Модели	Modelle
+clash.no_models	No parsed BIM models in this project.	В проекте нет распарсенных BIM-моделей.	Keine geparsten BIM-Modelle in diesem Projekt.
+clash.tolerance	Tolerance (mm)	Допуск (мм)	Toleranz (mm)
+clash.clearance	Clearance (mm)	Зазор (мм)	Mindestabstand (mm)
+clash.mode	Test scope	Область проверки	Prüfumfang
+clash.mode_cross	Cross-discipline only	Только между дисциплинами	Nur fachübergreifend
+clash.mode_all	Every pair	Все пары	Jedes Paar
+clash.mode_sets	Set A vs Set B (by type)	Набор A против набора B (по типу)	Set A vs. Set B (nach Typ)
+clash.sets_hint	Only pairs where one element is in Set A and the other in Set B are tested — e.g. all Walls (A) against all Pipes (B).	Проверяются только пары, где один элемент в наборе A, а другой в наборе B — например, все стены (A) против всех труб (B).	Nur Paare werden geprüft, bei denen ein Element in Set A und das andere in Set B liegt — z. B. alle Wände (A) gegen alle Rohrleitungen (B).
+clash.set_a	Set A	Набор A	Set A
+clash.set_b	Set B	Набор B	Set B
+clash.sets_required	Pick at least one type or discipline for both Set A and Set B.	Выберите хотя бы один тип или дисциплину для наборов A и B.	Wählen Sie mindestens einen Typ oder ein Fach für Set A und Set B.
+clash.set_search	Search types / disciplines…	Поиск типов / дисциплин…	Typen / Fächer suchen…
+clash.set_empty	No elements — select a parsed model first.	Нет элементов — сначала выберите распарсенную модель.	Keine Elemente — wählen Sie zuerst ein geparstes Modell.
+clash.disciplines	Disciplines	Дисциплины	Fachgewerke
+clash.element_types	Element types	Типы элементов	Elementtypen
+clash.run	Run clash detection	Запустить поиск коллизий	Kollisionsprüfung starten
+clash.history	Run history	История прогонов	Lauf-Historie
+clash.no_runs	No runs yet.	Прогонов ещё нет.	Noch keine Läufe.
+clash.run_failed	Clash run failed	Прогон коллизий не удался	Kollisionsprüfung fehlgeschlagen
+clash.run_done	{{n}} clashes found across {{e}} elements	Найдено {{n}} коллизий в {{e}} элементах	{{n}} Kollisionen in {{e}} Elementen gefunden
+clash.status_failed	Could not update status	Не удалось обновить статус	Status konnte nicht aktualisiert werden
+clash.status_saved	Status updated	Статус обновлён	Status aktualisiert
+clash.bcf_done	Exported {{n}} clash(es) to BCF ({{s}} skipped)	Экспортировано {{n}} коллизий в BCF (пропущено: {{s}})	{{n}} Kollision(en) nach BCF exportiert ({{s}} übersprungen)
+clash.empty_title	No clash run selected	Прогон коллизий не выбран	Keine Kollisionsprüfung ausgewählt
+clash.empty_desc	Pick the BIM models on the left and run clash detection to build the coordination matrix.	Выберите BIM-модели слева и запустите поиск коллизий, чтобы построить матрицу координации.	Wählen Sie links die BIM-Modelle aus und starten Sie die Kollisionsprüfung, um die Koordinationsmatrix zu erstellen.
+clash.kpi_total	Total clashes	Всего коллизий	Kollisionen gesamt
+clash.kpi_hard	Hard	Жёстких	Hart
+clash.kpi_clearance	Clearance	По зазору	Mindestabstand
+clash.kpi_open	Open	Открытых	Offen
+clash.kpi_resolved	Resolved	Устранённых	Behoben
+clash.kpi_disciplines	Disciplines	Дисциплин	Fachgewerke
+clash.kpi_matrix_cells	Matrix cells	Ячеек матрицы	Matrixzellen
+clash.matrix_title	Clash matrix — discipline × discipline	Матрица коллизий — дисциплина × дисциплина	Kollisionsmatrix — Fach × Fach
+clash.matrix_open	{{n}} open	{{n}} открытых	{{n}} offen
+clash.clear_filter	Clear filter	Сбросить фильтр	Filter löschen
+clash.no_clashes	No clashes — the models are clean.	Коллизий нет — модели чисты.	Keine Kollisionen — die Modelle sind sauber.
+clash.no_clashes_title	No clashes detected	Коллизии не обнаружены	Keine Kollisionen erkannt
+clash.no_match_title	No clashes match the filters	Под фильтр не попало ни одной коллизии	Keine Kollisionen entsprechen den Filtern
+clash.no_match_desc	Try widening or clearing the active filters.	Расширьте или сбросьте активные фильтры.	Erweitern oder entfernen Sie die aktiven Filter.
+clash.results_error	Failed to load clash results	Не удалось загрузить результаты коллизий	Kollisionsergebnisse konnten nicht geladen werden
+clash.results_error_desc	The clash results could not be loaded. This does not mean the models are clean — please retry.	Результаты коллизий не загрузились. Это не значит, что модели чисты — попробуйте снова.	Die Kollisionsergebnisse konnten nicht geladen werden. Das bedeutet nicht, dass die Modelle sauber sind — bitte erneut versuchen.
+clash.retry	Retry	Повторить	Erneut versuchen
+clash.capped_notice	Showing the first {{loaded}} of {{total}} clashes — refine the filters to narrow the review set.	Показаны первые {{loaded}} из {{total}} коллизий — уточните фильтры, чтобы сузить набор.	Zeigt die ersten {{loaded}} von {{total}} Kollisionen — verfeinern Sie die Filter, um den Prüfumfang einzugrenzen.
+clash.results	Clash results	Результаты коллизий	Kollisionsergebnisse
+clash.count_of	{{shown}} of {{total}}	{{shown}} из {{total}}	{{shown}} von {{total}}
+clash.search_ph	Search element name…	Поиск по имени элемента…	Elementnamen suchen…
+clash.all_types	All types	Все типы	Alle Typen
+clash.type_hard	Hard	Жёсткая	Hart
+clash.type_clearance	Clearance	По зазору	Mindestabstand
+clash.export_sel	Export {{n}} to BCF	Экспортировать {{n}} в BCF	{{n}} nach BCF exportieren
+clash.export_open	Export open → BCF	Экспорт открытых → BCF	Offene → BCF exportieren
+clash.export_row	Export this clash to BCF	Экспортировать эту коллизию в BCF	Diese Kollision nach BCF exportieren
+clash.filter_status	Status	Статус	Status
+clash.filter_min_pen	Min penetration	Мин. проникновение	Min. Durchdringung
+clash.clear_all	Clear all	Сбросить всё	Alle löschen
+clash.col_a	Element A	Элемент A	Element A
+clash.col_b	Element B	Элемент B	Element B
+clash.col_type	Type	Тип	Typ
+clash.col_penetration	Penetration	Проникновение	Durchdringung
+clash.col_distance	Distance	Расстояние	Abstand
+clash.col_status	Status	Статус	Status
+clash.col_actions	Actions	Действия	Aktionen
+clash.select_all	Select all on page	Выбрать всё на странице	Alle auf Seite auswählen
+clash.select_row	Select clash	Выбрать коллизию	Kollision auswählen
+clash.bcf	BCF	BCF	BCF
+clash.isolate_3d	Isolate in 3D	Изолировать в 3D	In 3D isolieren
+clash.isolate_3d_short	3D	3D	3D
+clash.n_selected	{{n}} selected	выбрано: {{n}}	{{n}} ausgewählt
+clash.clear_selection	Clear	Сбросить	Auswahl löschen
+clash.clear_filter_short	Clear	Сбросить	Löschen
+clash.page_range	{{from}}–{{to}} of {{total}}	{{from}}–{{to}} из {{total}}	{{from}}–{{to}} von {{total}}
+clash.page_of	Page {{p}} / {{n}}	Стр. {{p}} / {{n}}	Seite {{p}} / {{n}}
+clash.prev	Prev	Назад	Zurück
+clash.next	Next	Далее	Weiter
+clash.status.new	New	Новая	Neu
+clash.status.active	Active	Активна	Aktiv
+clash.status.reviewed	Reviewed	Просмотрена	Geprüft
+clash.status.approved	Approved	Одобрена	Freigegeben
+clash.status.resolved	Resolved	Устранена	Behoben
+clash.status.ignored	Ignored	Проигнорирована	Ignoriert
+pipeline.untitled	Untitled pipeline	Безымянный пайплайн	Unbenannte Pipeline
+pipeline.empty.title	Build your first automation	Создайте свою первую автоматизацию	Erstellen Sie Ihre erste Automatisierung
+pipeline.empty.description	Drag a trigger and a few steps from the palette on the left, connect them, then press Run.	Перетащите триггер и несколько шагов из палитры слева, соедините их и нажмите «Выполнить».	Ziehen Sie einen Auslöser und einige Schritte aus der Palette links auf die Fläche, verbinden Sie sie und drücken Sie Ausführen.
+pipeline.toast.saved	Pipeline saved	Пайплайн сохранён	Pipeline gespeichert
+pipeline.toast.save_failed	Could not save pipeline	Не удалось сохранить пайплайн	Pipeline konnte nicht gespeichert werden
+pipeline.toast.run_failed	Could not start the run	Не удалось запустить выполнение	Lauf konnte nicht gestartet werden
+pipeline.explain.coming_soon_title	Explain this pipeline	Объяснить этот пайплайн	Diese Pipeline erklären
+pipeline.explain.coming_soon_body	The plain-language story view arrives in the next release.	Объяснение на естественном языке появится в следующем релизе.	Die Klartext-Erzählansicht kommt in der nächsten Version.
+pipeline.tour.palette_title	Pick your steps	Выберите шаги	Wählen Sie Ihre Schritte
+pipeline.tour.palette_body	Drag a step from here onto the canvas, or just click it to drop it in the middle.	Перетащите шаг отсюда на холст или просто нажмите на него, чтобы добавить в центр.	Ziehen Sie einen Schritt von hier auf die Fläche oder klicken Sie ihn an, um ihn in die Mitte zu setzen.
+pipeline.tour.canvas_title	Connect the steps	Соедините шаги	Schritte verbinden
+pipeline.tour.canvas_body	Drag from one step output dot to the next step input. Colours show the data type.	Тяните от точки выхода одного шага к точке входа следующего. Цвета показывают тип данных.	Ziehen Sie vom Ausgangspunkt eines Schritts zum Eingangspunkt des nächsten. Farben zeigen den Datentyp an.
+pipeline.tour.run_title	Run it	Запустите	Ausführen
+pipeline.tour.run_body	Press Run to execute the pipeline and watch each step light up live.	Нажмите «Выполнить», чтобы запустить пайплайн и видеть, как каждый шаг загорается в реальном времени.	Drücken Sie Ausführen, um die Pipeline auszuführen und jeden Schritt live aufleuchten zu sehen.
+pipeline.toolbar.aria	Pipeline toolbar	Панель инструментов пайплайна	Pipeline-Symbolleiste
+pipeline.toolbar.undo	Undo	Отменить	Rückgängig
+pipeline.toolbar.redo	Redo	Повторить	Wiederherstellen
+pipeline.toolbar.fit	Fit view	Вписать в окно	An Fenster anpassen
+pipeline.toolbar.explain	Explain this pipeline	Объяснить этот пайплайн	Diese Pipeline erklären
+pipeline.toolbar.issues	{{count}} issue(s)	проблем: {{count}}	{{count}} Problem(e)
+pipeline.toolbar.save	Save	Сохранить	Speichern
+pipeline.toolbar.run	Run	Выполнить	Ausführen
+pipeline.toolbar.stop	Stop	Остановить	Stopp
+pipeline.palette.title	Steps	Шаги	Schritte
+pipeline.palette.aria	Node palette	Палитра узлов	Knoten-Palette
+pipeline.palette.expand	Expand palette	Развернуть палитру	Palette erweitern
+pipeline.palette.collapse	Collapse palette	Свернуть палитру	Palette einklappen
+pipeline.palette.search	Search steps	Поиск шагов	Schritte suchen
+pipeline.palette.search_ph	Search…	Поиск…	Suchen…
+pipeline.palette.none	No step types available.	Нет доступных типов узлов.	Keine Knotentypen verfügbar.
+pipeline.palette.module_chip	Touches the {{module}} module	Затрагивает модуль {{module}}	Betrifft das Modul {{module}}
+pipeline.palette.writes	writes	пишет	schreibt
+pipeline.palette.writes_chip	This step writes data — needs a gate before it	Этот шаг пишет данные — перед ним нужен gate	Dieser Schritt schreibt Daten — braucht ein Gate davor
+pipeline.palette.cat_trigger	Sources / Triggers	Источники / Триггеры	Quellen / Auslöser
+pipeline.palette.cat_source	Get data	Получить данные	Daten abrufen
+pipeline.palette.cat_transform	Transform	Преобразовать	Transformieren
+pipeline.palette.cat_gate	Validate	Валидация	Validieren
+pipeline.palette.cat_ai	AI	ИИ	KI
+pipeline.palette.cat_action	Actions / Outputs	Действия / Вывод	Aktionen / Ausgaben
+pipeline.palette.cat_flow	Flow control	Управление потоком	Flusssteuerung
+pipeline.inspector.aria	Inspector	Инспектор	Inspektor
+pipeline.inspector.expand	Expand inspector	Развернуть инспектор	Inspektor erweitern
+pipeline.inspector.collapse	Collapse inspector	Свернуть инспектор	Inspektor einklappen
+pipeline.inspector.tab_node	Node	Узел	Knoten
+pipeline.inspector.tab_pipeline	Pipeline	Пайплайн	Pipeline
+pipeline.inspector.context_node	Editing step	Редактирование шага	Schritt bearbeiten
+pipeline.inspector.context_pipeline	Editing pipeline	Редактирование пайплайна	Pipeline bearbeiten
+pipeline.inspector.no_params	This step has no settings to configure.	У этого шага нет настраиваемых параметров.	Dieser Schritt hat keine konfigurierbaren Einstellungen.
+pipeline.inspector.enabled	Enabled	Включён	Aktiviert
+pipeline.inspector.choose	Choose…	Выбрать…	Auswählen…
+pipeline.inspector.duplicate	Duplicate	Дублировать	Duplizieren
+pipeline.inspector.delete	Delete	Удалить	Löschen
+pipeline.inspector.name	Name	Название	Name
+pipeline.inspector.name_ph	My automation	Моя автоматизация	Meine Automatisierung
+pipeline.inspector.description	Description	Описание	Beschreibung
+pipeline.inspector.published	Published (can be triggered)	Опубликован (можно запускать)	Veröffentlicht (kann ausgelöst werden)
+pipeline.canvas.aria	Pipeline editor canvas	Холст редактора пайплайна	Pipeline-Editor-Fläche
+pipeline.canvas.hint	Drag steps from the palette, connect their ports, then press Run.	Перетащите шаги из палитры, соедините их порты и нажмите «Выполнить».	Ziehen Sie Schritte aus der Palette, verbinden Sie ihre Ports und drücken Sie Ausführen.
+pipeline.canvas.legend_sr	Edge colour, shape and dash together encode the data type.	Цвет, форма и штрих линии вместе кодируют тип данных.	Kantenfarbe, Form und Strich codieren gemeinsam den Datentyp.
+pipeline.connect.incompatible_title	These steps can't be connected	Эти шаги нельзя соединить	Diese Schritte können nicht verbunden werden
+pipeline.connect.incompatible_body	This output is a {{from}}; that input expects a {{to}}.	Этот выход — {{from}}; этот вход ожидает {{to}}.	Diese Ausgabe ist ein {{from}}; dieser Eingang erwartet ein {{to}}.
+pipeline.node.rename	Rename node	Переименовать узел	Knoten umbenennen
+pipeline.node.rename_hint	Double-click to rename	Двойной клик — переименовать	Doppelklick zum Umbenennen
+pipeline.node.ai_badge	AI	ИИ	KI
+pipeline.node.ai_confidence	AI suggestion — review the confidence score	Предложение ИИ — проверьте оценку уверенности	KI-Vorschlag — Konfidenzwert prüfen
+pipeline.node.help	What this node does	Что делает этот узел	Was dieser Knoten tut
+pipeline.node.help_generic	Configure this step in the Inspector. It receives data from the connected step before it and passes its result on.	Настройте этот шаг в инспекторе. Он принимает данные от предыдущего соединённого шага и передаёт результат дальше.	Konfigurieren Sie diesen Schritt im Inspektor. Er empfängt Daten vom verbundenen Schritt davor und gibt das Ergebnis weiter.
+pipeline.node.collapse	Collapse	Свернуть	Einklappen
+pipeline.node.expand	Expand	Развернуть	Erweitern
+pipeline.node.more_params	+{{count}} more	+ещё {{count}}	+{{count}} mehr
+pipeline.node.took_ms	{{ms}} ms	{{ms}} мс	{{ms}} ms
+pipeline.port.aria_input	input: {{label}}, type {{type}}	вход: {{label}}, тип {{type}}	Eingang: {{label}}, Typ {{type}}
+pipeline.port.aria_output	output: {{label}}, type {{type}}	выход: {{label}}, тип {{type}}	Ausgang: {{label}}, Typ {{type}}
+pipeline.port.table	Table / rows	Таблица / строки	Tabelle / Zeilen
+pipeline.port.file	File / document	Файл / документ	Datei / Dokument
+pipeline.port.bim	BIM model	BIM-модель	BIM-Modell
+pipeline.port.number	Number	Число	Zahl
+pipeline.port.boolean	Boolean / flag	Булево / флаг	Boolean / Flag
+pipeline.port.any	Any / passthrough	Любой / passthrough	Beliebig / Durchreichen
+pipeline.port.error	Error branch	Ветка ошибок	Fehlerzweig
+pipeline.dock.run	Run	Выполнить	Ausführen
+pipeline.dock.expand	Expand run dock	Развернуть док запусков	Lauf-Dock erweitern
+pipeline.dock.collapse	Collapse run dock	Свернуть док запусков	Lauf-Dock einklappen
+pipeline.dock.idle	Idle	Бездействие	Leerlauf
+pipeline.dock.progress	{{pct}}%	{{pct}}%	{{pct}}%
+pipeline.dock.tab_run	Run	Запуск	Lauf
+pipeline.dock.tab_history	History	История	Historie
+pipeline.dock.no_steps	Add steps and press Run to watch data flow through your pipeline.	Добавьте шаги и нажмите «Выполнить», чтобы увидеть поток данных.	Fügen Sie Schritte hinzu und drücken Sie Ausführen, um den Datenfluss zu beobachten.
+pipeline.dock.loading_history	Loading run history…	Загружаем историю запусков…	Lauf-Historie wird geladen…
+pipeline.dock.no_runs_title	No runs yet	Запусков ещё не было	Noch keine Läufe
+pipeline.dock.no_runs_desc	Press Run to see data flow through your pipeline.	Нажмите «Выполнить», чтобы увидеть поток данных через пайплайн.	Drücken Sie Ausführen, um den Datenfluss durch Ihre Pipeline zu sehen.
+pipeline.dock.manual	Manual	Ручной	Manuell
+pipeline.dock.queued_hint	Waiting for a worker to pick up the run…	Ожидание воркера, который возьмёт запуск в работу…	Warten auf einen Worker, der den Lauf übernimmt…
+pipeline.runstatus.pending	Pending	Ожидает	Ausstehend
+pipeline.runstatus.queued	Queued	В очереди	In Warteschlange
+pipeline.runstatus.running	Running	Выполняется	Wird ausgeführt
+pipeline.runstatus.started	Running	Выполняется	Wird ausgeführt
+pipeline.runstatus.done	Done	Готово	Erledigt
+pipeline.runstatus.success	Done	Готово	Erledigt
+pipeline.runstatus.error	Error	Ошибка	Fehler
+pipeline.runstatus.failed	Failed	Не удалось	Fehlgeschlagen
+pipeline.runstatus.skipped	Skipped	Пропущен	Übersprungen
+pipeline.runstatus.stale	Needs re-run	Нужен перезапуск	Erneut ausführen
+pipeline.runstatus.paused	Paused	На паузе	Pausiert
+pipeline.runstatus.cancelled	Cancelled	Отменён	Abgebrochen
+pipeline.trigger.manual	Manual	Ручной	Manuell
+pipeline.trigger.schedule	Scheduled	По расписанию	Geplant
+pipeline.trigger.event	Event	По событию	Ereignis
+pipeline.nodetype.trigger.manual	Manual trigger	Ручной триггер	Manueller Auslöser
+pipeline.nodetype.trigger.manual.desc	Start the pipeline from a REST call. No inputs.	Запуск пайплайна REST-вызовом. Без входов.	Starten Sie die Pipeline über einen REST-Aufruf. Keine Eingänge.
+pipeline.nodetype.source.project	Get project	Получить проект	Projekt abrufen
+pipeline.nodetype.source.project.desc	Load the bound project's id + name.	Загружает id и название привязанного проекта.	Lädt die ID und den Namen des gebundenen Projekts.
+pipeline.nodetype.source.boq	Get BOQ positions	Получить позиции BOQ	LV-Positionen abrufen
+pipeline.nodetype.source.boq.desc	Load every BOQ position for the project as rows (ids + a small sample).	Загружает все позиции BOQ проекта как строки (id + небольшая выборка).	Lädt alle LV-Positionen des Projekts als Zeilen (IDs + kleine Stichprobe).
+pipeline.nodetype.transform.filter	Filter rows	Фильтр строк	Zeilen filtern
+pipeline.nodetype.transform.filter.desc	Keep only rows matching a simple field/op/value test.	Оставляет только строки, удовлетворяющие простому тесту поле/оператор/значение.	Behält nur Zeilen, die einem einfachen Feld/Operator/Wert-Test entsprechen.
+pipeline.nodetype.gate.validation	Validation gate	Шлюз валидации	Validierungs-Gate
+pipeline.nodetype.gate.validation.desc	Run the validation engine over the rows; stop the run on blocking errors.	Прогоняет движок валидации по строкам; останавливает запуск при блокирующих ошибках.	Führt die Validierungs-Engine über die Zeilen aus; stoppt den Lauf bei blockierenden Fehlern.
+pipeline.nodetype.action.export.excel	Export to Excel	Экспорт в Excel	Excel-Export
+pipeline.nodetype.action.export.excel.desc	Write the rows to an .xlsx file (returns a download reference; does not mutate the database).	Записывает строки в файл .xlsx (возвращает ссылку для скачивания; БД не изменяется).	Schreibt die Zeilen in eine .xlsx-Datei (gibt eine Download-Referenz zurück; verändert die Datenbank nicht).
+pipeline.nodehelp.trigger.manual	This is where the pipeline begins. It carries no settings — connect it to a data step next.	Здесь начинается пайплайн. Без настроек — следующим шагом подключите получатель данных.	Hier beginnt die Pipeline. Keine Einstellungen — verbinden Sie sie als Nächstes mit einem Datenschritt.
+pipeline.nodehelp.source.project	Loads the project this pipeline is bound to. Leave the project id blank to use the one from the page URL.	Загружает проект, к которому привязан этот пайплайн. Оставьте id пустым, чтобы взять его из URL страницы.	Lädt das Projekt, an das diese Pipeline gebunden ist. Lassen Sie die Projekt-ID leer, um die aus der Seiten-URL zu verwenden.
+pipeline.nodehelp.source.boq	Reads every BOQ position for the project. Only ids and a small preview travel between steps; the full data stays on the server.	Читает все позиции BOQ проекта. Между шагами передаются только id и небольшая выборка; полные данные остаются на сервере.	Liest alle LV-Positionen des Projekts. Zwischen den Schritten werden nur IDs und eine kleine Vorschau übertragen; die vollständigen Daten bleiben auf dem Server.
+pipeline.nodehelp.transform.filter	Keeps only the rows that match the field / operator / value test you set in the Inspector. Leave the field blank to pass everything through.	Оставляет только строки, удовлетворяющие тесту поле/оператор/значение, заданному в инспекторе. Пустое поле пропускает всё.	Behält nur Zeilen, die dem im Inspektor festgelegten Feld/Operator/Wert-Test entsprechen. Leeres Feld lässt alles durch.
+pipeline.nodehelp.gate.validation	Runs the validation engine over the rows. If there are blocking errors the run stops here, so write steps after it never act on bad data.	Прогоняет движок валидации по строкам. При блокирующих ошибках запуск останавливается здесь, чтобы последующие шаги записи не работали с плохими данными.	Führt die Validierungs-Engine über die Zeilen aus. Bei blockierenden Fehlern stoppt der Lauf hier, damit nachgelagerte Schreibschritte nie auf fehlerhafte Daten wirken.
+pipeline.nodehelp.action.export.excel	Writes the incoming rows to an Excel file and returns a download reference. It does not change any data.	Записывает входящие строки в файл Excel и возвращает ссылку на скачивание. Данные не меняет.	Schreibt die eingehenden Zeilen in eine Excel-Datei und gibt eine Download-Referenz zurück. Daten werden nicht verändert.
+pipeline.param.source.project.project_id	Project id (optional)	ID проекта (необязательно)	Projekt-ID (optional)
+pipeline.param.source.boq.project_id	Project id (optional)	ID проекта (необязательно)	Projekt-ID (optional)
+pipeline.param.transform.filter.field	Field	Поле	Feld
+pipeline.param.transform.filter.op	Operator	Оператор	Operator
+pipeline.param.transform.filter.value	Value	Значение	Wert
+pipeline.param.gate.validation.rule_sets	Rule sets	Наборы правил	Regelsätze
+pipeline.param.action.export.excel.filename	File name	Имя файла	Dateiname
+pipeline.param.action.export.excel.columns	Columns	Столбцы	Spalten

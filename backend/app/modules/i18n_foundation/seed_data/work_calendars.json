@@ -1,0 +1,754 @@
+[
+  {
+    "country_code": "DE",
+    "name": "Germany Standard 2026",
+    "name_translations": {
+      "en": "Germany Standard 2026",
+      "de": "Deutschland Standard 2026"
+    },
+    "year": "2026",
+    "work_hours_per_day": "8",
+    "work_days": [1, 2, 3, 4, 5],
+    "exceptions": [
+      {"date": "2026-01-01", "name": {"en": "New Year's Day", "de": "Neujahrstag"}, "type": "public_holiday"},
+      {"date": "2026-04-03", "name": {"en": "Good Friday", "de": "Karfreitag"}, "type": "public_holiday"},
+      {"date": "2026-04-06", "name": {"en": "Easter Monday", "de": "Ostermontag"}, "type": "public_holiday"},
+      {"date": "2026-05-01", "name": {"en": "Labour Day", "de": "Tag der Arbeit"}, "type": "public_holiday"},
+      {"date": "2026-05-14", "name": {"en": "Ascension Day", "de": "Christi Himmelfahrt"}, "type": "public_holiday"},
+      {"date": "2026-05-25", "name": {"en": "Whit Monday", "de": "Pfingstmontag"}, "type": "public_holiday"},
+      {"date": "2026-10-03", "name": {"en": "German Unity Day", "de": "Tag der Deutschen Einheit"}, "type": "public_holiday"},
+      {"date": "2026-12-25", "name": {"en": "Christmas Day", "de": "1. Weihnachtstag"}, "type": "public_holiday"},
+      {"date": "2026-12-26", "name": {"en": "Boxing Day", "de": "2. Weihnachtstag"}, "type": "public_holiday"}
+    ]
+  },
+  {
+    "country_code": "AT",
+    "name": "Austria Standard 2026",
+    "name_translations": {
+      "en": "Austria Standard 2026",
+      "de": "Österreich Standard 2026"
+    },
+    "year": "2026",
+    "work_hours_per_day": "8",
+    "work_days": [1, 2, 3, 4, 5],
+    "exceptions": [
+      {"date": "2026-01-01", "name": {"en": "New Year's Day", "de": "Neujahrstag"}, "type": "public_holiday"},
+      {"date": "2026-01-06", "name": {"en": "Epiphany", "de": "Heilige Drei Könige"}, "type": "public_holiday"},
+      {"date": "2026-04-06", "name": {"en": "Easter Monday", "de": "Ostermontag"}, "type": "public_holiday"},
+      {"date": "2026-05-01", "name": {"en": "Labour Day", "de": "Staatsfeiertag"}, "type": "public_holiday"},
+      {"date": "2026-05-14", "name": {"en": "Ascension Day", "de": "Christi Himmelfahrt"}, "type": "public_holiday"},
+      {"date": "2026-05-25", "name": {"en": "Whit Monday", "de": "Pfingstmontag"}, "type": "public_holiday"},
+      {"date": "2026-06-04", "name": {"en": "Corpus Christi", "de": "Fronleichnam"}, "type": "public_holiday"},
+      {"date": "2026-08-15", "name": {"en": "Assumption of Mary", "de": "Mariä Himmelfahrt"}, "type": "public_holiday"},
+      {"date": "2026-10-26", "name": {"en": "National Day", "de": "Nationalfeiertag"}, "type": "public_holiday"},
+      {"date": "2026-11-01", "name": {"en": "All Saints' Day", "de": "Allerheiligen"}, "type": "public_holiday"},
+      {"date": "2026-12-08", "name": {"en": "Immaculate Conception", "de": "Mariä Empfängnis"}, "type": "public_holiday"},
+      {"date": "2026-12-25", "name": {"en": "Christmas Day", "de": "Christtag"}, "type": "public_holiday"},
+      {"date": "2026-12-26", "name": {"en": "St. Stephen's Day", "de": "Stefanitag"}, "type": "public_holiday"}
+    ]
+  },
+  {
+    "country_code": "CH",
+    "name": "Switzerland Standard 2026",
+    "name_translations": {
+      "en": "Switzerland Standard 2026",
+      "de": "Schweiz Standard 2026",
+      "fr": "Suisse Standard 2026"
+    },
+    "year": "2026",
+    "work_hours_per_day": "8.4",
+    "work_days": [1, 2, 3, 4, 5],
+    "exceptions": [
+      {"date": "2026-01-01", "name": {"en": "New Year's Day", "de": "Neujahrstag"}, "type": "public_holiday"},
+      {"date": "2026-01-02", "name": {"en": "Berchtold's Day", "de": "Berchtoldstag"}, "type": "public_holiday"},
+      {"date": "2026-04-03", "name": {"en": "Good Friday", "de": "Karfreitag"}, "type": "public_holiday"},
+      {"date": "2026-04-06", "name": {"en": "Easter Monday", "de": "Ostermontag"}, "type": "public_holiday"},
+      {"date": "2026-05-14", "name": {"en": "Ascension Day", "de": "Auffahrt"}, "type": "public_holiday"},
+      {"date": "2026-05-25", "name": {"en": "Whit Monday", "de": "Pfingstmontag"}, "type": "public_holiday"},
+      {"date": "2026-08-01", "name": {"en": "Swiss National Day", "de": "Bundesfeiertag"}, "type": "public_holiday"},
+      {"date": "2026-12-25", "name": {"en": "Christmas Day", "de": "Weihnachtstag"}, "type": "public_holiday"},
+      {"date": "2026-12-26", "name": {"en": "St. Stephen's Day", "de": "Stephanstag"}, "type": "public_holiday"}
+    ]
+  },
+  {
+    "country_code": "GB",
+    "name": "United Kingdom Standard 2026",
+    "name_translations": {
+      "en": "United Kingdom Standard 2026"
+    },
+    "year": "2026",
+    "work_hours_per_day": "8",
+    "work_days": [1, 2, 3, 4, 5],
+    "exceptions": [
+      {"date": "2026-01-01", "name": {"en": "New Year's Day"}, "type": "public_holiday"},
+      {"date": "2026-04-03", "name": {"en": "Good Friday"}, "type": "public_holiday"},
+      {"date": "2026-04-06", "name": {"en": "Easter Monday"}, "type": "public_holiday"},
+      {"date": "2026-05-04", "name": {"en": "Early May Bank Holiday"}, "type": "public_holiday"},
+      {"date": "2026-05-25", "name": {"en": "Spring Bank Holiday"}, "type": "public_holiday"},
+      {"date": "2026-08-31", "name": {"en": "Summer Bank Holiday"}, "type": "public_holiday"},
+      {"date": "2026-12-25", "name": {"en": "Christmas Day"}, "type": "public_holiday"},
+      {"date": "2026-12-28", "name": {"en": "Boxing Day (substitute)"}, "type": "public_holiday"}
+    ]
+  },
+  {
+    "country_code": "US",
+    "name": "United States Federal 2026",
+    "name_translations": {
+      "en": "United States Federal 2026"
+    },
+    "year": "2026",
+    "work_hours_per_day": "8",
+    "work_days": [1, 2, 3, 4, 5],
+    "exceptions": [
+      {"date": "2026-01-01", "name": {"en": "New Year's Day"}, "type": "public_holiday"},
+      {"date": "2026-01-19", "name": {"en": "Martin Luther King Jr. Day"}, "type": "public_holiday"},
+      {"date": "2026-02-16", "name": {"en": "Presidents' Day"}, "type": "public_holiday"},
+      {"date": "2026-05-25", "name": {"en": "Memorial Day"}, "type": "public_holiday"},
+      {"date": "2026-06-19", "name": {"en": "Juneteenth"}, "type": "public_holiday"},
+      {"date": "2026-07-03", "name": {"en": "Independence Day (observed)"}, "type": "public_holiday"},
+      {"date": "2026-09-07", "name": {"en": "Labor Day"}, "type": "public_holiday"},
+      {"date": "2026-10-12", "name": {"en": "Columbus Day"}, "type": "public_holiday"},
+      {"date": "2026-11-11", "name": {"en": "Veterans Day"}, "type": "public_holiday"},
+      {"date": "2026-11-26", "name": {"en": "Thanksgiving Day"}, "type": "public_holiday"},
+      {"date": "2026-12-25", "name": {"en": "Christmas Day"}, "type": "public_holiday"}
+    ]
+  },
+  {
+    "country_code": "CA",
+    "name": "Canada Standard 2026",
+    "name_translations": {
+      "en": "Canada Standard 2026",
+      "fr": "Canada Standard 2026"
+    },
+    "year": "2026",
+    "work_hours_per_day": "8",
+    "work_days": [1, 2, 3, 4, 5],
+    "exceptions": [
+      {"date": "2026-01-01", "name": {"en": "New Year's Day", "fr": "Jour de l'An"}, "type": "public_holiday"},
+      {"date": "2026-02-16", "name": {"en": "Family Day", "fr": "Journée de la famille"}, "type": "public_holiday"},
+      {"date": "2026-04-03", "name": {"en": "Good Friday", "fr": "Vendredi saint"}, "type": "public_holiday"},
+      {"date": "2026-05-18", "name": {"en": "Victoria Day", "fr": "Journée nationale des patriotes"}, "type": "public_holiday"},
+      {"date": "2026-07-01", "name": {"en": "Canada Day", "fr": "Fête du Canada"}, "type": "public_holiday"},
+      {"date": "2026-08-03", "name": {"en": "Civic Holiday"}, "type": "public_holiday"},
+      {"date": "2026-09-07", "name": {"en": "Labour Day", "fr": "Fête du travail"}, "type": "public_holiday"},
+      {"date": "2026-09-30", "name": {"en": "National Day for Truth and Reconciliation"}, "type": "public_holiday"},
+      {"date": "2026-10-12", "name": {"en": "Thanksgiving Day", "fr": "Action de grâce"}, "type": "public_holiday"},
+      {"date": "2026-11-11", "name": {"en": "Remembrance Day", "fr": "Jour du Souvenir"}, "type": "public_holiday"},
+      {"date": "2026-12-25", "name": {"en": "Christmas Day", "fr": "Noël"}, "type": "public_holiday"},
+      {"date": "2026-12-28", "name": {"en": "Boxing Day (substitute)", "fr": "Lendemain de Noël (substitut)"}, "type": "public_holiday"}
+    ]
+  },
+  {
+    "country_code": "FR",
+    "name": "France Standard 2026",
+    "name_translations": {
+      "en": "France Standard 2026",
+      "fr": "France Standard 2026"
+    },
+    "year": "2026",
+    "work_hours_per_day": "7",
+    "work_days": [1, 2, 3, 4, 5],
+    "exceptions": [
+      {"date": "2026-01-01", "name": {"en": "New Year's Day", "fr": "Jour de l'an"}, "type": "public_holiday"},
+      {"date": "2026-04-06", "name": {"en": "Easter Monday", "fr": "Lundi de Pâques"}, "type": "public_holiday"},
+      {"date": "2026-05-01", "name": {"en": "Labour Day", "fr": "Fête du Travail"}, "type": "public_holiday"},
+      {"date": "2026-05-08", "name": {"en": "Victory in Europe Day", "fr": "Victoire 1945"}, "type": "public_holiday"},
+      {"date": "2026-05-14", "name": {"en": "Ascension Day", "fr": "Ascension"}, "type": "public_holiday"},
+      {"date": "2026-05-25", "name": {"en": "Whit Monday", "fr": "Lundi de Pentecôte"}, "type": "public_holiday"},
+      {"date": "2026-07-14", "name": {"en": "Bastille Day", "fr": "Fête nationale"}, "type": "public_holiday"},
+      {"date": "2026-08-15", "name": {"en": "Assumption of Mary", "fr": "Assomption"}, "type": "public_holiday"},
+      {"date": "2026-11-01", "name": {"en": "All Saints' Day", "fr": "Toussaint"}, "type": "public_holiday"},
+      {"date": "2026-11-11", "name": {"en": "Armistice Day", "fr": "Armistice"}, "type": "public_holiday"},
+      {"date": "2026-12-25", "name": {"en": "Christmas Day", "fr": "Noël"}, "type": "public_holiday"}
+    ]
+  },
+  {
+    "country_code": "ES",
+    "name": "Spain Standard 2026",
+    "name_translations": {
+      "en": "Spain Standard 2026",
+      "es": "España Standard 2026"
+    },
+    "year": "2026",
+    "work_hours_per_day": "8",
+    "work_days": [1, 2, 3, 4, 5],
+    "exceptions": [
+      {"date": "2026-01-01", "name": {"en": "New Year's Day", "es": "Año Nuevo"}, "type": "public_holiday"},
+      {"date": "2026-01-06", "name": {"en": "Epiphany", "es": "Día de Reyes"}, "type": "public_holiday"},
+      {"date": "2026-04-02", "name": {"en": "Holy Thursday", "es": "Jueves Santo"}, "type": "public_holiday"},
+      {"date": "2026-04-03", "name": {"en": "Good Friday", "es": "Viernes Santo"}, "type": "public_holiday"},
+      {"date": "2026-05-01", "name": {"en": "Labour Day", "es": "Fiesta del Trabajo"}, "type": "public_holiday"},
+      {"date": "2026-08-15", "name": {"en": "Assumption of Mary", "es": "Asunción de la Virgen"}, "type": "public_holiday"},
+      {"date": "2026-10-12", "name": {"en": "National Day", "es": "Fiesta Nacional de España"}, "type": "public_holiday"},
+      {"date": "2026-11-01", "name": {"en": "All Saints' Day", "es": "Todos los Santos"}, "type": "public_holiday"},
+      {"date": "2026-12-06", "name": {"en": "Constitution Day", "es": "Día de la Constitución"}, "type": "public_holiday"},
+      {"date": "2026-12-08", "name": {"en": "Immaculate Conception", "es": "Inmaculada Concepción"}, "type": "public_holiday"},
+      {"date": "2026-12-25", "name": {"en": "Christmas Day", "es": "Navidad"}, "type": "public_holiday"}
+    ]
+  },
+  {
+    "country_code": "IT",
+    "name": "Italy Standard 2026",
+    "name_translations": {
+      "en": "Italy Standard 2026",
+      "it": "Italia Standard 2026"
+    },
+    "year": "2026",
+    "work_hours_per_day": "8",
+    "work_days": [1, 2, 3, 4, 5],
+    "exceptions": [
+      {"date": "2026-01-01", "name": {"en": "New Year's Day", "it": "Capodanno"}, "type": "public_holiday"},
+      {"date": "2026-01-06", "name": {"en": "Epiphany", "it": "Epifania"}, "type": "public_holiday"},
+      {"date": "2026-04-05", "name": {"en": "Easter Sunday", "it": "Pasqua"}, "type": "public_holiday"},
+      {"date": "2026-04-06", "name": {"en": "Easter Monday", "it": "Lunedì dell'Angelo"}, "type": "public_holiday"},
+      {"date": "2026-04-25", "name": {"en": "Liberation Day", "it": "Festa della Liberazione"}, "type": "public_holiday"},
+      {"date": "2026-05-01", "name": {"en": "Labour Day", "it": "Festa dei Lavoratori"}, "type": "public_holiday"},
+      {"date": "2026-06-02", "name": {"en": "Republic Day", "it": "Festa della Repubblica"}, "type": "public_holiday"},
+      {"date": "2026-08-15", "name": {"en": "Assumption of Mary", "it": "Ferragosto"}, "type": "public_holiday"},
+      {"date": "2026-11-01", "name": {"en": "All Saints' Day", "it": "Tutti i Santi"}, "type": "public_holiday"},
+      {"date": "2026-12-08", "name": {"en": "Immaculate Conception", "it": "Immacolata Concezione"}, "type": "public_holiday"},
+      {"date": "2026-12-25", "name": {"en": "Christmas Day", "it": "Natale"}, "type": "public_holiday"},
+      {"date": "2026-12-26", "name": {"en": "St. Stephen's Day", "it": "Santo Stefano"}, "type": "public_holiday"}
+    ]
+  },
+  {
+    "country_code": "NL",
+    "name": "Netherlands Standard 2026",
+    "name_translations": {
+      "en": "Netherlands Standard 2026",
+      "nl": "Nederland Standard 2026"
+    },
+    "year": "2026",
+    "work_hours_per_day": "8",
+    "work_days": [1, 2, 3, 4, 5],
+    "exceptions": [
+      {"date": "2026-01-01", "name": {"en": "New Year's Day", "nl": "Nieuwjaarsdag"}, "type": "public_holiday"},
+      {"date": "2026-04-03", "name": {"en": "Good Friday", "nl": "Goede Vrijdag"}, "type": "public_holiday"},
+      {"date": "2026-04-05", "name": {"en": "Easter Sunday", "nl": "Eerste Paasdag"}, "type": "public_holiday"},
+      {"date": "2026-04-06", "name": {"en": "Easter Monday", "nl": "Tweede Paasdag"}, "type": "public_holiday"},
+      {"date": "2026-04-27", "name": {"en": "King's Day", "nl": "Koningsdag"}, "type": "public_holiday"},
+      {"date": "2026-05-05", "name": {"en": "Liberation Day", "nl": "Bevrijdingsdag"}, "type": "public_holiday"},
+      {"date": "2026-05-14", "name": {"en": "Ascension Day", "nl": "Hemelvaartsdag"}, "type": "public_holiday"},
+      {"date": "2026-05-24", "name": {"en": "Whit Sunday", "nl": "Eerste Pinksterdag"}, "type": "public_holiday"},
+      {"date": "2026-05-25", "name": {"en": "Whit Monday", "nl": "Tweede Pinksterdag"}, "type": "public_holiday"},
+      {"date": "2026-12-25", "name": {"en": "Christmas Day", "nl": "Eerste Kerstdag"}, "type": "public_holiday"},
+      {"date": "2026-12-26", "name": {"en": "Second Day of Christmas", "nl": "Tweede Kerstdag"}, "type": "public_holiday"}
+    ]
+  },
+  {
+    "country_code": "PL",
+    "name": "Poland Standard 2026",
+    "name_translations": {
+      "en": "Poland Standard 2026",
+      "pl": "Polska Standard 2026"
+    },
+    "year": "2026",
+    "work_hours_per_day": "8",
+    "work_days": [1, 2, 3, 4, 5],
+    "exceptions": [
+      {"date": "2026-01-01", "name": {"en": "New Year's Day", "pl": "Nowy Rok"}, "type": "public_holiday"},
+      {"date": "2026-01-06", "name": {"en": "Epiphany", "pl": "Święto Trzech Króli"}, "type": "public_holiday"},
+      {"date": "2026-04-05", "name": {"en": "Easter Sunday", "pl": "Wielkanoc"}, "type": "public_holiday"},
+      {"date": "2026-04-06", "name": {"en": "Easter Monday", "pl": "Poniedziałek Wielkanocny"}, "type": "public_holiday"},
+      {"date": "2026-05-01", "name": {"en": "Labour Day", "pl": "Święto Pracy"}, "type": "public_holiday"},
+      {"date": "2026-05-03", "name": {"en": "Constitution Day", "pl": "Święto Konstytucji 3 Maja"}, "type": "public_holiday"},
+      {"date": "2026-05-24", "name": {"en": "Whit Sunday", "pl": "Zielone Świątki"}, "type": "public_holiday"},
+      {"date": "2026-06-04", "name": {"en": "Corpus Christi", "pl": "Boże Ciało"}, "type": "public_holiday"},
+      {"date": "2026-08-15", "name": {"en": "Assumption of Mary", "pl": "Wniebowzięcie NMP"}, "type": "public_holiday"},
+      {"date": "2026-11-01", "name": {"en": "All Saints' Day", "pl": "Wszystkich Świętych"}, "type": "public_holiday"},
+      {"date": "2026-11-11", "name": {"en": "Independence Day", "pl": "Narodowe Święto Niepodległości"}, "type": "public_holiday"},
+      {"date": "2026-12-25", "name": {"en": "Christmas Day", "pl": "Boże Narodzenie"}, "type": "public_holiday"},
+      {"date": "2026-12-26", "name": {"en": "Second Day of Christmas", "pl": "Drugi dzień Bożego Narodzenia"}, "type": "public_holiday"}
+    ]
+  },
+  {
+    "country_code": "CZ",
+    "name": "Czech Republic Standard 2026",
+    "name_translations": {
+      "en": "Czech Republic Standard 2026",
+      "cs": "Česko Standard 2026"
+    },
+    "year": "2026",
+    "work_hours_per_day": "8",
+    "work_days": [1, 2, 3, 4, 5],
+    "exceptions": [
+      {"date": "2026-01-01", "name": {"en": "New Year's Day / Restoration Day", "cs": "Nový rok / Den obnovy"}, "type": "public_holiday"},
+      {"date": "2026-04-03", "name": {"en": "Good Friday", "cs": "Velký pátek"}, "type": "public_holiday"},
+      {"date": "2026-04-06", "name": {"en": "Easter Monday", "cs": "Velikonoční pondělí"}, "type": "public_holiday"},
+      {"date": "2026-05-01", "name": {"en": "Labour Day", "cs": "Svátek práce"}, "type": "public_holiday"},
+      {"date": "2026-05-08", "name": {"en": "Liberation Day", "cs": "Den vítězství"}, "type": "public_holiday"},
+      {"date": "2026-07-05", "name": {"en": "Sts. Cyril and Methodius Day", "cs": "Den slovanských věrozvěstů"}, "type": "public_holiday"},
+      {"date": "2026-07-06", "name": {"en": "Jan Hus Day", "cs": "Den upálení mistra Jana Husa"}, "type": "public_holiday"},
+      {"date": "2026-09-28", "name": {"en": "Czech Statehood Day", "cs": "Den české státnosti"}, "type": "public_holiday"},
+      {"date": "2026-10-28", "name": {"en": "Independent Czechoslovak State Day", "cs": "Den vzniku samostatného čs. státu"}, "type": "public_holiday"},
+      {"date": "2026-11-17", "name": {"en": "Struggle for Freedom and Democracy Day", "cs": "Den boje za svobodu a demokracii"}, "type": "public_holiday"},
+      {"date": "2026-12-24", "name": {"en": "Christmas Eve", "cs": "Štědrý den"}, "type": "public_holiday"},
+      {"date": "2026-12-25", "name": {"en": "Christmas Day", "cs": "1. svátek vánoční"}, "type": "public_holiday"},
+      {"date": "2026-12-26", "name": {"en": "St. Stephen's Day", "cs": "2. svátek vánoční"}, "type": "public_holiday"}
+    ]
+  },
+  {
+    "country_code": "TR",
+    "name": "Turkey Standard 2026",
+    "name_translations": {
+      "en": "Turkey Standard 2026",
+      "tr": "Türkiye Standard 2026"
+    },
+    "year": "2026",
+    "work_hours_per_day": "8",
+    "work_days": [1, 2, 3, 4, 5],
+    "exceptions": [
+      {"date": "2026-01-01", "name": {"en": "New Year's Day", "tr": "Yılbaşı"}, "type": "public_holiday"},
+      {"date": "2026-03-20", "name": {"en": "Ramadan Feast Day 1", "tr": "Ramazan Bayramı 1. gün"}, "type": "public_holiday"},
+      {"date": "2026-03-21", "name": {"en": "Ramadan Feast Day 2", "tr": "Ramazan Bayramı 2. gün"}, "type": "public_holiday"},
+      {"date": "2026-03-22", "name": {"en": "Ramadan Feast Day 3", "tr": "Ramazan Bayramı 3. gün"}, "type": "public_holiday"},
+      {"date": "2026-04-23", "name": {"en": "National Sovereignty and Children's Day", "tr": "Ulusal Egemenlik ve Çocuk Bayramı"}, "type": "public_holiday"},
+      {"date": "2026-05-01", "name": {"en": "Labour Day", "tr": "Emek ve Dayanışma Günü"}, "type": "public_holiday"},
+      {"date": "2026-05-19", "name": {"en": "Commemoration of Atatürk", "tr": "Atatürk'ü Anma Gençlik ve Spor Bayramı"}, "type": "public_holiday"},
+      {"date": "2026-05-27", "name": {"en": "Eid al-Adha Day 1", "tr": "Kurban Bayramı 1. gün"}, "type": "public_holiday"},
+      {"date": "2026-05-28", "name": {"en": "Eid al-Adha Day 2", "tr": "Kurban Bayramı 2. gün"}, "type": "public_holiday"},
+      {"date": "2026-05-29", "name": {"en": "Eid al-Adha Day 3", "tr": "Kurban Bayramı 3. gün"}, "type": "public_holiday"},
+      {"date": "2026-05-30", "name": {"en": "Eid al-Adha Day 4", "tr": "Kurban Bayramı 4. gün"}, "type": "public_holiday"},
+      {"date": "2026-07-15", "name": {"en": "Democracy and National Unity Day", "tr": "Demokrasi ve Millî Birlik Günü"}, "type": "public_holiday"},
+      {"date": "2026-08-30", "name": {"en": "Victory Day", "tr": "Zafer Bayramı"}, "type": "public_holiday"},
+      {"date": "2026-10-29", "name": {"en": "Republic Day", "tr": "Cumhuriyet Bayramı"}, "type": "public_holiday"}
+    ]
+  },
+  {
+    "country_code": "SA",
+    "name": "Saudi Arabia Standard 2026",
+    "name_translations": {
+      "en": "Saudi Arabia Standard 2026",
+      "ar": "المملكة العربية السعودية 2026"
+    },
+    "year": "2026",
+    "work_hours_per_day": "8",
+    "work_days": [0, 1, 2, 3, 4],
+    "exceptions": [
+      {"date": "2026-02-22", "name": {"en": "Founding Day", "ar": "يوم التأسيس"}, "type": "public_holiday"},
+      {"date": "2026-03-19", "name": {"en": "Eid al-Fitr Day 1", "ar": "عيد الفطر"}, "type": "public_holiday"},
+      {"date": "2026-03-20", "name": {"en": "Eid al-Fitr Day 2", "ar": "عيد الفطر"}, "type": "public_holiday"},
+      {"date": "2026-03-21", "name": {"en": "Eid al-Fitr Day 3", "ar": "عيد الفطر"}, "type": "public_holiday"},
+      {"date": "2026-03-22", "name": {"en": "Eid al-Fitr Day 4", "ar": "عيد الفطر"}, "type": "public_holiday"},
+      {"date": "2026-05-26", "name": {"en": "Arafat Day", "ar": "يوم عرفة"}, "type": "public_holiday"},
+      {"date": "2026-05-27", "name": {"en": "Eid al-Adha Day 1", "ar": "عيد الأضحى"}, "type": "public_holiday"},
+      {"date": "2026-05-28", "name": {"en": "Eid al-Adha Day 2", "ar": "عيد الأضحى"}, "type": "public_holiday"},
+      {"date": "2026-05-29", "name": {"en": "Eid al-Adha Day 3", "ar": "عيد الأضحى"}, "type": "public_holiday"},
+      {"date": "2026-09-23", "name": {"en": "Saudi National Day", "ar": "اليوم الوطني السعودي"}, "type": "public_holiday"}
+    ]
+  },
+  {
+    "country_code": "AE",
+    "name": "United Arab Emirates Standard 2026",
+    "name_translations": {
+      "en": "United Arab Emirates Standard 2026",
+      "ar": "الإمارات العربية المتحدة 2026"
+    },
+    "year": "2026",
+    "work_hours_per_day": "8",
+    "work_days": [1, 2, 3, 4, 5],
+    "exceptions": [
+      {"date": "2026-01-01", "name": {"en": "New Year's Day", "ar": "رأس السنة الميلادية"}, "type": "public_holiday"},
+      {"date": "2026-03-19", "name": {"en": "Eid al-Fitr Day 1", "ar": "عيد الفطر"}, "type": "public_holiday"},
+      {"date": "2026-03-20", "name": {"en": "Eid al-Fitr Day 2", "ar": "عيد الفطر"}, "type": "public_holiday"},
+      {"date": "2026-03-21", "name": {"en": "Eid al-Fitr Day 3", "ar": "عيد الفطر"}, "type": "public_holiday"},
+      {"date": "2026-05-26", "name": {"en": "Arafat Day", "ar": "يوم عرفة"}, "type": "public_holiday"},
+      {"date": "2026-05-27", "name": {"en": "Eid al-Adha Day 1", "ar": "عيد الأضحى"}, "type": "public_holiday"},
+      {"date": "2026-05-28", "name": {"en": "Eid al-Adha Day 2", "ar": "عيد الأضحى"}, "type": "public_holiday"},
+      {"date": "2026-05-29", "name": {"en": "Eid al-Adha Day 3", "ar": "عيد الأضحى"}, "type": "public_holiday"},
+      {"date": "2026-06-17", "name": {"en": "Islamic New Year", "ar": "رأس السنة الهجرية"}, "type": "public_holiday"},
+      {"date": "2026-08-26", "name": {"en": "Prophet's Birthday", "ar": "المولد النبوي"}, "type": "public_holiday"},
+      {"date": "2026-11-30", "name": {"en": "Commemoration Day", "ar": "يوم الشهيد"}, "type": "public_holiday"},
+      {"date": "2026-12-02", "name": {"en": "National Day", "ar": "اليوم الوطني"}, "type": "public_holiday"},
+      {"date": "2026-12-03", "name": {"en": "National Day Holiday", "ar": "عطلة اليوم الوطني"}, "type": "public_holiday"}
+    ]
+  },
+  {
+    "country_code": "CN",
+    "name": "China Standard 2026",
+    "name_translations": {
+      "en": "China Standard 2026",
+      "zh": "中国 2026年标准日历"
+    },
+    "year": "2026",
+    "work_hours_per_day": "8",
+    "work_days": [1, 2, 3, 4, 5],
+    "exceptions": [
+      {"date": "2026-01-01", "name": {"en": "New Year's Day", "zh": "元旦"}, "type": "public_holiday"},
+      {"date": "2026-02-17", "name": {"en": "Chinese New Year Day 1", "zh": "春节"}, "type": "public_holiday"},
+      {"date": "2026-02-18", "name": {"en": "Chinese New Year Day 2", "zh": "春节"}, "type": "public_holiday"},
+      {"date": "2026-02-19", "name": {"en": "Chinese New Year Day 3", "zh": "春节"}, "type": "public_holiday"},
+      {"date": "2026-02-20", "name": {"en": "Chinese New Year Day 4", "zh": "春节"}, "type": "public_holiday"},
+      {"date": "2026-02-21", "name": {"en": "Chinese New Year Day 5", "zh": "春节"}, "type": "public_holiday"},
+      {"date": "2026-02-22", "name": {"en": "Chinese New Year Day 6", "zh": "春节"}, "type": "public_holiday"},
+      {"date": "2026-02-23", "name": {"en": "Chinese New Year Day 7", "zh": "春节"}, "type": "public_holiday"},
+      {"date": "2026-04-05", "name": {"en": "Qingming Festival", "zh": "清明节"}, "type": "public_holiday"},
+      {"date": "2026-05-01", "name": {"en": "Labour Day", "zh": "劳动节"}, "type": "public_holiday"},
+      {"date": "2026-05-31", "name": {"en": "Dragon Boat Festival", "zh": "端午节"}, "type": "public_holiday"},
+      {"date": "2026-10-01", "name": {"en": "National Day", "zh": "国庆节"}, "type": "public_holiday"},
+      {"date": "2026-10-02", "name": {"en": "National Day Holiday 2", "zh": "国庆节"}, "type": "public_holiday"},
+      {"date": "2026-10-03", "name": {"en": "National Day Holiday 3", "zh": "国庆节"}, "type": "public_holiday"},
+      {"date": "2026-10-06", "name": {"en": "Mid-Autumn Festival", "zh": "中秋节"}, "type": "public_holiday"}
+    ]
+  },
+  {
+    "country_code": "JP",
+    "name": "Japan Standard 2026",
+    "name_translations": {
+      "en": "Japan Standard 2026",
+      "ja": "日本 2026年標準カレンダー"
+    },
+    "year": "2026",
+    "work_hours_per_day": "8",
+    "work_days": [1, 2, 3, 4, 5],
+    "exceptions": [
+      {"date": "2026-01-01", "name": {"en": "New Year's Day", "ja": "元日"}, "type": "public_holiday"},
+      {"date": "2026-01-12", "name": {"en": "Coming of Age Day", "ja": "成人の日"}, "type": "public_holiday"},
+      {"date": "2026-02-11", "name": {"en": "National Foundation Day", "ja": "建国記念の日"}, "type": "public_holiday"},
+      {"date": "2026-02-23", "name": {"en": "Emperor's Birthday", "ja": "天皇誕生日"}, "type": "public_holiday"},
+      {"date": "2026-03-20", "name": {"en": "Vernal Equinox Day", "ja": "春分の日"}, "type": "public_holiday"},
+      {"date": "2026-04-29", "name": {"en": "Showa Day", "ja": "昭和の日"}, "type": "public_holiday"},
+      {"date": "2026-05-03", "name": {"en": "Constitution Memorial Day", "ja": "憲法記念日"}, "type": "public_holiday"},
+      {"date": "2026-05-04", "name": {"en": "Greenery Day", "ja": "みどりの日"}, "type": "public_holiday"},
+      {"date": "2026-05-05", "name": {"en": "Children's Day", "ja": "こどもの日"}, "type": "public_holiday"},
+      {"date": "2026-05-06", "name": {"en": "Substitute Holiday", "ja": "振替休日"}, "type": "public_holiday"},
+      {"date": "2026-07-20", "name": {"en": "Marine Day", "ja": "海の日"}, "type": "public_holiday"},
+      {"date": "2026-08-11", "name": {"en": "Mountain Day", "ja": "山の日"}, "type": "public_holiday"},
+      {"date": "2026-09-21", "name": {"en": "Respect for the Aged Day", "ja": "敬老の日"}, "type": "public_holiday"},
+      {"date": "2026-09-22", "name": {"en": "Autumnal Equinox Day", "ja": "秋分の日"}, "type": "public_holiday"},
+      {"date": "2026-09-23", "name": {"en": "Citizen's Holiday", "ja": "国民の休日"}, "type": "public_holiday"},
+      {"date": "2026-10-12", "name": {"en": "Sports Day", "ja": "スポーツの日"}, "type": "public_holiday"},
+      {"date": "2026-11-03", "name": {"en": "Culture Day", "ja": "文化の日"}, "type": "public_holiday"},
+      {"date": "2026-11-23", "name": {"en": "Labour Thanksgiving Day", "ja": "勤労感謝の日"}, "type": "public_holiday"}
+    ]
+  },
+  {
+    "country_code": "KR",
+    "name": "South Korea Standard 2026",
+    "name_translations": {
+      "en": "South Korea Standard 2026",
+      "ko": "대한민국 2026년 표준 달력"
+    },
+    "year": "2026",
+    "work_hours_per_day": "8",
+    "work_days": [1, 2, 3, 4, 5],
+    "exceptions": [
+      {"date": "2026-01-01", "name": {"en": "New Year's Day", "ko": "신정"}, "type": "public_holiday"},
+      {"date": "2026-02-16", "name": {"en": "Lunar New Year Eve", "ko": "설날 연휴"}, "type": "public_holiday"},
+      {"date": "2026-02-17", "name": {"en": "Lunar New Year", "ko": "설날"}, "type": "public_holiday"},
+      {"date": "2026-02-18", "name": {"en": "Lunar New Year Day 2", "ko": "설날 연휴"}, "type": "public_holiday"},
+      {"date": "2026-03-01", "name": {"en": "Independence Movement Day", "ko": "삼일절"}, "type": "public_holiday"},
+      {"date": "2026-05-05", "name": {"en": "Children's Day", "ko": "어린이날"}, "type": "public_holiday"},
+      {"date": "2026-05-24", "name": {"en": "Buddha's Birthday", "ko": "부처님 오신 날"}, "type": "public_holiday"},
+      {"date": "2026-06-06", "name": {"en": "Memorial Day", "ko": "현충일"}, "type": "public_holiday"},
+      {"date": "2026-08-15", "name": {"en": "Liberation Day", "ko": "광복절"}, "type": "public_holiday"},
+      {"date": "2026-10-04", "name": {"en": "Chuseok Eve", "ko": "추석 연휴"}, "type": "public_holiday"},
+      {"date": "2026-10-05", "name": {"en": "Chuseok", "ko": "추석"}, "type": "public_holiday"},
+      {"date": "2026-10-06", "name": {"en": "Chuseok Day 2", "ko": "추석 연휴"}, "type": "public_holiday"},
+      {"date": "2026-10-03", "name": {"en": "National Foundation Day", "ko": "개천절"}, "type": "public_holiday"},
+      {"date": "2026-10-09", "name": {"en": "Hangul Day", "ko": "한글날"}, "type": "public_holiday"},
+      {"date": "2026-12-25", "name": {"en": "Christmas Day", "ko": "크리스마스"}, "type": "public_holiday"}
+    ]
+  },
+  {
+    "country_code": "IN",
+    "name": "India Standard 2026",
+    "name_translations": {
+      "en": "India Standard 2026",
+      "hi": "भारत मानक 2026"
+    },
+    "year": "2026",
+    "work_hours_per_day": "8",
+    "work_days": [1, 2, 3, 4, 5],
+    "exceptions": [
+      {"date": "2026-01-26", "name": {"en": "Republic Day", "hi": "गणतंत्र दिवस"}, "type": "public_holiday"},
+      {"date": "2026-03-10", "name": {"en": "Maha Shivaratri", "hi": "महाशिवरात्रि"}, "type": "public_holiday"},
+      {"date": "2026-03-17", "name": {"en": "Holi", "hi": "होली"}, "type": "public_holiday"},
+      {"date": "2026-03-20", "name": {"en": "Eid al-Fitr", "hi": "ईद उल-फित्र"}, "type": "public_holiday"},
+      {"date": "2026-04-02", "name": {"en": "Ram Navami", "hi": "राम नवमी"}, "type": "public_holiday"},
+      {"date": "2026-04-03", "name": {"en": "Good Friday", "hi": "गुड फ्राइडे"}, "type": "public_holiday"},
+      {"date": "2026-04-14", "name": {"en": "Dr. Ambedkar Jayanti", "hi": "अम्बेडकर जयंती"}, "type": "public_holiday"},
+      {"date": "2026-05-01", "name": {"en": "May Day", "hi": "मई दिवस"}, "type": "public_holiday"},
+      {"date": "2026-05-27", "name": {"en": "Eid al-Adha", "hi": "ईद उल-अज़हा"}, "type": "public_holiday"},
+      {"date": "2026-08-15", "name": {"en": "Independence Day", "hi": "स्वतंत्रता दिवस"}, "type": "public_holiday"},
+      {"date": "2026-08-26", "name": {"en": "Prophet's Birthday", "hi": "मिलाद-उन-नबी"}, "type": "public_holiday"},
+      {"date": "2026-10-02", "name": {"en": "Gandhi Jayanti", "hi": "गांधी जयंती"}, "type": "public_holiday"},
+      {"date": "2026-10-21", "name": {"en": "Dussehra", "hi": "दशहरा"}, "type": "public_holiday"},
+      {"date": "2026-11-10", "name": {"en": "Diwali", "hi": "दीपावली"}, "type": "public_holiday"},
+      {"date": "2026-11-27", "name": {"en": "Guru Nanak Jayanti", "hi": "गुरु नानक जयंती"}, "type": "public_holiday"},
+      {"date": "2026-12-25", "name": {"en": "Christmas Day", "hi": "क्रिसमस"}, "type": "public_holiday"}
+    ]
+  },
+  {
+    "country_code": "AU",
+    "name": "Australia Standard 2026",
+    "name_translations": {
+      "en": "Australia Standard 2026"
+    },
+    "year": "2026",
+    "work_hours_per_day": "7.6",
+    "work_days": [1, 2, 3, 4, 5],
+    "exceptions": [
+      {"date": "2026-01-01", "name": {"en": "New Year's Day"}, "type": "public_holiday"},
+      {"date": "2026-01-26", "name": {"en": "Australia Day"}, "type": "public_holiday"},
+      {"date": "2026-04-03", "name": {"en": "Good Friday"}, "type": "public_holiday"},
+      {"date": "2026-04-04", "name": {"en": "Saturday before Easter"}, "type": "public_holiday"},
+      {"date": "2026-04-06", "name": {"en": "Easter Monday"}, "type": "public_holiday"},
+      {"date": "2026-04-25", "name": {"en": "ANZAC Day"}, "type": "public_holiday"},
+      {"date": "2026-06-08", "name": {"en": "Queen's Birthday"}, "type": "public_holiday"},
+      {"date": "2026-12-25", "name": {"en": "Christmas Day"}, "type": "public_holiday"},
+      {"date": "2026-12-28", "name": {"en": "Boxing Day (substitute)"}, "type": "public_holiday"}
+    ]
+  },
+  {
+    "country_code": "NZ",
+    "name": "New Zealand Standard 2026",
+    "name_translations": {
+      "en": "New Zealand Standard 2026"
+    },
+    "year": "2026",
+    "work_hours_per_day": "8",
+    "work_days": [1, 2, 3, 4, 5],
+    "exceptions": [
+      {"date": "2026-01-01", "name": {"en": "New Year's Day"}, "type": "public_holiday"},
+      {"date": "2026-01-02", "name": {"en": "Day after New Year's Day"}, "type": "public_holiday"},
+      {"date": "2026-02-06", "name": {"en": "Waitangi Day"}, "type": "public_holiday"},
+      {"date": "2026-04-03", "name": {"en": "Good Friday"}, "type": "public_holiday"},
+      {"date": "2026-04-06", "name": {"en": "Easter Monday"}, "type": "public_holiday"},
+      {"date": "2026-04-27", "name": {"en": "ANZAC Day (observed)"}, "type": "public_holiday"},
+      {"date": "2026-06-01", "name": {"en": "Queen's Birthday"}, "type": "public_holiday"},
+      {"date": "2026-06-20", "name": {"en": "Matariki"}, "type": "public_holiday"},
+      {"date": "2026-10-26", "name": {"en": "Labour Day"}, "type": "public_holiday"},
+      {"date": "2026-12-25", "name": {"en": "Christmas Day"}, "type": "public_holiday"},
+      {"date": "2026-12-28", "name": {"en": "Boxing Day (substitute)"}, "type": "public_holiday"}
+    ]
+  },
+  {
+    "country_code": "SE",
+    "name": "Sweden Standard 2026",
+    "name_translations": {
+      "en": "Sweden Standard 2026",
+      "sv": "Sverige Standard 2026"
+    },
+    "year": "2026",
+    "work_hours_per_day": "8",
+    "work_days": [1, 2, 3, 4, 5],
+    "exceptions": [
+      {"date": "2026-01-01", "name": {"en": "New Year's Day", "sv": "Nyårsdagen"}, "type": "public_holiday"},
+      {"date": "2026-01-06", "name": {"en": "Epiphany", "sv": "Trettondedag jul"}, "type": "public_holiday"},
+      {"date": "2026-04-03", "name": {"en": "Good Friday", "sv": "Långfredagen"}, "type": "public_holiday"},
+      {"date": "2026-04-05", "name": {"en": "Easter Sunday", "sv": "Påskdagen"}, "type": "public_holiday"},
+      {"date": "2026-04-06", "name": {"en": "Easter Monday", "sv": "Annandag påsk"}, "type": "public_holiday"},
+      {"date": "2026-05-01", "name": {"en": "Labour Day", "sv": "Första maj"}, "type": "public_holiday"},
+      {"date": "2026-05-14", "name": {"en": "Ascension Day", "sv": "Kristi himmelsfärdsdag"}, "type": "public_holiday"},
+      {"date": "2026-05-24", "name": {"en": "Whit Sunday", "sv": "Pingstdagen"}, "type": "public_holiday"},
+      {"date": "2026-06-06", "name": {"en": "National Day of Sweden", "sv": "Sveriges nationaldag"}, "type": "public_holiday"},
+      {"date": "2026-06-20", "name": {"en": "Midsummer's Day", "sv": "Midsommardagen"}, "type": "public_holiday"},
+      {"date": "2026-10-31", "name": {"en": "All Saints' Day", "sv": "Alla helgons dag"}, "type": "public_holiday"},
+      {"date": "2026-12-25", "name": {"en": "Christmas Day", "sv": "Juldagen"}, "type": "public_holiday"},
+      {"date": "2026-12-26", "name": {"en": "Boxing Day", "sv": "Annandag jul"}, "type": "public_holiday"}
+    ]
+  },
+  {
+    "country_code": "NO",
+    "name": "Norway Standard 2026",
+    "name_translations": {
+      "en": "Norway Standard 2026",
+      "no": "Norge Standard 2026"
+    },
+    "year": "2026",
+    "work_hours_per_day": "7.5",
+    "work_days": [1, 2, 3, 4, 5],
+    "exceptions": [
+      {"date": "2026-01-01", "name": {"en": "New Year's Day", "no": "Første nyttårsdag"}, "type": "public_holiday"},
+      {"date": "2026-04-02", "name": {"en": "Maundy Thursday", "no": "Skjærtorsdag"}, "type": "public_holiday"},
+      {"date": "2026-04-03", "name": {"en": "Good Friday", "no": "Langfredag"}, "type": "public_holiday"},
+      {"date": "2026-04-05", "name": {"en": "Easter Sunday", "no": "Første påskedag"}, "type": "public_holiday"},
+      {"date": "2026-04-06", "name": {"en": "Easter Monday", "no": "Andre påskedag"}, "type": "public_holiday"},
+      {"date": "2026-05-01", "name": {"en": "Labour Day", "no": "Arbeidernes dag"}, "type": "public_holiday"},
+      {"date": "2026-05-14", "name": {"en": "Ascension Day", "no": "Kristi himmelfartsdag"}, "type": "public_holiday"},
+      {"date": "2026-05-17", "name": {"en": "Constitution Day", "no": "Grunnlovsdagen"}, "type": "public_holiday"},
+      {"date": "2026-05-24", "name": {"en": "Whit Sunday", "no": "Første pinsedag"}, "type": "public_holiday"},
+      {"date": "2026-05-25", "name": {"en": "Whit Monday", "no": "Andre pinsedag"}, "type": "public_holiday"},
+      {"date": "2026-12-25", "name": {"en": "Christmas Day", "no": "Første juledag"}, "type": "public_holiday"},
+      {"date": "2026-12-26", "name": {"en": "Boxing Day", "no": "Andre juledag"}, "type": "public_holiday"}
+    ]
+  },
+  {
+    "country_code": "DK",
+    "name": "Denmark Standard 2026",
+    "name_translations": {
+      "en": "Denmark Standard 2026",
+      "da": "Danmark Standard 2026"
+    },
+    "year": "2026",
+    "work_hours_per_day": "7.4",
+    "work_days": [1, 2, 3, 4, 5],
+    "exceptions": [
+      {"date": "2026-01-01", "name": {"en": "New Year's Day", "da": "Nytårsdag"}, "type": "public_holiday"},
+      {"date": "2026-04-02", "name": {"en": "Maundy Thursday", "da": "Skærtorsdag"}, "type": "public_holiday"},
+      {"date": "2026-04-03", "name": {"en": "Good Friday", "da": "Langfredag"}, "type": "public_holiday"},
+      {"date": "2026-04-05", "name": {"en": "Easter Sunday", "da": "Påskedag"}, "type": "public_holiday"},
+      {"date": "2026-04-06", "name": {"en": "Easter Monday", "da": "2. påskedag"}, "type": "public_holiday"},
+      {"date": "2026-05-01", "name": {"en": "Labour Day", "da": "Arbejdernes kampdag"}, "type": "public_holiday"},
+      {"date": "2026-05-14", "name": {"en": "Ascension Day", "da": "Kristi himmelfartsdag"}, "type": "public_holiday"},
+      {"date": "2026-05-24", "name": {"en": "Whit Sunday", "da": "Pinsedag"}, "type": "public_holiday"},
+      {"date": "2026-05-25", "name": {"en": "Whit Monday", "da": "2. pinsedag"}, "type": "public_holiday"},
+      {"date": "2026-06-05", "name": {"en": "Constitution Day", "da": "Grundlovsdag"}, "type": "public_holiday"},
+      {"date": "2026-12-24", "name": {"en": "Christmas Eve", "da": "Juleaften"}, "type": "public_holiday"},
+      {"date": "2026-12-25", "name": {"en": "Christmas Day", "da": "Juledag"}, "type": "public_holiday"},
+      {"date": "2026-12-26", "name": {"en": "Second Day of Christmas", "da": "2. juledag"}, "type": "public_holiday"}
+    ]
+  },
+  {
+    "country_code": "FI",
+    "name": "Finland Standard 2026",
+    "name_translations": {
+      "en": "Finland Standard 2026",
+      "fi": "Suomi Standard 2026"
+    },
+    "year": "2026",
+    "work_hours_per_day": "7.5",
+    "work_days": [1, 2, 3, 4, 5],
+    "exceptions": [
+      {"date": "2026-01-01", "name": {"en": "New Year's Day", "fi": "Uudenvuodenpäivä"}, "type": "public_holiday"},
+      {"date": "2026-01-06", "name": {"en": "Epiphany", "fi": "Loppiainen"}, "type": "public_holiday"},
+      {"date": "2026-04-03", "name": {"en": "Good Friday", "fi": "Pitkäperjantai"}, "type": "public_holiday"},
+      {"date": "2026-04-05", "name": {"en": "Easter Sunday", "fi": "Pääsiäispäivä"}, "type": "public_holiday"},
+      {"date": "2026-04-06", "name": {"en": "Easter Monday", "fi": "2. pääsiäispäivä"}, "type": "public_holiday"},
+      {"date": "2026-05-01", "name": {"en": "May Day", "fi": "Vappu"}, "type": "public_holiday"},
+      {"date": "2026-05-14", "name": {"en": "Ascension Day", "fi": "Helatorstai"}, "type": "public_holiday"},
+      {"date": "2026-05-24", "name": {"en": "Whit Sunday", "fi": "Helluntaipäivä"}, "type": "public_holiday"},
+      {"date": "2026-06-20", "name": {"en": "Midsummer's Day", "fi": "Juhannuspäivä"}, "type": "public_holiday"},
+      {"date": "2026-10-31", "name": {"en": "All Saints' Day", "fi": "Pyhäinpäivä"}, "type": "public_holiday"},
+      {"date": "2026-12-06", "name": {"en": "Independence Day", "fi": "Itsenäisyyspäivä"}, "type": "public_holiday"},
+      {"date": "2026-12-25", "name": {"en": "Christmas Day", "fi": "Joulupäivä"}, "type": "public_holiday"},
+      {"date": "2026-12-26", "name": {"en": "Boxing Day", "fi": "Tapaninpäivä"}, "type": "public_holiday"}
+    ]
+  },
+  {
+    "country_code": "BR",
+    "name": "Brazil Standard 2026",
+    "name_translations": {
+      "en": "Brazil Standard 2026",
+      "pt": "Brasil Standard 2026"
+    },
+    "year": "2026",
+    "work_hours_per_day": "8",
+    "work_days": [1, 2, 3, 4, 5],
+    "exceptions": [
+      {"date": "2026-01-01", "name": {"en": "New Year's Day", "pt": "Confraternização Universal"}, "type": "public_holiday"},
+      {"date": "2026-02-16", "name": {"en": "Carnival Monday", "pt": "Carnaval"}, "type": "public_holiday"},
+      {"date": "2026-02-17", "name": {"en": "Carnival Tuesday", "pt": "Carnaval"}, "type": "public_holiday"},
+      {"date": "2026-04-03", "name": {"en": "Good Friday", "pt": "Sexta-feira Santa"}, "type": "public_holiday"},
+      {"date": "2026-04-21", "name": {"en": "Tiradentes Day", "pt": "Tiradentes"}, "type": "public_holiday"},
+      {"date": "2026-05-01", "name": {"en": "Labour Day", "pt": "Dia do Trabalho"}, "type": "public_holiday"},
+      {"date": "2026-06-04", "name": {"en": "Corpus Christi", "pt": "Corpus Christi"}, "type": "public_holiday"},
+      {"date": "2026-09-07", "name": {"en": "Independence Day", "pt": "Independência do Brasil"}, "type": "public_holiday"},
+      {"date": "2026-10-12", "name": {"en": "Our Lady of Aparecida", "pt": "Nossa Senhora Aparecida"}, "type": "public_holiday"},
+      {"date": "2026-11-02", "name": {"en": "All Souls' Day", "pt": "Finados"}, "type": "public_holiday"},
+      {"date": "2026-11-15", "name": {"en": "Republic Proclamation Day", "pt": "Proclamação da República"}, "type": "public_holiday"},
+      {"date": "2026-11-20", "name": {"en": "Black Awareness Day", "pt": "Dia da Consciência Negra"}, "type": "public_holiday"},
+      {"date": "2026-12-25", "name": {"en": "Christmas Day", "pt": "Natal"}, "type": "public_holiday"}
+    ]
+  },
+  {
+    "country_code": "MX",
+    "name": "Mexico Standard 2026",
+    "name_translations": {
+      "en": "Mexico Standard 2026",
+      "es": "México Standard 2026"
+    },
+    "year": "2026",
+    "work_hours_per_day": "8",
+    "work_days": [1, 2, 3, 4, 5],
+    "exceptions": [
+      {"date": "2026-01-01", "name": {"en": "New Year's Day", "es": "Año Nuevo"}, "type": "public_holiday"},
+      {"date": "2026-02-02", "name": {"en": "Constitution Day", "es": "Día de la Constitución"}, "type": "public_holiday"},
+      {"date": "2026-03-16", "name": {"en": "Benito Juárez's Birthday", "es": "Natalicio de Benito Juárez"}, "type": "public_holiday"},
+      {"date": "2026-04-02", "name": {"en": "Holy Thursday", "es": "Jueves Santo"}, "type": "public_holiday"},
+      {"date": "2026-04-03", "name": {"en": "Good Friday", "es": "Viernes Santo"}, "type": "public_holiday"},
+      {"date": "2026-05-01", "name": {"en": "Labour Day", "es": "Día del Trabajo"}, "type": "public_holiday"},
+      {"date": "2026-09-16", "name": {"en": "Independence Day", "es": "Día de la Independencia"}, "type": "public_holiday"},
+      {"date": "2026-11-16", "name": {"en": "Revolution Day", "es": "Día de la Revolución"}, "type": "public_holiday"},
+      {"date": "2026-12-25", "name": {"en": "Christmas Day", "es": "Navidad"}, "type": "public_holiday"}
+    ]
+  },
+  {
+    "country_code": "RU",
+    "name": "Russia Standard 2026",
+    "name_translations": {
+      "en": "Russia Standard 2026",
+      "ru": "Россия Стандарт 2026"
+    },
+    "year": "2026",
+    "work_hours_per_day": "8",
+    "work_days": [1, 2, 3, 4, 5],
+    "exceptions": [
+      {"date": "2026-01-01", "name": {"en": "New Year Holiday", "ru": "Новогодние каникулы"}, "type": "public_holiday"},
+      {"date": "2026-01-02", "name": {"en": "New Year Holiday", "ru": "Новогодние каникулы"}, "type": "public_holiday"},
+      {"date": "2026-01-03", "name": {"en": "New Year Holiday", "ru": "Новогодние каникулы"}, "type": "public_holiday"},
+      {"date": "2026-01-04", "name": {"en": "New Year Holiday", "ru": "Новогодние каникулы"}, "type": "public_holiday"},
+      {"date": "2026-01-05", "name": {"en": "New Year Holiday", "ru": "Новогодние каникулы"}, "type": "public_holiday"},
+      {"date": "2026-01-06", "name": {"en": "New Year Holiday", "ru": "Новогодние каникулы"}, "type": "public_holiday"},
+      {"date": "2026-01-07", "name": {"en": "Orthodox Christmas", "ru": "Рождество Христово"}, "type": "public_holiday"},
+      {"date": "2026-01-08", "name": {"en": "New Year Holiday", "ru": "Новогодние каникулы"}, "type": "public_holiday"},
+      {"date": "2026-02-23", "name": {"en": "Defender of the Fatherland Day", "ru": "День защитника Отечества"}, "type": "public_holiday"},
+      {"date": "2026-03-08", "name": {"en": "International Women's Day", "ru": "Международный женский день"}, "type": "public_holiday"},
+      {"date": "2026-03-09", "name": {"en": "Women's Day Holiday (substitute)", "ru": "Перенос выходного"}, "type": "public_holiday"},
+      {"date": "2026-05-01", "name": {"en": "Spring and Labour Day", "ru": "Праздник Весны и Труда"}, "type": "public_holiday"},
+      {"date": "2026-05-09", "name": {"en": "Victory Day", "ru": "День Победы"}, "type": "public_holiday"},
+      {"date": "2026-05-11", "name": {"en": "Victory Day Holiday (substitute)", "ru": "Перенос выходного"}, "type": "public_holiday"},
+      {"date": "2026-06-12", "name": {"en": "Russia Day", "ru": "День России"}, "type": "public_holiday"},
+      {"date": "2026-11-04", "name": {"en": "National Unity Day", "ru": "День народного единства"}, "type": "public_holiday"}
+    ]
+  },
+  {
+    "country_code": "UA",
+    "name": "Ukraine Standard 2026",
+    "name_translations": {
+      "en": "Ukraine Standard 2026",
+      "uk": "Україна Стандарт 2026"
+    },
+    "year": "2026",
+    "work_hours_per_day": "8",
+    "work_days": [1, 2, 3, 4, 5],
+    "exceptions": [
+      {"date": "2026-01-01", "name": {"en": "New Year's Day", "uk": "Новий рік"}, "type": "public_holiday"},
+      {"date": "2026-01-07", "name": {"en": "Orthodox Christmas", "uk": "Різдво Христове"}, "type": "public_holiday"},
+      {"date": "2026-03-08", "name": {"en": "International Women's Day", "uk": "Міжнародний жіночий день"}, "type": "public_holiday"},
+      {"date": "2026-04-13", "name": {"en": "Orthodox Easter Sunday", "uk": "Великдень"}, "type": "public_holiday"},
+      {"date": "2026-05-01", "name": {"en": "Labour Day", "uk": "День праці"}, "type": "public_holiday"},
+      {"date": "2026-05-09", "name": {"en": "Victory Day over Nazism", "uk": "День перемоги"}, "type": "public_holiday"},
+      {"date": "2026-06-01", "name": {"en": "Orthodox Whit Sunday", "uk": "Трійця"}, "type": "public_holiday"},
+      {"date": "2026-06-28", "name": {"en": "Constitution Day", "uk": "День Конституції"}, "type": "public_holiday"},
+      {"date": "2026-08-24", "name": {"en": "Independence Day", "uk": "День Незалежності"}, "type": "public_holiday"},
+      {"date": "2026-10-14", "name": {"en": "Defender of Ukraine Day", "uk": "День захисника України"}, "type": "public_holiday"},
+      {"date": "2026-12-25", "name": {"en": "Christmas Day", "uk": "Різдво Христове (25 грудня)"}, "type": "public_holiday"}
+    ]
+  },
+  {
+    "country_code": "ZA",
+    "name": "South Africa Standard 2026",
+    "name_translations": {
+      "en": "South Africa Standard 2026"
+    },
+    "year": "2026",
+    "work_hours_per_day": "8",
+    "work_days": [1, 2, 3, 4, 5],
+    "exceptions": [
+      {"date": "2026-01-01", "name": {"en": "New Year's Day"}, "type": "public_holiday"},
+      {"date": "2026-03-21", "name": {"en": "Human Rights Day"}, "type": "public_holiday"},
+      {"date": "2026-04-03", "name": {"en": "Good Friday"}, "type": "public_holiday"},
+      {"date": "2026-04-06", "name": {"en": "Family Day"}, "type": "public_holiday"},
+      {"date": "2026-04-27", "name": {"en": "Freedom Day"}, "type": "public_holiday"},
+      {"date": "2026-05-01", "name": {"en": "Workers' Day"}, "type": "public_holiday"},
+      {"date": "2026-06-16", "name": {"en": "Youth Day"}, "type": "public_holiday"},
+      {"date": "2026-08-10", "name": {"en": "National Women's Day"}, "type": "public_holiday"},
+      {"date": "2026-09-24", "name": {"en": "Heritage Day"}, "type": "public_holiday"},
+      {"date": "2026-12-16", "name": {"en": "Day of Reconciliation"}, "type": "public_holiday"},
+      {"date": "2026-12-25", "name": {"en": "Christmas Day"}, "type": "public_holiday"},
+      {"date": "2026-12-26", "name": {"en": "Day of Goodwill"}, "type": "public_holiday"}
+    ]
+  }
+]

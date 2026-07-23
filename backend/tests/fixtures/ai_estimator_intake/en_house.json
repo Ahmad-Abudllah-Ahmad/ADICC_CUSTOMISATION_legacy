@@ -1,0 +1,129 @@
+{
+  "name": "en_house",
+  "raw_request": "new single-family house build, 180 m2 over two storeys",
+  "mode_hint": "offline",
+  "expected_type": "house_new",
+  "answers": {
+    "gross_floor_area_m2": 180.0,
+    "storeys": 2,
+    "footprint_m2": 90.0,
+    "wall_construction": "masonry",
+    "roof_type": "pitched",
+    "roof_area_m2": 110.0,
+    "pitch_deg": 30.0,
+    "ceiling_height_m": 2.7,
+    "finish_level": "standard",
+    "foundation_type": "strip"
+  },
+  "expected_params": {
+    "gross_floor_area_m2": 180.0,
+    "storeys": 2,
+    "footprint_m2": 90.0,
+    "wall_construction": "masonry",
+    "roof_type": "pitched",
+    "roof_area_m2": 110.0,
+    "pitch_deg": 30.0,
+    "ceiling_height_m": 2.7,
+    "finish_level": "standard",
+    "foundation_type": "strip"
+  },
+  "expected_selected_packages": [
+    "commissioning",
+    "excavation",
+    "floor_screed",
+    "foundation",
+    "painting_walls",
+    "roof_structure",
+    "superstructure_walls",
+    "wall_plaster"
+  ],
+  "expected_stage_order": [
+    "demo",
+    "structure",
+    "rough",
+    "close",
+    "finish",
+    "commission"
+  ],
+  "expected_quantities": {
+    "excavation": 45.0,
+    "foundation": 180.0,
+    "floor_screed": 180.0,
+    "roof_structure": 127.017
+  },
+  "golden_positions": {
+    "excavation": {
+      "collection_name": [
+        "Earthworks",
+        "Tunneling works"
+      ],
+      "masterformat": [
+        "31"
+      ]
+    },
+    "foundation": {
+      "collection_name": [
+        "Monolithic concrete and reinforced concrete structures",
+        "Precast concrete and reinforced concrete structures",
+        "Concrete and reinforced concrete structures",
+        "Brick and block structures"
+      ],
+      "masterformat": [
+        "03 30",
+        "03",
+        "04"
+      ]
+    },
+    "superstructure_walls": {
+      "collection_name": [
+        "Brick and block structures"
+      ],
+      "masterformat": [
+        "04 20",
+        "04"
+      ]
+    },
+    "roof_structure": {
+      "collection_name": [
+        "Wooden structures",
+        "Roofs"
+      ],
+      "masterformat": [
+        "06",
+        "07"
+      ]
+    },
+    "floor_screed": {
+      "collection_name": [
+        "Floors",
+        "Finishing works"
+      ],
+      "masterformat": [
+        "03 35",
+        "09"
+      ]
+    },
+    "wall_plaster": {
+      "collection_name": [
+        "Plastering work",
+        "Stucco work",
+        "Finishing works"
+      ],
+      "masterformat": [
+        "09 24",
+        "09 20",
+        "09"
+      ]
+    },
+    "painting_walls": {
+      "collection_name": [
+        "Painting work",
+        "Finishing works"
+      ],
+      "masterformat": [
+        "09 90",
+        "09"
+      ]
+    }
+  }
+}

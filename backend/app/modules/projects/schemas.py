@@ -1,0 +1,1322 @@
+# DDC-CWICR-OE: DataDrivenConstruction · OpenConstructionERP
+# Copyright (c) 2026 Artem Boiko / DataDrivenConstruction
+"""Project Pydantic schemas for request/response validation."""
+
+import re
+from datetime import datetime
+from typing import Any
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator, model_validator
+
+_HTML_TAG_RE = re.compile(r"<[^>]+>")
+_CURRENCY_CODE_RE = re.compile(r"^[A-Z]{3}$")
+_DECIMAL_RE = re.compile(r"^[0-9]+(\.[0-9]+)?$")
+_UNIT_CODE_RE = re.compile(r"^[A-Za-z0-9._/²³-]{1,20}$")
+# ``client_id`` column is String(36). The create form historically posted a
+# free-text client/owner name into this field; names longer than 36 chars
+# 422'd. Accept longer input and relocate non-id values into custom_fields.
+_UUID_RE = re.compile(
+    r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+)
+
+
+def _relocate_client_name_fields(
+    client_id: str | None,
+    custom_fields: dict[str, Any] | None,
+) -> tuple[str | None, dict[str, Any] | None]:
+    """Move free-text client names out of the 36-char ``client_id`` slot."""
+    if client_id is None:
+        return None, custom_fields
+    text = client_id.strip()
+    if not text:
+        return None, custom_fields
+    if _UUID_RE.match(text) and len(text) <= 36:
+        return text, custom_fields
+    fields = dict(custom_fields or {})
+    fields.setdefault("client_name", text)
+    return None, fields
+
+# Valid date formats accepted by the platform (ISO 8601 preferred)
+_DATE_FORMATS = ("%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%d.%m.%Y", "%m/%d/%Y")
+
+
+def _validate_fx_rates(
+    value: list[dict[str, Any]] | dict[str, Any] | None,
+) -> list[dict[str, Any]] | None:
+    """Validate the ``fx_rates`` JSON list shape (RFC 37, Issues #88/#93).
+
+    Each entry must be a dict with:
+
+    * ``code`` - 3-letter uppercase ISO 4217 currency code
+    * ``rate`` - positive decimal-string (units of base per 1 unit of foreign)
+    * ``label`` - optional human label (≤64 chars)
+
+    Duplicate codes within a single project are rejected - the UI relies on
+    unique codes for the per-resource dropdown. Stored on Project as JSON;
+    we keep the dict shape rather than a structured Pydantic submodel so it
+    survives round-trip through ``Project.fx_rates`` without coupling to a
+    SQLAlchemy relationship.
+
+    Convenience: a flat ``{code: rate}`` mapping (e.g. ``{"USD": "1.08"}``)
+    is also accepted and normalised to the canonical list-of-dicts form
+    before validation. This matches the shape some third-party clients
+    and Probe-A scripts post.
+    """
+    if value is None:
+        return None
+    # Accept a {code: rate} or {code: {rate, label}} mapping for ergonomics.
+    # Normalise it to the canonical list-of-dicts shape, then fall through
+    # to the existing validator so all rules (regex, duplicates, positivity)
+    # apply identically regardless of input shape.
+    if isinstance(value, dict):
+        normalised: list[dict[str, Any]] = []
+        for code, rate_or_obj in value.items():
+            if isinstance(rate_or_obj, dict):
+                rate = rate_or_obj.get("rate", "")
+                label = rate_or_obj.get("label", "")
+            else:
+                rate = rate_or_obj
+                label = ""
+            normalised.append(
+                {"code": str(code), "rate": str(rate), "label": str(label)},
+            )
+        value = normalised
+    if not isinstance(value, list):
+        raise ValueError(
+            "fx_rates must be a list of {code, rate, label} dicts or a {code: rate} mapping",
+        )
+    seen: set[str] = set()
+    cleaned: list[dict[str, Any]] = []
+    for entry in value:
+        if not isinstance(entry, dict):
+            raise ValueError("each fx_rates entry must be an object")
+        code = str(entry.get("code", "")).strip().upper()
+        rate = str(entry.get("rate", "")).strip()
+        label = str(entry.get("label") or "").strip()[:64]
+        if not _CURRENCY_CODE_RE.match(code):
+            raise ValueError(f"fx_rates: '{code}' is not a 3-letter currency code")
+        if code in seen:
+            raise ValueError(f"fx_rates: duplicate currency '{code}'")
+        if not _DECIMAL_RE.match(rate):
+            raise ValueError(f"fx_rates: '{rate}' is not a decimal number for {code}")
+        # Reject zero rates outright - division by zero would crash rollups
+        # and a literal 0 has no plausible business meaning either.
+        try:
+            from decimal import Decimal
+
+            if Decimal(rate) <= 0:
+                raise ValueError(f"fx_rates: rate for {code} must be positive")
+        except (ValueError, ArithmeticError) as exc:
+            raise ValueError(f"fx_rates: invalid rate for {code}: {exc}") from exc
+        seen.add(code)
+        cleaned.append({"code": code, "rate": rate, "label": label})
+    return cleaned
+
+
+def _validate_vat_rate(value: str | None) -> str | None:
+    """Validate ``default_vat_rate``: positive decimal string ≤100.
+
+    Empty string is treated as None so a UI that clears the field results
+    in the regional default being used again (matching the column's
+    nullable contract).
+    """
+    if value is None:
+        return None
+    cleaned = str(value).strip()
+    if cleaned == "":
+        return None
+    if not _DECIMAL_RE.match(cleaned):
+        raise ValueError("default_vat_rate must be a positive decimal (e.g. '21' or '8.25')")
+    from decimal import Decimal
+
+    rate = Decimal(cleaned)
+    if rate < 0 or rate > 100:
+        raise ValueError("default_vat_rate must be between 0 and 100")
+    return cleaned
+
+
+def _validate_custom_units(value: list[str] | None) -> list[str] | None:
+    """Validate ``custom_units`` list (Issue #93 item 3).
+
+    Each unit is a short alphanumeric token. Duplicates and ones already
+    matching well-known canonical units (m, m2, kg) are still allowed -
+    the frontend de-duplicates against its canonical list at render time.
+    """
+    if value is None:
+        return None
+    if not isinstance(value, list):
+        raise ValueError("custom_units must be a list of strings")
+    seen: set[str] = set()
+    cleaned: list[str] = []
+    for entry in value:
+        s = str(entry).strip()
+        if not s:
+            continue
+        if not _UNIT_CODE_RE.match(s):
+            raise ValueError(f"custom_units: '{s}' is not a valid unit token (≤20 chars, no spaces)")
+        if s in seen:
+            continue
+        seen.add(s)
+        cleaned.append(s)
+    return cleaned
+
+
+def _validate_date_string(value: str | None, field_name: str) -> str | None:
+    """Validate that a date string can be parsed to a real date.
+
+    Accepts ISO 8601 (2026-01-15), European (15.01.2026), US (01/15/2026).
+    Returns the original string unchanged if valid.
+    """
+    if value is None:
+        return None
+    for fmt in _DATE_FORMATS:
+        try:
+            datetime.strptime(value.strip(), fmt)
+            return value.strip()
+        except ValueError:
+            continue
+    raise ValueError(
+        f"{field_name}: '{value}' is not a valid date. Expected formats: YYYY-MM-DD, DD.MM.YYYY, or MM/DD/YYYY"
+    )
+
+
+def parse_flexible_date(value: str | None) -> "datetime | None":
+    """Parse a stored milestone/date string to a ``datetime`` for sorting.
+
+    The ``planned_date`` column is a free-form ``String`` that accepts ISO
+    (2026-03-15), European (15.03.2026) and US (03/15/2026) formats. A raw
+    string ``order_by`` (A-PROJ-06) and a string ``>=`` comparison
+    (A-DASH-03) therefore interleave formats wrongly. This converts any of
+    the supported formats to a comparable ``datetime``; unparseable / null
+    values return ``None`` so callers can sort them last.
+    """
+    if value is None:
+        return None
+    cleaned = str(value).strip()
+    if not cleaned:
+        return None
+    for fmt in _DATE_FORMATS:
+        try:
+            return datetime.strptime(cleaned, fmt)
+        except ValueError:
+            continue
+    return None
+
+
+def _normalise_currency(value: str | None) -> str | None:
+    """Normalise a currency code without hard ISO-4217 rejection.
+
+    This is a 20-language *global* product: currencies and markets are open
+    by design. A hard closed enum here would break legitimate non-listed
+    currencies and contradicts the explicit no-restriction contract in
+    ``test_project_schemas.py``. So we only *normalise* (strip + uppercase)
+    and apply a *soft* shape check: a non-empty currency that is not a
+    3-letter alpha code is rejected, because a value like ``"NOTACURRENCY"``
+    or ``"123"`` is a data-integrity error, not a regional variant. Empty
+    string stays empty (user has not chosen yet - no default bias).
+    """
+    if value is None:
+        return None
+    cleaned = value.strip().upper()
+    if cleaned == "":
+        return ""
+    if not _CURRENCY_CODE_RE.match(cleaned):
+        raise ValueError(
+            f"currency: '{value}' is not a 3-letter currency code (e.g. EUR, USD, GBP, JPY). Leave empty if undecided."
+        )
+    return cleaned
+
+
+def _validate_money(value: str | None, field_name: str) -> str | None:
+    """Validate a monetary string field is a non-negative number.
+
+    Stored as a locale-independent decimal string (project model columns
+    are String for SQLite parity). A negative contract value or budget is
+    a data-integrity error regardless of region/currency, so this is a
+    hard reject - not a regional restriction. Empty string clears the
+    field (treated as None).
+    """
+    if value is None:
+        return None
+    cleaned = str(value).strip()
+    if cleaned == "":
+        return None
+    from decimal import Decimal, InvalidOperation
+
+    try:
+        amount = Decimal(cleaned)
+    except (InvalidOperation, ValueError) as exc:
+        raise ValueError(f"{field_name}: '{value}' is not a valid number") from exc
+    if amount < 0:
+        raise ValueError(f"{field_name} must be >= 0 (got {value})")
+    return cleaned
+
+
+def _validate_percentage(value: str | None, field_name: str) -> str | None:
+    """Validate a percentage string field is within 0–100.
+
+    Used for ``contingency_pct`` and milestone ``linked_payment_pct``.
+    Out-of-range percentages (e.g. 500%) corrupt progress-billing and
+    budget rollups, so this is a correctness bound, not a locale policy.
+    """
+    if value is None:
+        return None
+    cleaned = str(value).strip()
+    if cleaned == "":
+        return None
+    from decimal import Decimal, InvalidOperation
+
+    try:
+        pct = Decimal(cleaned)
+    except (InvalidOperation, ValueError) as exc:
+        raise ValueError(f"{field_name}: '{value}' is not a valid number") from exc
+    if pct < 0 or pct > 100:
+        raise ValueError(f"{field_name} must be between 0 and 100 (got {value})")
+    return cleaned
+
+
+# ── Create / Update ───────────────────────────────────────────────────────
+
+
+class ProjectCreate(BaseModel):
+    """Create a new project."""
+
+    name: str = Field(
+        ...,
+        min_length=1,
+        max_length=255,
+        description="Project name (must be at least 1 character, HTML tags are rejected)",
+        examples=["Residential Mitte"],
+    )
+
+    @field_validator("name", mode="after")
+    @classmethod
+    def reject_html_tags(cls, v: str) -> str:
+        """Reject HTML tags so callers see a clear 422 instead of silent mutation.
+
+        The previous revision silently stripped ``<...>`` sequences to prevent
+        XSS. That kept the server safe but left the caller with a surprising
+        delta between what they sent and what was persisted. Rejecting
+        loudly preserves the XSS guarantee and stops the data from being
+        quietly rewritten.
+
+        A-PROJ-01: ``min_length=1`` runs *before* this after-validator, so a
+        whitespace-only name ("   ") passed length but trimmed to "" and was
+        stored empty. Re-assert non-emptiness post-trim so "   " gets the
+        same 422 an empty string already gets.
+        """
+        trimmed = v.strip()
+        if not trimmed:
+            raise ValueError("Project name must contain at least one non-whitespace character.")
+        if _HTML_TAG_RE.search(trimmed):
+            raise ValueError("Project name contains HTML tags. Use plain text only.")
+        return trimmed
+
+    description: str = Field(
+        default="",
+        max_length=5000,
+        description="Project scope description (max 5000 characters)",
+        examples=["5-story residential building, 48 units, underground parking"],
+    )
+
+    @field_validator("description", mode="after")
+    @classmethod
+    def _strip_xss_from_description(cls, v: str) -> str:
+        # BUG-326: long-form description field previously stored ``<script>``
+        # and ``onerror=`` payloads verbatim. Silently stripping dangerous
+        # HTML preserves legitimate text (``"beam <200mm"``) while killing
+        # XSS vectors that target frontends using dangerouslySetInnerHTML.
+        from app.core.sanitize import strip_dangerous_html
+
+        return strip_dangerous_html(v)
+
+    region: str = Field(
+        default="",
+        max_length=100,
+        description="Region/market identifier (e.g. DACH, UK, US, Middle East). User must choose, no default bias",
+        examples=["DACH"],
+    )
+    classification_standard: str = Field(
+        default="",
+        max_length=100,
+        description="Classification standard identifier (e.g. din276, nrm, masterformat, uniclass)",
+        examples=["din276"],
+    )
+    currency: str = Field(
+        default="",
+        max_length=10,
+        description="ISO 4217 currency code (e.g. EUR, GBP, USD). User must choose, no default bias",
+        examples=["EUR"],
+    )
+    locale: str = Field(default="en", max_length=10, description="UI locale code (e.g. en, de, fr)")
+    validation_rule_sets: list[str] = Field(
+        default_factory=lambda: ["boq_quality"],
+        description="List of validation rule set IDs to apply (e.g. boq_quality, din276, gaeb)",
+    )
+    compliance_rule_packs: list[str] = Field(
+        default_factory=lambda: ["universal"],
+        description="Compliance rule-pack IDs enforced at workflow gates "
+        "(e.g. universal, de_compliance, uk_compliance, us_compliance)",
+    )
+
+    # Phase 12 expansion fields (all optional)
+    project_code: str | None = Field(default=None, max_length=50)
+    project_type: str | None = Field(default=None, max_length=50)
+    phase: str | None = Field(default=None, max_length=50)
+    # Accept free-text client/owner names from older clients; normalised
+    # into custom_fields.client_name by ``_normalise_client_id``.
+    client_id: str | None = Field(default=None, max_length=255)
+    parent_project_id: UUID | None = None
+    address: dict[str, Any] | None = None
+    country_code: str | None = Field(
+        default=None,
+        max_length=2,
+        description="ISO 3166-1 alpha-2 country code (e.g. US, CA, AU, DE, GB). "
+        "Drives the AIA G702/G703 payment-application gate (US/CA/AU only).",
+    )
+
+    @field_validator("country_code", mode="after")
+    @classmethod
+    def _normalise_country_code(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        cc = v.strip().upper()
+        return cc or None
+
+    @model_validator(mode="after")
+    def _normalise_client_id(self) -> "ProjectCreate":
+        cid, fields = _relocate_client_name_fields(self.client_id, self.custom_fields)
+        self.client_id = cid
+        self.custom_fields = fields
+        return self
+
+    contract_value: str | None = Field(default=None, max_length=50)
+    planned_start_date: str | None = Field(default=None, max_length=20)
+    planned_end_date: str | None = Field(default=None, max_length=20)
+    actual_start_date: str | None = Field(default=None, max_length=20)
+    actual_end_date: str | None = Field(default=None, max_length=20)
+    budget_estimate: str | None = Field(default=None, max_length=50)
+    contingency_pct: str | None = Field(default=None, max_length=10)
+    gross_floor_area: str | None = Field(
+        default=None,
+        max_length=50,
+        description=(
+            "Gross floor area in m2 GFA as a decimal-string (e.g. '5400'). "
+            "Used by the Cost Benchmarks module to derive a real cost-per-m2 "
+            "figure for the project portfolio distribution."
+        ),
+    )
+    custom_fields: dict[str, Any] | None = None
+    work_calendar_id: str | None = Field(default=None, max_length=36)
+
+    # ── v2.6.0 - multi-currency + per-project VAT (RFC 37) ───────────────
+    fx_rates: list[dict[str, Any]] | None = Field(
+        default=None,
+        description=(
+            "Additional currencies + decimal-string rates to base. Shape: "
+            "[{code: 'USD', rate: '1200.50', label: 'US Dollar'}]. Empty/null "
+            "means single-currency project."
+        ),
+    )
+    default_vat_rate: str | None = Field(
+        default=None,
+        max_length=10,
+        description=(
+            "Per-project VAT override as decimal-string percentage (e.g. '21'). Null means use the regional template."
+        ),
+    )
+    custom_units: list[str] | None = Field(
+        default=None,
+        description="Project-scoped unit codes not in the canonical frontend list.",
+    )
+
+    # mode="before" so we get the raw input before Pydantic coerces it to
+    # ``list[dict[str, Any]]`` - this lets us also accept the convenience
+    # ``{code: rate}`` mapping shape that some clients post.
+    @field_validator("fx_rates", mode="before")
+    @classmethod
+    def _check_fx_rates(
+        cls,
+        v: list[dict[str, Any]] | dict[str, Any] | None,
+    ) -> list[dict[str, Any]] | None:
+        return _validate_fx_rates(v)
+
+    @field_validator("default_vat_rate", mode="after")
+    @classmethod
+    def _check_vat_rate(cls, v: str | None) -> str | None:
+        return _validate_vat_rate(v)
+
+    @field_validator("custom_units", mode="after")
+    @classmethod
+    def _check_custom_units(cls, v: list[str] | None) -> list[str] | None:
+        return _validate_custom_units(v)
+
+    @field_validator("planned_start_date", "planned_end_date", "actual_start_date", "actual_end_date")
+    @classmethod
+    def _validate_dates(cls, v: str | None, info: Any) -> str | None:
+        return _validate_date_string(v, info.field_name)
+
+    @field_validator("currency", mode="after")
+    @classmethod
+    def _normalise_currency(cls, v: str) -> str:
+        # A-PROJ-02: normalise (trim/upper) + soft shape check. NOT a
+        # closed ISO-4217 enum - this is a global product.
+        return _normalise_currency(v) or ""
+
+    @field_validator("region", "classification_standard", mode="after")
+    @classmethod
+    def _trim_region_std(cls, v: str) -> str:
+        # A-PROJ-02: region/classification_standard stay open (any market /
+        # custom standard) - we only strip surrounding whitespace so
+        # " DACH " and "DACH" don't fork into two distinct values.
+        return v.strip()
+
+    @field_validator("contract_value", "budget_estimate", "gross_floor_area", mode="after")
+    @classmethod
+    def _validate_money_fields(cls, v: str | None, info: Any) -> str | None:
+        # A-PROJ-03: monetary and area fields must be non-negative numbers.
+        return _validate_money(v, info.field_name)
+
+    @field_validator("contingency_pct", mode="after")
+    @classmethod
+    def _validate_contingency(cls, v: str | None) -> str | None:
+        # A-PROJ-03: contingency is a 0–100 percentage.
+        return _validate_percentage(v, "contingency_pct")
+
+
+class ProjectUpdate(BaseModel):
+    """Update project fields. All optional - only provided fields are updated."""
+
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    description: str | None = Field(default=None, max_length=5000)
+
+    @field_validator("name", mode="after")
+    @classmethod
+    def _reject_html_in_name(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        trimmed = v.strip()
+        if _HTML_TAG_RE.search(trimmed):
+            raise ValueError("Project name contains HTML tags. Use plain text only.")
+        return trimmed
+
+    @field_validator("description", mode="after")
+    @classmethod
+    def _strip_xss_from_description(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        from app.core.sanitize import strip_dangerous_html
+
+        return strip_dangerous_html(v)
+
+    region: str | None = Field(default=None, max_length=100)
+    classification_standard: str | None = Field(default=None, max_length=100)
+    currency: str | None = Field(default=None, max_length=10)
+    locale: str | None = Field(default=None, max_length=10)
+    validation_rule_sets: list[str] | None = None
+    compliance_rule_packs: list[str] | None = None
+    metadata: dict[str, Any] | None = None
+
+    # Phase 12 expansion fields
+    project_code: str | None = Field(default=None, max_length=50)
+    project_type: str | None = Field(default=None, max_length=50)
+    phase: str | None = Field(default=None, max_length=50)
+    client_id: str | None = Field(default=None, max_length=255)
+    parent_project_id: UUID | None = None
+    address: dict[str, Any] | None = None
+    country_code: str | None = Field(
+        default=None,
+        max_length=2,
+        description="ISO 3166-1 alpha-2 country code (e.g. US, CA, AU, DE, GB). "
+        "Drives the AIA G702/G703 payment-application gate (US/CA/AU only).",
+    )
+
+    @field_validator("country_code", mode="after")
+    @classmethod
+    def _normalise_country_code(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        cc = v.strip().upper()
+        return cc or None
+
+    @model_validator(mode="after")
+    def _normalise_client_id(self) -> "ProjectUpdate":
+        cid, fields = _relocate_client_name_fields(self.client_id, self.custom_fields)
+        self.client_id = cid
+        # Only overwrite custom_fields when we relocated a name, so a
+        # patch that omits custom_fields doesn't clear unrelated keys.
+        if fields is not self.custom_fields:
+            self.custom_fields = fields
+        return self
+
+    contract_value: str | None = Field(default=None, max_length=50)
+    planned_start_date: str | None = Field(default=None, max_length=20)
+    planned_end_date: str | None = Field(default=None, max_length=20)
+    actual_start_date: str | None = Field(default=None, max_length=20)
+    actual_end_date: str | None = Field(default=None, max_length=20)
+    budget_estimate: str | None = Field(default=None, max_length=50)
+    contingency_pct: str | None = Field(default=None, max_length=10)
+    gross_floor_area: str | None = Field(
+        default=None,
+        max_length=50,
+        description="Gross floor area in m2 GFA as a decimal-string. Empty string clears it.",
+    )
+    custom_fields: dict[str, Any] | None = None
+    work_calendar_id: str | None = Field(default=None, max_length=36)
+    status: str | None = None
+
+    # ── v2.6.0 - multi-currency + per-project VAT (RFC 37) ───────────────
+    fx_rates: list[dict[str, Any]] | None = None
+    default_vat_rate: str | None = Field(default=None, max_length=10)
+    custom_units: list[str] | None = None
+
+    # mode="before" so we get the raw input before Pydantic coerces it to
+    # ``list[dict[str, Any]]`` - this lets us also accept the convenience
+    # ``{code: rate}`` mapping shape that some clients post.
+    @field_validator("fx_rates", mode="before")
+    @classmethod
+    def _check_fx_rates(
+        cls,
+        v: list[dict[str, Any]] | dict[str, Any] | None,
+    ) -> list[dict[str, Any]] | None:
+        return _validate_fx_rates(v)
+
+    @field_validator("default_vat_rate", mode="after")
+    @classmethod
+    def _check_vat_rate(cls, v: str | None) -> str | None:
+        return _validate_vat_rate(v)
+
+    @field_validator("custom_units", mode="after")
+    @classmethod
+    def _check_custom_units(cls, v: list[str] | None) -> list[str] | None:
+        return _validate_custom_units(v)
+
+    @field_validator("planned_start_date", "planned_end_date", "actual_start_date", "actual_end_date")
+    @classmethod
+    def _validate_dates(cls, v: str | None, info: Any) -> str | None:
+        return _validate_date_string(v, info.field_name)
+
+    @field_validator("name", mode="after")
+    @classmethod
+    def reject_html_tags(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        trimmed = v.strip()
+        if not trimmed:
+            raise ValueError("Project name must contain at least one non-whitespace character.")
+        if _HTML_TAG_RE.search(trimmed):
+            raise ValueError("Project name contains HTML tags. Use plain text only.")
+        return trimmed
+
+    @field_validator("currency", mode="after")
+    @classmethod
+    def _normalise_currency(cls, v: str | None) -> str | None:
+        # A-PROJ-02: same soft normalisation as ProjectCreate.
+        return _normalise_currency(v)
+
+    @field_validator("region", "classification_standard", mode="after")
+    @classmethod
+    def _trim_region_std(cls, v: str | None) -> str | None:
+        return None if v is None else v.strip()
+
+    @field_validator("contract_value", "budget_estimate", "gross_floor_area", mode="after")
+    @classmethod
+    def _validate_money_fields(cls, v: str | None, info: Any) -> str | None:
+        return _validate_money(v, info.field_name)
+
+    @field_validator("contingency_pct", mode="after")
+    @classmethod
+    def _validate_contingency(cls, v: str | None) -> str | None:
+        return _validate_percentage(v, "contingency_pct")
+
+
+class ComplianceRulePacksUpdate(BaseModel):
+    """Set the compliance rule packs enforced for a project (Item #27)."""
+
+    rule_pack_ids: list[str] = Field(
+        default_factory=list,
+        description="Compliance rule-pack IDs to enforce at workflow gates. "
+        "Validated against the known pack catalogue; unknown ids are rejected.",
+        examples=[["universal", "de_compliance"]],
+    )
+
+
+# ── Response ──────────────────────────────────────────────────────────────
+
+
+class ProjectResponse(BaseModel):
+    """Project in API responses."""
+
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    id: UUID
+    name: str
+    description: str
+    region: str
+    classification_standard: str
+    currency: str
+    locale: str
+    validation_rule_sets: list[str]
+    compliance_rule_packs: list[str] = Field(default_factory=lambda: ["universal"])
+    status: str
+    owner_id: UUID
+    metadata: dict[str, Any] = Field(default_factory=dict, validation_alias="metadata_")
+    created_at: datetime
+    updated_at: datetime
+
+    # Phase 12 expansion fields
+    project_code: str | None = None
+    project_type: str | None = None
+    phase: str | None = None
+    client_id: str | None = None
+    parent_project_id: UUID | None = None
+    address: dict[str, Any] | None = None
+    country_code: str | None = None
+    contract_value: str | None = None
+    planned_start_date: str | None = None
+    planned_end_date: str | None = None
+    actual_start_date: str | None = None
+    actual_end_date: str | None = None
+    budget_estimate: str | None = None
+    contingency_pct: str | None = None
+    gross_floor_area: str | None = None
+    custom_fields: dict[str, Any] | None = None
+    work_calendar_id: str | None = None
+
+    # ── v2.6.0 - multi-currency + per-project VAT (RFC 37) ───────────────
+    fx_rates: list[dict[str, Any]] = Field(default_factory=list)
+    default_vat_rate: str | None = None
+    custom_units: list[str] = Field(default_factory=list)
+
+    # BUG-MATH04: defence-in-depth response strip - see BOQResponse for the
+    # full rationale. ``ProjectCreate`` rejects HTML in ``name`` outright
+    # (loud 422) and only strips dangerous tags from ``description``;
+    # benign tags stored before that fix or via non-HTTP paths are
+    # neutralised here on the way out.
+    @field_validator("name", "description", mode="after")
+    @classmethod
+    def _strip_html_on_response(cls, v: str) -> str:
+        from app.core.sanitize import sanitise_text
+
+        return sanitise_text(v) or ""
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def is_aia_eligible(self) -> bool:
+        """True when this project may use AIA G702/G703 (US/CA/AU only).
+
+        Derived from the project country so the front end can render the AIA
+        payment-application UI only where it is the local norm. The backend
+        enforces the same gate independently on the AIA endpoints.
+        """
+        from app.modules.contracts.aia import is_aia_eligible
+
+        return is_aia_eligible(self.country_code, self.address)
+
+
+# ── Status-history schemas ───────────────────────────────────────────────
+
+
+class ProjectStatusHistoryResponse(BaseModel):
+    """One project status transition returned from the API.
+
+    ``from_status`` is null for the initial status recorded at creation;
+    ``changed_by`` is null when the acting user is unknown or has since been
+    removed (the FK is ``ON DELETE SET NULL``). UUID columns are serialised
+    as strings so the frontend gets the plain ids the contract expects.
+    """
+
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    id: str
+    project_id: str
+    from_status: str | None = None
+    to_status: str
+    changed_by: str | None = None
+    note: str | None = None
+    created_at: datetime
+
+    @field_validator("id", "project_id", "changed_by", mode="before")
+    @classmethod
+    def _coerce_uuid_to_str(cls, v: Any) -> Any:
+        # ORM columns are GUID() (UUID instances). Stringify so the response
+        # matches the {id, project_id, changed_by} string contract regardless
+        # of whether the value arrives as a UUID or already as a string.
+        return str(v) if isinstance(v, UUID) else v
+
+
+# ── WBS schemas ──────────────────────────────────────────────────────────
+
+
+class WBSCreate(BaseModel):
+    """Create a WBS node."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    parent_id: UUID | None = None
+    code: str = Field(..., min_length=1, max_length=50)
+    name: str = Field(..., min_length=1, max_length=255)
+    name_translations: dict[str, str] | None = None
+    level: int = Field(default=0, ge=0)
+    sort_order: int = Field(default=0, ge=0)
+    wbs_type: str = Field(default="cost", max_length=50)
+    planned_cost: str | None = Field(default=None, max_length=50)
+    planned_hours: str | None = Field(default=None, max_length=50)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class WBSUpdate(BaseModel):
+    """Partial update for a WBS node."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    parent_id: UUID | None = None
+    code: str | None = Field(default=None, min_length=1, max_length=50)
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    name_translations: dict[str, str] | None = None
+    level: int | None = Field(default=None, ge=0)
+    sort_order: int | None = Field(default=None, ge=0)
+    wbs_type: str | None = Field(default=None, max_length=50)
+    planned_cost: str | None = Field(default=None, max_length=50)
+    planned_hours: str | None = Field(default=None, max_length=50)
+    metadata: dict[str, Any] | None = None
+
+
+class WBSResponse(BaseModel):
+    """WBS node returned from the API."""
+
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    id: UUID
+    project_id: UUID
+    parent_id: UUID | None
+    code: str
+    name: str
+    name_translations: dict[str, str] | None = None
+    level: int
+    sort_order: int
+    wbs_type: str
+    planned_cost: str | None = None
+    planned_hours: str | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict, validation_alias="metadata_")
+    created_at: datetime
+    updated_at: datetime
+
+
+# ── Milestone schemas ────────────────────────────────────────────────────
+
+
+_MILESTONE_STATUSES = ("pending", "in_progress", "completed", "cancelled")
+
+# Allowed status transitions: from_status -> set of valid to_statuses
+_MILESTONE_TRANSITIONS: dict[str, set[str]] = {
+    "pending": {"in_progress", "cancelled"},
+    "in_progress": {"completed", "cancelled", "pending"},
+    "completed": {"in_progress"},  # Allow reopening
+    "cancelled": {"pending"},  # Allow reactivation
+}
+
+
+class MilestoneCreate(BaseModel):
+    """Create a project milestone."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    name: str = Field(..., min_length=1, max_length=255)
+    milestone_type: str = Field(default="general", max_length=50)
+    planned_date: str | None = Field(default=None, max_length=20)
+    actual_date: str | None = Field(default=None, max_length=20)
+    status: str = Field(default="pending", max_length=50)
+    linked_payment_pct: str | None = Field(default=None, max_length=10)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("status")
+    @classmethod
+    def _validate_status(cls, v: str) -> str:
+        if v not in _MILESTONE_STATUSES:
+            raise ValueError(f"Invalid status '{v}'. Must be one of: {', '.join(_MILESTONE_STATUSES)}")
+        return v
+
+    @field_validator("planned_date")
+    @classmethod
+    def _validate_planned_date(cls, v: str | None) -> str | None:
+        return _validate_date_string(v, "planned_date")
+
+    @field_validator("actual_date")
+    @classmethod
+    def _validate_actual_date(cls, v: str | None) -> str | None:
+        return _validate_date_string(v, "actual_date")
+
+    @field_validator("linked_payment_pct")
+    @classmethod
+    def _validate_payment_pct(cls, v: str | None) -> str | None:
+        # A-PROJ-05: progress-billing percentage must be 0–100.
+        return _validate_percentage(v, "linked_payment_pct")
+
+
+class MilestoneUpdate(BaseModel):
+    """Partial update for a milestone."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    milestone_type: str | None = Field(default=None, max_length=50)
+    planned_date: str | None = Field(default=None, max_length=20)
+    actual_date: str | None = Field(default=None, max_length=20)
+    status: str | None = Field(default=None, max_length=50)
+    linked_payment_pct: str | None = Field(default=None, max_length=10)
+    metadata: dict[str, Any] | None = None
+
+    @field_validator("status")
+    @classmethod
+    def _validate_status(cls, v: str | None) -> str | None:
+        if v is not None and v not in _MILESTONE_STATUSES:
+            raise ValueError(f"Invalid status '{v}'. Must be one of: {', '.join(_MILESTONE_STATUSES)}")
+        return v
+
+    @field_validator("planned_date")
+    @classmethod
+    def _validate_planned_date(cls, v: str | None) -> str | None:
+        return _validate_date_string(v, "planned_date")
+
+    @field_validator("actual_date")
+    @classmethod
+    def _validate_actual_date(cls, v: str | None) -> str | None:
+        return _validate_date_string(v, "actual_date")
+
+    @field_validator("linked_payment_pct")
+    @classmethod
+    def _validate_payment_pct(cls, v: str | None) -> str | None:
+        # A-PROJ-05: progress-billing percentage must be 0–100.
+        return _validate_percentage(v, "linked_payment_pct")
+
+
+class MilestoneResponse(BaseModel):
+    """Milestone returned from the API."""
+
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    id: UUID
+    project_id: UUID
+    name: str
+    milestone_type: str
+    planned_date: str | None = None
+    actual_date: str | None = None
+    status: str
+    linked_payment_pct: str | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict, validation_alias="metadata_")
+    created_at: datetime
+    updated_at: datetime
+
+
+# ── Match-settings schemas (v2.8.0) ──────────────────────────────────────
+
+
+_LANGUAGE_CODE_RE = re.compile(r"^[A-Za-z]{2}$")
+
+
+def _validate_classifier(value: str) -> str:
+    """Reject classifier values not in the allow-list."""
+    from app.modules.projects.models import MATCH_ALLOWED_CLASSIFIERS
+
+    cleaned = value.strip().lower()
+    if cleaned not in MATCH_ALLOWED_CLASSIFIERS:
+        raise ValueError(f"classifier must be one of {sorted(MATCH_ALLOWED_CLASSIFIERS)}; got '{value}'")
+    return cleaned
+
+
+def _validate_mode(value: str) -> str:
+    """Reject mode values outside ``manual``/``auto``."""
+    from app.modules.projects.models import MATCH_ALLOWED_MODES
+
+    cleaned = value.strip().lower()
+    if cleaned not in MATCH_ALLOWED_MODES:
+        raise ValueError(f"mode must be one of {sorted(MATCH_ALLOWED_MODES)}; got '{value}'")
+    return cleaned
+
+
+def _clamp_threshold(value: float) -> float:
+    """Clamp ``auto_link_threshold`` into the [0.0, 1.0] range.
+
+    We clamp rather than reject to keep the UI forgiving - a slider that
+    drifts to 1.01 due to floating-point UI math should not 422.
+    """
+    if value < 0.0:
+        return 0.0
+    if value > 1.0:
+        return 1.0
+    return float(value)
+
+
+def _validate_sources(value: list[str]) -> list[str]:
+    """Validate ``sources_enabled`` entries against the allow-list.
+
+    Empty list is allowed (the user can disable every source explicitly).
+    Duplicates are silently de-duplicated; case-folded to lowercase.
+    """
+    from app.modules.projects.models import MATCH_ALLOWED_SOURCES
+
+    if not isinstance(value, list):
+        raise ValueError("sources_enabled must be a list of strings")
+    seen: set[str] = set()
+    cleaned: list[str] = []
+    for entry in value:
+        if not isinstance(entry, str):
+            raise ValueError("sources_enabled entries must be strings")
+        token = entry.strip().lower()
+        if not token:
+            continue
+        if token not in MATCH_ALLOWED_SOURCES:
+            raise ValueError(f"sources_enabled: '{entry}' is not one of {sorted(MATCH_ALLOWED_SOURCES)}")
+        if token in seen:
+            continue
+        seen.add(token)
+        cleaned.append(token)
+    return cleaned
+
+
+def _validate_target_language(value: str) -> str:
+    """Validate ISO-639 two-letter language code (case-insensitive)."""
+    cleaned = value.strip().lower()
+    if not _LANGUAGE_CODE_RE.match(cleaned):
+        raise ValueError(f"target_language must be a 2-letter ISO-639 code; got '{value}'")
+    return cleaned
+
+
+class MatchProjectSettingsBase(BaseModel):
+    """All match-settings fields with their canonical defaults.
+
+    Used as the canonical shape - both ``Read`` and the Update schema
+    derive their field set from this class so adding a new field stays
+    one edit instead of three.
+    """
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    target_language: str = Field(
+        default="en",
+        min_length=2,
+        max_length=8,
+        description="ISO-639 two-letter target catalog language (e.g. 'de', 'bg', 'en').",
+    )
+    classifier: str = Field(
+        default="none",
+        description="Classification standard: 'none' (default), 'din276', 'nrm', 'masterformat'.",
+    )
+    auto_link_threshold: float = Field(
+        default=0.85,
+        ge=0.0,
+        le=1.0,
+        description="Confidence threshold (0.0-1.0). Above this auto-links when enabled.",
+    )
+    auto_link_enabled: bool = Field(
+        default=False,
+        description="Master toggle - false forces every match to manual confirmation.",
+    )
+    mode: str = Field(
+        default="manual",
+        description="'manual' (user confirms each match) or 'auto'.",
+    )
+    sources_enabled: list[str] = Field(
+        default_factory=lambda: ["bim", "pdf", "dwg", "photo"],
+        description="Subset of ['bim','pdf','dwg','photo'] - sources the matcher consumes.",
+    )
+    cost_database_id: str | None = Field(
+        default=None,
+        max_length=32,
+        description=(
+            "Selected CWICR catalogue ID (e.g. 'RU_STPETERSBURG', 'DE_BERLIN'). "
+            "Null = no catalogue picked yet - match endpoint returns "
+            "'no_catalog_selected' and the UI surfaces an explicit picker."
+        ),
+    )
+
+    @field_validator("target_language", mode="after")
+    @classmethod
+    def _check_language(cls, v: str) -> str:
+        return _validate_target_language(v)
+
+    @field_validator("classifier", mode="after")
+    @classmethod
+    def _check_classifier(cls, v: str) -> str:
+        return _validate_classifier(v)
+
+    @field_validator("mode", mode="after")
+    @classmethod
+    def _check_mode(cls, v: str) -> str:
+        return _validate_mode(v)
+
+    @field_validator("auto_link_threshold", mode="after")
+    @classmethod
+    def _check_threshold(cls, v: float) -> float:
+        return _clamp_threshold(v)
+
+    @field_validator("sources_enabled", mode="after")
+    @classmethod
+    def _check_sources(cls, v: list[str]) -> list[str]:
+        return _validate_sources(v)
+
+
+class MatchProjectSettingsRead(BaseModel):
+    """Match settings as returned from the API."""
+
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    id: UUID
+    project_id: UUID
+    target_language: str
+    classifier: str
+    auto_link_threshold: float
+    auto_link_enabled: bool
+    mode: str
+    sources_enabled: list[str] = Field(default_factory=list)
+    cost_database_id: str | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class MatchProjectSettingsUpdate(BaseModel):
+    """Partial update - every field optional for PATCH semantics."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    target_language: str | None = Field(
+        default=None,
+        min_length=2,
+        max_length=8,
+    )
+    classifier: str | None = None
+    auto_link_threshold: float | None = Field(default=None, ge=0.0, le=1.0)
+    auto_link_enabled: bool | None = None
+    mode: str | None = None
+    sources_enabled: list[str] | None = None
+    cost_database_id: str | None = Field(default=None, max_length=32)
+
+    @field_validator("target_language", mode="after")
+    @classmethod
+    def _check_language(cls, v: str | None) -> str | None:
+        return None if v is None else _validate_target_language(v)
+
+    @field_validator("classifier", mode="after")
+    @classmethod
+    def _check_classifier(cls, v: str | None) -> str | None:
+        return None if v is None else _validate_classifier(v)
+
+    @field_validator("mode", mode="after")
+    @classmethod
+    def _check_mode(cls, v: str | None) -> str | None:
+        return None if v is None else _validate_mode(v)
+
+    @field_validator("auto_link_threshold", mode="after")
+    @classmethod
+    def _check_threshold(cls, v: float | None) -> float | None:
+        return None if v is None else _clamp_threshold(v)
+
+    @field_validator("sources_enabled", mode="after")
+    @classmethod
+    def _check_sources(cls, v: list[str] | None) -> list[str] | None:
+        return None if v is None else _validate_sources(v)
+
+
+# ── Project-creation wizard (Slice 1 - profile + presets + modules) ──────
+
+
+class PresetRead(BaseModel):
+    """One preset card for the wizard's step 1."""
+
+    id: str
+    icon: str
+    label_key: str
+    label_en: str
+    blurb_en: str
+    # Resolved full module set (ALWAYS_ON ∪ extras) so the right-pane
+    # live preview can render without a second call.
+    modules: list[str]
+    module_count: int
+
+
+class ProfileSpec(BaseModel):
+    """Wizard answers → apply to a project (POST body)."""
+
+    preset: str = "custom"
+    activity: list[str] = Field(default_factory=list)
+    phases: list[str] = Field(default_factory=list)
+    role: str | None = None
+    size: str | None = None
+    region: str | None = None
+    language: str | None = None
+    extensions_enabled: list[str] = Field(default_factory=list)
+    focus_mode_enabled: bool = True
+    setup_completion: dict[str, Any] = Field(default_factory=dict)
+    # Optional manual overrides applied AFTER scoring: force a module on
+    # / off regardless of tier. {"finance": true, "safety": false}
+    manual_overrides: dict[str, bool] = Field(default_factory=dict)
+
+
+class ProjectModuleRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    module_name: str
+    enabled: bool
+    tier: str
+    score: int
+    phase: str
+    source: str
+    ordinal: int | None = None
+    why: str | None = None
+
+
+class ProjectProfileRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    project_id: UUID
+    preset: str
+    activity: list[str]
+    phases: list[str]
+    role: str | None
+    size: str | None
+    region: str | None
+    language: str | None
+    extensions_enabled: list[str]
+    focus_mode_enabled: bool
+    setup_completion: dict[str, Any]
+
+
+class ProjectProfileResult(BaseModel):
+    """Profile + the resolved module assignment (apply / get response)."""
+
+    profile: ProjectProfileRead
+    modules: list[ProjectModuleRead]
+    enabled_count: int
+    must_count: int
+
+
+class FocusModePatch(BaseModel):
+    """Master switch for the numbered/greyed sidebar mode."""
+
+    focus_mode_enabled: bool
+
+
+class ProjectModulePresence(BaseModel):
+    """Per-module "has any data?" booleans for one project.
+
+    Used by the frontend sidebar to dim/grey modules that have no rows
+    for the current project. Every field is a single boolean - keeping
+    the response shape literal (vs. a free-form dict) so the
+    openapi-typescript client gets a strongly typed surface.
+
+    Rules of the road:
+
+    * ``True``  - at least one row exists in that module's primary
+                  project-scoped table.
+    * ``False`` - either zero rows, OR the underlying table is missing
+                  (fresh DB / migration not yet applied). Endpoint must
+                  never 500 because one module is unwired.
+
+    Module keys mirror the frontend sidebar slugs.
+    """
+
+    # ``populate_by_name=True`` lets ``model_validate({"5d": ...})``
+    # resolve the alias. ``from_attributes=True`` keeps the usual
+    # ORM-friendly behaviour the rest of the schemas use.
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    # ── Estimation & BIM ──
+    boq: bool = False
+    takeoff: bool = False
+    clash: bool = False
+    bim: bool = False
+    costs: bool = False
+    match_elements: bool = False
+    assemblies: bool = False
+    smart_views: bool = False
+    bim_requirements: bool = False
+    bcf: bool = False
+
+    # ── Planning & Field ──
+    schedule: bool = False
+    tasks: bool = False
+    # JSON requires keys be valid Python identifiers - store as ``five_d``
+    # in Python and serialise to ``"5d"`` (sidebar key) on the wire.
+    five_d: bool = Field(default=False, alias="5d")
+    risk: bool = False
+    field_reports: bool = False
+    daily_diary: bool = False
+    equipment: bool = False
+    resources: bool = False
+    service: bool = False
+    portal: bool = False
+
+    # ── Commercial ──
+    finance: bool = False
+    procurement: bool = False
+    tendering: bool = False
+    changeorders: bool = False
+    crm: bool = False
+    contracts: bool = False
+    subcontractors: bool = False
+    bid_management: bool = False
+    variations: bool = False
+    supplier_catalogs: bool = False
+    property_dev: bool = False
+
+    # ── Communication & Docs ──
+    contacts: bool = False
+    meetings: bool = False
+    rfi: bool = False
+    submittals: bool = False
+    transmittals: bool = False
+    correspondence: bool = False
+    assets: bool = False
+    cde: bool = False
+    photos: bool = False
+    markups: bool = False
+    reports: bool = False
+    bi_dashboards: bool = False
+
+    # ── Quality, HSE & Compliance ──
+    validation: bool = False
+    inspections: bool = False
+    ncr: bool = False
+    punchlist: bool = False
+    qms: bool = False
+    safety: bool = False
+    hse_advanced: bool = False
+    carbon: bool = False
+
+    # ── AI & Analytics ──
+    ai_estimate: bool = False
+    ai_agents: bool = False
+    advisor: bool = False
+    estimation_dashboard: bool = False
+    erp_chat: bool = False
+
+
+class ProjectCardMetrics(BaseModel):
+    """Lightweight per-project KPI summary for the dashboard cards endpoint.
+
+    Mirrors the dict assembled by ``GET /dashboard/cards/`` exactly. Declaring
+    it as the endpoint ``response_model`` makes FastAPI validate and serialise
+    the output (so non-ASCII names and numeric fields are encoded safely)
+    instead of returning a raw ``list[dict]``. Timestamps are pre-serialised
+    ISO-8601 strings on the wire, so they are typed ``str | None`` here.
+    """
+
+    id: str
+    name: str
+    description: str = ""
+    region: str = ""
+    currency: str = ""
+    classification_standard: str = ""
+    status: str = "active"
+    phase: str | None = None
+    created_at: str | None = None
+    updated_at: str | None = None
+    boq_total_value: float = 0.0
+    boq_count: int = 0
+    position_count: int = 0
+    open_tasks: int = 0
+    open_rfis: int = 0
+    safety_incidents: int = 0
+    progress_pct: float = 0.0

@@ -1,0 +1,41 @@
+{
+  "rule_pack_id": "nzs_3910_2023_contracts",
+  "name": "NZS 3910:2023 — Conditions of Contract for Building and Civil Engineering Construction",
+  "standard": "NZS 3910:2023",
+  "jurisdiction": "NZ",
+  "regulator": "Standards New Zealand",
+  "publication_year": 2023,
+  "supersedes": "NZS 3910:2013 (replaced effective 2023-10-23)",
+  "description": "Enables OCERP built-in validation rules that check tender packs and contract documents against NZS 3910:2023 — the current general conditions for building and civil engineering construction in New Zealand. Replaces NZS 3910:2013. Splits the previous Engineer role into Contract Administrator + Independent Certifier and updates payment, dispute and risk allocation provisions.",
+  "key_changes_vs_2013": [
+    "Engineer role split into Contract Administrator and Independent Certifier",
+    "Payment provisions aligned with Construction Contracts Act 2002 (CCA) amendments",
+    "Updated insurance clauses (CAR / public liability minimums)",
+    "Health & Safety at Work Act 2015 (HSWA) alignment",
+    "New early-warning / mutual cooperation obligations",
+    "Updated dispute resolution ladder"
+  ],
+  "related_standards": {
+    "NZS 3915:2005": "Conditions of Contract — without Engineer (civil only, niche)",
+    "NZS 3916:2013": "Conditions of Contract — Design and Construct",
+    "NZS 3917:2013": "Conditions of Contract — Fixed Term"
+  },
+  "applies_to": ["tendering", "contracts", "validation"],
+  "enables_rule_ids": [
+    "nzs3910.contract_variant_2023_edition",
+    "nzs3910.contract_administrator_named",
+    "nzs3910.independent_certifier_named",
+    "nzs3910.special_conditions_attached",
+    "nzs3910.payment_schedule_cca_aligned",
+    "nzs3910.retention_per_construction_contracts_act",
+    "nzs3910.variation_procedure_compliant",
+    "nzs3910.insurance_car_min_set",
+    "nzs3910.insurance_public_liability_min_set",
+    "nzs3910.hswa_2015_principal_designation_set",
+    "nzs3910.early_warning_obligation_acknowledged",
+    "nzs3910.dispute_resolution_ladder_set",
+    "nzs3910.liquidated_damages_rate_set",
+    "nzs3910.defects_notification_period_set",
+    "nzs3910.bond_or_retention_specified"
+  ]
+}

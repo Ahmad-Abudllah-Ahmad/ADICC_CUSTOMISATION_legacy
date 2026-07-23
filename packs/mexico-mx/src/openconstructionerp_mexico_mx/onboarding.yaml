@@ -1,0 +1,60 @@
+# OCERP x Mexico partner pack - first-login onboarding script.
+#
+# Replaces the default OnboardingWizard when this partner pack is active.
+# Each step is rendered by the frontend OnboardingWizard component.
+
+version: 1
+pack: mexico-mx
+locale: es-MX
+estimated_minutes: 7
+title: "Bienvenido a OpenConstructionERP - Edicion Mexico"
+subtitle: "Unos pasos para alinear su espacio de trabajo con los precios unitarios (APU), el IVA, el CFDI y la normatividad mexicana."
+
+steps:
+  - id: company_profile
+    title: "Perfil de la empresa"
+    body: "Cuentenos sobre su organizacion para que las licitaciones, los CFDI y los reportes se atribuyan correctamente."
+    fields:
+      - { key: company_name, label: "Razon social", type: text, required: true }
+      - { key: rfc, label: "RFC (12 caracteres persona moral, 13 persona fisica)", type: text, required: false, pattern: "^[A-Za-zN&]{3,4}[0-9]{6}[A-Za-z0-9]{3}$" }
+      - { key: regimen_fiscal, label: "Regimen fiscal", type: select, required: false, options: ["601 - General de Ley Personas Morales", "603 - Personas Morales con Fines no Lucrativos", "612 - Personas Fisicas con Actividades Empresariales y Profesionales", "626 - Regimen Simplificado de Confianza (RESICO)"] }
+      - { key: home_state, label: "Estado", type: select, required: true, options: ["Aguascalientes", "Baja California", "Baja California Sur", "Campeche", "Chiapas", "Chihuahua", "Ciudad de Mexico", "Coahuila", "Colima", "Durango", "Guanajuato", "Guerrero", "Hidalgo", "Jalisco", "Mexico", "Michoacan", "Morelos", "Nayarit", "Nuevo Leon", "Oaxaca", "Puebla", "Queretaro", "Quintana Roo", "San Luis Potosi", "Sinaloa", "Sonora", "Tabasco", "Tamaulipas", "Tlaxcala", "Veracruz", "Yucatan", "Zacatecas"] }
+
+  - id: project_type
+    title: "Tipo de obra"
+    body: "Elija el tipo de obra tipica. La vivienda social se financia mediante INFONAVIT, FOVISSSTE y la politica de CONAVI; la obra publica federal sigue la LOPSRM."
+    fields:
+      - { key: project_type, label: "Tipo de proyecto", type: radio, required: true, default: "Vivienda social", options: ["Vivienda social (INFONAVIT, FOVISSSTE, CONAVI)", "Vivienda residencial privada", "Obra publica (LOPSRM)", "Obra privada general"] }
+      - { key: social_housing_body, label: "Organismo de vivienda (si aplica)", type: select, required: false, options: ["INFONAVIT", "FOVISSSTE", "CONAVI", "No aplica"] }
+
+  - id: contract_method
+    title: "Contrato y metodo de precios"
+    body: "Confirme la forma de contrato y el metodo de integracion del precio unitario. Puede cambiarlo por proyecto."
+    fields:
+      - { key: contract_form, label: "Forma de contrato", type: select, required: true, default: "Contrato a precios unitarios", options: ["Contrato a precios unitarios", "Contrato a precio alzado", "Contrato mixto"] }
+      - { key: use_apu, label: "Integrar precios unitarios con la metodologia APU (indirectos, financiamiento, utilidad, cargos adicionales)", type: checkbox, default: true }
+
+  - id: tax_invoicing
+    title: "Impuestos y facturacion"
+    body: "Confirme la tasa de IVA y los datos del CFDI. La region fronteriza usa el 8 por ciento."
+    fields:
+      - { key: iva_rate, label: "Tasa de IVA", type: select, required: true, default: "16% (general)", options: ["16% (general)", "8% (region fronteriza)", "0% (tasa cero o exportacion)"] }
+      - { key: apply_retenciones, label: "Aplicar retenciones de IVA/ISR a subcontratistas", type: checkbox, default: false }
+      - { key: uso_cfdi, label: "Uso de CFDI por defecto", type: select, required: false, default: "I01 - Construcciones", options: ["I01 - Construcciones", "G03 - Gastos en general", "G01 - Adquisicion de mercancias", "CP01 - Pagos"] }
+
+  - id: cost_data
+    title: "Datos de costos"
+    body: "Confirme la region de costos CWICR a precargar."
+    fields:
+      - { key: cwicr_region, label: "Region CWICR a precargar", type: select, required: true, default: "Ciudad de Mexico", options: ["Ciudad de Mexico"] }
+
+  - id: review
+    title: "Revisar y finalizar"
+    body: "Configuraremos su espacio de trabajo mexicano con MXN, IVA 16 por ciento, la metodologia APU y los paquetes de validacion de Mexico (APU, IVA/retenciones, CFDI) mas la calidad de catalogo. Puede cambiar todo despues en Configuracion."
+    action:
+      label: "Crear mi espacio de trabajo Mexico"
+      apply:
+        - set_default_currency: MXN
+        - set_tax_template: mx_iva_16
+        - set_methodology: mexico
+        - enable_rule_packs: [mexico, boq_quality, apu_precios_unitarios, iva_retenciones_cfdi, lopsrm_obra_publica, vivienda_social_infonavit, imss_nom_seguridad]

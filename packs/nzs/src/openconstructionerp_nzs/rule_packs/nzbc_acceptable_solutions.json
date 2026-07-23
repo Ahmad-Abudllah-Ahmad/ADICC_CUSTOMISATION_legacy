@@ -1,0 +1,41 @@
+{
+  "rule_pack_id": "nzbc_acceptable_solutions",
+  "name": "NZBC — New Zealand Building Code (MBIE Acceptable Solutions)",
+  "standard": "NZBC",
+  "jurisdiction": "NZ",
+  "regulator": "Ministry of Business, Innovation and Employment (MBIE)",
+  "description": "Enables OCERP built-in validation rules covering the performance-based New Zealand Building Code and the MBIE Acceptable Solutions / Verification Methods that demonstrate compliance. Covers the most commonly invoked clauses for residential and light commercial work: B1 Structure, B2 Durability, C Fire safety, E2 External moisture, F2/F4 Hazardous building materials & fall safety, G12 Water supplies, H1 Energy efficiency.",
+  "compliance_paths": [
+    "acceptable_solution",
+    "verification_method",
+    "alternative_solution"
+  ],
+  "key_clauses": {
+    "B1": "Structure (Acceptable Solution B1/AS1 — refers to NZS 3604 etc.)",
+    "B2": "Durability (B2/AS1)",
+    "C": "Protection from fire (C1-C6)",
+    "E2": "External moisture (E2/AS1 — weathertightness)",
+    "E3": "Internal moisture (E3/AS1)",
+    "F2": "Hazardous building materials",
+    "F4": "Safety from falling (barriers, balustrades)",
+    "G12": "Water supplies",
+    "H1": "Energy efficiency (H1/AS1 — updated 2022 thermal envelope uplift)"
+  },
+  "applies_to": ["projects", "boq", "validation", "submittals"],
+  "enables_rule_ids": [
+    "nzbc.compliance_path_documented",
+    "nzbc.clause_b1_structure_addressed",
+    "nzbc.clause_b2_durability_50_years_min",
+    "nzbc.clause_c_fire_safety_addressed",
+    "nzbc.clause_e2_weathertightness_compliant",
+    "nzbc.clause_e2_cavity_drainage_provisions",
+    "nzbc.clause_e3_internal_moisture_provisions",
+    "nzbc.clause_f2_hazardous_materials_managed",
+    "nzbc.clause_f4_barriers_min_1000mm",
+    "nzbc.clause_g12_potable_water_supply",
+    "nzbc.clause_h1_thermal_envelope_uplift_2022",
+    "nzbc.alternative_solution_evidence_attached",
+    "nzbc.bcAuthority_consent_attached",
+    "nzbc.producer_statements_ps1_ps3_ps4_present"
+  ]
+}

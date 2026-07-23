@@ -1,0 +1,471 @@
+[project]
+name = "openconstructionerp"
+version = "11.12.0"
+description = "Open-source construction cost estimation, multi-currency BOQ, AI vector matching, CAD/BIM takeoff without IfcOpenShell, resource-based cost DB import with example templates, 48 regional catalogues, 27 languages. AGPL-3.0. After install, run: openconstructionerp"
+license = "AGPL-3.0-or-later"
+requires-python = ">=3.12"
+authors = [
+    { name = "Artem Boiko", email = "info@datadrivenconstruction.io" }
+]
+maintainers = [
+    { name = "Data Driven Construction", email = "info@datadrivenconstruction.io" }
+]
+readme = "README.md"
+keywords = [
+    "openconstructionerp",
+    "construction",
+    "construction-management",
+    "ERP",
+    "estimation",
+    "cost-estimation",
+    "boq",
+    "gaeb",
+    "din276",
+    "cwicr",
+    "bim",
+    "ifc",
+    "takeoff",
+    "dxf",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Office/Business :: Financial",
+    "Topic :: Scientific/Engineering",
+    "Framework :: FastAPI",
+]
+
+dependencies = [
+    "fastapi>=0.116.0,<1",
+    "uvicorn[standard]>=0.32.0,<1",
+    "python-multipart>=0.0.27",
+    "sqlalchemy[asyncio]>=2.0.36,<2.1",
+    # Embedded PostgreSQL 16 is the runtime database: a real in-process cluster
+    # with no Docker, plus the async/sync drivers it speaks through. PostgreSQL
+    # is the only supported relational backend (external PG via DATABASE_URL or
+    # the embedded cluster); there is no SQLite fallback anymore.
+    "pixeltable-pgserver>=0.5.1,<0.6",
+    "asyncpg>=0.30.0",
+    "psycopg2-binary>=2.9.10",
+    "alembic>=1.14.0,<2",
+    "pydantic>=2.10.0,<3",
+    "pydantic-settings>=2.6.0,<3",
+    "email-validator>=2.1.0",
+    "python-jose[cryptography]>=3.3.0",
+    "bcrypt>=4.0.0",
+    "openpyxl>=3.1.0",
+    "reportlab>=4.0.0",
+    "pdfplumber>=0.11.0",
+    # PDF page-overlay / merge: the approval stamp-burn (app/core/pdf_stamp.py,
+    # used by file_approvals) merges a reportlab-drawn overlay onto every page
+    # of the source PDF, and property_dev counts pages off generated PDFs.
+    # pypdf was imported but never declared, so a clean install only had it by
+    # accident (transitively present in some environments, absent in others) -
+    # which silently degraded the PDF stamp to the JSON sidecar fallback.
+    "pypdf>=4.0.0",
+    # PDF takeoff works out of the box. PyMuPDF reads a page's vector drawings
+    # (page.get_drawings) for the deterministic vector detector, and
+    # opencv-python-headless powers the room/wall detector on scanned/raster
+    # pages (raster_recognize needs only cv2 + numpy, and numpy is already a
+    # base dep via pandas/pyarrow). These used to live in the optional 'cv'
+    # extra, which left vector recognition dead on a plain install and could
+    # never be installed at all in the frozen desktop app. The heavy OCR
+    # engine (paddleocr) stays optional - it only adds dimension-text reading.
+    "pymupdf>=1.25.0",
+    "opencv-python-headless>=4.10.0",
+    "httpx>=0.28.0,<1",
+    "orjson>=3.10.0",
+    "python-dateutil>=2.9.0",
+    "hijridate>=2.5.0",
+    "structlog>=24.4.0",
+    "pyyaml>=6.0",
+    "defusedxml>=0.7.1",
+    # Capped below 3.0: pandas 3.0 changed string-column type inference (a
+    # numeric-looking string column now infers as "string" not "numeric"),
+    # which the dashboards integrity detector and its tests were written
+    # against. Revisit and lift the cap when adopting pandas 3 deliberately.
+    "pandas>=2.2.0,<3",
+    "pyarrow>=23.0.1,<25",
+    "trimesh>=4.0.0",
+    # trimesh's COLLADA loader is a thin wrapper over pycollada (imported as
+    # "collada"); without it trimesh.load() of a .dae raises ImportError and the
+    # BIM Hub DAE-to-GLB conversion silently degrades to serving the larger raw
+    # DAE. Required so the GLB path actually runs.
+    "pycollada>=0.8",
+    "ezdxf>=0.18.0",
+    # Point-cloud viewing works out of the box for the open LAS/LAZ/COPC family:
+    # laspy reads LAS, the lazrs backend decompresses LAZ/COPC, and both feed the
+    # server-side decimator (app/modules/pointcloud/decode.py) that hands the
+    # browser a compact THREE.Points buffer. These used to sit in the optional
+    # 'pointcloud' extra, which left a fresh install unable to display any scan
+    # (upload succeeded, then the viewer answered 501). numpy (the readers' array
+    # path) is already a base dep transitively via pandas/pyarrow. Only E57
+    # (pye57, a heavier native libE57 wheel) stays in the optional extra.
+    "laspy>=2.5.0",
+    "lazrs>=0.6.0",
+    "duckdb>=1.2.0,<2",
+    "rapidfuzz>=3.0.0",
+    # Imported at module load by the smart_views (signed share links) and eac
+    # (safe expression evaluation) modules, so they must be base dependencies;
+    # a clean install otherwise cannot import those modules.
+    "itsdangerous>=2.1.0",
+    "simpleeval>=0.9.13",
+]
+[project.scripts]
+openestimate = "app.cli:main"
+openconstructionerp = "app.cli:main"
+
+[project.urls]
+Homepage = "https://datadrivenconstruction.io/erp"
+Documentation = "https://adicc-uae.com/docs"
+Repository = "https://adicc-uae.com"
+Issues = "https://adicc-uae.com/issues"
+Changelog = "https://adicc-uae.com/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+# Production add-ons: background tasks (Redis/Celery) + S3 storage. The
+# PostgreSQL drivers (asyncpg / psycopg2) and the embedded server moved to the
+# base dependencies in v6.0.0, so this extra is now just Celery + boto3.
+server = [
+    "celery[redis]>=5.4.0",
+    "boto3>=1.35.0",
+]
+# Embedded vector search (LanceDB)
+# pyarrow is now in base deps (was here before v1.3.13).
+vector = [
+    "lancedb>=0.17.0",
+    "fastembed>=0.4.0",
+]
+# Semantic search: Qdrant vector DB + sentence-transformers embeddings.
+# Used by the cost-database semantic-match endpoints and the RAG layer.
+#
+# NOTE: LLM provider SDKs (`anthropic`, `openai`, etc.) are intentionally
+# NOT listed here. `app/modules/ai/ai_client.py` calls those providers'
+# REST APIs directly via `httpx`, so the vendor SDKs would just be ~800 MB
+# of dead wheels on the user's disk. API keys live in the database and
+# `~/.openestimate/config.json`, not in SDK clients.
+semantic = [
+    "qdrant-client>=1.12.0",
+    "sentence-transformers>=3.3.0",
+    # BAAI/bge-m3 multilingual encoder — 1024-dim dense + sparse + colbert
+    # in one forward pass, MIT license, 100+ languages. Powers the CWICR
+    # 30-collection Qdrant store (cwicr_<lang>) where every point holds
+    # named vectors `dense` (semantic), `sparse` (BM25-like exact terms),
+    # and `resources` (top-12 unique resources of the rate). Wheels are
+    # ~700 MB INT8 ONNX (gpahal/bge-m3-onnx-int8) so the VPS path stays
+    # viable; FP32 path is fine on workstations.
+    "FlagEmbedding>=1.3.0",
+    # Lazy parquet reader for the CWICR 84-column rate-data lookup. The
+    # Qdrant payload is intentionally minimal (rate_code + filter columns)
+    # and the heavy fields (prices, labor, resources, budget sums) live in
+    # `<region>_workitems_costs_resources_DDC_CWICR.parquet`. polars'
+    # `pl.scan_parquet()` mmap-backed lazy frame keeps lookup-by-rate_code
+    # under 50 ms across 50K-row catalogues without loading everything.
+    "polars>=1.0.0",
+]
+# Backwards-compat alias. Deprecated since v1.3.14 — prefer `[semantic]`.
+# Kept so existing `pip install openconstructionerp[ai]` commands still work.
+ai = [
+    "openconstructionerp[semantic]",
+]
+# Optional OCR for PDF takeoff. PyMuPDF (vector reader) and
+# opencv-python-headless (raster room/wall detector) are base dependencies
+# now, so vector and scanned-page recognition both work without this extra.
+# Installing it adds PaddleOCR, which reads dimension strings and annotation
+# text off the page on top of the geometry the base install already detects.
+cv = [
+    "paddleocr>=2.9.0",
+    "Pillow>=12.1.1",
+]
+# E57 reader for the Point Cloud module (app/modules/pointcloud). The open
+# LAS/LAZ/COPC family is decoded out of the box (laspy + lazrs are base deps),
+# so this extra is now just E57: pye57 is a heavier native libE57 wheel that not
+# every deployment wants and that cannot be frozen into the desktop build, so it
+# stays opt-in. Without it the header sniff records "metadata pending" for E57
+# and the viewer answers a clear 501 for E57 only - the import guards in
+# sniff.py / decode.py degrade gracefully rather than crash. Install with
+# ``pip install openconstructionerp[pointcloud]`` to add E57 support.
+pointcloud = [
+    "pye57>=0.4.0",
+]
+# Deprecated alias since v2.5.0 — `duckdb` is in base deps now.
+# Kept so existing `pip install openconstructionerp[analytics]` commands
+# continue to work without failing.
+analytics = []
+# S3-compatible object storage backend (MinIO / AWS S3 / Backblaze B2 /
+# DigitalOcean Spaces).  Enables ``storage_backend=s3`` in settings so
+# BIM/CAD blobs live in a bucket instead of the local filesystem.
+s3 = [
+    "aioboto3>=12.0.0",
+]
+# Everything
+all = [
+    "openconstructionerp[server,vector,semantic,cv,s3,pointcloud,analytics]",
+]
+# Development tools
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=6.0.0",
+    "pytest-xdist>=3.5.0",
+    # Per-test wall-clock guard. The nightly full suite runs the integration
+    # tree serially against one PostgreSQL and used to be killed by the job
+    # timeout with no signal of where it stalled. A per-test timeout turns a
+    # single hung test into a reported failure so the run finishes and the
+    # durations report points at the real slow spots.
+    "pytest-timeout>=2.3.0",
+    # Splits the unit tree across the Backend CI shard matrix (--splits/--group)
+    # so the ~6300 mostly database-bound unit tests finish inside the job budget
+    # instead of being cancelled at the timeout on every push. Without a
+    # .test_durations file it splits by test count, which is enough here.
+    "pytest-split>=0.8.2",
+    "httpx>=0.28.0",
+    "factory-boy>=3.3.0",
+    # XSD validation oracle for the GAEB DA XML 3.3 exporter conformance suite
+    # (tests/unit/test_gaeb_export_xsd.py validates exported X83/X84 against the
+    # official GAEB schema). Test-only; the runtime XML path uses defusedxml.
+    "lxml>=5.0.0",
+    # Pinned exactly: the CI "ruff format --check" gate compares against the
+    # formatter's output, which can shift between ruff releases. A floating
+    # spec let CI pick a newer ruff than contributors ran locally, so formatted
+    # code still failed the check. Bump this deliberately when adopting a new ruff.
+    "ruff==0.15.20",
+    "mypy>=1.13.0",
+    "pre-commit>=4.0.0",
+    "pyinstaller>=6.0.0",
+    # pixeltable-pgserver, asyncpg and psycopg2-binary moved to the base
+    # dependencies in v6.0.0 (embedded PostgreSQL is the default runtime), so the
+    # tests/pg dialect suite needs nothing extra here.
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# Custom build hook — runs before any target resolves its file lists. The
+# hook lives in ``backend/hatch_build.py`` and creates a placeholder file at
+# ``../frontend/dist/.placeholder`` so the wheel target's ``force-include``
+# map always resolves, even on a cold clone where Vite hasn't been built
+# yet. Removes the documented "mkdir frontend/dist" workaround from the
+# install runbook — ``pip install -e ./backend`` now just works.
+[tool.hatch.build.hooks.custom]
+path = "hatch_build.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app", "openconstructionerp"]
+# Never ship internal working notes. Underscore-prefixed markdown / text
+# files that end up next to source (agent handoffs, audit residue, planning
+# notes) are local-only per repo policy (constraint #9); exclude them from the
+# package walk so a stray one under ``app/`` can never reach the wheel even
+# when it is still on disk. scripts/check_repo_hygiene.py enforces the same
+# rule on the built wheel via ``--zip`` as a backstop.
+exclude = ["**/_*.md", "**/_*.txt"]
+
+# Bundle pre-built frontend into the wheel for pip install
+# Build frontend first: cd frontend && npm run build
+[tool.hatch.build.targets.wheel.force-include]
+"../frontend/dist" = "app/_frontend_dist"
+# Backend UI locale bundles. app/core/i18n.py loads these at runtime from
+# ``Path(__file__).parent.parent.parent / "locales"``, i.e. a ``locales``
+# directory that sits NEXT TO the installed ``app`` package (site-packages/
+# locales), not inside it. Living outside every packaged directory, it is not
+# picked up by the ``app`` package walk, so without this line a ``pip install``
+# wheel ships none of them: load_translations() then finds the directory
+# missing and regenerates only the 20 languages hard-coded in
+# _generate_default_locales, silently dropping the six that exist solely as
+# JSON here (bg, hr, id, ro, th, vi). Force-including the folder at the same
+# top-level ``locales`` path the runtime looks up ships all 26. Unlike the
+# flagship assets noted below, this path is OUTSIDE the ``app`` tree, so it is
+# not also added by the package walk and does not trip the double-add guard.
+"locales" = "locales"
+# NOTE: the baked flagship/demo assets live at app/scripts/flagship_assets,
+# which is already inside the ``app`` package above, so the package walk
+# ships those tracked bytes (flagship.json, the .dae.gz geometry, the
+# plan-set PDF) into the wheel on its own. They must NOT also appear in this
+# force-include map: a path that is both inside a packaged directory and
+# force-included is added to the archive twice, and hatchling aborts the
+# build with "a second file is being added to the wheel archive at the same
+# path". seed_demo_assets.py reads them from the installed package location.
+
+# Editable installs (uv pip install -e ./backend, pip install -e .) do NOT
+# need the bundled frontend — Vite's dev server serves the UI on :5173
+# during development. Without this section, hatchling re-uses the wheel
+# target's force-include map and aborts with "Forced include not found:
+# .../frontend/dist" on a fresh checkout where the frontend hasn't been
+# built yet.
+#
+# Three-layer fix:
+#   1. ``dev-mode-dirs`` makes hatchling generate a simple ``.pth`` pointing
+#      at the source folders, bypassing the wheel-style file detection that
+#      consults ``force-include``.
+#   2. Explicit (empty) ``force-include`` map on the editable target
+#      additionally severs inheritance from the wheel target — defence in
+#      depth in case a hatchling version still walks the inclusion map.
+#   3. ``only-include = ["app"]`` keeps the discovered file set scoped to
+#      the package itself, so even if (1) and (2) were to fail open, the
+#      frontend/dist path never enters the inclusion candidate list.
+#   4. Belt-and-braces: ``hatch_build.py`` creates a placeholder dist dir
+#      pre-build so hatchling versions that walk the map regardless of the
+#      overrides above still find the path.
+[tool.hatch.build.targets.editable]
+packages = ["app", "openconstructionerp"]
+dev-mode-dirs = ["."]
+only-include = ["app", "openconstructionerp"]
+
+[tool.hatch.build.targets.editable.force-include]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+src = ["app", "tests"]
+
+[tool.ruff.format]
+# The demo pack templates are hand-authored BOQ data tables, one position per
+# line, laid out as readable columns. The formatter would wrap each long row
+# into eight or more lines, exploding the files and destroying their tabular
+# readability for no behaviour gain, so they are skipped by the formatter.
+# They are still linted (with N999 ignored below, and E501 is off globally).
+# retail_market_heilbronn.py is the same kind of data table but carries an
+# importable snake_case name, so it is excluded explicitly.
+exclude = ["app/core/demo_packs/*-*.py", "app/core/demo_packs/retail_market_heilbronn.py"]
+
+[tool.ruff.lint]
+# Pragmatic ruleset: catch real bugs (E/F/W/B), enforce import order (I)
+# and Python idioms (UP/SIM/RET/PT/C4) without drowning in stylistic noise.
+# Strict annotation enforcement (ANN) and unused-arg detection (ARG) are
+# off by design — FastAPI's DI heavily uses unused-arg parameters and the
+# project pre-dates ruff strict mode, so retroactively annotating ~1.8k
+# call sites would be churn for no real safety win.
+select = [
+    "E", "F", "W",     # pyflakes + pycodestyle
+    "I",                # isort
+    "N",                # pep8-naming
+    "UP",               # pyupgrade
+    "B",                # bugbear
+    "A",                # builtins
+    "C4",               # comprehensions
+    "PT",               # pytest
+    "RET",              # return
+    "SIM",              # simplify
+]
+ignore = [
+    "COM812",           # trailing comma (conflicts with formatter)
+    "B008",             # function calls in defaults — required by FastAPI Depends()
+    "N818",             # exception name should end with Error — historical names kept
+    "B904",             # raise from — not always meaningful
+    "SIM105",           # contextlib.suppress — try/except is clearer for one liners
+    "SIM108",           # ternary if-else — readability call, not always cleaner
+    "SIM117",           # nested with — sometimes clearer separated
+    "RET504",           # unnecessary assignment before return — readability call
+    "RET505",           # unnecessary else after return — readability call
+    "UP007",            # X | Y union syntax — keep Optional[X] readable for FastAPI
+    "UP035",            # deprecated typing imports — touches too many files
+    "E402",             # module-level imports not at top — some files set env vars first
+    "E501",             # line-too-long — formatter handles wrapping where it matters
+    "E701",             # multiple statements on one line — common in stub clauses
+    "E702",             # multiple statements on one line (semicolon) — same
+    "N806",             # non-lowercase variable in function — common for matrix/Pydantic locals
+    "A002",             # builtin shadowing in args — `id`, `type`, `format` are clearest names
+    "B007",             # unused loop control var — sometimes intentional for clarity
+    "B017",             # assert raises Exception — fine for tests verifying any failure
+    "B023",             # function uses loop variable — sometimes intentional in tests
+    "PT011",            # pytest.raises with broad Exception — fine for edge tests
+    "PT028",            # pytest parameter with default — fine for fixtures
+    "F841",             # unused variable — IDEs catch this; sometimes intentional in tests
+    "C416",             # unnecessary list/set comprehension — readability call
+    "C401",             # unnecessary generator — readability call
+    "SIM102",           # collapsible if — sometimes nested is clearer
+    "F811",             # redefined while unused — common in test fixtures
+    "RET503",           # implicit return — sometimes intentional for None
+    "UP022",            # replace stdout/stderr — old pattern, harmless
+    "E722",             # bare except — sometimes deliberate (silencing all errors)
+    "PT018",            # composite assert — splitting hurts test readability for many cases
+    "PT017",            # assertion on exception in except — legacy test pattern, harmless
+    "PT006",            # parametrize first arg type — comma-string form is the common idiom
+    "PT013",            # incorrect pytest import — minor style, no bug risk
+    "PT019",            # fixture without value — harmless, used as side-effect injection
+    "N814",             # camelcase imported as constant — common alias pattern (e.g., `_SC`, `_BIO`)
+    "N803",             # argument name not lowercase — math/geometry code uses `A`, `B`, `triA`
+    "N802",             # function name not lowercase — some regulator-report helpers use codes (RERA, 214FZ)
+    "N801",             # class name not CapWords — historical, rare
+    "N811",             # constant imported as non-constant — pyproj CRS / typing aliases
+    "N817",             # camelcase imported as acronym — xml.etree.ElementTree as ET is canonical
+    "SIM103",           # return condition directly — explicit if/else often clearer for readers
+    "SIM118",           # `key in dict.keys()` — explicit form sometimes intentional for clarity
+    "SIM101",           # merge isinstance calls — sometimes split for readability
+    "SIM110",           # use any()/all() — for loop with return can be clearer
+    "C408",             # unnecessary dict() call — kwargs form is sometimes intentional
+    "UP046",            # PEP 695 generic syntax — not yet ubiquitous, optional uplift
+    "E741",             # ambiguous variable name `l`/`I`/`O` — domain code uses `l` for length
+    "A001",             # builtin shadowing — `license` as variable name in test is fine
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+[tool.ruff.lint.per-file-ignores]
+# Demo pack template files use hyphenated, slug-style names
+# (e.g. "commercial-auckland.py") and are loaded dynamically by slug via
+# importlib, never imported by module path, so the invalid-module-name rule
+# (N999) does not apply to them.
+"app/core/demo_packs/*.py" = ["N999"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Prepend the backend source dir so tests always import the local ``app``
+# package, never a stale ``pip install openconstructionerp`` in site-packages.
+pythonpath = ["."]
+asyncio_mode = "auto"
+# Restore a single shared event loop for the whole test session. These suites
+# were written against pytest-asyncio 0.21, where one session-wide loop was the
+# default, so many of them use module-scoped async fixtures that yield an
+# AsyncSession reused by every test in the module. pytest-asyncio 1.x defaults
+# each test and fixture to its own function-scoped loop, which left those
+# module-scoped connections bound to a loop that was already closed and
+# surfaced as "attached to a different loop" and "another operation is in
+# progress" cascades once the sharded gate actually ran the suite to
+# completion. Pinning both loop scopes to "session" puts every test and fixture
+# back on one loop. NullPool (set in conftest) still opens a fresh connection
+# per checkout, so nothing leaks across that shared loop.
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+# Run serially. The suite shares one PostgreSQL database that conftest sets
+# up at import time, and the first user it registers is bootstrapped as the
+# admin every later test depends on. Under pytest-xdist each worker is a
+# subprocess that inherits the controller's already-set DATABASE_URL, so all
+# workers end up hammering the same database: concurrent create_all DDL races
+# and the bootstrap-admin ordering is no longer deterministic. Parallel
+# execution needs a per-worker database first; until then serial is correct.
+addopts = []
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+markers = [
+    "unit: Unit tests (no database)",
+    "integration: Integration tests (requires database)",
+    "slow: Slow tests (>5s)",
+    "benchmark: Recall/perf benchmarks — opt-in via `pytest -m benchmark`",
+]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+
+[tool.coverage.run]
+source = ["app"]
+omit = ["app/migrations/*", "tests/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.",
+]

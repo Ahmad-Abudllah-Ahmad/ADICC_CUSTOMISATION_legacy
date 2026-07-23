@@ -1,0 +1,158 @@
+{
+  "cost_items": [
+    {"code": "STR-CON-C2530", "description": "Ready-mix concrete C25/30, delivered & placed", "unit": "m3", "rate": "120.00", "currency": "EUR", "tags": ["concrete", "structure"], "components": [{"code": "DEMO-MAT-001", "name": "Ready-mix concrete C25/30", "type": "material", "quantity": "1.02", "unit_rate": "118"}, {"code": "DEMO-LAB-001", "name": "General construction laborer", "type": "labor", "quantity": "0.4", "unit_rate": "38"}, {"code": "DEMO-EQP-005", "name": "Concrete pump (hire)", "type": "equipment", "quantity": "0.02", "unit_rate": "720"}]},
+    {"code": "STR-CON-C3037", "description": "Ready-mix concrete C30/37, delivered & placed", "unit": "m3", "rate": "135.00", "currency": "EUR", "tags": ["concrete", "structure"], "components": [{"code": "DEMO-MAT-002", "name": "Ready-mix concrete C30/37", "type": "material", "quantity": "1.02", "unit_rate": "132"}, {"code": "DEMO-LAB-001", "name": "General construction laborer", "type": "labor", "quantity": "0.4", "unit_rate": "38"}, {"code": "DEMO-EQP-005", "name": "Concrete pump (hire)", "type": "equipment", "quantity": "0.02", "unit_rate": "720"}]},
+    {"code": "STR-REB-B500B", "description": "Reinforcement steel B500B, cut/bent/installed", "unit": "kg", "rate": "1.45", "currency": "EUR", "tags": ["rebar", "structure"], "components": [{"code": "DEMO-MAT-003", "name": "Reinforcement steel bar B500B", "type": "material", "quantity": "1", "unit_rate": "0.92"}, {"code": "DEMO-LAB-003", "name": "Steel fixer", "type": "labor", "quantity": "0.012", "unit_rate": "49"}]},
+    {"code": "STR-FRM-WALL", "description": "Wall formwork, supply/erect/strip", "unit": "m2", "rate": "32.00", "currency": "EUR", "tags": ["formwork", "structure"], "components": [{"code": "DEMO-MAT-011", "name": "Sawn softwood timber", "type": "material", "quantity": "0.03", "unit_rate": "420"}, {"code": "DEMO-LAB-002", "name": "Skilled carpenter", "type": "labor", "quantity": "0.35", "unit_rate": "52"}]},
+    {"code": "STR-FRM-SLAB", "description": "Slab formwork, supply/erect/strip", "unit": "m2", "rate": "28.00", "currency": "EUR", "tags": ["formwork", "structure"], "components": [{"code": "DEMO-MAT-011", "name": "Sawn softwood timber", "type": "material", "quantity": "0.025", "unit_rate": "420"}, {"code": "DEMO-LAB-002", "name": "Skilled carpenter", "type": "labor", "quantity": "0.3", "unit_rate": "52"}]},
+    {"code": "STR-MAS-BRK-115", "description": "Brick masonry, single leaf 115mm, mortar M5", "unit": "m2", "rate": "55.00", "currency": "EUR", "tags": ["masonry"], "components": [{"code": "DEMO-MAT-005", "name": "Common clay brick", "type": "material", "quantity": "60", "unit_rate": "0.65"}, {"code": "DEMO-LAB-004", "name": "Bricklayer", "type": "labor", "quantity": "0.8", "unit_rate": "47"}, {"code": "DEMO-LAB-001", "name": "General construction laborer", "type": "labor", "quantity": "0.3", "unit_rate": "38"}]},
+    {"code": "STR-MAS-BLK-200", "description": "Concrete block masonry 200mm, mortar M5", "unit": "m2", "rate": "48.00", "currency": "EUR", "tags": ["masonry"], "components": [{"code": "DEMO-MAT-006", "name": "Aerated concrete block", "type": "material", "quantity": "10", "unit_rate": "2.4"}, {"code": "DEMO-LAB-004", "name": "Bricklayer", "type": "labor", "quantity": "0.7", "unit_rate": "47"}, {"code": "DEMO-LAB-001", "name": "General construction laborer", "type": "labor", "quantity": "0.3", "unit_rate": "38"}]},
+    {"code": "STR-INS-MIN-100", "description": "Mineral wool insulation 100mm", "unit": "m2", "rate": "18.50", "currency": "EUR", "tags": ["insulation"], "components": [{"code": "DEMO-MAT-009", "name": "Mineral wool insulation 100 mm", "type": "material", "quantity": "1.05", "unit_rate": "11.2"}, {"code": "DEMO-LAB-001", "name": "General construction laborer", "type": "labor", "quantity": "0.15", "unit_rate": "38"}]},
+    {"code": "FIN-PNT-EMU-2C", "description": "Emulsion paint, 2-coat application on plaster", "unit": "m2", "rate": "8.50", "currency": "EUR", "tags": ["paint", "finish"], "components": [{"code": "DEMO-MAT-010", "name": "Interior emulsion paint", "type": "material", "quantity": "0.25", "unit_rate": "8.9"}, {"code": "DEMO-LAB-008", "name": "Painter and decorator", "type": "labor", "quantity": "0.12", "unit_rate": "44"}]},
+    {"code": "FIN-PLS-INT-15", "description": "Internal gypsum plaster 15mm, finished smooth", "unit": "m2", "rate": "16.00", "currency": "EUR", "tags": ["plaster", "finish"]},
+    {"code": "FIN-FLR-SCR-50", "description": "Cement screed 50mm, levelled", "unit": "m2", "rate": "22.00", "currency": "EUR", "tags": ["floor", "finish"]},
+    {"code": "FIN-FLR-TIL-CER", "description": "Ceramic floor tiles, supply & lay (300x300)", "unit": "m2", "rate": "55.00", "currency": "EUR", "tags": ["floor", "finish"]},
+    {"code": "FIN-CLG-SUS-T24", "description": "Suspended ceiling, T-bar grid + mineral tiles", "unit": "m2", "rate": "42.00", "currency": "EUR", "tags": ["ceiling", "finish"]},
+    {"code": "FIN-PRT-STD-12", "description": "Stud partition wall 120mm, 2x plasterboard each side", "unit": "m2", "rate": "62.00", "currency": "EUR", "tags": ["partition", "finish"], "components": [{"code": "DEMO-MAT-008", "name": "Gypsum plasterboard 12.5 mm", "type": "material", "quantity": "4.2", "unit_rate": "6.8"}, {"code": "DEMO-MAT-009", "name": "Mineral wool insulation 100 mm", "type": "material", "quantity": "1", "unit_rate": "11.2"}, {"code": "DEMO-LAB-002", "name": "Skilled carpenter", "type": "labor", "quantity": "0.5", "unit_rate": "52"}]},
+    {"code": "OPN-DOR-SGL", "description": "Single-leaf interior door, frame + leaf, painted", "unit": "pcs", "rate": "320.00", "currency": "EUR", "tags": ["doors", "openings"]},
+    {"code": "OPN-WIN-PVC-12", "description": "PVC window unit 1.2m², double glazed, installed", "unit": "pcs", "rate": "480.00", "currency": "EUR", "tags": ["windows", "openings"]},
+    {"code": "OPN-WIN-PVC-M2", "description": "PVC window per m², double glazed, installed", "unit": "m2", "rate": "395.00", "currency": "EUR", "tags": ["windows", "openings"]},
+    {"code": "ROF-TIL-CLY", "description": "Clay roof tiles, supply & lay on battens", "unit": "m2", "rate": "68.00", "currency": "EUR", "tags": ["roof"]},
+    {"code": "ROF-BIT-2L", "description": "Bituminous roof membrane, 2-layer welded", "unit": "m2", "rate": "38.00", "currency": "EUR", "tags": ["roof"]},
+    {"code": "EXC-BLK-1M", "description": "Bulk excavation up to 1m depth, machine", "unit": "m3", "rate": "9.50", "currency": "EUR", "tags": ["earthworks"], "components": [{"code": "DEMO-EQP-003", "name": "Crawler excavator 20 t (hire)", "type": "equipment", "quantity": "0.006", "unit_rate": "540"}, {"code": "DEMO-OPR-002", "name": "Excavator operator", "type": "operator", "quantity": "0.05", "unit_rate": "57"}, {"code": "DEMO-LAB-001", "name": "General construction laborer", "type": "labor", "quantity": "0.05", "unit_rate": "38"}]},
+    {"code": "EXC-TRN-1M", "description": "Trench excavation up to 1m depth", "unit": "m3", "rate": "14.00", "currency": "EUR", "tags": ["earthworks"], "components": [{"code": "DEMO-EQP-003", "name": "Crawler excavator 20 t (hire)", "type": "equipment", "quantity": "0.008", "unit_rate": "540"}, {"code": "DEMO-OPR-002", "name": "Excavator operator", "type": "operator", "quantity": "0.07", "unit_rate": "57"}, {"code": "DEMO-LAB-001", "name": "General construction laborer", "type": "labor", "quantity": "0.1", "unit_rate": "38"}]},
+    {"code": "EXC-BCK-COMP", "description": "Backfill with compaction, layered", "unit": "m3", "rate": "11.00", "currency": "EUR", "tags": ["earthworks"]},
+    {"code": "FND-STR-60", "description": "Strip foundation 600mm wide, concrete + rebar", "unit": "m", "rate": "165.00", "currency": "EUR", "tags": ["foundation"], "components": [{"code": "DEMO-MAT-002", "name": "Ready-mix concrete C30/37", "type": "material", "quantity": "0.3", "unit_rate": "132"}, {"code": "DEMO-MAT-003", "name": "Reinforcement steel bar B500B", "type": "material", "quantity": "35", "unit_rate": "0.92"}, {"code": "DEMO-LAB-003", "name": "Steel fixer", "type": "labor", "quantity": "0.4", "unit_rate": "49"}, {"code": "DEMO-LAB-001", "name": "General construction laborer", "type": "labor", "quantity": "0.6", "unit_rate": "38"}]},
+    {"code": "FND-PAD-1M", "description": "Pad foundation 1.0×1.0×0.5m, concrete + rebar", "unit": "pcs", "rate": "210.00", "currency": "EUR", "tags": ["foundation"], "components": [{"code": "DEMO-MAT-002", "name": "Ready-mix concrete C30/37", "type": "material", "quantity": "0.5", "unit_rate": "132"}, {"code": "DEMO-MAT-003", "name": "Reinforcement steel bar B500B", "type": "material", "quantity": "45", "unit_rate": "0.92"}, {"code": "DEMO-LAB-003", "name": "Steel fixer", "type": "labor", "quantity": "0.6", "unit_rate": "49"}, {"code": "DEMO-LAB-001", "name": "General construction laborer", "type": "labor", "quantity": "0.8", "unit_rate": "38"}]},
+    {"code": "STR-COL-RC-30", "description": "RC column 300×300mm, concrete + rebar + formwork (composite)", "unit": "m", "rate": "115.00", "currency": "EUR", "tags": ["structure", "column"], "components": [{"code": "DEMO-MAT-002", "name": "Ready-mix concrete C30/37", "type": "material", "quantity": "0.09", "unit_rate": "132"}, {"code": "DEMO-MAT-003", "name": "Reinforcement steel bar B500B", "type": "material", "quantity": "18", "unit_rate": "0.92"}, {"code": "DEMO-LAB-003", "name": "Steel fixer", "type": "labor", "quantity": "0.25", "unit_rate": "49"}, {"code": "DEMO-LAB-002", "name": "Skilled carpenter", "type": "labor", "quantity": "0.5", "unit_rate": "52"}, {"code": "DEMO-LAB-001", "name": "General construction laborer", "type": "labor", "quantity": "0.3", "unit_rate": "38"}]},
+    {"code": "STR-BEM-RC-30", "description": "RC beam 300×500mm, concrete + rebar + formwork (composite)", "unit": "m", "rate": "175.00", "currency": "EUR", "tags": ["structure", "beam"], "components": [{"code": "DEMO-MAT-002", "name": "Ready-mix concrete C30/37", "type": "material", "quantity": "0.15", "unit_rate": "132"}, {"code": "DEMO-MAT-003", "name": "Reinforcement steel bar B500B", "type": "material", "quantity": "28", "unit_rate": "0.92"}, {"code": "DEMO-LAB-003", "name": "Steel fixer", "type": "labor", "quantity": "0.35", "unit_rate": "49"}, {"code": "DEMO-LAB-002", "name": "Skilled carpenter", "type": "labor", "quantity": "0.7", "unit_rate": "52"}, {"code": "DEMO-LAB-001", "name": "General construction laborer", "type": "labor", "quantity": "0.4", "unit_rate": "38"}]},
+    {"code": "PLB-PIP-PVC-110", "description": "PVC drainage pipe 110mm, supply & install", "unit": "m", "rate": "26.00", "currency": "EUR", "tags": ["plumbing", "mep"]},
+    {"code": "PLB-PIP-CU-22", "description": "Copper supply pipe 22mm, supply & install", "unit": "m", "rate": "32.00", "currency": "EUR", "tags": ["plumbing", "mep"]},
+    {"code": "PLB-FIX-WC", "description": "WC suite, ceramic, installed (incl. cistern)", "unit": "pcs", "rate": "385.00", "currency": "EUR", "tags": ["plumbing", "mep"]},
+    {"code": "PLB-FIX-WHB", "description": "Wash hand basin, ceramic, installed", "unit": "pcs", "rate": "215.00", "currency": "EUR", "tags": ["plumbing", "mep"]},
+    {"code": "HVA-DCT-RECT", "description": "Rectangular sheet-metal duct, supply & install", "unit": "m2", "rate": "58.00", "currency": "EUR", "tags": ["hvac", "mep"]},
+    {"code": "HVA-DIF-CEIL", "description": "Ceiling diffuser, 4-way, installed", "unit": "pcs", "rate": "95.00", "currency": "EUR", "tags": ["hvac", "mep"]},
+    {"code": "HVA-RAD-PNL", "description": "Steel panel radiator 600×1000, installed", "unit": "pcs", "rate": "245.00", "currency": "EUR", "tags": ["hvac", "mep"]},
+    {"code": "ELE-CBL-NYM-3X1.5", "description": "NYM-J 3×1.5mm² cable, supply & lay", "unit": "m", "rate": "4.50", "currency": "EUR", "tags": ["electrical", "mep"], "components": [{"code": "DEMO-MAT-013", "name": "Copper electrical cable NYM 3x2.5", "type": "material", "quantity": "1.02", "unit_rate": "3"}, {"code": "DEMO-LAB-005", "name": "Electrician", "type": "labor", "quantity": "0.028", "unit_rate": "58"}]},
+    {"code": "ELE-CBL-NYM-3X2.5", "description": "NYM-J 3×2.5mm² cable, supply & lay", "unit": "m", "rate": "5.20", "currency": "EUR", "tags": ["electrical", "mep"], "components": [{"code": "DEMO-MAT-013", "name": "Copper electrical cable NYM 3x2.5", "type": "material", "quantity": "1.02", "unit_rate": "3.2"}, {"code": "DEMO-LAB-005", "name": "Electrician", "type": "labor", "quantity": "0.03", "unit_rate": "58"}]},
+    {"code": "ELE-OUT-DBL", "description": "Double socket outlet, flush, installed", "unit": "pcs", "rate": "38.00", "currency": "EUR", "tags": ["electrical", "mep"]},
+    {"code": "ELE-SWT-1G", "description": "Single-gang switch, flush, installed", "unit": "pcs", "rate": "32.00", "currency": "EUR", "tags": ["electrical", "mep"]},
+    {"code": "ELE-LIT-LED-PNL", "description": "LED panel light 600×600, surface mounted", "unit": "pcs", "rate": "85.00", "currency": "EUR", "tags": ["electrical", "mep"]},
+    {"code": "ELE-DBR-CONS", "description": "Consumer unit / distribution board (12-way)", "unit": "pcs", "rate": "320.00", "currency": "EUR", "tags": ["electrical", "mep"]},
+    {"code": "EXT-FAC-RND", "description": "External render 20mm + paint, scaffold included", "unit": "m2", "rate": "55.00", "currency": "EUR", "tags": ["facade", "external"]},
+    {"code": "EXT-FAC-CLD-FB", "description": "Fibre-cement cladding panel, fixed to battens", "unit": "m2", "rate": "92.00", "currency": "EUR", "tags": ["facade", "external"]},
+    {"code": "SIT-PAV-CON", "description": "Concrete paving 80mm, on bedding sand", "unit": "m2", "rate": "65.00", "currency": "EUR", "tags": ["sitework"]},
+    {"code": "SIT-KER-CON", "description": "Concrete kerb, supply & install", "unit": "m", "rate": "28.00", "currency": "EUR", "tags": ["sitework"]},
+    {"code": "DEM-WAL-MAS", "description": "Masonry wall demolition, manual", "unit": "m3", "rate": "75.00", "currency": "EUR", "tags": ["demolition"]},
+    {"code": "DEM-DSP-MIX", "description": "Mixed construction waste disposal", "unit": "t", "rate": "120.00", "currency": "EUR", "tags": ["demolition"]},
+    {"code": "LBR-SKL-HR", "description": "Skilled labourer (general trades), hourly", "unit": "h", "rate": "42.00", "currency": "EUR", "tags": ["labour"]},
+    {"code": "LBR-UNS-HR", "description": "Unskilled labourer, hourly", "unit": "h", "rate": "28.00", "currency": "EUR", "tags": ["labour"]},
+    {"code": "PRO-MGT-PCT", "description": "Site management & supervision (allowance, %)", "unit": "lsum", "rate": "1.00", "currency": "EUR", "tags": ["preliminaries"]},
+    {"code": "PRO-SCF-EXT", "description": "External scaffolding, hire + erect/dismantle", "unit": "m2", "rate": "14.00", "currency": "EUR", "tags": ["preliminaries"]},
+    {"code": "TST-MAT-CON", "description": "Concrete cube testing (set of 3)", "unit": "pcs", "rate": "85.00", "currency": "EUR", "tags": ["testing"]}
+  ],
+  "assemblies": [
+    {
+      "code": "ASM-RC-WALL-24",
+      "name": "Reinforced concrete wall, 240mm thick",
+      "unit": "m2",
+      "category": "Structure",
+      "components": [
+        {"cost_code": "STR-CON-C3037", "factor": "0.24", "description": "Concrete C30/37 (0.24 m³ per m²)", "unit": "m3"},
+        {"cost_code": "STR-REB-B500B", "factor": "28.0", "description": "Rebar B500B (28 kg per m²)", "unit": "kg"},
+        {"cost_code": "STR-FRM-WALL", "factor": "2.0", "description": "Wall formwork, both faces (2 m² per m²)", "unit": "m2"}
+      ]
+    },
+    {
+      "code": "ASM-CLG-SUS",
+      "name": "Suspended ceiling per m²",
+      "unit": "m2",
+      "category": "Finishes",
+      "components": [
+        {"cost_code": "FIN-CLG-SUS-T24", "factor": "1.0", "description": "T-bar grid + mineral tiles", "unit": "m2"},
+        {"cost_code": "ELE-LIT-LED-PNL", "factor": "0.25", "description": "LED panel allowance (1 per 4 m²)", "unit": "pcs"}
+      ]
+    },
+    {
+      "code": "ASM-PRT-STD-12",
+      "name": "Stud wall partition, 120mm",
+      "unit": "m2",
+      "category": "Finishes",
+      "components": [
+        {"cost_code": "FIN-PRT-STD-12", "factor": "1.0", "description": "Stud partition + 2x plasterboard each side", "unit": "m2"},
+        {"cost_code": "FIN-PNT-EMU-2C", "factor": "2.0", "description": "Emulsion paint, both faces (2 m² per m²)", "unit": "m2"}
+      ]
+    },
+    {
+      "code": "ASM-FLR-SCR-50",
+      "name": "Floor screed, 50mm",
+      "unit": "m2",
+      "category": "Finishes",
+      "components": [
+        {"cost_code": "FIN-FLR-SCR-50", "factor": "1.0", "description": "Cement screed 50mm", "unit": "m2"}
+      ]
+    },
+    {
+      "code": "ASM-PNT-2C",
+      "name": "Painted finish, 2-coat",
+      "unit": "m2",
+      "category": "Finishes",
+      "components": [
+        {"cost_code": "FIN-PLS-INT-15", "factor": "1.0", "description": "Internal plaster 15mm", "unit": "m2"},
+        {"cost_code": "FIN-PNT-EMU-2C", "factor": "1.0", "description": "Emulsion paint 2-coat", "unit": "m2"}
+      ]
+    },
+    {
+      "code": "ASM-ROF-TIL",
+      "name": "Roof tile installation per m²",
+      "unit": "m2",
+      "category": "Roof",
+      "components": [
+        {"cost_code": "ROF-TIL-CLY", "factor": "1.0", "description": "Clay tiles on battens", "unit": "m2"},
+        {"cost_code": "STR-INS-MIN-100", "factor": "1.0", "description": "Mineral wool insulation 100mm", "unit": "m2"}
+      ]
+    },
+    {
+      "code": "ASM-DOR-SGL",
+      "name": "Door installation, single-leaf",
+      "unit": "pcs",
+      "category": "Openings",
+      "components": [
+        {"cost_code": "OPN-DOR-SGL", "factor": "1.0", "description": "Door + frame + paint", "unit": "pcs"},
+        {"cost_code": "LBR-SKL-HR", "factor": "1.5", "description": "Carpenter labour (1.5 h)", "unit": "h"}
+      ]
+    },
+    {
+      "code": "ASM-WIN-12",
+      "name": "Window installation, 1.2m²",
+      "unit": "pcs",
+      "category": "Openings",
+      "components": [
+        {"cost_code": "OPN-WIN-PVC-12", "factor": "1.0", "description": "PVC window 1.2 m²", "unit": "pcs"},
+        {"cost_code": "LBR-SKL-HR", "factor": "1.0", "description": "Installer labour (1 h)", "unit": "h"}
+      ]
+    },
+    {
+      "code": "ASM-FND-STR-60",
+      "name": "Strip foundation, 600mm wide",
+      "unit": "m",
+      "category": "Substructure",
+      "components": [
+        {"cost_code": "EXC-TRN-1M", "factor": "0.6", "description": "Trench excavation (0.6 m³ per m)", "unit": "m3"},
+        {"cost_code": "FND-STR-60", "factor": "1.0", "description": "Concrete strip + rebar", "unit": "m"},
+        {"cost_code": "EXC-BCK-COMP", "factor": "0.3", "description": "Backfill (0.3 m³ per m)", "unit": "m3"}
+      ]
+    },
+    {
+      "code": "ASM-COL-RC-30",
+      "name": "Concrete column 300×300mm",
+      "unit": "m",
+      "category": "Structure",
+      "components": [
+        {"cost_code": "STR-CON-C3037", "factor": "0.09", "description": "Concrete C30/37 (0.09 m³ per m)", "unit": "m3"},
+        {"cost_code": "STR-REB-B500B", "factor": "12.0", "description": "Rebar (12 kg per m)", "unit": "kg"},
+        {"cost_code": "STR-FRM-WALL", "factor": "1.2", "description": "Column formwork (1.2 m² per m)", "unit": "m2"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "rule_pack_id": "vision_2030_kpis",
+  "name": "Vision 2030 — Sustainability & Localisation KPIs",
+  "name_ar": "رؤية 2030 — مؤشرات الاستدامة والتوطين",
+  "standard": "Saudi Vision 2030 — National Transformation Programme + Quality of Life Programme + Saudi Green Initiative (SGI)",
+  "jurisdiction": "SA",
+  "regulator": "Vision 2030 Realisation Programmes (oversight: Council of Economic and Development Affairs / CEDA)",
+  "publication_year": 2030,
+  "applies_to": ["projects", "boq", "validation", "tendering", "reporting"],
+  "description": "Enables OCERP built-in validation rules that report each project against Vision 2030 KPIs that procurement teams must answer in public tenders: IKTVA / Local Content score, Saudi Green Initiative carbon-budget alignment, energy intensity target (per Saudi Energy Efficiency Programme), water intensity target (50% non-potable substitution for new developments), waste-diversion-from-landfill (Vision 2030 target: 60% by 2035), and Saudi-supplier preference. Surfaces a Vision 2030 score chip on the project header.",
+  "description_ar": "تفعيل قواعد التحقق لقياس المشاريع وفق مؤشرات رؤية 2030 — المحتوى المحلي IKTVA، المبادرة السعودية الخضراء، كثافة الطاقة والمياه، وتحويل النفايات.",
+  "severity_overrides": {
+    "vision2030.local_content_score_disclosed": "ERROR"
+  },
+  "enables_rule_ids": [
+    "vision2030.local_content_score_disclosed",
+    "vision2030.iktva_score_disclosed",
+    "vision2030.saudi_green_initiative_alignment_documented",
+    "vision2030.energy_intensity_target_set",
+    "vision2030.water_non_potable_substitution_50pct",
+    "vision2030.waste_diversion_target_60pct",
+    "vision2030.saudi_supplier_preference_applied",
+    "vision2030.renewable_energy_share_target_set",
+    "vision2030.embodied_carbon_disclosed",
+    "vision2030.localisation_of_engineering_services_pct"
+  ]
+}

@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openconstructionerp-mexico-mx"
+version = "0.1.0"
+description = "Pre-configured partner pack for Mexican construction: APU unit prices under LOPSRM, IVA 16/8 percent and retenciones, CFDI 4.0, INFONAVIT/FOVISSSTE/CONAVI social housing, IMSS and NOM-031-STPS safety, MXN."
+readme = "README.md"
+license = { text = "AGPL-3.0-or-later" }
+requires-python = ">=3.11"
+authors = [
+    { name = "OpenConstructionERP", email = "info@datadrivenconstruction.io" },
+]
+keywords = [
+    "openconstructionerp", "ocerp", "partner-pack",
+    "mexico", "latam", "apu", "precios-unitarios", "lopsrm",
+    "iva", "cfdi", "infonavit", "imss", "mxn",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Other Audience",
+    "Topic :: Office/Business",
+    "Natural Language :: Spanish",
+]
+dependencies = [
+    "openconstructionerp>=8.0.0",
+]
+
+[project.urls]
+Source = "https://github.com/DataDrivenConstruction/openconstructionerp"
+
+# Registered under both the canonical Packs umbrella group and the legacy
+# partner_packs alias so older and newer cores both discover it.
+[project.entry-points."openconstructionerp.packs"]
+mexico-mx = "openconstructionerp_mexico_mx:MANIFEST"
+
+[project.entry-points."openconstructionerp.partner_packs"]
+mexico-mx = "openconstructionerp_mexico_mx:MANIFEST"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+openconstructionerp_mexico_mx = [
+    "logo.svg",
+    "onboarding.yaml",
+    "locales/*.json",
+    "rule_packs/*.json",
+]

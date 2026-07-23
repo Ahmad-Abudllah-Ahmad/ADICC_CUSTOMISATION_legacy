@@ -1,0 +1,15 @@
+{
+  "common.ok": "OK",
+  "module.display_name": "Cost Match",
+  "match.semantic.not_installed": "Semantic matching requires `pip install openconstructionerp[semantic]`. Exact-match results are shown; install the extra for fuzzy cost matching.",
+  "match.reason.exact_match": "Exact match on the normalized description.",
+  "match.reason.strong_overlap": "Every search term was found in this cost item.",
+  "match.reason.partial_overlap": "Some search terms were found in this cost item.",
+  "match.reason.weak_overlap": "Few or no search terms matched this cost item.",
+  "match.reason.unit_match": "Units are compatible.",
+  "match.reason.unit_mismatch": "Units differ, which lowers confidence.",
+  "match.reason.unit_unknown": "Unit could not be compared.",
+  "match.hint.empty_query": "Enter a material or work description to search the cost database.",
+  "match.hint.no_candidates": "No cost items are loaded for this catalogue yet. Load a regional cost base first.",
+  "match.hint.no_good_match": "No confident match found. Try fewer words, the material name on its own, or the description in another language."
+}

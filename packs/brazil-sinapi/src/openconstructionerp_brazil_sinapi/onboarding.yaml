@@ -1,0 +1,179 @@
+# Brazil Construction Pack — first-login onboarding wizard.
+# Streamed by /api/v1/partner-pack/onboarding-script and rendered by the
+# OnboardingWizard React component in place of the default steps.
+#
+# Standards covered by the bundled rule packs:
+#   - SINAPI (Caixa + IBGE, mensal)
+#   - NBR 12721:2006 / Errata 2007 (CUB)
+#   - NBR 6118:2023 (concreto) + NBR 8800:2008 (aco)
+#   - NBR 9050:2020 (acessibilidade — obrigatoria)
+#   - NBR 5419:2015 (SPDA — protecao contra descargas atmosfericas)
+#   - Lei 14.133/2021 (Nova Lei de Licitacoes)
+#   - RPS / NFS-e municipal (LC 116/2003)
+
+version: 2
+locale: pt
+title: "Bem-vindo ao OpenConstructionERP - Edicao Brasil"
+subtitle: "Sete passos rapidos para alinhar seu espaco de trabalho a pratica brasileira (SINAPI, ABNT, Lei 14.133/2021, RPS)."
+
+steps:
+  - id: company_profile
+    title: "Perfil da empresa"
+    body: "Informe os dados da sua construtora. Esses campos alimentam os cabecalhos de documentos, RPS e propostas de licitacao."
+    fields:
+      - { key: razao_social, label: "Razao social", type: text, required: true }
+      - { key: cnpj, label: "CNPJ", type: text, required: true, placeholder: "00.000.000/0000-00", validation: "br_cnpj" }
+      - { key: inscricao_municipal, label: "Inscricao municipal (IM)", type: text, required: false, help: "Obrigatoria para emissao de RPS / NFS-e." }
+      - key: uf
+        label: "UF (Estado-sede)"
+        type: select
+        required: true
+        options: ["AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"]
+        default: "SP"
+      - key: municipio
+        label: "Municipio-sede"
+        type: text
+        required: true
+        help: "Define a aliquota de ISS padrao (cada municipio fixa entre 2% e 5%)."
+
+  - id: tax_regime
+    title: "Regime tributario"
+    body: "O regime tributario altera o calculo de encargos sociais, retencoes e BDI. Configurado uma vez, vale para todos os projetos."
+    fields:
+      - key: regime_tributario
+        label: "Regime tributario"
+        type: radio
+        required: true
+        default: "Lucro Presumido"
+        options: ["Simples Nacional", "Lucro Presumido", "Lucro Real"]
+      - key: optante_simples_anexo
+        label: "Anexo do Simples Nacional"
+        type: select
+        required: false
+        options: ["Anexo III", "Anexo IV", "Anexo V"]
+        visible_when: { regime_tributario: "Simples Nacional" }
+        help: "Servicos de construcao civil normalmente Anexo IV."
+      - key: encargos_desonerados
+        label: "Encargos sociais desonerados?"
+        type: radio
+        required: true
+        default: "Nao-desonerados"
+        options: ["Desonerados", "Nao-desonerados"]
+        help: "Define a tabela SINAPI usada (com / sem desoneracao da folha de pagamento)."
+
+  - id: cost_standard
+    title: "Base de custos (SINAPI)"
+    body: "Escolha a UF e o mes de referencia SINAPI usados para precificar suas composicoes. O sistema avisa quando o mes-ref ficar desatualizado."
+    fields:
+      - key: sinapi_state
+        label: "Estado SINAPI"
+        type: select
+        required: true
+        default: "SP"
+        options: ["SP", "RJ", "MG", "DF", "RS", "PR", "SC", "BA", "PE", "CE", "GO", "ES", "MT", "MS", "PA", "MA", "PB", "RN", "AL", "SE", "PI", "AM", "RO", "AC", "RR", "AP", "TO"]
+      - key: sinapi_reference_month
+        label: "Mes de referencia (mes-ref)"
+        type: text
+        required: true
+        default: "2026-04"
+        placeholder: "AAAA-MM"
+        help: "Mes mais recente publicado pela Caixa. Atualize todo mes."
+      - key: enable_bdi_calculator
+        label: "Habilitar calculadora de BDI no orcamento"
+        type: checkbox
+        default: true
+      - key: bdi_default_pct
+        label: "BDI padrao (%)"
+        type: number
+        default: 24.18
+        step: 0.01
+        help: "Faixa do Acordao TCU 2622/2013 para edificacoes: 20,34% a 27,07%."
+
+  - id: rps_iss
+    title: "RPS, NFS-e e ISS municipal"
+    body: "ISS e municipal (nao estadual). Cada municipio fixa entre 2% e 5% (Lei Complementar 116/2003)."
+    fields:
+      - key: iss_aliquota
+        label: "Aliquota ISS padrao (%)"
+        type: number
+        required: true
+        default: 3.0
+        step: 0.01
+        min: 2.0
+        max: 5.0
+      - key: codigo_servico_padrao
+        label: "Codigo de servico municipal padrao"
+        type: text
+        required: false
+        default: "7.02"
+        help: "Lista LC 116. 7.02 = execucao de obra de construcao civil."
+      - key: gerar_rps
+        label: "Habilitar geracao de RPS PDF"
+        type: checkbox
+        default: true
+      - key: serie_rps
+        label: "Serie RPS"
+        type: text
+        default: "A"
+        visible_when: { gerar_rps: true }
+      - key: numero_inicial_rps
+        label: "Numero inicial sequencial"
+        type: number
+        default: 1
+        visible_when: { gerar_rps: true }
+
+  - id: standards
+    title: "Normas tecnicas ABNT"
+    body: "Selecione as normas ABNT que devem validar seus projetos automaticamente. NBR 9050 e obrigatoria em obras publicas e comerciais."
+    fields:
+      - { key: enable_nbr_12721, label: "NBR 12721 - Avaliacao de custos unitarios (CUB)", type: checkbox, default: true }
+      - { key: enable_nbr_6118, label: "NBR 6118:2023 - Estruturas de concreto", type: checkbox, default: true }
+      - { key: enable_nbr_8800, label: "NBR 8800:2008 - Estruturas de aco", type: checkbox, default: false }
+      - { key: enable_nbr_9050, label: "NBR 9050:2020 - Acessibilidade (obrigatoria em publicas/comerciais)", type: checkbox, default: true }
+      - { key: enable_nbr_5419, label: "NBR 5419:2015 - SPDA (protecao contra descargas atmosfericas)", type: checkbox, default: false }
+
+  - id: licitacoes
+    title: "Licitacoes publicas (Lei 14.133/2021)"
+    body: "Caso voce participe de licitacoes publicas, habilite a Nova Lei de Licitacoes. As regras checam modalidade, criterio de julgamento, habilitacoes e tetos de BDI conforme Acordao TCU 2622/2013."
+    fields:
+      - key: perfil_obra
+        label: "Perfil predominante das obras"
+        type: radio
+        required: true
+        default: "Privada"
+        options: ["Publica", "Privada", "Parceria publico-privada (PPP)"]
+      - key: enable_lei_14133
+        label: "Habilitar validacao Lei 14.133/2021"
+        type: checkbox
+        default: true
+        visible_when: { perfil_obra: ["Publica", "Parceria publico-privada (PPP)"] }
+      - key: modalidade_padrao
+        label: "Modalidade padrao"
+        type: select
+        options: ["Concorrencia", "Pregao", "Concurso", "Leilao", "Dialogo Competitivo", "Dispensa", "Inexigibilidade"]
+        default: "Concorrencia"
+        visible_when: { enable_lei_14133: true }
+
+  - id: review
+    title: "Revisar e finalizar"
+    body: "Criaremos seu primeiro projeto brasileiro com validacao SINAPI + NBR 12721 + acessibilidade NBR 9050, modelo tributario ISS municipal e geracao de RPS habilitada. Voce pode alterar tudo depois em Configuracoes."
+    action:
+      label: "Criar meu workspace brasileiro"
+      apply:
+        - set_default_currency: BRL
+        - set_tax_template: br_iss_municipal
+        - enable_rule_packs:
+            - sinapi_cost_db
+            - nbr_12721
+            - abnt_concrete
+            - nbr_9050_2020
+            - rps_pdf_generation
+        - conditional_enable:
+            when: { enable_nbr_8800: true }
+            rule_pack: abnt_steel
+        - conditional_enable:
+            when: { enable_nbr_5419: true }
+            rule_pack: nbr_5419_2015
+        - conditional_enable:
+            when: { enable_lei_14133: true }
+            rule_pack: lei_14133_2021

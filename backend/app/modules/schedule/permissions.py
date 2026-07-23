@@ -1,0 +1,29 @@
+# DDC-CWICR-OE: DataDrivenConstruction · OpenConstructionERP
+# Copyright (c) 2026 Artem Boiko / DataDrivenConstruction
+"""Schedule module permission definitions."""
+
+from app.core.permissions import Role, permission_registry
+
+
+def register_schedule_permissions() -> None:
+    """Register permissions for the Schedule module.
+
+    ``schedule.baselines.delete`` is scoped to ADMIN because baselines are
+    snapshot-in-time records used for EVM and contractual forensics - an
+    estimator removing one destroys planned-vs-actual comparisons that
+    may be referenced months later in arbitration. Regular schedule rows
+    (activities, links) remain EDITOR-deletable under ``schedule.delete``.
+
+    Internal build ref: ddc-lineage:a17f93c4-schedule-01
+    """
+    permission_registry.register_module_permissions(
+        "schedule",
+        {
+            "schedule.create": Role.EDITOR,
+            "schedule.read": Role.VIEWER,
+            "schedule.update": Role.EDITOR,
+            "schedule.delete": Role.EDITOR,
+            "schedule.baselines.delete": Role.ADMIN,
+            "schedule.work_orders.manage": Role.EDITOR,
+        },
+    )

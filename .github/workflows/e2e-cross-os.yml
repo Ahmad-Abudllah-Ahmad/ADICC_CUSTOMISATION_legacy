@@ -1,0 +1,135 @@
+name: E2E (cross-OS, real browser)
+
+# Real-browser end-to-end smoke across the three desktop OSes the product ships
+# on (Linux, Windows, macOS) and the three engines (Chromium, Firefox, WebKit =
+# Safari). One Windows or Linux box can run three *engines* but not three *OSes*;
+# only a runner matrix exercises the actual OS behaviour, so this is where the
+# honest cross-OS coverage lives.
+#
+# Each job boots the full app the way it ships - the backend on embedded
+# PostgreSQL serving the freshly built SPA on :8000 - seeds the demo workspace,
+# then drives every user-facing route in a real browser (tests/e2e/
+# smoke-all-modules.spec.ts), capturing a per-route screenshot + a findings JSON
+# that are uploaded as artifacts for visual review.
+#
+# Cost control: the full 3x3 matrix is heavy (full backend install + seed per
+# job), so it runs nightly and on demand, NOT on every PR. A lightweight
+# Linux+Chromium PR gate can be added later by copying the job with a pinned
+# matrix and an `on: pull_request` trigger.
+
+on:
+  workflow_dispatch:
+    inputs:
+      browsers:
+        description: "Comma-separated engines (chromium,firefox,webkit)"
+        default: "chromium,firefox,webkit"
+        required: false
+  schedule:
+    - cron: "0 3 * * *" # 03:00 UTC nightly
+
+concurrency:
+  group: e2e-cross-os-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    name: ${{ matrix.os }} / ${{ matrix.browser }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        browser: [chromium, firefox, webkit]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend deps
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend (single-server SPA)
+        working-directory: frontend
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
+        run: npm run build
+
+      - name: Install backend (serves the built SPA + API on :8000)
+        working-directory: backend
+        run: pip install -e .
+
+      - name: Install Playwright browser (${{ matrix.browser }})
+        working-directory: frontend
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            npx playwright install --with-deps ${{ matrix.browser }}
+          else
+            npx playwright install ${{ matrix.browser }}
+          fi
+
+      - name: Start backend (embedded PostgreSQL + demo seed)
+        working-directory: backend
+        shell: bash
+        env:
+          OE_DATA_DIR: ${{ runner.temp }}/oe-e2e-data
+          SEED_DEMO: "true"
+          APP_ENV: development
+        run: |
+          nohup python -m app.cli serve --port 8000 --data-dir "${{ runner.temp }}/oe-e2e-data" \
+            > "${{ runner.temp }}/backend.log" 2>&1 &
+          echo $! > "${{ runner.temp }}/backend.pid"
+          echo "backend launched (pid $(cat "${{ runner.temp }}/backend.pid"))"
+
+      - name: Wait for backend health (seed can take a few minutes)
+        shell: bash
+        run: |
+          for i in $(seq 1 72); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8000/api/health || true)
+            if [ "$code" = "200" ]; then echo "backend healthy after $((i*5))s"; exit 0; fi
+            sleep 5
+          done
+          echo "::error::backend never became healthy"
+          tail -80 "${{ runner.temp }}/backend.log" || true
+          exit 1
+
+      - name: Run smoke-all-modules (${{ matrix.browser }})
+        working-directory: frontend
+        shell: bash
+        env:
+          OE_TEST_BASE_URL: http://127.0.0.1:8000
+          OE_TEST_API_URL: http://127.0.0.1:8000
+          OE_SMOKE_WORKERS: "2"
+        run: npx playwright test --config=playwright.smoke-all.config.ts --project=${{ matrix.browser }}
+
+      - name: Upload screenshots + findings + report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-smoke-${{ matrix.os }}-${{ matrix.browser }}
+          path: |
+            frontend/qa-smoke/**
+            frontend/qa-smoke-report/**
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Dump backend log on failure
+        if: failure()
+        shell: bash
+        run: tail -120 "${{ runner.temp }}/backend.log" || true

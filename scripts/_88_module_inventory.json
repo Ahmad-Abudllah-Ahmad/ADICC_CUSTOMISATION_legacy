@@ -1,0 +1,618 @@
+[
+  {
+    "folder": "admin",
+    "name": "oe_admin",
+    "display_name": "Admin",
+    "category": "core",
+    "description": "Operator endpoints for QA pipelines (qa-reset, fixtures). Triple-gated by env+token+hostname."
+  },
+  {
+    "folder": "ai",
+    "name": "oe_ai",
+    "display_name": "AI Estimation",
+    "category": "core",
+    "description": "AI-powered construction cost estimation from text descriptions and photos"
+  },
+  {
+    "folder": "architecture_map",
+    "name": "oe_architecture_map",
+    "display_name": "Architecture Map",
+    "category": "developer_tools",
+    "description": "Interactive visual map of system architecture"
+  },
+  {
+    "folder": "asia_pac_pack",
+    "name": "oe_asia_pac_pack",
+    "display_name": "Regional Pack — Asia-Pacific",
+    "category": "regional",
+    "description": null
+  },
+  {
+    "folder": "assemblies",
+    "name": "oe_assemblies",
+    "display_name": "Assemblies & Calculations",
+    "category": "core",
+    "description": null
+  },
+  {
+    "folder": "backup",
+    "name": "oe_backup",
+    "display_name": "Backup & Restore",
+    "category": "core",
+    "description": "Export and import user data backups"
+  },
+  {
+    "folder": "bi_dashboards",
+    "name": "oe_bi_dashboards",
+    "display_name": "BI Dashboards & Reporting",
+    "category": "extension",
+    "description": null
+  },
+  {
+    "folder": "bid_management",
+    "name": "oe_bid_management",
+    "display_name": "Bid Management",
+    "category": "business",
+    "description": null
+  },
+  {
+    "folder": "bim_hub",
+    "name": "oe_bim_hub",
+    "display_name": "BIM Hub",
+    "category": "core",
+    "description": "BIM data management: models, elements, BOQ linking, quantity maps, and model diffs"
+  },
+  {
+    "folder": "bim_requirements",
+    "name": "oe_bim_requirements",
+    "display_name": "BIM Requirements",
+    "category": "core",
+    "description": null
+  },
+  {
+    "folder": "boq",
+    "name": "oe_boq",
+    "display_name": "Bill of Quantities",
+    "category": "core",
+    "description": "Core BOQ editor with hierarchical structure, positions, and cost calculations"
+  },
+  {
+    "folder": "cad",
+    "name": "oe_cad",
+    "display_name": "CAD Import",
+    "category": "extension",
+    "description": "CAD file import and conversion pipeline (DWG, DGN, RVT, IFC)"
+  },
+  {
+    "folder": "carbon",
+    "name": "oe_carbon",
+    "display_name": "Carbon & Sustainability",
+    "category": "business",
+    "description": null
+  },
+  {
+    "folder": "catalog",
+    "name": "oe_catalog",
+    "display_name": "Product & Resource Catalog",
+    "category": "core",
+    "description": "Curated catalog of materials, equipment, labor, and operators extracted from cost databases"
+  },
+  {
+    "folder": "cde",
+    "name": "oe_cde",
+    "display_name": "Common Data Environment (ISO 19650)",
+    "category": "core",
+    "description": "ISO 19650 compliant Common Data Environment — document containers, revisions, state transitions, and suitability codes"
+  },
+  {
+    "folder": "changeorders",
+    "name": "oe_changeorders",
+    "display_name": "Change Orders",
+    "category": "core",
+    "description": "Track scope changes, cost impacts, and approval workflows"
+  },
+  {
+    "folder": "collaboration",
+    "name": "oe_collaboration",
+    "display_name": "Comments & Viewpoints",
+    "category": "core",
+    "description": "Threaded comments with @mentions and viewpoints for any entity"
+  },
+  {
+    "folder": "collaboration_locks",
+    "name": "oe_collaboration_locks",
+    "display_name": "Real-time collaboration locks",
+    "category": "core",
+    "description": null
+  },
+  {
+    "folder": "compliance",
+    "name": "oe_compliance",
+    "display_name": "Compliance DSL",
+    "category": "core",
+    "description": null
+  },
+  {
+    "folder": "compliance_ai",
+    "name": "oe_compliance_ai",
+    "display_name": "Compliance AI",
+    "category": "core",
+    "description": null
+  },
+  {
+    "folder": "compliance_docs",
+    "name": "oe_compliance_docs",
+    "display_name": "Compliance Documents",
+    "category": "core",
+    "description": null
+  },
+  {
+    "folder": "contacts",
+    "name": "oe_contacts",
+    "display_name": "Contacts Directory",
+    "category": "core",
+    "description": "Unified contacts directory for clients, subcontractors, suppliers, consultants"
+  },
+  {
+    "folder": "contracts",
+    "name": "oe_contracts",
+    "display_name": "Contract Types Engine",
+    "category": "business",
+    "description": null
+  },
+  {
+    "folder": "correspondence",
+    "name": "oe_correspondence",
+    "display_name": "Correspondence",
+    "category": "core",
+    "description": "Project correspondence tracking — letters, emails, notices with direction, contacts, and document cross-references"
+  },
+  {
+    "folder": "cost_match",
+    "name": "oe_cost_match",
+    "display_name": "Cost Match",
+    "category": "core",
+    "description": null
+  },
+  {
+    "folder": "costmodel",
+    "name": "oe_costmodel",
+    "display_name": "5D Cost Model",
+    "category": "core",
+    "description": null
+  },
+  {
+    "folder": "costs",
+    "name": "oe_costs",
+    "display_name": "Cost Database",
+    "category": "core",
+    "description": "Cost item management, rate databases (CWICR, RSMeans, BKI), bulk import"
+  },
+  {
+    "folder": "crm",
+    "name": "oe_crm",
+    "display_name": "CRM Sales Pipeline",
+    "category": "business",
+    "description": null
+  },
+  {
+    "folder": "dach_pack",
+    "name": "oe_dach_pack",
+    "display_name": "Regional Pack — DACH (DE/AT/CH)",
+    "category": "regional",
+    "description": null
+  },
+  {
+    "folder": "daily_diary",
+    "name": "oe_daily_diary",
+    "display_name": "Daily Site Diary",
+    "category": "business",
+    "description": null
+  },
+  {
+    "folder": "dashboards",
+    "name": "oe_dashboards",
+    "display_name": "Dashboards",
+    "category": "core",
+    "description": null
+  },
+  {
+    "folder": "documents",
+    "name": "oe_documents",
+    "display_name": "Document Management",
+    "category": "core",
+    "description": "Upload, categorize, and manage project documents with tagging and search"
+  },
+  {
+    "folder": "dwg_takeoff",
+    "name": "oe_dwg_takeoff",
+    "display_name": "DWG Takeoff",
+    "category": "extension",
+    "description": "2D DWG/DXF drawing viewer with measurements, annotations, and BOQ linking"
+  },
+  {
+    "folder": "eac",
+    "name": "oe_eac",
+    "display_name": "EAC v2 Engine",
+    "category": "core",
+    "description": null
+  },
+  {
+    "folder": "enterprise_workflows",
+    "name": "oe_enterprise_workflows",
+    "display_name": "Enterprise Workflows",
+    "category": "enterprise",
+    "description": "Configurable approval workflows for invoices, purchase orders, variations, and BOQs"
+  },
+  {
+    "folder": "equipment",
+    "name": "oe_equipment",
+    "display_name": "Equipment & Fleet Management",
+    "category": "business",
+    "description": null
+  },
+  {
+    "folder": "erp_chat",
+    "name": "oe_erp_chat",
+    "display_name": "ERP Chat",
+    "category": "core",
+    "description": "AI-powered chat with tool-calling for construction ERP data"
+  },
+  {
+    "folder": "fieldreports",
+    "name": "oe_fieldreports",
+    "display_name": "Field Reports",
+    "category": "core",
+    "description": "Daily field reports for construction sites — weather, workforce, delays, safety incidents, and approvals"
+  },
+  {
+    "folder": "finance",
+    "name": "oe_finance",
+    "display_name": "Finance",
+    "category": "core",
+    "description": "Invoicing, payments, budgets, and Earned Value Management for construction projects"
+  },
+  {
+    "folder": "full_evm",
+    "name": "oe_full_evm",
+    "display_name": "Full EVM",
+    "category": "enterprise",
+    "description": "Advanced Earned Value Management with forecasting, S-curves, and TCPI analysis"
+  },
+  {
+    "folder": "hse_advanced",
+    "name": "oe_hse_advanced",
+    "display_name": "HSE Advanced",
+    "category": "business",
+    "description": null
+  },
+  {
+    "folder": "i18n_foundation",
+    "name": "oe_i18n_foundation",
+    "display_name": "Internationalization Foundation",
+    "category": "core",
+    "description": "Multi-currency exchange rates, country registry, work calendars, tax configurations"
+  },
+  {
+    "folder": "india_pack",
+    "name": "oe_india_pack",
+    "display_name": "Regional Pack — India",
+    "category": "regional",
+    "description": null
+  },
+  {
+    "folder": "inspections",
+    "name": "oe_inspections",
+    "display_name": "Quality Inspections",
+    "category": "core",
+    "description": "Quality inspection management — concrete pours, waterproofing, MEP, fire stopping, handover with checklists and pass/fail workflows"
+  },
+  {
+    "folder": "integrations",
+    "name": "oe_integrations",
+    "display_name": "Integrations",
+    "category": "core",
+    "description": "Chat connectors (Teams, Slack, Telegram), outgoing webhooks, email, iCal feeds"
+  },
+  {
+    "folder": "jobs",
+    "name": "oe_jobs",
+    "display_name": "Background Jobs",
+    "category": "core",
+    "description": null
+  },
+  {
+    "folder": "latam_pack",
+    "name": "oe_latam_pack",
+    "display_name": "Regional Pack — Latin America",
+    "category": "regional",
+    "description": null
+  },
+  {
+    "folder": "markups",
+    "name": "oe_markups",
+    "display_name": "Markups & Annotations",
+    "category": "core",
+    "description": "Drawing markups, scale calibration, and stamp templates for document annotation"
+  },
+  {
+    "folder": "match",
+    "name": "oe_match",
+    "display_name": "Element Match",
+    "category": "core",
+    "description": null
+  },
+  {
+    "folder": "match_elements",
+    "name": "oe_match_elements",
+    "display_name": "Match Elements",
+    "category": "core",
+    "description": "Map BIM/CAD/PDF/photo elements to CWICR cost positions; auto-load scaled resources into BOQ"
+  },
+  {
+    "folder": "meetings",
+    "name": "oe_meetings",
+    "display_name": "Meetings",
+    "category": "core",
+    "description": "Meeting minutes management — agendas, attendees, action items, and status tracking"
+  },
+  {
+    "folder": "middle_east_pack",
+    "name": "oe_middle_east_pack",
+    "display_name": "Regional Pack — Middle East & GCC",
+    "category": "regional",
+    "description": null
+  },
+  {
+    "folder": "ncr",
+    "name": "oe_ncr",
+    "display_name": "Non-Conformance Reports",
+    "category": "core",
+    "description": "NCR management — material, workmanship, design non-conformances with root cause analysis and corrective actions"
+  },
+  {
+    "folder": "notifications",
+    "name": "oe_notifications",
+    "display_name": "Notifications",
+    "category": "core",
+    "description": "In-app notification system with i18n keys and per-user preferences"
+  },
+  {
+    "folder": "opencde_api",
+    "name": "oe_opencde_api",
+    "display_name": "OpenCDE API",
+    "category": "core",
+    "description": "BuildingSMART OpenCDE Foundation API 1.1 + BCF API 3.0 compliance layer"
+  },
+  {
+    "folder": "portal",
+    "name": "oe_portal",
+    "display_name": "Customer & Partner Portal",
+    "category": "business",
+    "description": null
+  },
+  {
+    "folder": "procurement",
+    "name": "oe_procurement",
+    "display_name": "Procurement",
+    "category": "core",
+    "description": "Purchase orders, goods receipts, and vendor management for construction projects"
+  },
+  {
+    "folder": "project_intelligence",
+    "name": "oe_project_intelligence",
+    "display_name": "Project Intelligence",
+    "category": "core",
+    "description": "AI-powered project completion analysis, scoring, and guided recommendations"
+  },
+  {
+    "folder": "projects",
+    "name": "oe_projects",
+    "display_name": "Projects",
+    "category": "core",
+    "description": "Project management with regional settings, classification standards, and validation configuration"
+  },
+  {
+    "folder": "property_dev",
+    "name": "oe_property_dev",
+    "display_name": "Property Development",
+    "category": "business",
+    "description": null
+  },
+  {
+    "folder": "punchlist",
+    "name": "oe_punchlist",
+    "display_name": "Punch List",
+    "category": "core",
+    "description": "Track construction deficiencies, quality issues, and snag items with photo evidence and verification workflows"
+  },
+  {
+    "folder": "qms",
+    "name": "oe_qms",
+    "display_name": "Quality Management System (QMS)",
+    "category": "extension",
+    "description": null
+  },
+  {
+    "folder": "reporting",
+    "name": "oe_reporting",
+    "display_name": "Reporting & Dashboards",
+    "category": "core",
+    "description": "KPI snapshots, report templates, and generated reports for projects and portfolios"
+  },
+  {
+    "folder": "requirements",
+    "name": "oe_requirements",
+    "display_name": "Requirements & Quality Gates",
+    "category": "core",
+    "description": "Extract, validate, and track construction requirements using EAC triplets"
+  },
+  {
+    "folder": "resources",
+    "name": "oe_resources",
+    "display_name": "Resource Planning",
+    "category": "business",
+    "description": null
+  },
+  {
+    "folder": "rfi",
+    "name": "oe_rfi",
+    "display_name": "Requests for Information",
+    "category": "core",
+    "description": "RFI management — questions, responses, cost/schedule impact tracking, and drawing cross-references"
+  },
+  {
+    "folder": "rfq_bidding",
+    "name": "oe_rfq_bidding",
+    "display_name": "RFQ & Bidding",
+    "category": "enterprise",
+    "description": "Request for Quotation management with bid submission, evaluation, and award workflows"
+  },
+  {
+    "folder": "risk",
+    "name": "oe_risk",
+    "display_name": "Risk Register",
+    "category": "core",
+    "description": "Track project risks, assess probability and impact, manage mitigation strategies"
+  },
+  {
+    "folder": "russia_pack",
+    "name": "oe_russia_pack",
+    "display_name": "Regional Pack — Russia & CIS",
+    "category": "regional",
+    "description": null
+  },
+  {
+    "folder": "safety",
+    "name": "oe_safety",
+    "display_name": "Safety Management",
+    "category": "core",
+    "description": "Safety incident reporting and observation tracking with risk scoring, corrective actions, and regulatory compliance"
+  },
+  {
+    "folder": "schedule",
+    "name": "oe_schedule",
+    "display_name": "4D Schedule",
+    "category": "core",
+    "description": "4D construction scheduling — linking BOQ positions to a timeline"
+  },
+  {
+    "folder": "schedule_advanced",
+    "name": "oe_schedule_advanced",
+    "display_name": "Schedule Advanced (Last Planner)",
+    "category": "business",
+    "description": null
+  },
+  {
+    "folder": "search",
+    "name": "oe_search",
+    "display_name": "Semantic Search",
+    "category": "core",
+    "description": null
+  },
+  {
+    "folder": "service",
+    "name": "oe_service",
+    "display_name": "Service & Maintenance",
+    "category": "business",
+    "description": null
+  },
+  {
+    "folder": "subcontractors",
+    "name": "oe_subcontractors",
+    "display_name": "Subcontractor Management",
+    "category": "business",
+    "description": null
+  },
+  {
+    "folder": "submittals",
+    "name": "oe_submittals",
+    "display_name": "Submittals",
+    "category": "core",
+    "description": "Construction submittal management — shop drawings, product data, samples with review/approval workflows"
+  },
+  {
+    "folder": "supplier_catalogs",
+    "name": "oe_supplier_catalogs",
+    "display_name": "Supplier Catalogs & Vendor Management",
+    "category": "extension",
+    "description": null
+  },
+  {
+    "folder": "takeoff",
+    "name": "oe_takeoff",
+    "display_name": "Quantity Takeoff",
+    "category": "extension",
+    "description": "Manual and AI-assisted quantity takeoff from drawings and models"
+  },
+  {
+    "folder": "tasks",
+    "name": "oe_tasks",
+    "display_name": "Tasks",
+    "category": "core",
+    "description": null
+  },
+  {
+    "folder": "teams",
+    "name": "oe_teams",
+    "display_name": "Team Visibility",
+    "category": "core",
+    "description": "Team-based entity visibility and access control within projects"
+  },
+  {
+    "folder": "tendering",
+    "name": "oe_tendering",
+    "display_name": "Tendering",
+    "category": "core",
+    "description": "Bid package management, distribution, collection, and comparison"
+  },
+  {
+    "folder": "transmittals",
+    "name": "oe_transmittals",
+    "display_name": "Transmittals",
+    "category": "core",
+    "description": "Formal document transmittal management with recipients, acknowledgements, and responses"
+  },
+  {
+    "folder": "uk_pack",
+    "name": "oe_uk_pack",
+    "display_name": "Regional Pack — United Kingdom",
+    "category": "regional",
+    "description": null
+  },
+  {
+    "folder": "uploads",
+    "name": "oe_uploads",
+    "display_name": "Direct Uploads",
+    "category": "core",
+    "description": "HMAC-signed direct PUT endpoint for LocalStorageBackend presigned URLs."
+  },
+  {
+    "folder": "us_pack",
+    "name": "oe_us_pack",
+    "display_name": "Regional Pack — United States",
+    "category": "regional",
+    "description": null
+  },
+  {
+    "folder": "users",
+    "name": "oe_users",
+    "display_name": "Users & Authentication",
+    "category": "core",
+    "description": "User management, JWT authentication, API keys, and RBAC"
+  },
+  {
+    "folder": "validation",
+    "name": "oe_validation",
+    "display_name": "Validation Engine",
+    "category": "core",
+    "description": null
+  },
+  {
+    "folder": "variations",
+    "name": "oe_variations",
+    "display_name": "Variations & Site Measurements",
+    "category": "business",
+    "description": null
+  }
+]

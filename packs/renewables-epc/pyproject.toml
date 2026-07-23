@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openconstructionerp-renewables-epc"
+version = "0.2.0"
+description = "Pre-configured partner pack for solar / wind / BESS EPC contractors — PV array takeoff, turbine BOM, MV cable schedules, LCOE templates (NREL ATB + LBNL + BNEF), IEC 61400 family (wind), IEC 61215 + IEC 61730 + IEC 62548 (PV), NFPA 855 + IEC 62619 + UL 9540 (BESS), ENTSO-E RfG + UK NGC + IEEE 1547 + FERC 2222 grid compliance."
+readme = "README.md"
+license = { text = "AGPL-3.0-or-later" }
+requires-python = ">=3.11"
+authors = [
+    { name = "OpenConstructionERP", email = "info@datadrivenconstruction.io" },
+]
+keywords = ["openconstructionerp", "ocerp", "partner-pack", "renewables", "solar", "wind", "bess", "epc", "iec", "nfpa-855", "lcoe", "grid-code"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Other Audience",
+    "Topic :: Office/Business",
+    "Natural Language :: English",
+]
+dependencies = [
+    "openconstructionerp>=5.5.0",
+]
+
+[project.urls]
+Source = "https://github.com/DataDrivenConstruction/openconstructionerp"
+
+[project.entry-points."openconstructionerp.partner_packs"]
+renewables-epc = "openconstructionerp_renewables_epc:MANIFEST"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+openconstructionerp_renewables_epc = [
+    "logo.svg",
+    "onboarding.yaml",
+    "rule_packs/*.json",
+]

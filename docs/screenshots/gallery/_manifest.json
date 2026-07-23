@@ -1,0 +1,23 @@
+{
+  "captured": [
+    "portfolio-dashboard",
+    "bim-3d-viewer",
+    "projects",
+    "boq-editor",
+    "cost-database",
+    "data-explorer",
+    "clash-detection",
+    "pdf-takeoff",
+    "validation",
+    "schedule-4d",
+    "cost-model-5d",
+    "analytics",
+    "tendering",
+    "finance",
+    "ai-estimate",
+    "reporting"
+  ],
+  "proj": "da481707-a571-4367-a7b7-6b5211a912e1",
+  "boq": "59ddae0e",
+  "model": "c8acb9a5-3fff-5719-a2b0-fe7d62a8a21f"
+}

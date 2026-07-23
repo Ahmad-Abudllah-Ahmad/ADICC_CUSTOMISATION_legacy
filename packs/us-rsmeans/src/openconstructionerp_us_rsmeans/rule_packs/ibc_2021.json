@@ -1,0 +1,28 @@
+{
+  "rule_pack_id": "ibc_2021",
+  "name": "International Building Code (IBC) 2021",
+  "standard": "IBC 2021",
+  "jurisdiction": "US (adopted with state amendments — verify per AHJ)",
+  "edition": "2021 (ICC publishes every 3 years; IBC 2024 was published Sep 2023, adoptions rolling)",
+  "description": "Enables OCERP built-in validation rules that check design submissions and tender packs against the International Building Code 2021: occupancy classification, construction type, allowable building heights & areas, fire-resistance ratings, means of egress, accessibility (incorporates ICC A117.1-2017), and energy provisions (IECC). Most US states adopt the IBC with amendments — the rule pack supports edition overrides per jurisdiction (e.g. CA Title 24 + 2022 CBC, NY 2020 NYCBC, FL FBC 8th ed 2023).",
+  "issuer": "International Code Council (ICC)",
+  "occupancy_groups": "A (Assembly), B (Business), E (Educational), F (Factory), H (High-hazard), I (Institutional), M (Mercantile), R (Residential), S (Storage), U (Utility)",
+  "construction_types": "I-A, I-B, II-A, II-B, III-A, III-B, IV-HT (Heavy Timber), IV-A/B/C (Mass Timber, new in 2021), V-A, V-B",
+  "enables_rule_ids": [
+    "ibc.2021.code_edition_jurisdiction_match",
+    "ibc.2021.occupancy_classification_assigned",
+    "ibc.2021.construction_type_assigned",
+    "ibc.2021.mixed_occupancy_separations_present",
+    "ibc.2021.allowable_height_area_within_table_504_506",
+    "ibc.2021.fire_resistance_rated_assemblies_present",
+    "ibc.2021.opening_protectives_per_table_716",
+    "ibc.2021.means_of_egress_capacity_calc_present",
+    "ibc.2021.exit_separation_distance_compliant",
+    "ibc.2021.accessibility_chapter_11_set",
+    "ibc.2021.icc_a117_1_2017_referenced",
+    "ibc.2021.fire_alarm_sprinkler_per_chapter_9",
+    "ibc.2021.mass_timber_iv_a_b_c_assemblies_when_used",
+    "ibc.2021.energy_iecc_compliance_path_selected",
+    "ibc.2021.state_amendment_addendum_present_when_applicable"
+  ]
+}

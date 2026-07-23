@@ -1,0 +1,27 @@
+{
+  "rule_pack_id": "ipdm_procurement_gates",
+  "name": "Infrastructure Delivery and Procurement Gates (FIDPM)",
+  "standard": "National Treasury FIDPM 2019 (successor to SIPDM 2015)",
+  "jurisdiction": "ZA",
+  "regulator": "National Treasury",
+  "description": "Stage-gate control framework for public infrastructure delivery and procurement per the National Treasury Framework for Infrastructure Delivery and Procurement Management. Each stage ends in a gate where the deliverable is approved before the next stage starts. Switches on the universal project-completeness rules today; stage-gate deliverable checks are on the roadmap.",
+  "applies_to": ["projects", "procurement", "validation"],
+  "stages": [
+    {"stage": 0, "name": "Project initiation", "gate_deliverable": "Initiation report"},
+    {"stage": 1, "name": "Infrastructure planning", "gate_deliverable": "Strategic brief / infrastructure plan"},
+    {"stage": 2, "name": "Prefeasibility", "gate_deliverable": "Prefeasibility report"},
+    {"stage": 3, "name": "Feasibility", "gate_deliverable": "Feasibility report"},
+    {"stage": 4, "name": "Design development", "gate_deliverable": "Concept and viability / design development report"},
+    {"stage": 5, "name": "Design documentation", "gate_deliverable": "Production information and procurement documents"},
+    {"stage": 6, "name": "Works", "gate_deliverable": "Completed works / practical completion"},
+    {"stage": 7, "name": "Handover", "gate_deliverable": "Handover certificate and operations or maintenance information"},
+    {"stage": 8, "name": "Package completion", "gate_deliverable": "Works completion certificate"},
+    {"stage": 9, "name": "Close-out", "gate_deliverable": "Close-out report"}
+  ],
+  "note": "Stage names follow the National Treasury infrastructure delivery management stages. Confirm exact gate deliverables against the current FIDPM instruction note for your institution.",
+  "enables_rule_ids": [
+    "project_completeness.all_trades_covered",
+    "ipdm.stage_set",
+    "ipdm.gate_deliverable_present"
+  ]
+}

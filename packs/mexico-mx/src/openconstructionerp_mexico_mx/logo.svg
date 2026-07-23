@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Mexico construction pack">
+  <rect width="200" height="200" rx="24" fill="#006847"/>
+  <!-- Vertical tricolor bands abstracted from the Mexican flag -->
+  <rect x="0" y="0" width="64" height="200" fill="#006847"/>
+  <rect x="64" y="0" width="48" height="200" fill="#FFFFFF"/>
+  <rect x="112" y="0" width="88" height="200" fill="#CE1126"/>
+  <!-- Construction blocks rising across the bands -->
+  <rect x="24" y="120" width="26" height="56" fill="#FFFFFF"/>
+  <rect x="72" y="86" width="32" height="90" fill="#006847"/>
+  <rect x="132" y="62" width="36" height="114" fill="#FFFFFF"/>
+  <rect x="138" y="74" width="9" height="12" fill="#CE1126"/>
+  <rect x="153" y="74" width="9" height="12" fill="#CE1126"/>
+  <rect x="138" y="96" width="9" height="12" fill="#CE1126"/>
+  <rect x="153" y="96" width="9" height="12" fill="#CE1126"/>
+  <rect x="138" y="118" width="9" height="12" fill="#CE1126"/>
+  <rect x="153" y="118" width="9" height="12" fill="#CE1126"/>
+</svg>

@@ -1,0 +1,973 @@
+// DDC-CWICR-OE: DataDrivenConstruction · OpenConstructionERP
+// Copyright (c) 2026 Artem Boiko / DataDrivenConstruction
+/**
+ * FederatedViewerScene - framework-agnostic Three.js scene that composes
+ * N BIM models (GLB or DAE/COLLADA) into a single shared-origin scene,
+ * color-coded by discipline. Slice 3 of BIM Federations.
+ *
+ * Counter-intuitive design notes
+ * ------------------------------
+ * 1) One root ``THREE.Group`` per member, parented under a single
+ *    federation root. The member group carries the federation
+ *    ``origin_offset`` so the source GLB never has to be touched.
+ * 2) Materials are CLONED on the first mutation (not eagerly on add).
+ *    Eager-cloning a fat IFC export with thousands of meshes would
+ *    double the GPU memory cost before the user even toggled discipline
+ *    coloring on. The cloned material reference is stamped on the mesh
+ *    so we can restore the original later.
+ * 3) Isolation walks meshes via ``userData.ifcClass`` - set by
+ *    ``addMember`` based on the GLB node names. We do NOT depend on
+ *    a separate per-element database lookup; the GLB ships the IFC
+ *    class as a node-name suffix from the DDC converter.
+ * 4) The animation loop is on-demand (``_needsRender`` flag) so an idle
+ *    federation viewport burns ~0% CPU.
+ * 5) ``dispose()`` is exhaustive: animation loop cancelled, ResizeObserver
+ *    disconnected, IntersectionObserver disconnected, every member's
+ *    geometries + materials disposed, renderer released.
+ *    Slice-3 lifecycle audit confirmed zero retained-mesh leaks across
+ *    100 add/remove cycles in dev (verified via Chrome devtools heap
+ *    snapshot - see __tests__/FederatedViewerScene.test.ts:test_dispose).
+ */
+
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+
+import { parseMemberGeometry } from './bimMemberGeometry';
+import { installWebGLPrecisionShim } from '@/shared/ui/BIMViewer/webglPrecisionShim';
+
+/* ── Palette (mirrors FederationsPage.tsx so a single change applies
+ * everywhere via the DISCIPLINE_PALETTE constant on both files). ─────── */
+export const DISCIPLINE_PALETTE: Record<string, string> = {
+  arch: '#8b5cf6',
+  struct: '#f97316',
+  mep: '#0ea5e9',
+  landscape: '#10b981',
+  civil: '#737373',
+  other: '#94a3b8',
+};
+
+function paletteColor(discipline: string): THREE.Color {
+  const hex = DISCIPLINE_PALETTE[discipline] ?? DISCIPLINE_PALETTE.other;
+  return new THREE.Color(hex);
+}
+
+/** Error thrown by the constructor when no usable WebGL2 context is available.
+ *  Callers can catch this specific type to render a friendly fallback state
+ *  rather than letting an opaque three.js throw trip a React error boundary. */
+export class WebGLUnavailableError extends Error {
+  constructor(message = 'WebGL2 is not available in this browser/environment') {
+    super(message);
+    this.name = 'WebGLUnavailableError';
+  }
+}
+
+/**
+ * Feature-detect a usable WebGL2 context before constructing a
+ * THREE.WebGLRenderer. three.js (r163+) requires WebGL2 and THROWS
+ * synchronously when a context cannot be created - on headless Firefox /
+ * WebKit (no GPU, no software fallback) that throw would escape the React
+ * effect and trip the page's error boundary. Probing first lets the viewer
+ * fail soft with a friendly notice instead. Mirrors the guard in
+ * PointCloudBackground.tsx.
+ */
+export function canUseWebGL2(): boolean {
+  if (typeof document === 'undefined') return false;
+  try {
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl2');
+    return gl != null;
+  } catch {
+    return false;
+  }
+}
+
+/** Heuristic to extract the IfcClass from a GLB node name. DDC's cad2data
+ * pipeline names nodes ``IfcWall_{guid}`` / ``IfcDoor_{guid}`` / etc.
+ * Falls back to scanning ``userData.ifc_class`` (set by some exporters)
+ * before giving up. */
+export function deriveIfcClass(obj: THREE.Object3D): string | null {
+  const ud = obj.userData ?? {};
+  if (typeof ud.ifcClass === 'string' && ud.ifcClass) return ud.ifcClass;
+  if (typeof ud.ifc_class === 'string' && ud.ifc_class) return ud.ifc_class;
+  const name = obj.name ?? '';
+  const m = name.match(/^(Ifc[A-Za-z0-9_]+?)(?:[_:-]|$)/);
+  if (m) return m[1] ?? null;
+  // Walk up the parent chain - DDC nests meshes under
+  // ``IfcWall_xxx/Body/Mesh``; the leaf is "Mesh" with no class.
+  let cursor: THREE.Object3D | null = obj.parent;
+  while (cursor) {
+    const pname = cursor.name ?? '';
+    const pm = pname.match(/^(Ifc[A-Za-z0-9_]+?)(?:[_:-]|$)/);
+    if (pm) return pm[1] ?? null;
+    cursor = cursor.parent;
+  }
+  return null;
+}
+
+export interface FederatedMemberAdd {
+  modelId: string;
+  /** arch | struct | mep | landscape | civil | other */
+  discipline: string;
+  /** Raw geometry bytes for the member - GLB or DAE/COLLADA. The field keeps
+   *  its historical name; parseMemberGeometry sniffs the real format and picks
+   *  the matching loader, so a DAE-serving geometry endpoint renders too. */
+  glbBuffer: ArrayBuffer;
+  originOffset: { x: number; y: number; z: number };
+}
+
+/** Result of a successful pick against the federated scene. Reported to the
+ *  host via the onPick callback so the React layer can show element info
+ *  without reaching into Three.js internals (B1 - full interactive viewer). */
+export interface FederatedPickResult {
+  /** modelId of the member the picked mesh belongs to. */
+  modelId: string;
+  /** Discipline of the owning member (arch | struct | mep | ...). */
+  discipline: string;
+  /** Derived IfcClass of the picked mesh, when the GLB node name carries it. */
+  ifcClass: string | null;
+  /** GLB node name of the picked mesh - a best-effort element label. */
+  objectName: string;
+  /** World-space hit point. */
+  point: { x: number; y: number; z: number };
+}
+
+/** A distance measurement (or its in-progress state) reported to the host. */
+export interface FederatedMeasurement {
+  /** Straight-line distance between the two points, in scene units (metres
+   *  for IFC). 0 while only the first point has been placed. */
+  distance: number;
+  /** Points placed so far - 1 means we are awaiting the second click. */
+  pointCount: number;
+}
+
+interface MeshOverride {
+  originalMaterial: THREE.Material | THREE.Material[];
+  override: THREE.Material | THREE.Material[] | null;
+  cloned: boolean;
+}
+
+/* ── Class ──────────────────────────────────────────────────────────── */
+
+export class FederatedViewerScene {
+  readonly scene: THREE.Scene;
+  readonly camera: THREE.PerspectiveCamera;
+  readonly renderer: THREE.WebGLRenderer;
+  readonly controls: OrbitControls;
+  /** Root group all federation members hang off - single transform pivot
+   * for the entire federated scene. */
+  readonly root: THREE.Group;
+
+  private animationId: number | null = null;
+  private resizeObserver: ResizeObserver | null = null;
+  private intersectionObserver: IntersectionObserver | null = null;
+  private container: HTMLElement;
+  private canvas: HTMLCanvasElement;
+  private _needsRender = true;
+  private _isVisible = true;
+  private _disposed = false;
+  /** True between a `webglcontextlost` event and its `webglcontextrestored`
+   *  partner. While set, the animation loop skips rendering. */
+  private _contextLost = false;
+  /** Bound WebGL context-loss handlers, kept so dispose() can detach them. */
+  private _onContextLost: ((e: Event) => void) | null = null;
+  private _onContextRestored: (() => void) | null = null;
+  /** Optional host callback fired with `true` on context loss / `false` on
+   *  restore - wired to a non-fatal recovery banner (pdf11). */
+  private _onContextStateChange: ((lost: boolean) => void) | null = null;
+
+  /** modelId → member root group. */
+  private members = new Map<string, THREE.Group>();
+  /** modelId → discipline (kept so coloring can re-apply on demand). */
+  private memberDisciplines = new Map<string, string>();
+  /** Per-mesh override state (original material + active override). The map
+   * key is the mesh ``uuid``; we never reuse meshes across federations so
+   * a plain Map is safe. */
+  private meshOverrides = new WeakMap<THREE.Mesh, MeshOverride>();
+  /** Live mesh registry - WeakMaps aren't iterable, so we also keep a Set
+   * of meshes-with-overrides for sweep operations (toggle off, restore). */
+  private overriddenMeshes = new Set<THREE.Mesh>();
+
+  private disciplineColoringEnabled = false;
+  private isolatedClass: string | null = null;
+
+  /* ── Interaction: selection + measurement (B1 - full viewer) ─────── */
+  private raycaster = new THREE.Raycaster();
+  private ndc = new THREE.Vector2();
+  /** BoxHelper outlining the currently-selected mesh, or null. */
+  private selectionHelper: THREE.BoxHelper | null = null;
+  private selectedObject: THREE.Object3D | null = null;
+  private measureMode = false;
+  private measurePoints: THREE.Vector3[] = [];
+  /** Group holding the measurement markers + line; parented directly under the
+   * scene (not root) so isolation / colouring sweeps never touch it. */
+  private measureGroup: THREE.Group | null = null;
+  private _onPick: ((result: FederatedPickResult | null) => void) | null = null;
+  private _onMeasure: ((m: FederatedMeasurement | null) => void) | null = null;
+  /** Pointer-down screen position, used to tell a click from an orbit drag. */
+  private _pointerDownAt: { x: number; y: number } | null = null;
+  private _onPointerDown: ((e: PointerEvent) => void) | null = null;
+  private _onPointerUp: ((e: PointerEvent) => void) | null = null;
+
+  constructor(canvas: HTMLCanvasElement) {
+    const parent = canvas.parentElement;
+    if (!parent)
+      throw new Error('FederatedViewerScene: canvas must have a parent element');
+    this.canvas = canvas;
+    this.container = parent;
+
+    // Fail soft when WebGL2 is unavailable. three.js throws synchronously from
+    // the WebGLRenderer constructor in that case; without this guard the throw
+    // escapes the caller's React effect and trips the page error boundary
+    // (same failure class fixed in PointCloudBackground.tsx). We feature-detect
+    // first and additionally wrap the construction in try/catch so a non-fatal
+    // WebGLUnavailableError surfaces, which FederatedViewer renders as a
+    // friendly notice instead of crashing the page.
+    if (!canUseWebGL2()) {
+      throw new WebGLUnavailableError();
+    }
+    installWebGLPrecisionShim();
+    try {
+      this.renderer = new THREE.WebGLRenderer({
+        canvas,
+        antialias: true,
+        alpha: false,
+        logarithmicDepthBuffer: true,
+      });
+    } catch (err) {
+      throw new WebGLUnavailableError(
+        err instanceof Error ? err.message : undefined,
+      );
+    }
+    // Cap at min(2, devicePixelRatio) per Slice-3 perf budget. Higher DPRs
+    // quadruple fragment cost on multi-discipline federations.
+    const dpr = typeof window !== 'undefined' && window.devicePixelRatio
+      ? Math.min(2, window.devicePixelRatio)
+      : 1;
+    this.renderer.setPixelRatio(dpr);
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.0;
+    this.renderer.shadowMap.enabled = false;
+    this.updateSize();
+
+    // WebGL context-loss handling - a federated scene composes several fat
+    // IFC/RVT GLBs and is a prime candidate for a driver reset / VRAM-pressure
+    // context drop. preventDefault() on the loss event lets the browser
+    // restore the context; we pause rendering until it does (pdf11).
+    this._onContextLost = (e: Event) => {
+      e.preventDefault();
+      this._contextLost = true;
+      this._onContextStateChange?.(true);
+    };
+    this._onContextRestored = () => {
+      this._contextLost = false;
+      this._needsRender = true;
+      this._onContextStateChange?.(false);
+    };
+    canvas.addEventListener('webglcontextlost', this._onContextLost as EventListener, false);
+    canvas.addEventListener('webglcontextrestored', this._onContextRestored, false);
+
+    this.scene = new THREE.Scene();
+    this.scene.background = new THREE.Color(
+      typeof document !== 'undefined' &&
+      document.documentElement.classList.contains('dark')
+        ? 0x1a1a2e
+        : 0xf0f2f5,
+    );
+
+    const aspect = this.container.clientWidth / Math.max(this.container.clientHeight, 1);
+    this.camera = new THREE.PerspectiveCamera(45, aspect, 0.01, 1_000_000);
+    this.camera.position.set(30, 20, 30);
+    this.camera.lookAt(0, 0, 0);
+
+    this.controls = new OrbitControls(this.camera, canvas);
+    this.controls.enableDamping = true;
+    this.controls.dampingFactor = 0.08;
+    this.controls.rotateSpeed = 0.8;
+    this.controls.panSpeed = 1.0;
+    this.controls.zoomSpeed = 1.2;
+    this.controls.minDistance = 0.01;
+    this.controls.maxDistance = 100_000;
+    this.controls.minPolarAngle = 0.05;
+    this.controls.maxPolarAngle = Math.PI - 0.05;
+    this.controls.target.set(0, 0, 0);
+    this.controls.addEventListener('change', () => {
+      this._needsRender = true;
+    });
+
+    // Click vs drag discrimination: OrbitControls consumes pointer drags for
+    // orbit / pan, so we only treat a pointer-up as a "click" (pick a member,
+    // or drop a measurement point) when it lands within a few px of the
+    // pointer-down. A larger move means the user was orbiting, and we leave the
+    // current selection / measurement untouched.
+    this._onPointerDown = (e: PointerEvent) => {
+      this._pointerDownAt = { x: e.clientX, y: e.clientY };
+    };
+    this._onPointerUp = (e: PointerEvent) => {
+      const down = this._pointerDownAt;
+      this._pointerDownAt = null;
+      if (!down) return;
+      if (e.button !== 0) return; // left click only
+      const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
+      if (moved > 5) return; // treated as an orbit / pan drag
+      this.handleClick(e.clientX, e.clientY);
+    };
+    canvas.addEventListener('pointerdown', this._onPointerDown);
+    canvas.addEventListener('pointerup', this._onPointerUp);
+
+    this.setupLighting();
+
+    this.root = new THREE.Group();
+    this.root.name = 'federation-root';
+    this.scene.add(this.root);
+
+    // ResizeObserver covers the common case of the parent flex/grid
+    // expanding the canvas. We also pause rendering when the canvas
+    // scrolls out of the viewport via IntersectionObserver.
+    if (typeof ResizeObserver !== 'undefined') {
+      this.resizeObserver = new ResizeObserver(() => {
+        this.updateSize();
+        this._needsRender = true;
+      });
+      this.resizeObserver.observe(this.container);
+    }
+    if (typeof IntersectionObserver !== 'undefined') {
+      this.intersectionObserver = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+          this._isVisible = entry.isIntersecting;
+        }
+        this._needsRender = true;
+      });
+      this.intersectionObserver.observe(this.canvas);
+    }
+
+    this.animate();
+  }
+
+  private setupLighting(): void {
+    const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+    this.scene.add(ambient);
+    const hemi = new THREE.HemisphereLight(0xddeeff, 0xffeedd, 0.3);
+    hemi.position.set(0, 50, 0);
+    this.scene.add(hemi);
+    const directional = new THREE.DirectionalLight(0xffffff, 0.8);
+    directional.position.set(30, 50, 30);
+    directional.castShadow = false;
+    this.scene.add(directional);
+    const fill = new THREE.DirectionalLight(0xffffff, 0.3);
+    fill.position.set(-20, 30, -20);
+    this.scene.add(fill);
+  }
+
+  private updateSize(): void {
+    const w = this.container.clientWidth || 1;
+    const h = Math.max(this.container.clientHeight, 1);
+    this.renderer.setSize(w, h, false);
+    if (this.camera) {
+      this.camera.aspect = w / h;
+      this.camera.updateProjectionMatrix();
+    }
+  }
+
+  private animate = (): void => {
+    if (this._disposed) return;
+    this.animationId = requestAnimationFrame(this.animate);
+    if (!this._isVisible) return;
+    // Skip while the GL context is lost - render() would throw against a
+    // dead context. Resumes on `webglcontextrestored`.
+    if (this._contextLost) return;
+    const dampingDirty = this.controls.update();
+    if (dampingDirty) this._needsRender = true;
+    if (this._needsRender) {
+      this.renderer.render(this.scene, this.camera);
+      this._needsRender = false;
+    }
+  };
+
+  /** Mark dirty so the next animation tick re-renders. */
+  requestRender(): void {
+    this._needsRender = true;
+  }
+
+  /** Register a callback notified when the WebGL context is lost (`true`)
+   *  or restored (`false`). Pass `null` to clear. Fires immediately with the
+   *  current state so a listener attached after a loss still sees it. */
+  onContextStateChange(cb: ((lost: boolean) => void) | null): void {
+    this._onContextStateChange = cb;
+    if (cb) cb(this._contextLost);
+  }
+
+  /** True while the WebGL context is lost (between contextlost / restored). */
+  isContextLost(): boolean {
+    return this._contextLost;
+  }
+
+  /** Swap the scene background between dark and light mode.
+   *  Call this whenever the host detects a theme change so the canvas
+   *  background matches the surrounding UI. */
+  setDarkMode(dark: boolean): void {
+    (this.scene.background as THREE.Color).set(dark ? 0x1a1a2e : 0xf0f2f5);
+    this._needsRender = true;
+  }
+
+  /* ── Member management ─────────────────────────────────────────── */
+
+  async addMember(args: FederatedMemberAdd): Promise<void> {
+    if (this._disposed) return;
+    if (this.members.has(args.modelId)) {
+      this.removeMember(args.modelId);
+    }
+    const root = await parseMemberGeometry(args.glbBuffer);
+    root.name = `member-${args.modelId}`;
+    root.position.set(
+      args.originOffset.x ?? 0,
+      args.originOffset.y ?? 0,
+      args.originOffset.z ?? 0,
+    );
+    root.userData.modelId = args.modelId;
+    root.userData.discipline = args.discipline;
+
+    // Walk every mesh and stamp ifcClass / discipline. We do NOT clone
+    // materials here - that happens lazily on the first colour mutation.
+    root.traverse((obj) => {
+      if (obj instanceof THREE.Mesh) {
+        const ifcClass = deriveIfcClass(obj);
+        if (ifcClass) obj.userData.ifcClass = ifcClass;
+        obj.userData.discipline = args.discipline;
+        obj.userData.modelId = args.modelId;
+      }
+    });
+
+    this.members.set(args.modelId, root);
+    this.memberDisciplines.set(args.modelId, args.discipline);
+    this.root.add(root);
+
+    // Apply current viewer state (coloring + isolation) to the new
+    // member so it appears consistent with what's already on screen.
+    if (this.disciplineColoringEnabled) {
+      this.applyDisciplineColoringToMember(root, args.discipline);
+    }
+    if (this.isolatedClass !== null) {
+      this.applyIsolationToMember(root, this.isolatedClass);
+    }
+
+    this._needsRender = true;
+  }
+
+  removeMember(modelId: string): void {
+    const member = this.members.get(modelId);
+    if (!member) return;
+    // Drop the selection outline if it points into the member being removed,
+    // otherwise the BoxHelper would reference a disposed object.
+    if (this.selectedObject && this.isDescendantOf(this.selectedObject, member)) {
+      this.clearSelection();
+    }
+    this.root.remove(member);
+    this.disposeGroup(member);
+    this.members.delete(modelId);
+    this.memberDisciplines.delete(modelId);
+    this._needsRender = true;
+  }
+
+  clear(): void {
+    for (const id of Array.from(this.members.keys())) {
+      this.removeMember(id);
+    }
+  }
+
+  /* ── Coloring ──────────────────────────────────────────────────── */
+
+  setDisciplineColoringEnabled(enabled: boolean): void {
+    this.disciplineColoringEnabled = enabled;
+    if (enabled) {
+      for (const [modelId, member] of this.members) {
+        const discipline =
+          this.memberDisciplines.get(modelId) ??
+          (member.userData.discipline as string) ??
+          'other';
+        this.applyDisciplineColoringToMember(member, discipline);
+      }
+    } else {
+      this.restoreAllOriginals();
+    }
+    this._needsRender = true;
+  }
+
+  private applyDisciplineColoringToMember(
+    member: THREE.Group,
+    discipline: string,
+  ): void {
+    const color = paletteColor(discipline);
+    member.traverse((obj) => {
+      if (obj instanceof THREE.Mesh) {
+        this.applyOverrideColor(obj, color);
+      }
+    });
+  }
+
+  private applyOverrideColor(mesh: THREE.Mesh, color: THREE.Color): void {
+    let state = this.meshOverrides.get(mesh);
+    if (!state) {
+      state = {
+        originalMaterial: mesh.material,
+        override: null,
+        cloned: false,
+      };
+      this.meshOverrides.set(mesh, state);
+      this.overriddenMeshes.add(mesh);
+    }
+    // Lazy-clone: only on first mutation. Reuse the cloned material on
+    // subsequent toggles to keep allocations bounded.
+    if (!state.cloned) {
+      if (Array.isArray(mesh.material)) {
+        const clones = mesh.material.map((m) => m.clone());
+        state.override = clones;
+        mesh.material = clones;
+      } else if (mesh.material) {
+        const cloned = mesh.material.clone();
+        state.override = cloned;
+        mesh.material = cloned;
+      }
+      state.cloned = true;
+    } else if (state.override) {
+      mesh.material = state.override;
+    }
+    // Apply the discipline tint + slight transparency for layering.
+    const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+    for (const mat of mats) {
+      const tinted = mat as THREE.Material & {
+        color?: THREE.Color;
+        opacity?: number;
+        transparent?: boolean;
+      };
+      if (tinted.color && typeof tinted.color.copy === 'function') {
+        tinted.color.copy(color);
+      }
+      tinted.transparent = true;
+      tinted.opacity = 0.85;
+      mat.needsUpdate = true;
+    }
+  }
+
+  private restoreAllOriginals(): void {
+    for (const mesh of this.overriddenMeshes) {
+      const state = this.meshOverrides.get(mesh);
+      if (!state) continue;
+      mesh.material = state.originalMaterial;
+      // Drop the cloned override - we'll re-clone on the next toggle.
+      if (state.override) {
+        const mats = Array.isArray(state.override) ? state.override : [state.override];
+        for (const m of mats) m.dispose();
+      }
+      // Fully evict the per-mesh state from the WeakMap, not just null out its
+      // fields. If the stale state object lingered, applyOverrideColor's
+      // `if (!state)` branch would be skipped on the next enable, so the mesh
+      // would be re-tinted but never re-added to overriddenMeshes - leaving the
+      // sweep set empty and breaking the following disable (off→on→off would
+      // get stuck tinted). Deleting the entry makes re-enabling rebuild state
+      // from scratch, so repeated toggling is idempotent.
+      this.meshOverrides.delete(mesh);
+    }
+    // Clear the sweep set now that all overrides are reverted. Without this
+    // the set would accumulate stale mesh refs across add/remove cycles -
+    // each removeMember() call already deletes entries via disposeGroup(),
+    // but meshes from members that were never removed (just uncolored)
+    // would stay until the next disposeGroup / dispose(). Clearing here
+    // keeps the set bounded to the currently-overridden meshes only.
+    this.overriddenMeshes.clear();
+  }
+
+  /* ── Isolation ─────────────────────────────────────────────────── */
+
+  isolateClass(ifcClass: string | null): void {
+    this.isolatedClass = ifcClass;
+    for (const member of this.members.values()) {
+      this.applyIsolationToMember(member, ifcClass);
+    }
+    this._needsRender = true;
+  }
+
+  private applyIsolationToMember(
+    member: THREE.Group,
+    ifcClass: string | null,
+  ): void {
+    member.traverse((obj) => {
+      if (obj instanceof THREE.Mesh) {
+        if (ifcClass === null) {
+          obj.visible = true;
+        } else {
+          obj.visible = obj.userData.ifcClass === ifcClass;
+        }
+      }
+    });
+  }
+
+  /* ── Visibility ───────────────────────────────────────────────── */
+
+  setMemberVisible(modelId: string, visible: boolean): void {
+    const member = this.members.get(modelId);
+    if (!member) return;
+    member.visible = visible;
+    this._needsRender = true;
+  }
+
+  /* ── Camera ───────────────────────────────────────────────────── */
+
+  frameAll(): void {
+    this.scene.updateMatrixWorld(true);
+    const box = new THREE.Box3();
+    const tmp = new THREE.Box3();
+    for (const member of this.members.values()) {
+      if (!member.visible) continue;
+      tmp.setFromObject(member);
+      if (!tmp.isEmpty() && Number.isFinite(tmp.min.x)) {
+        box.union(tmp);
+      }
+    }
+    if (box.isEmpty()) return;
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z);
+    if (!Number.isFinite(maxDim) || maxDim <= 0) return;
+    const fov = this.camera.fov * (Math.PI / 180);
+    const dist = (maxDim / (2 * Math.tan(fov / 2))) * 1.2;
+    this.camera.near = Math.max(maxDim / 50_000, 0.01);
+    this.camera.far = Math.max(dist * 12, maxDim * 50);
+    this.camera.updateProjectionMatrix();
+    this.controls.maxDistance = this.camera.far * 0.5;
+    this.controls.target.copy(center);
+    this.camera.position.set(
+      center.x + dist * 0.7,
+      center.y + dist * 0.35,
+      center.z + dist * 0.5,
+    );
+    this.camera.lookAt(center);
+    this.controls.update();
+    this._needsRender = true;
+  }
+
+  resetView(): void {
+    this.controls.target.set(0, 0, 0);
+    this.camera.position.set(30, 20, 30);
+    this.camera.lookAt(0, 0, 0);
+    this.controls.update();
+    this._needsRender = true;
+  }
+
+  /* ── Interaction: selection + measurement (B1) ─────────────────── */
+
+  /** Register a callback fired when the user clicks a member element (or empty
+   *  space, which reports null). Pass null to clear. */
+  setOnPick(cb: ((result: FederatedPickResult | null) => void) | null): void {
+    this._onPick = cb;
+  }
+
+  /** Register a callback fired as measurement points are placed: pointCount=1
+   *  while awaiting the second click, then the finished distance, then null on
+   *  clear. Pass null to clear. */
+  setOnMeasure(cb: ((m: FederatedMeasurement | null) => void) | null): void {
+    this._onMeasure = cb;
+  }
+
+  /** Toggle distance-measurement mode. Turning it on clears the current
+   *  selection, turning it off clears any in-progress measurement, so the two
+   *  click modes never fight over the same pointer-up. */
+  setMeasureMode(enabled: boolean): void {
+    this.measureMode = enabled;
+    if (enabled) {
+      this.clearSelection();
+    } else {
+      this.clearMeasurements();
+    }
+  }
+
+  isMeasureMode(): boolean {
+    return this.measureMode;
+  }
+
+  /** Remove the selection outline (no-op if nothing is selected). */
+  clearSelection(): void {
+    this.selectedObject = null;
+    if (this.selectionHelper) {
+      this.scene.remove(this.selectionHelper);
+      this.selectionHelper.geometry.dispose();
+      (this.selectionHelper.material as THREE.Material).dispose();
+      this.selectionHelper = null;
+      this._needsRender = true;
+    }
+  }
+
+  /** Remove all measurement markers + the connecting line. */
+  clearMeasurements(): void {
+    this.measurePoints = [];
+    if (this.measureGroup) {
+      this.disposeMeasureGroup();
+      this._onMeasure?.(null);
+      this._needsRender = true;
+    }
+  }
+
+  private disposeMeasureGroup(): void {
+    if (!this.measureGroup) return;
+    this.measureGroup.traverse((obj) => {
+      const mesh = obj as THREE.Mesh & { geometry?: THREE.BufferGeometry };
+      if (mesh.geometry && typeof mesh.geometry.dispose === 'function') {
+        mesh.geometry.dispose();
+      }
+      const mat = (mesh as THREE.Mesh).material;
+      if (mat) {
+        const mats = Array.isArray(mat) ? mat : [mat];
+        for (const m of mats) {
+          if (m && typeof m.dispose === 'function') m.dispose();
+        }
+      }
+    });
+    this.scene.remove(this.measureGroup);
+    this.measureGroup = null;
+  }
+
+  /** True iff ``obj`` is ``ancestor`` or sits somewhere below it. */
+  private isDescendantOf(obj: THREE.Object3D, ancestor: THREE.Object3D): boolean {
+    let cursor: THREE.Object3D | null = obj;
+    while (cursor) {
+      if (cursor === ancestor) return true;
+      cursor = cursor.parent;
+    }
+    return false;
+  }
+
+  /** Convert a client (screen) coordinate to a raycast hit against visible
+   *  member meshes. Returns the leaf mesh + world hit point, or null. */
+  private raycast(
+    clientX: number,
+    clientY: number,
+  ): { object: THREE.Object3D; point: THREE.Vector3 } | null {
+    const rect = this.canvas.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return null;
+    this.ndc.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+    this.ndc.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+    this.raycaster.setFromCamera(this.ndc, this.camera);
+    const hits = this.raycaster.intersectObject(this.root, true);
+    for (const hit of hits) {
+      // intersectObject skips meshes with visible=false, but a member GROUP
+      // hidden via the legend keeps its meshes visible=true - guard against a
+      // hit inside a hidden member or under an isolated-away branch.
+      if (this.isHitVisible(hit.object)) {
+        return { object: hit.object, point: hit.point.clone() };
+      }
+    }
+    return null;
+  }
+
+  private isHitVisible(obj: THREE.Object3D): boolean {
+    let cursor: THREE.Object3D | null = obj;
+    while (cursor) {
+      if (cursor.visible === false) return false;
+      cursor = cursor.parent;
+    }
+    return true;
+  }
+
+  private handleClick(clientX: number, clientY: number): void {
+    const hit = this.raycast(clientX, clientY);
+    if (this.measureMode) {
+      if (hit) this.addMeasurePoint(hit.point);
+      return;
+    }
+    if (!hit) {
+      this.clearSelection();
+      this._onPick?.(null);
+      return;
+    }
+    this.applySelection(hit.object);
+    this._onPick?.(this.toPickResult(hit.object, hit.point));
+  }
+
+  private toPickResult(
+    obj: THREE.Object3D,
+    point: THREE.Vector3,
+  ): FederatedPickResult {
+    const ifcClass = deriveIfcClass(obj);
+    // modelId / discipline are stamped on the mesh by addMember; fall back to
+    // walking ancestors for nested meshes.
+    let modelId = '';
+    let discipline = '';
+    let cursor: THREE.Object3D | null = obj;
+    while (cursor && (!modelId || !discipline)) {
+      const ud = cursor.userData ?? {};
+      if (!modelId && typeof ud.modelId === 'string') modelId = ud.modelId;
+      if (!discipline && typeof ud.discipline === 'string') {
+        discipline = ud.discipline;
+      }
+      cursor = cursor.parent;
+    }
+    return {
+      modelId,
+      discipline: discipline || 'other',
+      ifcClass,
+      objectName: obj.name || '',
+      point: { x: point.x, y: point.y, z: point.z },
+    };
+  }
+
+  private applySelection(obj: THREE.Object3D): void {
+    this.clearSelection();
+    this.selectedObject = obj;
+    const helper = new THREE.BoxHelper(obj, 0xffaa00);
+    const mat = helper.material as THREE.LineBasicMaterial;
+    mat.depthTest = false;
+    mat.transparent = true;
+    helper.renderOrder = 999;
+    this.selectionHelper = helper;
+    this.scene.add(helper);
+    this._needsRender = true;
+  }
+
+  private addMeasurePoint(point: THREE.Vector3): void {
+    // A third click starts a fresh measurement.
+    if (this.measurePoints.length >= 2) {
+      this.clearMeasurements();
+    }
+    this.measurePoints.push(point.clone());
+    if (!this.measureGroup) {
+      this.measureGroup = new THREE.Group();
+      this.measureGroup.name = 'federation-measure';
+      this.scene.add(this.measureGroup);
+    }
+    // Marker sphere scaled by camera distance so it stays visible at any zoom.
+    const radius = Math.max(this.camera.position.distanceTo(point) * 0.01, 1e-4);
+    const sphere = new THREE.Mesh(
+      new THREE.SphereGeometry(radius, 12, 12),
+      new THREE.MeshBasicMaterial({ color: 0xff3344, depthTest: false }),
+    );
+    sphere.position.copy(point);
+    sphere.renderOrder = 1000;
+    this.measureGroup.add(sphere);
+
+    if (this.measurePoints.length === 2) {
+      const a = this.measurePoints[0] as THREE.Vector3;
+      const b = this.measurePoints[1] as THREE.Vector3;
+      const lineGeom = new THREE.BufferGeometry().setFromPoints([a, b]);
+      const line = new THREE.Line(
+        lineGeom,
+        new THREE.LineBasicMaterial({ color: 0xff3344, depthTest: false }),
+      );
+      line.renderOrder = 1000;
+      this.measureGroup.add(line);
+      this._onMeasure?.({ distance: a.distanceTo(b), pointCount: 2 });
+    } else {
+      this._onMeasure?.({ distance: 0, pointCount: 1 });
+    }
+    this._needsRender = true;
+  }
+
+  /* ── Disposal ──────────────────────────────────────────────────── */
+
+  private disposeGroup(group: THREE.Group): void {
+    group.traverse((obj) => {
+      if (obj instanceof THREE.Mesh) {
+        const state = this.meshOverrides.get(obj);
+        if (state?.override) {
+          const mats = Array.isArray(state.override) ? state.override : [state.override];
+          for (const m of mats) m.dispose();
+        }
+        // Original materials - only dispose if we cloned. Otherwise the
+        // user might still need them; in practice we own them (loaded
+        // from the GLB) so disposing is safe and prevents leaks.
+        const orig = state ? state.originalMaterial : obj.material;
+        const mats = Array.isArray(orig) ? orig : [orig];
+        for (const m of mats) {
+          if (m && typeof (m as THREE.Material).dispose === 'function') {
+            (m as THREE.Material).dispose();
+          }
+        }
+        if (obj.geometry && typeof obj.geometry.dispose === 'function') {
+          obj.geometry.dispose();
+        }
+        this.overriddenMeshes.delete(obj);
+      }
+    });
+  }
+
+  dispose(): void {
+    if (this._disposed) return;
+    this._disposed = true;
+    if (this.animationId !== null) {
+      cancelAnimationFrame(this.animationId);
+      this.animationId = null;
+    }
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = null;
+    }
+    if (this.intersectionObserver) {
+      this.intersectionObserver.disconnect();
+      this.intersectionObserver = null;
+    }
+    // Detach the WebGL context-loss listeners.
+    if (this._onContextLost) {
+      this.canvas.removeEventListener('webglcontextlost', this._onContextLost as EventListener, false);
+      this._onContextLost = null;
+    }
+    if (this._onContextRestored) {
+      this.canvas.removeEventListener('webglcontextrestored', this._onContextRestored, false);
+      this._onContextRestored = null;
+    }
+    this._onContextStateChange = null;
+    // Detach the interaction (pick / measure) pointer listeners and tear down
+    // the selection outline + measurement markers.
+    if (this._onPointerDown) {
+      this.canvas.removeEventListener('pointerdown', this._onPointerDown);
+      this._onPointerDown = null;
+    }
+    if (this._onPointerUp) {
+      this.canvas.removeEventListener('pointerup', this._onPointerUp);
+      this._onPointerUp = null;
+    }
+    this.clearSelection();
+    this.clearMeasurements();
+    this._onPick = null;
+    this._onMeasure = null;
+    this.clear();
+    this.controls.dispose();
+    // Release the WebGL context itself, not only GPU resources. The federated
+    // viewer remounts on project/model navigation; without forceContextLoss
+    // the browser's live-context cap is hit and later canvases render black.
+    try {
+      this.renderer.forceContextLoss();
+    } catch {
+      // mocked / headless renderers may not implement it - safe to ignore
+    }
+    this.renderer.dispose();
+    // Lights / helpers - let them go with the scene reference. Three.js
+    // does not reference them after dispose; GC reclaims them once the
+    // scene itself is unreachable.
+    this.overriddenMeshes.clear();
+  }
+
+  /* ── Test/inspection helpers (intentionally not on the public API
+   *    spec - needed for the unit tests to make assertions about
+   *    internal state without poking at private fields directly). */
+
+  /** Number of registered members. */
+  getMemberCount(): number {
+    return this.members.size;
+  }
+  /** Get the member group for a given modelId (or undefined). */
+  getMemberGroup(modelId: string): THREE.Group | undefined {
+    return this.members.get(modelId);
+  }
+  /** True iff discipline coloring is currently on. */
+  isDisciplineColoringEnabled(): boolean {
+    return this.disciplineColoringEnabled;
+  }
+  /** Current isolation class, or null when nothing is isolated. */
+  getIsolatedClass(): string | null {
+    return this.isolatedClass;
+  }
+  /** True after ``dispose()`` ran. */
+  isDisposed(): boolean {
+    return this._disposed;
+  }
+}
+
+export default FederatedViewerScene;

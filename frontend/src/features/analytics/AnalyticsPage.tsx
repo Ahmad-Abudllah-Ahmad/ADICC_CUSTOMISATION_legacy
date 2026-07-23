@@ -1,0 +1,917 @@
+// DDC-CWICR-OE: DataDrivenConstruction · OpenConstructionERP
+// Copyright (c) 2026 Artem Boiko / DataDrivenConstruction
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { apiGet } from '@/shared/lib/api';
+import { fmtCurrency, fmtNumber, getIntlLocale } from '@/shared/lib/formatters';
+import {
+  FolderOpen,
+  DollarSign,
+  TrendingDown,
+  AlertTriangle,
+  ArrowUpDown,
+  ChevronUp,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  BarChart3,
+  Search,
+  Database,
+  AlertCircle,
+  RefreshCw,
+  Wallet,
+} from 'lucide-react';
+import { Breadcrumb, Button, Card, Badge, Skeleton, EmptyState, ModuleGuideButton } from '@/shared/ui';
+import { PageHeader } from '@/shared/ui/PageHeader';
+import { DismissibleInfo, IntroRichText } from '@/shared/ui/DismissibleInfo';
+import { analyticsGuide } from './analyticsGuide';
+
+/* ── Helpers ─────────────────────────────────────────────────────────── */
+
+// Rows rendered per page in the comparison table. The overview endpoint
+// returns every owned project in one payload, so for large portfolios we
+// paginate on the client to keep the table (and its bar chart) responsive
+// instead of mounting hundreds of rows at once.
+const PAGE_SIZE = 50;
+
+function compactCurrency(value: number, currency = 'EUR'): string {
+  const safe = currency && /^[A-Z]{3}$/.test(currency) ? currency : 'EUR';
+  try {
+    return new Intl.NumberFormat(getIntlLocale(), {
+      style: 'currency',
+      currency: safe,
+      notation: 'compact',
+      maximumFractionDigits: 1,
+    }).format(value);
+  } catch {
+    if (Math.abs(value) >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M ${safe}`;
+    if (Math.abs(value) >= 1_000) return `${(value / 1_000).toFixed(0)}K ${safe}`;
+    return `${value.toFixed(0)} ${safe}`;
+  }
+}
+
+/* ── Types ────────────────────────────────────────────────────────────── */
+
+interface ProjectAnalytics {
+  id: string;
+  name: string;
+  region: string;
+  currency: string;
+  budget: number;
+  actual: number;
+  variance: number;
+  variance_pct: number | null;
+  boq_count: number;
+  status: 'on_budget' | 'over_budget';
+}
+
+interface CurrencyTotal {
+  currency: string;
+  total_planned: number;
+  total_actual: number;
+  total_variance: number;
+}
+
+interface AnalyticsOverview {
+  total_projects: number;
+  projects_with_budget: number;
+  total_planned: number;
+  total_actual: number;
+  total_variance: number;
+  multi_currency: boolean;
+  totals_by_currency: CurrencyTotal[];
+  over_budget_count: number;
+  projects: ProjectAnalytics[];
+}
+
+type SortField = 'name' | 'budget' | 'actual' | 'variance' | 'variance_pct';
+type SortDir = 'asc' | 'desc';
+
+/* ── Component ────────────────────────────────────────────────────────── */
+
+export function AnalyticsPage() {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [sortField, setSortField] = useState<SortField>('budget');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [regionFilter, setRegionFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [search, setSearch] = useState('');
+  // Debounced copy of the raw search box value. The expensive filter/sort
+  // memo (and table re-render) keys off this, so typing only recomputes once
+  // the user pauses for 300ms instead of on every keystroke.
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(0);
+
+  const { data, isLoading, isError, refetch, isFetching } = useQuery<AnalyticsOverview>({
+    queryKey: ['analytics', 'overview'],
+    queryFn: () => apiGet<AnalyticsOverview>('/v1/projects/analytics/overview/'),
+  });
+
+  // Debounce the search box (300ms), mirroring the costs browser pattern.
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const regions = useMemo(() => {
+    if (!data?.projects) return [];
+    return [...new Set(data.projects.map(p => p.region).filter(Boolean))].sort();
+  }, [data?.projects]);
+
+  const sortedProjects = useMemo(() => {
+    if (!data?.projects) return [];
+    let filtered = data.projects;
+    if (regionFilter) filtered = filtered.filter(p => p.region === regionFilter);
+    if (statusFilter) filtered = filtered.filter(p => p.status === statusFilter);
+    if (debouncedSearch) {
+      const q = debouncedSearch.toLowerCase();
+      filtered = filtered.filter(p => p.name.toLowerCase().includes(q));
+    }
+    return [...filtered].sort((a, b) => {
+      let cmp = 0;
+      if (sortField === 'name') {
+        cmp = a.name.localeCompare(b.name);
+      } else {
+        cmp = (a[sortField] ?? 0) - (b[sortField] ?? 0);
+      }
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+  }, [data?.projects, sortField, sortDir, regionFilter, statusFilter, debouncedSearch]);
+
+  // Reset to the first page whenever the result set changes (new filter,
+  // search, sort, or freshly fetched data) so the user never lands on an
+  // out-of-range page showing nothing.
+  useEffect(() => {
+    setPage(0);
+  }, [debouncedSearch, regionFilter, statusFilter, sortField, sortDir, data?.projects]);
+
+  // Total pages for the current filtered set (at least one, even when empty).
+  const pageCount = Math.max(1, Math.ceil(sortedProjects.length / PAGE_SIZE));
+  // Clamp the page index in case the result set shrank between renders.
+  const safePage = Math.min(page, pageCount - 1);
+  const pagedProjects = useMemo(
+    () => sortedProjects.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE),
+    [sortedProjects, safePage],
+  );
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      setSortDir('desc');
+    }
+  };
+
+  const handleExportCSV = useCallback(() => {
+    if (!sortedProjects.length) return;
+    const headers = [
+      t('analytics.col_project', { defaultValue: 'Project' }),
+      t('analytics.col_region', { defaultValue: 'Region' }),
+      t('analytics.col_currency', { defaultValue: 'Currency' }),
+      t('analytics.col_budget', { defaultValue: 'Budget' }),
+      t('analytics.col_actual', { defaultValue: 'Actual' }),
+      t('analytics.col_variance', { defaultValue: 'Variance' }),
+      t('analytics.col_variance_pct', { defaultValue: 'Var. %' }),
+      t('analytics.col_status', { defaultValue: 'Status' }),
+    ];
+    const rows = sortedProjects.map(p => [
+      `"${p.name.replace(/"/g, '""')}"`,
+      p.region,
+      p.currency,
+      Number(p.budget).toFixed(0),
+      Number(p.actual).toFixed(0),
+      Number(p.variance).toFixed(0),
+      p.variance_pct == null ? '' : `${Number(p.variance_pct).toFixed(1)}%`,
+      p.status,
+    ].join(','));
+    const csv = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'analytics_export.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [sortedProjects, t]);
+
+  // Find the max budget for bar chart scaling. Scale to the rows actually
+  // shown on the current page so each page's bars use the full width.
+  const maxBudget = useMemo(() => {
+    if (!pagedProjects.length) return 1;
+    return Math.max(...pagedProjects.map((p) => Math.max(p.budget, p.actual)), 1);
+  }, [pagedProjects]);
+
+  const currencyTotals = data?.totals_by_currency ?? [];
+  // Treat as multi-currency only when the backend flags it AND we actually
+  // have per-currency breakdowns to render; otherwise fall back to the single
+  // headline figure labelled with that one currency's ISO code.
+  const isMultiCurrency = Boolean(data?.multi_currency) && currencyTotals.length > 1;
+  // The single ISO code to label the flat scalar headline figures with, so a
+  // GBP/USD/AED portfolio is never mislabelled as EUR.
+  const singleCurrency = currencyTotals.length === 1 ? currencyTotals[0]?.currency : undefined;
+
+  const totalVariancePct =
+    data && data.total_planned > 0
+      ? `${((data.total_variance / data.total_planned) * 100).toFixed(1)}%`
+      : '—';
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <Skeleton className="h-8 w-64 mb-2" />
+          <Skeleton className="h-4 w-96" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i}>
+              <Skeleton className="h-4 w-24 mb-3" />
+              <Skeleton className="h-8 w-32" />
+            </Card>
+          ))}
+        </div>
+        <Card>
+          <Skeleton className="h-6 w-48 mb-4" />
+          <div className="space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-10 w-full" />
+            ))}
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  /* ── Fetch failed — distinguish a server error from an empty portfolio ── */
+  if (isError) {
+    return (
+      <div className="space-y-6">
+        <Breadcrumb
+          items={[
+            { label: t('nav.analytics', { defaultValue: 'Analytics' }) },
+          ]}
+          className="mb-4"
+        />
+        <EmptyState
+          icon={<AlertCircle size={28} />}
+          title={t('analytics.error_title', { defaultValue: 'Could not load analytics' })}
+          description={t('analytics.error_description', {
+            defaultValue:
+              'Something went wrong while fetching analytics data. Check your connection and try again.',
+          })}
+          action={
+            <Button
+              variant="primary"
+              icon={<RefreshCw size={14} className={isFetching ? 'animate-spin' : undefined} />}
+              onClick={() => refetch()}
+              disabled={isFetching}
+            >
+              {t('analytics.retry', { defaultValue: 'Retry' })}
+            </Button>
+          }
+        />
+      </div>
+    );
+  }
+
+  /* ── No data at all — guide the user ────────────────────────────────── */
+  if (!data || data.total_projects === 0) {
+    return (
+      <div className="space-y-6">
+        <Breadcrumb
+          items={[
+            { label: t('nav.analytics', { defaultValue: 'Analytics' }) },
+          ]}
+          className="mb-4"
+        />
+        <EmptyState
+          icon={<BarChart3 size={28} />}
+          title={t('analytics.empty_title', { defaultValue: 'No analytics data yet' })}
+          description={t('analytics.empty_description', {
+            defaultValue:
+              'Analytics are generated from your projects and cost data. Create a project or import a cost database to get started.',
+          })}
+          action={
+            <div className="flex items-center gap-3">
+              <Button
+                variant="primary"
+                icon={<FolderOpen size={14} />}
+                onClick={() => navigate('/projects')}
+              >
+                {t('analytics.action_create_project', { defaultValue: 'Create a Project' })}
+              </Button>
+              <Button
+                variant="secondary"
+                icon={<Database size={14} />}
+                onClick={() => navigate('/costs')}
+              >
+                {t('analytics.action_import_costs', { defaultValue: 'Import Cost Database' })}
+              </Button>
+            </div>
+          }
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-5 animate-fade-in">
+      {/* Breadcrumb */}
+      <Breadcrumb
+        items={[
+          { label: t('nav.analytics', { defaultValue: 'Analytics' }) },
+        ]}
+      />
+
+      {/* Header — module name + icon live in the global top bar; this page
+          renders only the muted subtitle + actions (canon §2). */}
+      <PageHeader
+        srTitle={t('nav.analytics', { defaultValue: 'Analytics' })}
+        subtitle={t('analytics.subtitle', {
+          defaultValue: 'Aggregated KPIs across all projects',
+        })}
+        actions={
+          <div className="flex items-center gap-2">
+            <ModuleGuideButton content={analyticsGuide} />
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<Download size={14} />}
+              onClick={handleExportCSV}
+              disabled={!sortedProjects.length}
+            >
+              {t('analytics.export_csv', { defaultValue: 'Export CSV' })}
+            </Button>
+          </div>
+        }
+      />
+
+      <DismissibleInfo
+        storageKey="analytics"
+        title={t('analytics.intro_title', {
+          defaultValue: 'See which projects are bleeding money',
+        })}
+        more={
+          t('analytics.intro_more', { defaultValue: '' })
+            ? <IntroRichText text={t('analytics.intro_more')} />
+            : undefined
+        }
+        links={[
+          {
+            label: t('nav.projects', { defaultValue: 'Projects' }),
+            onClick: () => navigate('/projects'),
+          },
+          {
+            label: t('nav.reporting', { defaultValue: 'Reporting' }),
+            onClick: () => navigate('/reporting'),
+          },
+          {
+            label: t('nav.finance', { defaultValue: 'Finance' }),
+            onClick: () => navigate('/finance'),
+          },
+        ]}
+      >
+        {t('analytics.intro_body', {
+          defaultValue:
+            'This rolls every project\'s budget against actual cost into one sortable table and bar chart, flagging which jobs are over budget and by how much, with currencies kept separate so a EUR job is never blended with a USD one. Filter by region or status, search, and export the comparison to CSV. Click a row to open that project, or switch to Reporting for the role-by-role KPI view.',
+        })}
+      </DismissibleInfo>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <KPICard
+          icon={<FolderOpen size={20} />}
+          iconBg="bg-oe-blue-subtle"
+          iconColor="text-oe-blue"
+          label={t('analytics.total_projects', { defaultValue: 'Total Projects' })}
+          value={String(data?.total_projects ?? 0)}
+          sub={t('analytics.with_budget', {
+            defaultValue: '{{count}} with budget',
+            count: data?.projects_with_budget ?? 0,
+          })}
+        />
+        <KPICard
+          icon={<DollarSign size={20} />}
+          iconBg="bg-semantic-success-bg"
+          iconColor="text-semantic-success"
+          label={t('analytics.total_budget', { defaultValue: 'Total Budget' })}
+          {...(isMultiCurrency
+            ? {
+                valueNode: (
+                  <div className="space-y-0.5">
+                    {currencyTotals.map((v) => (
+                      <div key={v.currency} className="flex items-baseline justify-between gap-2">
+                        <span className="text-base font-bold text-content-primary tabular-nums truncate">
+                          {compactCurrency(v.total_planned, v.currency)}
+                        </span>
+                        <span className="text-2xs text-content-tertiary tabular-nums shrink-0">
+                          {compactCurrency(v.total_actual, v.currency)}{' '}
+                          {t('analytics.actual_short', { defaultValue: 'Actual' })}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ),
+                sub: t('analytics.multi_currency_note', {
+                  defaultValue: 'Multiple currencies, shown per currency',
+                }),
+              }
+            : {
+                value: compactCurrency(data?.total_planned ?? 0, singleCurrency),
+                sub: t('analytics.actual_spend', {
+                  defaultValue: '{{amount}} actual',
+                  amount: compactCurrency(data?.total_actual ?? 0, singleCurrency),
+                }),
+              })}
+        />
+        <KPICard
+          icon={<TrendingDown size={20} />}
+          iconBg={
+            (data?.total_variance ?? 0) >= 0
+              ? 'bg-semantic-success-bg'
+              : 'bg-semantic-error-bg'
+          }
+          iconColor={
+            (data?.total_variance ?? 0) >= 0 ? 'text-semantic-success' : 'text-semantic-error'
+          }
+          label={t('analytics.overall_variance', { defaultValue: 'Overall Variance' })}
+          {...(isMultiCurrency
+            ? {
+                valueNode: (
+                  <div className="space-y-0.5">
+                    {currencyTotals.map((v) => (
+                      <div key={v.currency} className="flex items-baseline justify-between gap-2">
+                        <span
+                          className={`text-base font-bold tabular-nums truncate ${
+                            v.total_variance >= 0 ? 'text-semantic-success' : 'text-semantic-error'
+                          }`}
+                        >
+                          {v.total_variance >= 0 ? '+' : ''}
+                          {compactCurrency(v.total_variance, v.currency)}
+                        </span>
+                        <span className="text-2xs text-content-tertiary tabular-nums shrink-0">
+                          {v.total_planned > 0
+                            ? `${fmtNumber((v.total_variance / v.total_planned) * 100, 1)}%`
+                            : '—'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ),
+                sub: t('analytics.multi_currency_note', {
+                  defaultValue: 'Multiple currencies, shown per currency',
+                }),
+              }
+            : {
+                value: compactCurrency(data?.total_variance ?? 0, singleCurrency),
+                badge: (
+                  <Badge
+                    variant={(data?.total_variance ?? 0) >= 0 ? 'success' : 'error'}
+                    size="sm"
+                  >
+                    {totalVariancePct}
+                  </Badge>
+                ),
+              })}
+        />
+        <KPICard
+          icon={<AlertTriangle size={20} />}
+          iconBg={
+            (data?.over_budget_count ?? 0) > 0
+              ? 'bg-semantic-error-bg'
+              : 'bg-semantic-success-bg'
+          }
+          iconColor={
+            (data?.over_budget_count ?? 0) > 0 ? 'text-semantic-error' : 'text-semantic-success'
+          }
+          label={t('analytics.at_risk', { defaultValue: 'Projects at Risk' })}
+          value={String(data?.over_budget_count ?? 0)}
+          sub={t('analytics.over_budget_label', { defaultValue: 'over budget' })}
+        />
+      </div>
+
+      {/* Projects Comparison Table */}
+      <Card padding="none">
+        <div className="px-6 py-4 border-b border-border-light">
+          <h2 className="text-lg font-semibold text-content-primary">
+            {t('analytics.project_comparison', { defaultValue: 'Project Comparison' })}
+          </h2>
+        </div>
+        <div className="px-6 py-3 border-b border-border-light flex flex-wrap items-center gap-3">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t('analytics.search_placeholder', { defaultValue: 'Search projects...' })}
+            className="h-8 w-48 rounded-lg border border-border-light bg-surface-primary px-3 text-xs focus:outline-none focus:ring-1 focus:ring-oe-blue"
+            aria-label={t('analytics.search_placeholder', { defaultValue: 'Search projects...' })}
+          />
+          <select
+            value={regionFilter}
+            onChange={(e) => setRegionFilter(e.target.value)}
+            className="h-8 rounded-lg border border-border-light bg-surface-primary px-2 text-xs focus:outline-none focus:ring-1 focus:ring-oe-blue"
+            aria-label={t('analytics.filter_region', { defaultValue: 'Filter by region' })}
+          >
+            <option value="">{t('analytics.all_regions', { defaultValue: 'All Regions' })}</option>
+            {regions.map(r => <option key={r} value={r}>{r}</option>)}
+          </select>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="h-8 rounded-lg border border-border-light bg-surface-primary px-2 text-xs focus:outline-none focus:ring-1 focus:ring-oe-blue"
+            aria-label={t('analytics.filter_status', { defaultValue: 'Filter by status' })}
+          >
+            <option value="">{t('analytics.all_statuses', { defaultValue: 'All Statuses' })}</option>
+            <option value="on_budget">{t('analytics.on_budget', { defaultValue: 'On Budget' })}</option>
+            <option value="over_budget">{t('analytics.over_budget', { defaultValue: 'Over Budget' })}</option>
+          </select>
+          <span className="text-2xs text-content-tertiary ml-auto">
+            {sortedProjects.length} {t('analytics.of_total', { defaultValue: 'of' })} {data?.projects.length ?? 0}
+          </span>
+        </div>
+        {sortedProjects.length === 0 ? (
+          <EmptyState
+            icon={<Search size={28} strokeWidth={1.5} />}
+            title={t('analytics.no_matching_projects', {
+              defaultValue: 'No matching projects',
+            })}
+            description={t('analytics.no_matching_projects_hint', {
+              defaultValue:
+                'Try adjusting your search query or filters to find projects.',
+            })}
+            action={
+              (search || regionFilter || statusFilter) ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    setSearch('');
+                    setRegionFilter('');
+                    setStatusFilter('');
+                  }}
+                >
+                  {t('analytics.clear_filters', { defaultValue: 'Clear Filters' })}
+                </Button>
+              ) : undefined
+            }
+            className="py-12"
+          />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border-light bg-surface-secondary/50">
+                  <SortHeader
+                    field="name"
+                    label={t('analytics.col_project', { defaultValue: 'Project' })}
+                    current={sortField}
+                    dir={sortDir}
+                    onClick={handleSort}
+                  />
+                  <th className="px-4 py-3 text-left text-xs font-medium text-content-tertiary uppercase tracking-wider">
+                    {t('analytics.col_region', { defaultValue: 'Region' })}
+                  </th>
+                  <SortHeader
+                    field="budget"
+                    label={t('analytics.col_budget', { defaultValue: 'Budget' })}
+                    current={sortField}
+                    dir={sortDir}
+                    onClick={handleSort}
+                    align="right"
+                  />
+                  <SortHeader
+                    field="actual"
+                    label={t('analytics.col_actual', { defaultValue: 'Actual' })}
+                    current={sortField}
+                    dir={sortDir}
+                    onClick={handleSort}
+                    align="right"
+                  />
+                  <SortHeader
+                    field="variance"
+                    label={t('analytics.col_variance', { defaultValue: 'Variance' })}
+                    current={sortField}
+                    dir={sortDir}
+                    onClick={handleSort}
+                    align="right"
+                  />
+                  <SortHeader
+                    field="variance_pct"
+                    label={t('analytics.col_variance_pct', { defaultValue: 'Var. %' })}
+                    current={sortField}
+                    dir={sortDir}
+                    onClick={handleSort}
+                    align="right"
+                  />
+                  <th className="px-4 py-3 text-center text-xs font-medium text-content-tertiary uppercase tracking-wider">
+                    {t('analytics.col_status', { defaultValue: 'Status' })}
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-content-tertiary uppercase tracking-wider">
+                    {t('analytics.col_finance', { defaultValue: 'Finance' })}
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border-light">
+                {pagedProjects.map((p) => (
+                  <tr
+                    key={p.id}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={t('analytics.open_project_for', {
+                      defaultValue: 'Open project {{name}}',
+                      name: p.name,
+                    })}
+                    className="hover:bg-surface-secondary/30 transition-colors cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-oe-blue"
+                    onClick={() => navigate(`/projects/${p.id}`)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        navigate(`/projects/${p.id}`);
+                      }
+                    }}
+                  >
+                    <td className="px-4 py-3 font-medium text-content-primary whitespace-nowrap">
+                      {p.name}
+                    </td>
+                    <td className="px-4 py-3 text-content-secondary whitespace-nowrap">
+                      {p.region}
+                    </td>
+                    <td className="px-4 py-3 text-right text-content-primary tabular-nums whitespace-nowrap">
+                      {fmtCurrency(p.budget, p.currency)}
+                    </td>
+                    <td className="px-4 py-3 text-right text-content-secondary tabular-nums whitespace-nowrap">
+                      {fmtCurrency(p.actual, p.currency)}
+                    </td>
+                    <td
+                      className={`px-4 py-3 text-right tabular-nums font-medium whitespace-nowrap ${
+                        p.variance >= 0 ? 'text-semantic-success' : 'text-semantic-error'
+                      }`}
+                    >
+                      {p.variance >= 0 ? '+' : ''}
+                      {fmtCurrency(p.variance, p.currency)}
+                    </td>
+                    <td
+                      className={`px-4 py-3 text-right tabular-nums whitespace-nowrap ${
+                        p.variance_pct == null
+                          ? 'text-content-tertiary'
+                          : p.variance_pct >= 0
+                            ? 'text-semantic-success'
+                            : 'text-semantic-error'
+                      }`}
+                    >
+                      {p.variance_pct == null ? (
+                        '—'
+                      ) : (
+                        <>
+                          {p.variance_pct >= 0 ? '+' : ''}
+                          {fmtNumber(p.variance_pct, 1)}%
+                        </>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <Badge
+                        variant={p.status === 'on_budget' ? 'success' : 'error'}
+                        size="sm"
+                        dot
+                      >
+                        {p.status === 'on_budget'
+                          ? t('analytics.on_budget', { defaultValue: 'On Budget' })
+                          : t('analytics.over_budget', { defaultValue: 'Over Budget' })}
+                      </Badge>
+                    </td>
+                    {/* Per-row Finance deep link: the row itself opens the
+                        project, this opens that project's Finance module so the
+                        budget-vs-actual figure traces to its source (CONN-76). */}
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/projects/${p.id}/finance`);
+                        }}
+                        title={t('analytics.open_finance', { defaultValue: 'Open Finance' })}
+                        aria-label={t('analytics.open_finance_for', {
+                          defaultValue: 'Open Finance for {{name}}',
+                          name: p.name,
+                        })}
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-content-tertiary hover:bg-surface-secondary hover:text-oe-blue transition-colors"
+                      >
+                        <Wallet size={14} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {/* Pagination — only meaningful once a portfolio spills past one page.
+            Operates purely on the already-fetched, filtered result set. */}
+        {sortedProjects.length > 0 && pageCount > 1 && (
+          <div className="px-6 py-3 border-t border-border-light flex items-center justify-between gap-3">
+            <span className="text-2xs text-content-tertiary tabular-nums">
+              {t('analytics.showing_range', {
+                defaultValue: 'Showing {{from}}-{{to}} of {{total}}',
+                from: safePage * PAGE_SIZE + 1,
+                to: Math.min((safePage + 1) * PAGE_SIZE, sortedProjects.length),
+                total: sortedProjects.length,
+              })}
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<ChevronLeft size={14} />}
+                onClick={() => setPage((prev) => Math.max(0, prev - 1))}
+                disabled={safePage === 0}
+              >
+                {t('analytics.prev', { defaultValue: 'Previous' })}
+              </Button>
+              <span className="text-2xs text-content-tertiary tabular-nums whitespace-nowrap">
+                {t('analytics.page_of', {
+                  defaultValue: 'Page {{page}} of {{total}}',
+                  page: safePage + 1,
+                  total: pageCount,
+                })}
+              </span>
+              <Button
+                variant="secondary"
+                size="sm"
+                iconPosition="right"
+                icon={<ChevronRight size={14} />}
+                onClick={() => setPage((prev) => Math.min(pageCount - 1, prev + 1))}
+                disabled={safePage >= pageCount - 1}
+              >
+                {t('analytics.next', { defaultValue: 'Next' })}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Card>
+
+      {/* Budget Breakdown Chart — mirrors the current table page so the bars
+          line up with the visible rows and never render hundreds at once. */}
+      {pagedProjects.length > 0 && (
+        <Card>
+          <h2 className="text-lg font-semibold text-content-primary mb-4">
+            {t('analytics.budget_breakdown', { defaultValue: 'Budget Breakdown' })}
+          </h2>
+          <div className="space-y-4">
+            {[...pagedProjects]
+              .filter(p => p.budget > 0 || p.actual > 0)
+              .sort((a, b) => b.budget - a.budget)
+              .map((p) => {
+                const plannedPct = (p.budget / maxBudget) * 100;
+                const actualPct = (p.actual / maxBudget) * 100;
+                return (
+                  <div key={p.id}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-sm font-medium text-content-primary truncate max-w-[200px]">
+                        {p.name}
+                      </span>
+                      <span className="text-xs text-content-tertiary tabular-nums">
+                        {fmtCurrency(p.budget, p.currency)}
+                      </span>
+                    </div>
+                    {/* Planned bar */}
+                    <div className="relative h-5 w-full rounded bg-surface-secondary overflow-hidden">
+                      <div
+                        className="absolute inset-y-0 left-0 rounded bg-oe-blue/20"
+                        style={{ width: `${plannedPct}%` }}
+                      />
+                      <div
+                        className={`absolute inset-y-0 left-0 rounded ${
+                          p.status === 'over_budget'
+                            ? 'bg-semantic-error/70'
+                            : 'bg-oe-blue/60'
+                        }`}
+                        style={{ width: `${actualPct}%` }}
+                      />
+                      {/* Labels inside bar */}
+                      <div className="absolute inset-0 flex items-center px-2">
+                        <span className="text-2xs font-medium text-content-primary drop-shadow-sm">
+                          {t('analytics.actual_short', { defaultValue: 'Actual' })}:{' '}
+                          {fmtCurrency(p.actual, p.currency)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+          {/* Legend */}
+          <div className="mt-4 flex items-center gap-4 text-xs text-content-tertiary">
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block h-2.5 w-2.5 rounded bg-oe-blue/20" />
+              {t('analytics.legend_planned', { defaultValue: 'Planned' })}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block h-2.5 w-2.5 rounded bg-oe-blue/60" />
+              {t('analytics.legend_actual', { defaultValue: 'Actual' })}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block h-2.5 w-2.5 rounded bg-semantic-error/70" />
+              {t('analytics.legend_over', { defaultValue: 'Over Budget' })}
+            </span>
+          </div>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+/* ── Sub-components ───────────────────────────────────────────────────── */
+
+function KPICard({
+  icon,
+  iconBg,
+  iconColor,
+  label,
+  value,
+  valueNode,
+  sub,
+  badge,
+}: {
+  icon: React.ReactNode;
+  iconBg: string;
+  iconColor: string;
+  label: string;
+  value?: string;
+  valueNode?: React.ReactNode;
+  sub?: string;
+  badge?: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-xl border border-border-light bg-surface-elevated/90 p-4 shadow-xs transition-shadow duration-normal ease-oe hover:shadow-sm">
+      {/* items-start keeps the icon + text on the same top baseline; the
+          text column is a top-anchored flex-col so a single-line value tile
+          and a 3-line multi-currency tile share the first-line position
+          even when the grid stretches every tile to equal height (audit S8). */}
+      <div className="flex items-start gap-3">
+        <div
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${iconBg} ${iconColor}`}
+        >
+          {icon}
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col justify-start">
+          <p className="text-2xs font-medium uppercase tracking-wide text-content-tertiary">{label}</p>
+          {valueNode ? (
+            <div className="mt-1">{valueNode}</div>
+          ) : (
+            <div className="mt-1 flex items-center gap-2">
+              <span className="text-lg font-semibold text-content-primary truncate">{value}</span>
+              {badge}
+            </div>
+          )}
+          {sub && <p className="mt-0.5 text-xs text-content-secondary">{sub}</p>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SortHeader({
+  field,
+  label,
+  current,
+  dir,
+  onClick,
+  align = 'left',
+}: {
+  field: SortField;
+  label: string;
+  current: SortField;
+  dir: SortDir;
+  onClick: (f: SortField) => void;
+  align?: 'left' | 'right';
+}) {
+  const isActive = current === field;
+  return (
+    <th
+      className={`px-4 py-3 text-xs font-medium text-content-tertiary uppercase tracking-wider cursor-pointer select-none hover:text-content-secondary transition-colors ${
+        align === 'right' ? 'text-right' : 'text-left'
+      }`}
+      onClick={() => onClick(field)}
+      aria-sort={isActive ? (dir === 'asc' ? 'ascending' : 'descending') : 'none'}
+      role="columnheader"
+    >
+      <span className="inline-flex items-center gap-1">
+        {label}
+        {isActive ? (
+          dir === 'asc' ? (
+            <ChevronUp size={12} />
+          ) : (
+            <ChevronDown size={12} />
+          )
+        ) : (
+          <ArrowUpDown size={10} className="opacity-40" />
+        )}
+      </span>
+    </th>
+  );
+}

@@ -1,0 +1,13 @@
+No.,Description,Unit,Quantity,Unit Rate,Total,NRM,Section
+,** 1 Substructure **,,,,,,
+1.1.1,"Reduced level dig in firm clay",m3,420.000,18.50,7770.00,1,Substructure
+1.1.2,"Strip foundations to substructure",m3,68.000,165.00,11220.00,1,Substructure
+,** 2 Superstructure **,,,,,,
+2.1.1,"Reinforced concrete columns C32/40",m3,28.000,580.00,16240.00,2,Superstructure
+2.4.1,"Brickwork facing skin in F.L.B.",m2,840.000,72.50,60900.00,2,Superstructure
+,** 3 Internal finishes **,,,,,,
+3.1.1,"Vinyl floor sheet on screed",m2,1250.000,32.40,40500.00,3,Internal finishes
+3.3.1,"Suspended mineral fibre ceiling tiles",m2,1180.000,28.50,33630.00,3,Internal finishes
+,** 5 Services **,,,,,,
+5.1.1,"Hot water boiler 250 kW gas-fired",nr,2.000,9450.00,18900.00,5,Services
+5.4.1,"PVC-U soil and waste pipework",m,420.000,28.00,11760.00,5,Services

@@ -1,0 +1,21 @@
+{
+  "rule_pack_id": "ccdc_14",
+  "name": "CCDC 14 — Design-Build Stipulated Price Contract (2013)",
+  "name_fr-CA": "CCDC 14 — Contrat conception-construction à prix forfaitaire (2013)",
+  "standard": "CCDC 14-2013",
+  "jurisdiction": "CA",
+  "regulator": "Canadian Construction Documents Committee",
+  "publication_year": 2013,
+  "applies_to": ["projects", "tendering", "validation"],
+  "description": "Validates the design-build stipulated-price structure per CCDC 14-2013: Owner's Statement of Requirements present, Design-Builder's Proposal documented, single-point responsibility for design and construction asserted, schedule for design milestones present, performance bond and labour-and-material bond set.",
+  "description_fr-CA": "Vérifie la structure conception-construction à prix forfaitaire selon CCDC 14-2013 : Énoncé des besoins du Maître présent, Proposition du Concepteur-Constructeur documentée, responsabilité unique conception/construction affirmée, échéancier des jalons de conception présent, cautionnement de bonne exécution et cautionnement de paiement de main-d'œuvre et matériaux fournis.",
+  "severity_overrides": {},
+  "enables_rule_ids": [
+    "ccdc14.owners_statement_of_requirements_present",
+    "ccdc14.design_builder_proposal_documented",
+    "ccdc14.single_point_responsibility_clause_present",
+    "ccdc14.design_milestone_schedule_present",
+    "ccdc14.performance_bond_set",
+    "ccdc14.labour_material_bond_set"
+  ]
+}

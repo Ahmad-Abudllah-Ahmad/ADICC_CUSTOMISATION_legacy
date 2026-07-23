@@ -1,0 +1,1836 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+  <!-- Google Analytics with Consent Mode v2 (GDPR-compliant) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-JYQXK2652T"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    // Default: deny all until user makes a choice
+    gtag('consent', 'default', {
+      'ad_storage': 'denied',
+      'analytics_storage': 'denied',
+      'ad_user_data': 'denied',
+      'ad_personalization': 'denied',
+      'wait_for_update': 500
+    });
+    // Restore prior consent if user already chose
+    try {
+      var prior = localStorage.getItem('oce-cookie-consent');
+      if (prior === 'granted') {
+        gtag('consent', 'update', { 'analytics_storage': 'granted' });
+      }
+    } catch (e) {}
+    gtag('js', new Date());
+    gtag('config', 'G-JYQXK2652T', { 'anonymize_ip': true });
+  </script>
+
+  <title>News &amp; releases - OpenConstructionERP</title>
+  <meta name="description" content="Release notes, product updates and engineering posts from the OpenConstructionERP team. Open-source construction ERP under AGPL-3.0." />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://adicc-uae.com/news.html" />
+
+  <!-- Open Graph / Twitter -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="OpenConstructionERP" />
+  <meta property="og:url" content="https://adicc-uae.com/news.html" />
+  <meta property="og:title" content="News &amp; releases - OpenConstructionERP" />
+  <meta property="og:description" content="Release notes, product updates and engineering posts from the OpenConstructionERP team." />
+  <meta property="og:image" content="https://adicc-uae.com/screenshots/hero-overview.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="News &amp; releases - OpenConstructionERP" />
+  <meta name="twitter:description" content="Release notes, product updates and engineering posts." />
+  <meta name="twitter:image" content="https://adicc-uae.com/screenshots/hero-overview.jpg" />
+
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <meta name="theme-color" content="#2d5e8e" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <!-- Inherit theme preference from main site -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('oce-theme') || 'light';
+        document.documentElement.dataset.theme = t;
+      } catch (e) {
+        document.documentElement.dataset.theme = 'light';
+      }
+    })();
+  </script>
+
+  <style>
+    /* ================================================================ */
+    /* THEME TOKENS - same Breeze sky palette as the rest of the site   */
+    /* ================================================================ */
+    :root {
+      --bg-0: #f1f2f3;
+      --bg-1: #ebeced;
+      --bg-2: #e4e5e7;
+      --ink-0: #0b1220;
+      --ink-1: #1e293b;
+      --ink-2: #475569;
+      --ink-3: #94a3b8;
+      --line-0: rgba(15, 23, 42, 0.05);
+      --line-1: rgba(15, 23, 42, 0.09);
+      --line-2: rgba(15, 23, 42, 0.14);
+      --card: #ffffff;
+      --accent: #2d5e8e;
+      --accent-2: #3c6fa0;
+      --accent-3: #244c74;
+      --accent-4: #2d5e8e;
+      --accent-5: #3c6fa0;
+    }
+    [data-theme="dark"] {
+      --bg-0: #0b1220;
+      --bg-1: #111a2c;
+      --bg-2: #152238;
+      --ink-0: #eff6ff;
+      --ink-1: #cfe0f5;
+      --ink-2: #94a3b8;
+      --ink-3: #64748b;
+      --line-0: rgba(255, 255, 255, 0.06);
+      --line-1: rgba(255, 255, 255, 0.10);
+      --line-2: rgba(255, 255, 255, 0.16);
+      --card: #111a2c;
+      --accent: #6ba2d8;
+      --accent-2: #84b3e2;
+      --accent-3: #5a90c8;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(60% 50% at 50% 0%, color-mix(in oklab, var(--accent) 8%, transparent) 0%, transparent 70%),
+        var(--bg-0);
+      color: var(--ink-0);
+      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      font-size: 16px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+    a { color: inherit; text-decoration: none; }
+    a:hover { color: var(--accent); }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 48px); }
+
+    /* ─── TOP NAV - same visual language as the main site ─────────── */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: color-mix(in oklab, var(--bg-0) 88%, transparent);
+      -webkit-backdrop-filter: blur(14px) saturate(1.4);
+              backdrop-filter: blur(14px) saturate(1.4);
+      border-bottom: 1px solid var(--line-1);
+    }
+    .nav-inner {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 12px clamp(20px, 4vw, 48px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+    .nav-left, .nav-right { display: flex; align-items: center; gap: 10px; }
+    .brand {
+      text-decoration: none;
+      display: inline-flex;
+      align-items: baseline;
+      font-family: 'Inter Tight', sans-serif;
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: -0.015em;
+    }
+    .brand-name { display: inline-flex; align-items: baseline; }
+    .brand-seg-1 { color: var(--ink-0); }
+    .brand-seg-2 { color: var(--ink-2); }
+    .brand-seg-3 { color: var(--accent); font-weight: 800; }
+    .nav-icon-btn {
+      width: 36px; height: 36px;
+      display: grid; place-items: center;
+      border-radius: 9px;
+      border: 1px solid var(--line-2);
+      background: transparent;
+      color: var(--ink-2);
+      cursor: pointer;
+      transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+    }
+    .nav-icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .nav-icon-btn .icon-moon { display: none; }
+    [data-theme="dark"] .nav-icon-btn .icon-sun { display: none; }
+    [data-theme="dark"] .nav-icon-btn .icon-moon { display: block; }
+    .nav-links {
+      display: flex;
+      gap: clamp(10px, 1.6vw, 22px);
+      align-items: center;
+      font-size: 14px;
+    }
+    .nav-links a {
+      color: var(--ink-2);
+      font-weight: 500;
+      padding: 6px 4px;
+      transition: color 0.15s ease;
+    }
+    .nav-links a:hover, .nav-links a.is-active { color: var(--accent); }
+    .nav-links a.is-active { font-weight: 600; }
+    .nav-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.2s ease;
+    }
+    .nav-pill.github {
+      border: 1px solid var(--line-2);
+      color: var(--ink-1);
+      background: transparent;
+    }
+    .nav-pill.github:hover { border-color: var(--accent); color: var(--accent); }
+    .nav-pill.cta {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-3) 100%);
+      color: #fff;
+      box-shadow:
+        0 1px 0 rgba(255,255,255,0.3) inset,
+        0 8px 18px -8px color-mix(in oklab, var(--accent) 60%, transparent);
+    }
+    .nav-pill.cta:hover { transform: translateY(-1px); color: #fff; }
+    .nav-pill .arrow { transition: transform 0.15s ease; }
+    .nav-pill:hover .arrow { transform: translateX(2px); }
+    @media (max-width: 980px) {
+      .nav-links a:not(.news-link), .nav-pill.github { display: none; }
+    }
+
+    /* ─── HERO ─────────────────────────────────────────────────────── */
+    .hero {
+      position: relative;
+      padding: clamp(56px, 9vw, 120px) 0 clamp(36px, 5vw, 56px);
+      overflow: hidden;
+    }
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(to right, color-mix(in oklab, var(--accent) 8%, transparent) 1px, transparent 1px),
+        linear-gradient(to bottom, color-mix(in oklab, var(--accent) 8%, transparent) 1px, transparent 1px);
+      background-size: 56px 56px;
+      -webkit-mask-image: radial-gradient(ellipse 75% 60% at 50% 35%, black 30%, transparent 78%);
+              mask-image: radial-gradient(ellipse 75% 60% at 50% 35%, black 30%, transparent 78%);
+      pointer-events: none;
+      opacity: 0.5;
+      z-index: 0;
+    }
+    .hero > .wrap { position: relative; z-index: 1; }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: color-mix(in oklab, var(--accent) 9%, transparent);
+      border: 1px solid color-mix(in oklab, var(--accent) 22%, transparent);
+      color: var(--accent);
+      font-family: 'Inter Tight', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      margin-bottom: 22px;
+    }
+    .hero-eyebrow .dot {
+      width: 6px; height: 6px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px color-mix(in oklab, var(--accent) 20%, transparent);
+    }
+    .hero h1 {
+      font-family: 'Inter Tight', sans-serif;
+      font-weight: 700;
+      font-size: clamp(36px, 6vw, 64px);
+      line-height: 1.05;
+      letter-spacing: -0.025em;
+      margin: 0 0 18px;
+      max-width: 820px;
+    }
+    .hero p.lede {
+      color: var(--ink-2);
+      font-size: clamp(16px, 1.5vw, 19px);
+      line-height: 1.55;
+      max-width: 640px;
+      margin: 0;
+    }
+
+    /* ─── GRID ─────────────────────────────────────────────────────── */
+    .news-section {
+      padding: clamp(28px, 4vw, 56px) 0 clamp(56px, 8vw, 96px);
+    }
+    .news-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: clamp(18px, 2.2vw, 28px);
+    }
+    @media (max-width: 980px) { .news-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 640px) { .news-grid { grid-template-columns: 1fr; } }
+
+    /* Featured (first) card takes full width on desktop */
+    .news-grid > .card.is-featured { grid-column: span 3; }
+    @media (max-width: 980px) { .news-grid > .card.is-featured { grid-column: span 2; } }
+    @media (max-width: 640px) { .news-grid > .card.is-featured { grid-column: span 1; } }
+
+    .card {
+      position: relative;
+      background: var(--card);
+      border: 1px solid var(--line-1);
+      border-radius: 18px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.25s cubic-bezier(.22,.61,.36,1), box-shadow 0.25s ease, border-color 0.2s ease;
+    }
+    .card:hover {
+      transform: translateY(-3px);
+      border-color: color-mix(in oklab, var(--accent) 45%, var(--line-1));
+      box-shadow:
+        0 18px 36px -16px rgba(2, 90, 160, 0.18),
+        0 2px 6px -2px rgba(15, 23, 42, 0.06);
+    }
+    .card a.card-link {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      color: inherit;
+    }
+    .card a.card-link:hover { color: inherit; }
+
+    .card-media {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: linear-gradient(135deg, var(--bg-1), var(--bg-2));
+      overflow: hidden;
+    }
+    .card.is-featured .card-media { aspect-ratio: 21 / 9; }
+    .card-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.5s cubic-bezier(.22,.61,.36,1);
+    }
+    .card:hover .card-media img { transform: scale(1.03); }
+
+    .card-media.placeholder {
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 70% 30%, color-mix(in oklab, var(--accent) 20%, transparent), transparent 60%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2));
+    }
+    .card-media.placeholder .ph-icon {
+      width: 64px; height: 64px;
+      color: color-mix(in oklab, var(--accent) 55%, var(--ink-3));
+      opacity: 0.7;
+    }
+
+    .card-body {
+      padding: 20px 22px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+    }
+    .card.is-featured .card-body { padding: 28px 30px 32px; }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12.5px;
+      color: var(--ink-2);
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-family: 'Inter Tight', sans-serif;
+      font-size: 11.5px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+    .chip.release {
+      background: color-mix(in oklab, var(--accent) 10%, transparent);
+      color: var(--accent);
+      border: 1px solid color-mix(in oklab, var(--accent) 24%, transparent);
+    }
+    .chip.hotfix {
+      background: color-mix(in oklab, #f59e0b 14%, transparent);
+      color: #b45309;
+      border: 1px solid color-mix(in oklab, #f59e0b 30%, transparent);
+    }
+    .chip.coming {
+      background: color-mix(in oklab, var(--ink-2) 8%, transparent);
+      color: var(--ink-2);
+      border: 1px solid var(--line-2);
+    }
+    .chip.v3 {
+      background: color-mix(in oklab, var(--accent-4) 12%, transparent);
+      color: var(--accent-4);
+      border: 1px solid color-mix(in oklab, var(--accent-4) 28%, transparent);
+    }
+    .card-date {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--ink-3);
+      letter-spacing: 0.01em;
+    }
+    .card h2, .card h3 {
+      font-family: 'Inter Tight', sans-serif;
+      font-weight: 700;
+      font-size: 20px;
+      line-height: 1.25;
+      letter-spacing: -0.015em;
+      margin: 4px 0 0;
+      color: var(--ink-0);
+    }
+    .card.is-featured h2, .card.is-featured h3 {
+      font-size: clamp(24px, 2.4vw, 30px);
+      line-height: 1.18;
+    }
+    .card p.excerpt {
+      color: var(--ink-2);
+      font-size: 14.5px;
+      line-height: 1.55;
+      margin: 0;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .card.is-featured p.excerpt {
+      font-size: 16px;
+      -webkit-line-clamp: 3;
+    }
+    .read-more {
+      margin-top: auto;
+      padding-top: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Inter Tight', sans-serif;
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--accent);
+    }
+    .read-more .arrow { transition: transform 0.18s ease; }
+    .card:hover .read-more .arrow { transform: translateX(4px); }
+
+    /* Coming-soon cards: dimmed, not clickable */
+    .card.is-soon { opacity: 0.78; }
+    .card.is-soon:hover {
+      transform: none;
+      border-color: var(--line-1);
+      box-shadow: none;
+    }
+    .card.is-soon .card-link { cursor: default; pointer-events: none; }
+    .card.is-soon .read-more { color: var(--ink-3); }
+
+    /* ─── FOOTER ───────────────────────────────────────────────────── */
+    .pagefoot {
+      border-top: 1px solid var(--line-1);
+      padding: 28px 0;
+      margin-top: 24px;
+      color: var(--ink-2);
+      font-size: 13px;
+    }
+    .pagefoot-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .pagefoot a { color: var(--ink-2); }
+    .pagefoot a:hover { color: var(--accent); }
+
+    /* ================================================================ */
+    /* COOKIE BANNER - GDPR-compliant consent dialog                     */
+    /* ================================================================ */
+    .cookie-banner {
+      position: fixed;
+      left: 50%;
+      bottom: 20px;
+      transform: translateX(-50%) translateY(14px);
+      width: min(720px, calc(100vw - 32px));
+      z-index: 9999;
+      background: color-mix(in oklab, #ffffff 88%, transparent);
+      border: 1px solid var(--line-1);
+      border-radius: 18px;
+      backdrop-filter: blur(22px) saturate(180%);
+      -webkit-backdrop-filter: blur(22px) saturate(180%);
+      box-shadow: 0 24px 64px -28px rgba(15, 23, 42, 0.35);
+      padding: 18px 22px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+    [data-theme="dark"] .cookie-banner {
+      background: color-mix(in oklab, #111a2c 88%, transparent);
+      box-shadow: 0 24px 64px -28px rgba(0, 0, 0, 0.7);
+    }
+    .cookie-banner.is-visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(-50%) translateY(0);
+    }
+    .cookie-banner-inner {
+      display: grid;
+      grid-template-columns: 32px 1fr auto;
+      grid-gap: 16px;
+      align-items: center;
+    }
+    .cookie-banner-icon {
+      font-size: 22px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+    }
+    .cookie-banner-body { min-width: 0; }
+    .cookie-banner-title {
+      font-family: 'Inter Tight', 'Inter', sans-serif;
+      font-weight: 650;
+      font-size: 14px;
+      color: var(--ink-0);
+      margin: 0 0 3px;
+      letter-spacing: -0.01em;
+    }
+    .cookie-banner-text {
+      font-size: 12.5px;
+      line-height: 1.5;
+      color: var(--ink-2);
+      margin: 0;
+    }
+    .cookie-banner-text a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+      border-bottom: 1px solid color-mix(in oklab, var(--accent) 40%, transparent);
+    }
+    .cookie-banner-text a:hover { border-bottom-color: var(--accent); }
+    .cookie-banner-actions {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: nowrap;
+    }
+    .cookie-btn {
+      padding: 9px 16px;
+      border-radius: 999px;
+      font-family: inherit;
+      font-size: 12.5px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .cookie-btn-reject {
+      background: transparent;
+      border: 1px solid var(--line-1);
+      color: var(--ink-1);
+    }
+    .cookie-btn-reject:hover {
+      border-color: color-mix(in oklab, var(--ink-0) 30%, var(--line-1));
+      background: color-mix(in oklab, var(--ink-0) 4%, transparent);
+    }
+    .cookie-btn-accept {
+      background: var(--accent);
+      border: 1px solid var(--accent);
+      color: #fff;
+      box-shadow: 0 6px 16px -6px color-mix(in oklab, var(--accent) 55%, transparent);
+    }
+    .cookie-btn-accept:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px -6px color-mix(in oklab, var(--accent) 70%, transparent);
+    }
+    @media (max-width: 640px) {
+      .cookie-banner-inner {
+        grid-template-columns: 28px 1fr;
+        grid-gap: 12px;
+      }
+      .cookie-banner-actions {
+        grid-column: 1 / -1;
+        margin-top: 4px;
+      }
+      .cookie-btn { flex: 1; text-align: center; }
+    }
+  </style>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "News and releases",
+    "description": "Release announcements and concept papers from OpenConstructionERP.",
+    "url": "https://adicc-uae.com/news.html",
+    "isPartOf": { "@type": "WebSite", "name": "OpenConstructionERP", "url": "https://adicc-uae.com" }
+  }
+  </script>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- NAV - same visual language as the main site                   -->
+<!-- ============================================================ -->
+<nav class="nav" aria-label="Primary">
+  <div class="nav-inner">
+    <div class="nav-left">
+      <a class="brand" href="/">
+        <span class="brand-name">
+          <span class="brand-seg-1">Open</span><span class="brand-seg-2">Construction</span><span class="brand-seg-3">ERP</span>
+        </span>
+      </a>
+      <button type="button" class="nav-icon-btn" id="theme-toggle" aria-label="Toggle theme" title="Toggle theme" data-i18n-aria-label="page.news.nav_toggle_theme">
+        <svg class="icon-sun" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79Z"/>
+        </svg>
+      </button>
+    </div>
+    <div class="nav-links">
+      <a href="/#tour" data-i18n="page.news.nav_tour">Tour</a>
+      <a href="/#compare" data-i18n="page.news.nav_compare">Compare</a>
+      <a href="/#pricing" data-i18n="page.news.nav_pricing">Pricing</a>
+      <a href="/#faq" data-i18n="page.news.nav_faq">FAQ</a>
+      <a href="/docs.html" data-i18n="page.news.nav_docs">Docs</a>
+      <a href="/news.html" class="news-link is-active" data-i18n="page.news.nav_news">News</a>
+      <a href="/download" data-i18n="page.news.nav_download">Download</a>
+    </div>
+    <div class="nav-right">
+      <a class="nav-pill github" href="https://adicc-uae.com" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M12 0.5C5.65 0.5 0.5 5.65 0.5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.36-3.87-1.36-.52-1.32-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.47.11-3.05 0 0 .97-.31 3.18 1.18A11 11 0 0 1 12 6.8a11 11 0 0 1 2.9.39c2.2-1.5 3.17-1.18 3.17-1.18.63 1.58.24 2.76.12 3.05.74.81 1.18 1.84 1.18 3.1 0 4.43-2.7 5.4-5.27 5.69.42.36.78 1.07.78 2.15v3.19c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg>
+        <span data-i18n="page.news.nav_github">GitHub</span>
+      </a>
+      <a class="nav-pill cta" href="/demo">
+        <span data-i18n="page.news.nav_try_demo">Try demo</span>
+        <svg class="arrow" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- ============================================================ -->
+<!-- HERO                                                          -->
+<!-- ============================================================ -->
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-eyebrow">
+      <span class="dot" aria-hidden="true"></span>
+      <span data-i18n="page.news.hero_eyebrow">The OpenConstructionERP blog</span>
+    </div>
+    <h1 data-i18n-html="page.news.hero_title">News &amp; releases.</h1>
+    <p class="lede" data-i18n="page.news.hero_lede">
+      Stable releases, product updates and engineering posts from the team
+      building the open-source construction ERP.
+    </p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- ARTICLE GRID                                                  -->
+<!-- ============================================================ -->
+<section class="news-section">
+  <div class="wrap">
+    <div class="news-grid">
+
+      <!-- Featured: Concept paper -->
+      <article class="card is-featured">
+        <a class="card-link" href="/news/open-erp-own-your-stack.html" aria-label="Read: An open construction ERP for teams who want to own their stack" data-i18n-aria-label="page.news.card_concept_aria">
+          <div class="card-media">
+            <img src="/news/assets/open-erp-own-your-stack/images/hero-overview.jpg" alt="OpenConstructionERP - platform overview dashboard" loading="eager" decoding="async" data-i18n-attr="alt:page.news.card_concept_img_alt" />
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip release" data-i18n="page.news.chip_concept_paper">Concept paper</span>
+              <span class="card-date">2026-05-25</span>
+              <span class="card-date">·</span>
+              <span class="card-date" data-i18n="page.news.read_8min">~8 min read</span>
+            </div>
+            <h2 data-i18n="page.news.card_concept_title">An open construction ERP for teams who want to own their stack.</h2>
+            <p class="excerpt" data-i18n-html="page.news.card_concept_excerpt">
+              Estimating, CAD/BIM take-off, 4D/5D scheduling, procurement and site billing - in
+              one self-hosted system under <code>AGPL-3.0</code>. 116 modules in v5.2.0, 55,000+
+              cost items across 11 regions, 57 validation rules over 16 rule sets. The architecture,
+              how a real project flows, what it replaces and complements, the five-year TCO, and
+              who already works with our open tools.
+            </p>
+            <span class="read-more" data-i18n-html="page.news.read_concept_paper">
+              Read the concept paper
+              <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </span>
+          </div>
+        </a>
+      </article>
+
+      <!-- v10.9.0 release -->
+      <article class="card">
+        <a class="card-link" href="/news/v10-9-0.html" aria-label="Read: v10.9.0 - from v7.0.0 to v10.9.0, the complete construction ERP">
+          <div class="card-media">
+            <img src="/news/assets/v10-9-0-1.webp" alt="OpenConstructionERP from version 7.0.0 to 10.9.0 - one workflow from drawings to handover" loading="lazy" decoding="async" />
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip release" data-i18n="page.news.chip_release">Release</span>
+              <span class="card-date">2026-07-10</span>
+              <span class="card-date">·</span>
+              <span class="card-date">~6 min read</span>
+            </div>
+            <h2>v10.9.0 - From v7.0.0 to v10.9.0, the complete construction ERP.</h2>
+            <p class="excerpt">
+              Since 7.0.0 the platform has grown from an open estimating tool into
+              one system for the whole project: AI-assisted estimating, quantity
+              takeoff from PDF, DWG, IFC and RVT, federated BIM, advanced scheduling
+              with earned value, quality and change control, site delivery and
+              whole-life carbon. 159 modules, 85 guided cases, 27 languages, and more
+              than 150 community reports closed. Open source under AGPL-3.0,
+              self-hosted, from a 2GB server.
+            </p>
+          </div>
+        </a>
+      </article>
+
+      <!-- v8.8.2 release -->
+      <article class="card">
+        <a class="card-link" href="/news/v8-8-2.html" aria-label="Read: v8.8.2 - BIM and CAD converters that install themselves, and currency-correct BOQ totals">
+          <div class="card-media placeholder" aria-hidden="true">
+            <svg class="ph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M12 8v5"/><path d="M9.5 10.5 12 13l2.5-2.5"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip release" data-i18n="page.news.chip_release">Release</span>
+              <span class="card-date">2026-06-21</span>
+              <span class="card-date">·</span>
+              <span class="card-date">~4 min read</span>
+            </div>
+            <h2>v8.8.2 - BIM and CAD converters that install themselves, and currency-correct BOQ totals.</h2>
+            <p class="excerpt">
+              No more Settings detour to get a converter. The first time you
+              upload an .rvt, .ifc, .dwg or .dgn file, the matching converter is
+              fetched and provisioned in the background, trying several install
+              methods in turn so it works across the widest range of hosts, with
+              downloads that resume and a binary that self-tests after install.
+              And bill-of-quantities exports and side-by-side comparison now
+              convert foreign-currency amounts into the project's base currency
+              before totalling, so a mixed-currency total reconciles.
+            </p>
+          </div>
+        </a>
+      </article>
+
+      <!-- v8.8.1 release -->
+      <article class="card">
+        <a class="card-link" href="/news/v8-8-1.html" aria-label="Read: v8.8.1 - a takeoff PDF now stays attached to its project after a reload">
+          <div class="card-media placeholder" aria-hidden="true">
+            <svg class="ph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15l2 2 4-4"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip release" data-i18n="page.news.chip_release">Release</span>
+              <span class="card-date">2026-06-21</span>
+              <span class="card-date">·</span>
+              <span class="card-date">~2 min read</span>
+            </div>
+            <h2>v8.8.1 - A takeoff PDF now stays attached to its project after a reload.</h2>
+            <p class="excerpt">
+              A small, targeted fix. A PDF uploaded for quantity takeoff now stays
+              attached to the active project, so it remains in the document list
+              after a page reload instead of vanishing. Previously the upload was
+              saved with no project, so the project-filtered document list dropped
+              it on refresh. The server already verified the caller's access to
+              the project before storing the file, and it still does.
+            </p>
+          </div>
+        </a>
+      </article>
+
+      <!-- v8.8.0 release -->
+      <article class="card">
+        <a class="card-link" href="/news/v8-8-0.html" aria-label="Read: v8.8.0 - Monte-Carlo cost-risk for a bill of quantities, and an in-app How it works hub">
+          <div class="card-media placeholder" aria-hidden="true">
+            <svg class="ph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 16c2-6 4-8 6-8s2 4 4 4 2-4 4-6"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip release" data-i18n="page.news.chip_release">Release</span>
+              <span class="card-date">2026-06-21</span>
+              <span class="card-date">·</span>
+              <span class="card-date">~5 min read</span>
+            </div>
+            <h2>v8.8.0 - Monte-Carlo cost-risk for a bill of quantities, and an in-app How it works hub.</h2>
+            <p class="excerpt">
+              A single number hides the risk in an estimate. A new Monte-Carlo
+              cost-risk analysis runs thousands of correlated, PERT-distributed
+              iterations over a bill of quantities to produce a full cost
+              distribution: P5 to P95 bands, a probability S-curve, a recommended
+              contingency at your confidence level and a tornado of what drives
+              the variance. An in-app How it works hub explains every module in
+              all 27 languages, the Geo Hub gains lightweight 2D maps, cost
+              benchmarks gain a DIN 276 element breakdown, and takeoff can count
+              by example.
+            </p>
+          </div>
+        </a>
+      </article>
+
+      <!-- v8.7.1 release -->
+      <article class="card">
+        <a class="card-link" href="/news/v8-7-1.html" aria-label="Read: v8.7.1 - a calmer screen on a busy server, and several takeoff and estimator fixes">
+          <div class="card-media placeholder" aria-hidden="true">
+            <svg class="ph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip release" data-i18n="page.news.chip_release">Release</span>
+              <span class="card-date">2026-06-20</span>
+              <span class="card-date">·</span>
+              <span class="card-date">~3 min read</span>
+            </div>
+            <h2>v8.7.1 - A calmer screen on a busy server, and several takeoff and estimator fixes.</h2>
+            <p class="excerpt">
+              A maintenance release that smooths the rough edges of 8.7.0. The
+              recurring "Request timed out" message no longer floods the screen
+              on a busy or slow server, an interrupted CAD conversion stops
+              spinning forever and reports a clear error, and the AI Estimator no
+              longer analyses a source twice. The transmittals page reflects the
+              real lifecycle, the guided AI form drops its raw labels, and the AI
+              agent tools now verify project access before reading anything.
+            </p>
+          </div>
+        </a>
+      </article>
+
+      <!-- v8.7.0 release -->
+      <article class="card">
+        <a class="card-link" href="/news/v8-7-0.html" aria-label="Read: v8.7.0 - packs that carry their own estimating methodology, and a broad hardening pass">
+          <div class="card-media placeholder" aria-hidden="true">
+            <svg class="ph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip release" data-i18n="page.news.chip_release">Release</span>
+              <span class="card-date">2026-06-20</span>
+              <span class="card-date">·</span>
+              <span class="card-date">~5 min read</span>
+            </div>
+            <h2>v8.7.0 - Packs that carry their own estimating methodology, and a broad hardening pass.</h2>
+            <p class="excerpt">
+              The methodology engine meets the country packs. A pack can now
+              carry its own estimating methodology and apply it automatically, so
+              installing one starts its demo project and any new project on the
+              local cascade (United States, United Kingdom, India, Germany or
+              Australia) instead of the generic method. Methodology estimates
+              export to PDF and Excel, point cloud scans in LAS, LAZ and COPC read
+              directly, several capabilities surface in the interface, and a broad
+              security and data-integrity pass spans many modules.
+            </p>
+          </div>
+        </a>
+      </article>
+
+      <!-- v8.6.0 release -->
+      <article class="card">
+        <a class="card-link" href="/news/v8-6-0.html" aria-label="Read: v8.6.0 - a data-driven estimating methodology engine you build in the app">
+          <div class="card-media placeholder" aria-hidden="true">
+            <svg class="ph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip release" data-i18n="page.news.chip_release">Release</span>
+              <span class="card-date">2026-06-18</span>
+              <span class="card-date">·</span>
+              <span class="card-date">~4 min read</span>
+            </div>
+            <h2>v8.6.0 - A data-driven estimating methodology engine you build in the app.</h2>
+            <p class="excerpt">
+              One fixed markup chain does not fit every country or every kind of
+              work. A new data-driven methodology engine lets a project follow a
+              named methodology you build and edit in the app: a typed BOQ
+              hierarchy, analytical dimensions, named funding sources and a
+              cascade of markups that build on one another. Country and industry
+              templates ship ready to install, the cascade editor reconciles its
+              arithmetic against the server, and construction machinery is now
+              costed separately from installed equipment.
+            </p>
+          </div>
+        </a>
+      </article>
+
+      <!-- v8.5.0 release -->
+      <article class="card">
+        <a class="card-link" href="/news/v8-5-0.html" aria-label="Read: v8.5.0 - a full vector takeoff for CAD drawings, and a drawing-tool PDF viewer">
+          <div class="card-media placeholder" aria-hidden="true">
+            <svg class="ph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h2l3-9 4 18 3-9h6"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip release" data-i18n="page.news.chip_release">Release</span>
+              <span class="card-date">2026-06-18</span>
+              <span class="card-date">·</span>
+              <span class="card-date">~5 min read</span>
+            </div>
+            <h2>v8.5.0 - A full vector takeoff for CAD drawings, and a drawing-tool PDF viewer.</h2>
+            <p class="excerpt">
+              Takeoff grows up. DWG and DXF takeoff is now a full vector takeoff:
+              because a drawing is exact geometry rather than pixels, one click
+              produces a per-layer quantity table with the right unit for each
+              layer, plus a count-by-block rollup and a one-click Excel export.
+              The PDF takeoff viewer gains a thumbnail sidebar, find-on-sheet
+              search, fit and zoom controls and an orthogonal lock, PDF takeoff
+              can detect the printed drawing scale, and structural steel can be
+              priced by mass.
+            </p>
+          </div>
+        </a>
+      </article>
+
+      <!-- v8.4.0 release -->
+      <article class="card">
+        <a class="card-link" href="/news/v8-4-0.html" aria-label="Read: v8.4.0 - PDF takeoff measurements scoped to the document, and a one-click resource expand">
+          <div class="card-media placeholder" aria-hidden="true">
+            <svg class="ph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v18H3z"/><path d="M3 9h18"/><path d="M9 21V9"/><path d="M13 14l2 2 4-4"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip release" data-i18n="page.news.chip_release">Release</span>
+              <span class="card-date">2026-06-17</span>
+              <span class="card-date">·</span>
+              <span class="card-date">~3 min read</span>
+            </div>
+            <h2>v8.4.0 - PDF takeoff measurements scoped to the document, and a one-click resource expand.</h2>
+            <p class="excerpt">
+              A focused fix release. PDF takeoff measurements are now scoped to
+              the project and the exact document they were drawn on, so two files
+              that share a name never surface each other's measurements again. The
+              resources under a bill-of-quantities position open on the first
+              click of the chevron, and the public hosted demo keeps its bundled
+              cost databases read-only, with a clear note that points to
+              self-hosting.
+            </p>
+          </div>
+        </a>
+      </article>
+
+      <!-- v8.3.0 release -->
+      <article class="card">
+        <a class="card-link" href="/news/v8-3-0.html" aria-label="Read: v8.3.0 - a South Africa construction pack, the first of our African coverage">
+          <div class="card-media placeholder" aria-hidden="true">
+            <svg class="ph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip release" data-i18n="page.news.chip_release">Release</span>
+              <span class="card-date">2026-06-15</span>
+              <span class="card-date">·</span>
+              <span class="card-date">~4 min read</span>
+            </div>
+            <h2>v8.3.0 - A South Africa construction pack, the first of our African coverage.</h2>
+            <p class="excerpt">
+              OpenConstructionERP lands in Africa. A South Africa construction
+              pack arrives pre-configured for the way the country builds: SANS
+              1200 civil and ASAQS building measurement, CIDB contractor grading
+              from 1 to 9, the PPPFA 80/20 and 90/10 preferential procurement
+              scoring, the National Treasury delivery and procurement stages, all
+              nine provinces with editable location factors, and the rand with 15
+              percent VAT. Johannesburg cost data downloads on demand. Alongside
+              it, the newest feature screens are now translated in every language,
+              a fresh install starts faster, and the BOQ templates page follows
+              the project switcher.
+            </p>
+          </div>
+        </a>
+      </article>
+
+      <!-- v8.2.0 release -->
+      <article class="card">
+        <a class="card-link" href="/news/v8-2-0.html" aria-label="Read: v8.2.0 - a project journey map, an FX inversion guard and tighter import validation">
+          <div class="card-media placeholder" aria-hidden="true">
+            <svg class="ph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M3 12h6"/><path d="M15 12h6"/><circle cx="5" cy="6" r="1.6"/><circle cx="19" cy="18" r="1.6"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip release" data-i18n="page.news.chip_release">Release</span>
+              <span class="card-date">2026-06-14</span>
+              <span class="card-date">·</span>
+              <span class="card-date">~4 min read</span>
+            </div>
+            <h2>v8.2.0 - A project journey map, an FX inversion guard and tighter import validation.</h2>
+            <p class="excerpt">
+              A new project journey map lands in the top bar. A small control
+              names the lifecycle phase the screen you are on belongs to, and
+              opening it lays out the whole project from first lead to handover
+              across three arcs and eleven numbered phases, with every major
+              module placed on its phase as a link. Around it, the currency
+              dialog now catches an exchange rate entered upside down before it
+              skews a total, BIM models imported from a spreadsheet get the same
+              validation report as the CAD path, and the DIN 276 checks fold
+              dotted CAD codes to the right cost group.
+            </p>
+          </div>
+        </a>
+      </article>
+
+      <!-- v8.1.0 release -->
+      <article class="card">
+        <a class="card-link" href="/news/v8-1-0.html" aria-label="Read: v8.1.0 - tighter multi-user access control and a smoother first run">
+          <div class="card-media placeholder" aria-hidden="true">
+            <svg class="ph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip release" data-i18n="page.news.chip_release">Release</span>
+              <span class="card-date">2026-06-14</span>
+              <span class="card-date">·</span>
+              <span class="card-date">~4 min read</span>
+            </div>
+            <h2>v8.1.0 - Tighter multi-user access control and a smoother first run.</h2>
+            <p class="excerpt">
+              A security and reliability release. A broad access-control pass
+              scopes every list and aggregate to the projects an account can
+              reach, so a shared deployment keeps each team inside its own
+              projects, while administrators keep the full portfolio view. The
+              first run is smoother too: the init-db and seed commands now
+              build a brand-new database in full. Along the way the top bar
+              gains a What's new panel, the validation rule packs report how
+              much they actually check, DIN 276 validates across the full code
+              hierarchy, and the takeoff CSV export now matches Excel.
+            </p>
+          </div>
+        </a>
+      </article>
+
+      <!-- v7.10.0 release -->
+      <article class="card">
+        <a class="card-link" href="/news/v7-10-0.html" aria-label="Read: v7.10.0 - tables in the assistant chat, a fully translated project setup and a lighter install">
+          <div class="card-media placeholder" aria-hidden="true">
+            <svg class="ph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip release" data-i18n="page.news.chip_release">Release</span>
+              <span class="card-date">2026-06-13</span>
+              <span class="card-date">·</span>
+              <span class="card-date">~4 min read</span>
+            </div>
+            <h2>v7.10.0 - Tables in the assistant chat, a fully translated project setup and a lighter install.</h2>
+            <p class="excerpt">
+              The assistant chat now renders Markdown tables as real tables
+              instead of raw pipe text, in both the floating and full-page
+              chat. The quick create and guided project setup windows are fully
+              translated across all 27 languages. And the install is lighter:
+              regional cost catalogues download on demand and cache locally
+              instead of shipping inside the package, while all thirty regions
+              stay one click to import.
+            </p>
+          </div>
+        </a>
+      </article>
+
+      <!-- v7.9.0 release -->
+      <article class="card">
+        <a class="card-link" href="/news/v7-9-0.html" aria-label="Read: v7.9.0 - your own cost catalogues, offline regional cost data and earned value on the 5D model">
+          <div class="card-media placeholder" aria-hidden="true">
+            <svg class="ph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip release" data-i18n="page.news.chip_release">Release</span>
+              <span class="card-date">2026-06-13</span>
+              <span class="card-date">·</span>
+              <span class="card-date" data-i18n="page.news.read_6min">~6 min read</span>
+            </div>
+            <h2>v7.9.0 - Your own cost catalogues and earned value on the 5D model.</h2>
+            <p class="excerpt">
+              Company price books with their own currency, imported from the
+              Excel and CSV files you already have, with Russian headings and
+              European number formats read correctly. Thirty regional reference
+              catalogues now ship inside the install and load offline in
+              seconds. The 5D cost model gains an earned value column with
+              percent-complete recording right in the budget line, schedules
+              get estimated durations with an Est. badge, administrators can
+              remove the seeded demo projects in one click, and a deep
+              five-dimension audit hardened money parsing, budget idempotency
+              and currency handling before the tag.
+            </p>
+            <span class="read-more" data-i18n-html="page.news.read_release_notes">
+              Read the release notes
+              <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </span>
+          </div>
+        </a>
+      </article>
+
+      <!-- v7.6.0 release -->
+      <article class="card">
+        <a class="card-link" href="/news/v7-6-0.html" aria-label="Read: v7.6.0 - a built-in general ledger, AI plan reading and room for much larger files">
+          <div class="card-media placeholder" aria-hidden="true">
+            <svg class="ph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l3-3 3 3 5-5"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip release" data-i18n="page.news.chip_release">Release</span>
+              <span class="card-date">2026-06-11</span>
+              <span class="card-date">·</span>
+              <span class="card-date" data-i18n="page.news.read_6min">~6 min read</span>
+            </div>
+            <h2>v7.6.0 - A built-in general ledger and room for larger files.</h2>
+            <p class="excerpt">
+              Financial depth and scale. A double-entry general ledger turns
+              project costs into a trial balance, income statement, balance
+              sheet and cash flow. The takeoff tool can read a PDF plan with a
+              vision model and propose what it sees. Large CAD and PDF uploads
+              now resume if the connection drops, and limits across uploads,
+              lists and bulk actions are much higher. You can erase your own
+              account and data, and a new saved-views module remembers a
+              filtered list.
+            </p>
+            <span class="read-more" data-i18n-html="page.news.read_release_notes">
+              Read the release notes
+              <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </span>
+          </div>
+        </a>
+      </article>
+
+      <!-- v7.5.0 release -->
+      <article class="card">
+        <a class="card-link" href="/news/v7-5-0.html" aria-label="Read: v7.5.0 - WordPress for construction companies, the full path from drawing to a calculated and scheduled project">
+          <div class="card-media">
+            <img src="/news/assets/v7-5-0-hero.png" alt="OpenConstructionERP v7.5.0 - the open construction ERP from drawing to a calculated and scheduled project" loading="lazy" decoding="async" />
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip release" data-i18n="page.news.chip_release">Release</span>
+              <span class="card-date">2026-06-10</span>
+              <span class="card-date">·</span>
+              <span class="card-date" data-i18n="page.news.read_6min">~6 min read</span>
+            </div>
+            <h2>v7.5.0 - WordPress for construction companies.</h2>
+            <p class="excerpt">
+              Version 7 reaches the milestone we set out to build: your
+              processes, your resources, full 5D costing and 4D scheduling
+              through the 86 modules you need. One installer on Windows, macOS
+              and Linux, with CAD and BIM now on Linux too for DWG, RVT
+              and IFC. Quantities turn into resource-based estimates on GAEB,
+              NRM and MasterFormat, with schedules, data validation and AI that
+              suggests while you decide. The full path from drawing to a
+              calculated and scheduled project, in 27 languages. Open-source,
+              self-hosted, your data is yours.
+            </p>
+            <span class="read-more" data-i18n-html="page.news.read_release_notes">
+              Read the release notes
+              <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </span>
+          </div>
+        </a>
+      </article>
+
+      <!-- v7.3.0 release -->
+      <article class="card">
+        <a class="card-link" href="/news/v7-3-0.html" aria-label="Read: v7.3.0 - A desktop install that heals itself, and an estimator that never fakes a price">
+          <div class="card-media placeholder" aria-hidden="true">
+            <svg class="ph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip release" data-i18n="page.news.chip_release">Release</span>
+              <span class="card-date">2026-06-08</span>
+              <span class="card-date">·</span>
+              <span class="card-date" data-i18n="page.news.read_6min">~6 min read</span>
+            </div>
+            <h2>v7.3.0 - A desktop install that heals itself.</h2>
+            <p class="excerpt">
+              Everything since v7.1.0, in one place. The desktop app installs
+              reliably and an upgrade from a broken install now repairs itself,
+              including the Windows install that used to hang on Turkish
+              regional settings. The AI Estimate Builder shows the real
+              catalogue match and says "matched, no price" instead of a fake
+              $0.00. IFC grouping, search and filter work correctly in all 26
+              languages, a new schedule-quality pack checks project schedules
+              like a BOQ, and every module now explains itself with confidence
+              badges, suggestion chips and an inline glossary.
+            </p>
+            <span class="read-more" data-i18n-html="page.news.read_release_notes">
+              Read the release notes
+              <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </span>
+          </div>
+        </a>
+      </article>
+
+      <!-- v7.1.0 release -->
+      <article class="card">
+        <a class="card-link" href="/news/v7-1-0.html" aria-label="Read: v7.1.0 - One click to the next record, and an estimator that explains itself">
+          <div class="card-media placeholder" aria-hidden="true">
+            <svg class="ph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip release" data-i18n="page.news.chip_release">Release</span>
+              <span class="card-date">2026-06-07</span>
+              <span class="card-date">·</span>
+              <span class="card-date" data-i18n="page.news.read_6min">~6 min read</span>
+            </div>
+            <h2>v7.1.0 - The next record is one click away.</h2>
+            <p class="excerpt">
+              More than 80 places where related records had no link are now
+              wired both ways, so any related record is one click away and deep
+              links land on the exact row. The AI Estimate Builder opens with a
+              conversation, asks short clarifying rounds, then two confirmation
+              checkpoints and multi-pass rate mapping where every rate shows why
+              it was chosen and flags outliers. Plus a translation sweep across
+              all 26 app languages, cost positions that carry every resource on
+              add, clash clusters that become one tracked item, and a real
+              desktop first launch.
+            </p>
+            <span class="read-more" data-i18n-html="page.news.read_release_notes">
+              Read the release notes
+              <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </span>
+          </div>
+        </a>
+      </article>
+
+      <!-- v7.0.1 hotfix -->
+      <article class="card">
+        <a class="card-link" href="/news/v7-0-1.html" aria-label="Read: v7.0.1 - The desktop launch fix">
+          <div class="card-media placeholder" aria-hidden="true">
+            <svg class="ph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 22h8"/><path d="M12 18v4"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip release" data-i18n="page.news.chip_release">Release</span>
+              <span class="card-date">2026-06-06</span>
+              <span class="card-date">·</span>
+              <span class="card-date">~3 min read</span>
+            </div>
+            <h2>v7.0.1 - The desktop launch fix.</h2>
+            <p class="excerpt">
+              The v7.0.0 desktop app could quit about two seconds after launch
+              without ever showing a window. v7.0.1 removes the cause, an
+              auto-update plugin registered without its configuration, adds a
+              native error dialog so a startup failure can never be silent
+              again, attaches only to a healthy backend of exactly the same
+              version, and embeds the WebView2 runtime in the Windows
+              installer. Web, PyPI and Docker installs were not affected.
+            </p>
+            <span class="read-more" data-i18n-html="page.news.read_release_notes">
+              Read the release notes
+              <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </span>
+          </div>
+        </a>
+      </article>
+
+      <!-- v7.0.0 release -->
+      <article class="card">
+        <a class="card-link" href="/news/v7-0-0.html" aria-label="Read: v7.0.0 - One way in, for every module">
+          <div class="card-media placeholder" aria-hidden="true">
+            <svg class="ph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip release" data-i18n="page.news.chip_release">Release</span>
+              <span class="card-date">2026-06-06</span>
+              <span class="card-date">·</span>
+              <span class="card-date" data-i18n="page.news.read_6min">~6 min read</span>
+            </div>
+            <h2>v7.0.0 - One way in, for every module.</h2>
+            <p class="excerpt">
+              Every module now opens the same way: one name and icon in the top
+              bar, an info card that names the problem it solves and explains
+              what goes in, what comes out and where it flows next, and a
+              collapse-to-top-bar control. A platform-wide palette fix restored
+              dozens of translucent surfaces a Tailwind bug had silently dropped.
+              Plus the AI Estimate Builder, a reworked collaboration hub, Validate
+              deep links, a clickable diary calendar, and orientation copy for 110
+              modules in 27 languages.
+            </p>
+            <span class="read-more" data-i18n-html="page.news.read_release_notes">
+              Read the release notes
+              <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </span>
+          </div>
+        </a>
+      </article>
+
+      <!-- v6.10.0 release -->
+      <article class="card">
+        <a class="card-link" href="/news/v6-10-0.html" aria-label="Read: v6.10.0 - Field payroll, project-controls dashboard, compliance gates">
+          <div class="card-media placeholder" aria-hidden="true">
+            <svg class="ph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip release" data-i18n="page.news.chip_release">Release</span>
+              <span class="card-date">2026-06-05</span>
+              <span class="card-date">·</span>
+              <span class="card-date" data-i18n="page.news.read_6min">~6 min read</span>
+            </div>
+            <h2>v6.10.0 - Field payroll, project controls, compliance gates.</h2>
+            <p class="excerpt">
+              The TOP-30 competitive wave lands. Field time and attendance with a payroll
+              lifecycle and idempotent posting to the general ledger, a cross-module
+              project-controls dashboard, compliance enforced at the contract, document
+              and purchase-order gates, AIA <code>G702</code>/<code>G703</code> payment
+              applications, a wave of opt-in AI agents, a subcontractor and client portal,
+              and a desktop launch that survives long database recovery.
+            </p>
+            <span class="read-more" data-i18n-html="page.news.read_release_notes">
+              Read the release notes
+              <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </span>
+          </div>
+        </a>
+      </article>
+
+      <!-- v5.5.0 release -->
+      <article class="card">
+        <a class="card-link" href="/news/v5-5-0.html" aria-label="Read: v5.5.0 - Stability wave, full Japanese locale, 9-of-9 verified" data-i18n-aria-label="page.news.card_v550_aria">
+          <div class="card-media placeholder" aria-hidden="true">
+            <svg class="ph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip release" data-i18n="page.news.chip_release">Release</span>
+              <span class="card-date">2026-05-28</span>
+              <span class="card-date">·</span>
+              <span class="card-date" data-i18n="page.news.read_6min">~6 min read</span>
+            </div>
+            <h2 data-i18n="page.news.card_v550_title">v5.5.0 - Stability wave + full Japanese locale + 9-of-9 verified.</h2>
+            <p class="excerpt" data-i18n-html="page.news.card_v550_excerpt">
+              Last stable 5.x cut. Eight user-reported bugs fixed end-to-end (PDF worker,
+              PDF <code>403</code>, JWT session reset, CAD/BIM Data Explorer RVT, BIM
+              Section Box, Walk mode, <code>/bim/federations</code> 3D, DWG load). Each
+              one verified through a sequential Playwright probe before commit - 9
+              PASS, 0 FAIL. The Japanese locale crosses 98.5&nbsp;% (1,627 keys).
+              Six dependabot upgrades merged. News articles get a related-articles
+              right-rail.
+            </p>
+            <span class="read-more" data-i18n-html="page.news.read_release_notes">
+              Read the release notes
+              <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </span>
+          </div>
+        </a>
+      </article>
+
+      <!-- v5.3.0 release -->
+      <article class="card">
+        <a class="card-link" href="/news/v5-3-0.html" aria-label="Read: v5.3.0 - Geo Hub round 2 + Brazil invoices + login dark-mode + WCAG-AA" data-i18n-aria-label="page.news.card_v530_aria">
+          <div class="card-media placeholder" aria-hidden="true">
+            <svg class="ph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L3 7v6c0 5 4 9 9 11 5-2 9-6 9-11V7l-9-5z"/><path d="M9 12l2 2 4-4"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip release" data-i18n="page.news.chip_release">Release</span>
+              <span class="card-date">2026-05-27</span>
+              <span class="card-date">·</span>
+              <span class="card-date" data-i18n="page.news.read_5min">~5 min read</span>
+            </div>
+            <h2 data-i18n="page.news.card_v530_title">v5.3.0 - Geo Hub round 2 + Brazil Tier-1 + login dark-mode + WCAG-AA.</h2>
+            <p class="excerpt" data-i18n-html="page.news.card_v530_excerpt">
+              Six deep bundles and the last stable cut of the 5.x line. Geo Hub closes its
+              storage leaks and caps accuracy at 10&nbsp;km; Brazil gets <code>BRL</code>,
+              NBR&nbsp;12721 and an RPS-layout invoice PDF; <code>/login</code> reads cleanly in
+              dark mode; <code>/reporting</code> finally renders HTML reports in-page; Daily
+              Diary entries can be deleted; and 51 frontend files pass WCAG-AA on the top
+              contrast offender.
+            </p>
+            <span class="read-more" data-i18n-html="page.news.read_release_notes">
+              Read the release notes
+              <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </span>
+          </div>
+        </a>
+      </article>
+
+      <!-- v5.2.8 release -->
+      <article class="card">
+        <a class="card-link" href="/news/v5-2-8.html" aria-label="Read: v5.2.8 - /geo tabs reliability + /markups deep-link + /resources inline edit" data-i18n-aria-label="page.news.card_v528_aria">
+          <div class="card-media placeholder" aria-hidden="true">
+            <svg class="ph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip release" data-i18n="page.news.chip_release">Release</span>
+              <span class="card-date">2026-05-27</span>
+              <span class="card-date">·</span>
+              <span class="card-date" data-i18n="page.news.read_3min">~3 min read</span>
+            </div>
+            <h2 data-i18n="page.news.card_v528_title">v5.2.8 - /geo tabs reliability + /markups deep-link + /resources inline edit.</h2>
+            <p class="excerpt" data-i18n-html="page.news.card_v528_excerpt">
+              Three first-touch fixes on top of v5.2.7. The Geo Hub Global / Project /
+              Development tabs always navigate to the right scope instead of being dead
+              links, <code>/markups</code> → <code>/takeoff</code> deep links land on the
+              right measurement (flashed into view), and <code>/resources</code> gets
+              inline pencil + trash icons with a real edit modal and danger-styled delete
+              confirmation.
+            </p>
+            <span class="read-more" data-i18n-html="page.news.read_release_notes">
+              Read the release notes
+              <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </span>
+          </div>
+        </a>
+      </article>
+
+      <!-- v5.2.7 release -->
+      <article class="card">
+        <a class="card-link" href="/news/v5-2-7.html" aria-label="Read: v5.2.7 - Project-detail widget grid + one-click in-app upgrade" data-i18n-aria-label="page.news.card_v527_aria">
+          <div class="card-media placeholder" aria-hidden="true">
+            <svg class="ph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip release" data-i18n="page.news.chip_release">Release</span>
+              <span class="card-date">2026-05-27</span>
+              <span class="card-date">·</span>
+              <span class="card-date" data-i18n="page.news.read_4min">~4 min read</span>
+            </div>
+            <h2 data-i18n="page.news.card_v527_title">v5.2.7 - Project-detail widget grid + one-click in-app upgrade.</h2>
+            <p class="excerpt" data-i18n-html="page.news.card_v527_excerpt">
+              Two visible improvements on top of v5.2.6. The 13 widgets on
+              <code>/projects/:id</code> finally lay out as a responsive 1/2/3-column grid
+              instead of one tall stack, and the in-app update checker gains a real
+              <strong>Apply update</strong> button - same interpreter, captured pip log,
+              humanised restart hint.
+            </p>
+            <span class="read-more" data-i18n-html="page.news.read_release_notes">
+              Read the release notes
+              <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </span>
+          </div>
+        </a>
+      </article>
+
+      <!-- v5.2.6 release -->
+      <article class="card">
+        <a class="card-link" href="/news/v5-2-6.html" aria-label="Read: v5.2.6 - Demo login fix, WCAG-AA, Reporting renderer, Dashboard rollup, JA" data-i18n-aria-label="page.news.card_v526_aria">
+          <div class="card-media placeholder" aria-hidden="true">
+            <svg class="ph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip release" data-i18n="page.news.chip_release">Release</span>
+              <span class="card-date">2026-05-27</span>
+              <span class="card-date">·</span>
+              <span class="card-date" data-i18n="page.news.read_4min">~4 min read</span>
+            </div>
+            <h2 data-i18n="page.news.card_v526_title">v5.2.6 - Demo login JustWorks. WCAG-AA contrast. Reporting renderer. Dashboard rollup. 1197 JA keys.</h2>
+            <p class="excerpt" data-i18n-html="page.news.card_v526_excerpt">
+              A quality-of-life wave on top of v5.2.5's install-crash fix. The documented demo
+              password works, ~700 contrast violations cleared at the token layer,
+              <code>/reports</code> renders real HTML, the project dashboard stops fanning out, and
+              Japanese covers 1197 more keys.
+            </p>
+            <span class="read-more" data-i18n-html="page.news.read_release_notes">
+              Read the release notes
+              <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </span>
+          </div>
+        </a>
+      </article>
+
+      <!-- v5.2.5 hotfix -->
+      <article class="card">
+        <a class="card-link" href="/news/v5-2-5.html" aria-label="Read: v5.2.5 - Install-crash fix" data-i18n-aria-label="page.news.card_v525_aria">
+          <div class="card-media placeholder" aria-hidden="true">
+            <svg class="ph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip hotfix" data-i18n="page.news.chip_hotfix">Hotfix</span>
+              <span class="card-date">2026-05-27</span>
+              <span class="card-date">·</span>
+              <span class="card-date" data-i18n="page.news.read_3min">~3 min read</span>
+            </div>
+            <h2 data-i18n-html="page.news.card_v525_title">v5.2.5 - Install-crash fix. Fresh <code>pip install</code> works again.</h2>
+            <p class="excerpt" data-i18n-html="page.news.card_v525_excerpt">
+              Unblocks fresh installs that crashed on the 4.5.0 wheel by pinning
+              <code>fastapi&nbsp;&gt;=&nbsp;0.116</code>. Plus a restored <code>/dashboard</code>
+              landing route, the <code>deleteDiary</code> API helper for Daily Diary, and a
+              widened <code>Payment.amount</code> type for the finance UI.
+            </p>
+            <span class="read-more" data-i18n-html="page.news.read_release_notes">
+              Read the release notes
+              <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </span>
+          </div>
+        </a>
+      </article>
+
+      <!-- v5.2.3 hotfix -->
+      <article class="card">
+        <a class="card-link" href="/news/v5-2-3.html" aria-label="Read: v5.2.3 - Vector backend gate + .env.example clarity" data-i18n-aria-label="page.news.card_v523_aria">
+          <div class="card-media placeholder" aria-hidden="true">
+            <svg class="ph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip hotfix" data-i18n="page.news.chip_hotfix">Hotfix</span>
+              <span class="card-date">2026-05-27</span>
+              <span class="card-date">·</span>
+              <span class="card-date" data-i18n="page.news.read_3min">~3 min read</span>
+            </div>
+            <h2 data-i18n="page.news.card_v523_title">v5.2.3 - Issue #162 vector-backend gate. Semantic search finally on by default.</h2>
+            <p class="excerpt" data-i18n-html="page.news.card_v523_excerpt">
+              The <code>costs.vector_adapter</code> health probe was hardcoded to LanceDB
+              while production defaults to Qdrant since v3, so every cost upsert silently
+              no-op'd - <code>/match-elements</code> read "AI Semantic Search is offline" on
+              healthy installs. Probe now dispatches on <code>settings.vector_backend</code>,
+              and <code>backend/.env.example</code> got a full rewrite.
+            </p>
+            <span class="read-more" data-i18n-html="page.news.read_release_notes">
+              Read the release notes
+              <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </span>
+          </div>
+        </a>
+      </article>
+
+      <!-- v5.2.2 release -->
+      <article class="card">
+        <a class="card-link" href="/news/v5-2-2.html" aria-label="Read: v5.2.2 - /dashboard route + W10/W13/SAF-A3 + a11y bundle" data-i18n-aria-label="page.news.card_v522_aria">
+          <div class="card-media placeholder" aria-hidden="true">
+            <svg class="ph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip release" data-i18n="page.news.chip_release">Release</span>
+              <span class="card-date">2026-05-27</span>
+              <span class="card-date">·</span>
+              <span class="card-date" data-i18n="page.news.read_4min">~4 min read</span>
+            </div>
+            <h2 data-i18n="page.news.card_v522_title">v5.2.2 - /dashboard route + W10/W13/SAF-A3 + a11y bundle.</h2>
+            <p class="excerpt" data-i18n-html="page.news.card_v522_excerpt">
+              Seven small fixes on top of v5.2.0. <code>/dashboard</code> now renders
+              DashboardPage instead of redirecting, the takeoff viewer cancels in-flight
+              pdf.js renders on page change, the validation banner stops lying about empty
+              runs, the project widget grid stops 405-ing on Change Orders, six OSHA fields
+              exposed on Safety Incident responses, and an aria-label backfill across five
+              Page.tsx files.
+            </p>
+            <span class="read-more" data-i18n-html="page.news.read_release_notes">
+              Read the release notes
+              <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </span>
+          </div>
+        </a>
+      </article>
+
+      <!-- v5.2.0 release -->
+      <article class="card">
+        <a class="card-link" href="/news/v5-2-0.html" aria-label="Read: v5.2.0 - International BOQ" data-i18n-aria-label="page.news.card_v520_aria">
+          <div class="card-media placeholder" aria-hidden="true">
+            <svg class="ph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip release" data-i18n="page.news.chip_release">Release</span>
+              <span class="card-date">2026-05-26</span>
+              <span class="card-date">·</span>
+              <span class="card-date" data-i18n="page.news.read_5min">~5 min read</span>
+            </div>
+            <h2 data-i18n="page.news.card_v520_title">v5.2.0 - International BOQ. GAEB · BC3 · NRM · MasterFormat under one roof.</h2>
+            <p class="excerpt" data-i18n-html="page.news.card_v520_excerpt">
+              Epic I lands native I/O for the four BOQ formats that cover roughly 70% of the
+              Tier-1 construction market - DACH, Spain, UK and US - plus one drag-and-drop
+              import surface (<code>/regional-exchange</code>) that ties them together.
+            </p>
+            <span class="read-more" data-i18n-html="page.news.read_release_notes">
+              Read the release notes
+              <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </span>
+          </div>
+        </a>
+      </article>
+
+      <!-- v5.1.0 release -->
+      <article class="card">
+        <a class="card-link" href="/news/v5-1-0.html" aria-label="Read: v5.1.0 - Wave 1 polish" data-i18n-aria-label="page.news.card_v510_aria">
+          <div class="card-media placeholder" aria-hidden="true">
+            <svg class="ph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip release" data-i18n="page.news.chip_release">Release</span>
+              <span class="card-date">2026-05-26</span>
+              <span class="card-date">·</span>
+              <span class="card-date" data-i18n="page.news.read_3min">~3 min read</span>
+            </div>
+            <h2 data-i18n="page.news.card_v510_title">v5.1.0 - Wave 1 polish. TypeScript strict everywhere, dispatcher hardening.</h2>
+            <p class="excerpt" data-i18n-html="page.news.card_v510_excerpt">
+              A tight follow-up to v5.0. Full <code>strict</code> TypeScript over the new
+              notifications and file-version surface, dispatcher retry + de-dup, and the
+              first 751 v1 file rows backfilled on the live demo VPS.
+            </p>
+            <span class="read-more" data-i18n-html="page.news.read_release_notes">
+              Read the release notes
+              <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </span>
+          </div>
+        </a>
+      </article>
+
+      <!-- v5.0.0 release -->
+      <article class="card">
+        <a class="card-link" href="/news/v5-0-0.html" aria-label="Read: v5.0.0 - Deep-Coordination foundation" data-i18n-aria-label="page.news.card_v500_aria">
+          <div class="card-media placeholder" aria-hidden="true">
+            <svg class="ph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip release" data-i18n="page.news.chip_release">Release</span>
+              <span class="card-date">2026-05-26</span>
+              <span class="card-date">·</span>
+              <span class="card-date" data-i18n="page.news.read_4min">~4 min read</span>
+            </div>
+            <h2 data-i18n="page.news.card_v500_title">v5.0.0 - The Deep-Coordination foundation. Notifications · file versioning · audit trail.</h2>
+            <p class="excerpt" data-i18n-html="page.news.card_v500_excerpt">
+              The first stable v5 major. Wave 1 of the Deep-Coordination initiative lands
+              three pieces of cross-module infrastructure that every workflow above them now
+              relies on - and the platform crosses 116 modules.
+            </p>
+            <span class="read-more" data-i18n-html="page.news.read_release_notes">
+              Read the release notes
+              <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </span>
+          </div>
+        </a>
+      </article>
+
+      <!-- v4.0.0 release -->
+      <article class="card">
+        <a class="card-link" href="/news/v4-0-0.html" aria-label="Read: v4.0.0 - Stable Major" data-i18n-aria-label="page.news.card_v400_aria">
+          <div class="card-media">
+            <img src="/screenshots/02-dashboard.png" alt="OpenConstructionERP v4.0.0 dashboard" loading="lazy" decoding="async" data-i18n-attr="alt:page.news.card_v400_img_alt" />
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip release" data-i18n="page.news.chip_release">Release</span>
+              <span class="card-date">2026-05-20</span>
+              <span class="card-date">·</span>
+              <span class="card-date" data-i18n="page.news.read_5min">~5 min read</span>
+            </div>
+            <h2 data-i18n="page.news.card_v400_title">v4.0.0 - Stable Major. 103 modules, public API, multi-tenant security pass.</h2>
+            <p class="excerpt" data-i18n-html="page.news.card_v400_excerpt">
+              The first stable major. A pro-grade BIM Hub, real clash detection, the BOQ pro
+              rebuild, a 7-stage Match Elements pipeline, a starter pack of BI dashboards and
+              a public <code>/api/v1/*</code> contract you can build on - all in one
+              <code>pip install</code>.
+            </p>
+            <span class="read-more" data-i18n-html="page.news.read_release_notes">
+              Read the release notes
+              <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </span>
+          </div>
+        </a>
+      </article>
+
+      <!-- v3.11.0 release -->
+      <article class="card">
+        <a class="card-link" href="/news/v3-11-0.html" aria-label="Read: v3.11.0 - Wave 3/4 modules and Validation@Import" data-i18n-aria-label="page.news.card_v3110_aria">
+          <div class="card-media">
+            <img src="/screenshots/07-ai-estimate.png" alt="AI estimate panel - v3.11.0 added Validation@Import alongside GAEB X84 writer" loading="lazy" decoding="async" data-i18n-attr="alt:page.news.card_v3110_img_alt" />
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip v3" data-i18n="page.news.chip_v3">v3</span>
+              <span class="chip release" data-i18n="page.news.chip_release">Release</span>
+              <span class="card-date">2026-05-20</span>
+              <span class="card-date">·</span>
+              <span class="card-date" data-i18n="page.news.read_5min">~5 min read</span>
+            </div>
+            <h2 data-i18n="page.news.card_v3110_title">v3.11.0 - Validation@Import. GAEB X84 writer. RVT diagnostics.</h2>
+            <p class="excerpt" data-i18n-html="page.news.card_v3110_excerpt">
+              Wave 3/4 modules land with eight new Alembic revisions
+              (<code>v3088</code>→<code>v3095</code>). Validation moves out of the editor and
+              into the import pipeline itself, GAEB X84 <em>Nebenangebot</em> ships as a
+              first-class writer, and RVT import gains a structured diagnostics report.
+            </p>
+            <span class="read-more" data-i18n-html="page.news.read_release_notes">
+              Read the release notes
+              <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </span>
+          </div>
+        </a>
+      </article>
+
+      <!-- v3.6.0 / v3.6.1 release -->
+      <article class="card">
+        <a class="card-link" href="/news/v3-6-0.html" aria-label="Read: v3.6.0 / v3.6.1 - Multi-level BOQ hierarchy" data-i18n-aria-label="page.news.card_v360_aria">
+          <div class="card-media">
+            <img src="/screenshots/04-boq-list.png" alt="BOQ editor - v3.6 lifted the hierarchy cap to MAX_NESTING_DEPTH=8" loading="lazy" decoding="async" data-i18n-attr="alt:page.news.card_v360_img_alt" />
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip v3" data-i18n="page.news.chip_v3">v3</span>
+              <span class="chip release" data-i18n="page.news.chip_release">Release</span>
+              <span class="card-date">2026-05-18</span>
+              <span class="card-date">·</span>
+              <span class="card-date" data-i18n="page.news.read_4min">~4 min read</span>
+            </div>
+            <h2 data-i18n="page.news.card_v360_title">v3.6.0 / v3.6.1 - Multi-level BOQ hierarchy. Recursive parent_id tree walk.</h2>
+            <p class="excerpt" data-i18n-html="page.news.card_v360_excerpt">
+              BOQs that nest as deep as a real project does. The hard cap rises to
+              <code>MAX_NESTING_DEPTH=8</code>, the editor switches to a recursive
+              <code>parent_id</code> walk, a resource-code dedup closes <a href="https://adicc-uae.com/issues/133" target="_blank" rel="noopener">#133</a>, and v3.6.1 fixes the one
+              render path that still flattened deep rows.
+            </p>
+            <span class="read-more" data-i18n-html="page.news.read_release_notes">
+              Read the release notes
+              <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </span>
+          </div>
+        </a>
+      </article>
+
+      <!-- v3.0.0 release -->
+      <article class="card">
+        <a class="card-link" href="/news/v3-0-0.html" aria-label="Read: v3.0.0 - First stable v3 major" data-i18n-aria-label="page.news.card_v300_aria">
+          <div class="card-media">
+            <img src="/screenshots/hero-overview.jpg" alt="OpenConstructionERP v3.0.0 platform overview" loading="lazy" decoding="async" data-i18n-attr="alt:page.news.card_v300_img_alt" />
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="chip v3" data-i18n="page.news.chip_v3">v3</span>
+              <span class="chip release" data-i18n="page.news.chip_release">Release</span>
+              <span class="card-date">2026-05-13</span>
+              <span class="card-date">·</span>
+              <span class="card-date" data-i18n="page.news.read_6min">~6 min read</span>
+            </div>
+            <h2 data-i18n="page.news.card_v300_title">v3.0.0 - First stable v3 major. 18 modules, FSM engine, ISO 16739-1 IFC.</h2>
+            <p class="excerpt" data-i18n-html="page.news.card_v300_excerpt">
+              The release that put the platform's skeleton in place. Eighteen business
+              modules on one loader, a deterministic FSM engine replacing ad-hoc status
+              fields, a pure-Python ISO 16739-1 IFC parser, and the Qdrant + BGE rerank
+              Match Elements pipeline.
+            </p>
+            <span class="read-more" data-i18n-html="page.news.read_release_notes">
+              Read the release notes
+              <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </span>
+          </div>
+        </a>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- FOOTER                                                        -->
+<!-- ============================================================ -->
+<footer class="pagefoot">
+  <div class="wrap">
+    <div class="pagefoot-inner">
+      <div data-i18n-html="page.news.footer_copyright">&copy; 2026 Artem Boiko / DataDrivenConstruction &middot; Open source under AGPL-3.0.</div>
+      <div>
+        <a href="/" data-i18n="page.news.footer_home">Home</a> &middot;
+        <a href="/partners.html" data-i18n="page.news.footer_partners">Partners</a> &middot;
+        <a href="/news.html" data-i18n="page.news.nav_news">News</a> &middot;
+        <a href="https://adicc-uae.com" target="_blank" rel="noopener" data-i18n="page.news.nav_github">GitHub</a> &middot;
+        <a href="https://datadrivenconstruction.io" target="_blank" rel="noopener">DataDrivenConstruction.io</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- ================================================================ -->
+<!-- COOKIE CONSENT BANNER                                             -->
+<!-- ================================================================ -->
+<div class="cookie-banner" id="cookie-banner" role="dialog" aria-label="Cookie preferences" aria-live="polite">
+  <div class="cookie-banner-inner">
+    <div class="cookie-banner-icon" aria-hidden="true">🍪</div>
+    <div class="cookie-banner-body">
+      <div class="cookie-banner-title" data-i18n="cookie.title">Cookies &amp; analytics</div>
+      <p class="cookie-banner-text" data-i18n-html="cookie.text">
+        We use essential cookies and anonymised analytics to improve the site. No third-party trackers, no ads. <a href="/privacy-policy.html">Learn more</a>.
+      </p>
+    </div>
+    <div class="cookie-banner-actions">
+      <button type="button" class="cookie-btn cookie-btn-reject" id="cookie-reject" data-i18n="cookie.reject">Reject non-essential</button>
+      <button type="button" class="cookie-btn cookie-btn-accept" id="cookie-accept" data-i18n="cookie.accept">Accept all</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Theme toggle
+  (function () {
+    var btn = document.getElementById('theme-toggle');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      var cur = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+      var next = cur === 'dark' ? 'light' : 'dark';
+      document.documentElement.dataset.theme = next;
+      try { localStorage.setItem('oce-theme', next); } catch (e) {}
+    });
+  })();
+
+  // Cookie consent banner - GDPR Consent Mode v2 integration
+  (function setupCookieBanner() {
+    const banner = document.getElementById('cookie-banner');
+    const accept = document.getElementById('cookie-accept');
+    const reject = document.getElementById('cookie-reject');
+    if (!banner) return;
+    let prior = null;
+    try { prior = localStorage.getItem('oce-cookie-consent'); } catch (e) {}
+    if (!prior) {
+      setTimeout(() => banner.classList.add('is-visible'), 800);
+    }
+    function apply(choice) {
+      try { localStorage.setItem('oce-cookie-consent', choice); } catch (e) {}
+      if (typeof gtag === 'function') {
+        gtag('consent', 'update', {
+          'analytics_storage': choice === 'granted' ? 'granted' : 'denied'
+        });
+      }
+      banner.classList.remove('is-visible');
+    }
+    accept?.addEventListener('click', () => apply('granted'));
+    reject?.addEventListener('click', () => apply('denied'));
+    // Allow re-opening via any element with data-open-cookies
+    document.querySelectorAll('[data-open-cookies]').forEach((el) => {
+      el.addEventListener('click', (e) => { e.preventDefault(); banner.classList.add('is-visible'); });
+    });
+  })();
+</script>
+
+<script src="/i18n/i18n.js" defer></script>
+</body>
+</html>

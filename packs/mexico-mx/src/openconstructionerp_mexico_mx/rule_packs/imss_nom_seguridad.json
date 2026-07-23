@@ -1,0 +1,11 @@
+{
+  "rule_pack_id": "imss_nom_seguridad",
+  "name": "IMSS and NOM Site Safety",
+  "standard": "IMSS employer obligations and NOM-031-STPS-2011",
+  "jurisdiction": "MX",
+  "regulator": "Instituto Mexicano del Seguro Social (IMSS) and Secretaria del Trabajo y Prevision Social (STPS)",
+  "description": "Labor and site-safety context for Mexican construction. Workers must be registered with the IMSS and employer contributions paid, including the construction-industry (obra) obligations. NOM-031-STPS-2011 is the primary construction site safety and health standard, complemented by NOM-009-STPS (work at height) and NOM-001-STPS (premises). Surfaced for compliance reference; safety-document gates are on the roadmap.",
+  "applies_to": ["site", "compliance"],
+  "nom_standards": ["NOM-031-STPS-2011", "NOM-009-STPS-2011", "NOM-001-STPS-2008"],
+  "enables_rule_ids": []
+}

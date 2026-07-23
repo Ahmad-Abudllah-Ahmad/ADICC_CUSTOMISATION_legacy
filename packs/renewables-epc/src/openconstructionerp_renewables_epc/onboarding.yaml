@@ -1,0 +1,64 @@
+# Renewables EPC Pack — first-login onboarding wizard.
+# Streamed by /api/v1/partner-pack/onboarding-script and rendered by
+# the OnboardingWizard React component in place of the default steps.
+
+version: 2
+locale: en
+title: "Welcome to OpenConstructionERP — Renewables EPC Edition"
+subtitle: "Six quick steps to align your workspace with solar / wind / BESS EPC practice (IEC 61400, IEC 61730, IEC 62548, NFPA 855, ENTSO-E RfG, LCOE)."
+
+steps:
+  - id: company_profile
+    title: "EPC company profile"
+    body: "Tell us about your firm so reports, tender documents and grid-connection packages are correctly attributed."
+    fields:
+      - { key: company_name, label: "Company name", type: text, required: true }
+      - { key: registration_number, label: "Company registration number", type: text, required: false }
+      - { key: technology_mix, label: "Technology mix (multi-select)", type: multiselect, options: ["Solar PV — utility-scale", "Solar PV — C&I", "Solar PV — residential / rooftop", "Solar PV — floating (FPV)", "Wind — onshore", "Wind — offshore (fixed-bottom)", "Wind — offshore (floating)", "BESS — standalone", "BESS — co-located with PV/wind", "Hybrid (PV + BESS + Wind)", "Green hydrogen / Power-to-X"], required: true, default: ["Solar PV — utility-scale"] }
+      - { key: target_market_segment, label: "Primary target market segment", type: radio, options: ["Utility-scale (TSO-connected, ≥ 50 MW)", "Distributed utility-scale / IPP (DSO-connected, 5 – 50 MW)", "C&I (1 – 5 MW behind-the-meter or DSO)", "Residential / SME aggregation"], required: true, default: "Utility-scale (TSO-connected, ≥ 50 MW)" }
+
+  - id: project_typology
+    title: "Project typology and capacity"
+    body: "Pick the typical project profile so the takeoff editor and BOM templates start with sensible defaults."
+    fields:
+      - { key: typical_capacity_mw, label: "Typical project capacity (MW)", type: select, options: ["< 1 MW", "1–10 MW", "10–50 MW", "50–250 MW", "250 MW – 1 GW", "> 1 GW"], required: true, default: "10–50 MW" }
+      - { key: enable_lcoe_module, label: "Enable LCOE financial model on every project (NREL ATB methodology)", type: checkbox, default: true }
+      - { key: enable_mv_cable_scheduler, label: "Enable MV cable scheduler (sizing + routing + derating)", type: checkbox, default: true }
+      - { key: enable_bess_design, label: "Enable BESS design rules (NFPA 855 / UL 9540 / IEC 62619)", type: checkbox, default: true }
+
+  - id: standards
+    title: "Compliance standards (IEC + NFPA + IEEE)"
+    body: "Select the standards that should validate your project documentation automatically. Enable both baseline + deep packs for utility-scale EPC."
+    fields:
+      - { key: enable_iec_61400, label: "IEC 61400 — Wind turbine design (baseline)", type: checkbox, default: true }
+      - { key: enable_iec_61400_full, label: "IEC 61400 full family — met mast, micrositing, type/project cert, ZVI, shadow flicker", type: checkbox, default: true }
+      - { key: enable_iec_61730, label: "IEC 61730 + IEC 61215 — PV module safety + design qualification", type: checkbox, default: true }
+      - { key: enable_pv_design_full, label: "PV design deep — DC/AC ratio, soiling, degradation, shading, bifacial, tracker", type: checkbox, default: true }
+      - { key: enable_iec_62548, label: "IEC 62548 — PV array design", type: checkbox, default: true }
+      - { key: enable_bess_nfpa_855, label: "NFPA 855 + IEC 62619 + UL 9540 (BESS safety & fire)", type: checkbox, default: true }
+      - { key: enable_grid_compliance, label: "Grid compliance — ENTSO-E RfG / UK NGC / IEEE 1547 / EN 50549 / FERC 2222", type: checkbox, default: true }
+
+  - id: contract_form
+    title: "EPC contract form"
+    body: "Pre-select your usual contract form. The pack ships templates for the FIDIC suite and AIA standard forms; you can override per project."
+    fields:
+      - { key: default_epc_contract_form, label: "Default EPC contract form", type: radio, options: ["FIDIC Silver Book 2017 — EPC / Turnkey", "FIDIC Yellow Book 2017 — Plant & Design-Build", "FIDIC Green Book 2021 — Short Form", "AIA A141 — Design-Build (US)", "AIA A102 / A201 — Stipulated Sum + GC (US)", "Bespoke / client form"], required: true, default: "FIDIC Silver Book 2017 — EPC / Turnkey" }
+      - { key: liquidated_damages_cap_pct, label: "Typical LD cap (% contract value)", type: select, options: ["< 10 %", "10 – 15 %", "15 – 20 %", "20 – 30 %", "> 30 %"], required: false, default: "10 – 15 %" }
+      - { key: bonding_required, label: "Performance bond / parent-company guarantee typically required", type: checkbox, default: true }
+
+  - id: grid_and_regions
+    title: "Grid jurisdiction and regions of operation"
+    body: "Renewables EPC is cross-region by design. Tell us the grid jurisdictions you connect into so the right code packs activate."
+    fields:
+      - { key: interconnection_grid_jurisdiction, label: "Primary interconnection grid jurisdiction", type: radio, options: ["EU — ENTSO-E + Member-State TSO", "UK — NG ESO + DNO", "US — FERC / ISO-RTO (CAISO / ERCOT / PJM / MISO / SPP / NYISO / ISO-NE)", "Canada — IESO / AESO / etc.", "Australia — AEMO (NEM / WEM)", "Asia — country-specific (JEPX / NEM-Malaysia / etc.)", "Africa — national utility", "Latin America — national utility / ONS Brazil / CFE Mexico"], required: true, default: "EU — ENTSO-E + Member-State TSO" }
+      - { key: target_regions, label: "Active EPC regions", type: multiselect, options: ["Western Europe", "Southern Europe", "Central / Eastern Europe", "MENA", "Sub-Saharan Africa", "South Asia", "South-East Asia", "Australia / NZ", "North America", "Latin America"], required: true, default: ["Western Europe"] }
+      - { key: default_fx_currency, label: "Default reporting currency", type: select, options: ["EUR", "USD", "GBP", "AUD", "ZAR", "BRL", "MXN"], required: true, default: "EUR" }
+
+  - id: review
+    title: "Review and finish"
+    body: "We will create your first renewables EPC workspace with IEC 61400 (baseline + full) + IEC 61730 + IEC 62548 + PV-design-deep + NFPA 855 BESS + ENTSO-E RfG / IEEE 1547 / EN 50549 grid compliance + MV cable scheduler + LCOE templates (NREL ATB) enabled. You can change everything later in Settings."
+    action:
+      label: "Create my Renewables EPC workspace"
+      apply:
+        - set_default_currency: EUR
+        - enable_rule_packs: [iec_61400_wind, iec_61400_wind_full, iec_61730_pv, pv_design_full, bess_design, lcoe_templates, mv_cable_specs, renewables_grid_compliance]

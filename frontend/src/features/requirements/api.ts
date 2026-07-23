@@ -1,0 +1,550 @@
+// DDC-CWICR-OE: DataDrivenConstruction · OpenConstructionERP
+// Copyright (c) 2026 Artem Boiko / DataDrivenConstruction
+/**
+ * API helpers for Requirements & Quality Gates.
+ *
+ * All endpoints are prefixed with /v1/requirements/.
+ */
+
+import { apiGet, apiPost, apiPatch, apiDelete, getAuthToken, triggerDownload } from '@/shared/lib/api';
+import { useAuthStore } from '@/stores/useAuthStore';
+
+/* ── Types ─────────────────────────────────────────────────────────────── */
+
+export interface Requirement {
+  id: string;
+  requirement_set_id: string;
+  entity: string;
+  attribute: string;
+  constraint_type: string;
+  constraint_value: string;
+  unit: string;
+  category: string;
+  priority: string;
+  status: string;
+  confidence: number | null;
+  source_ref: string;
+  notes: string;
+  linked_position_id: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RequirementSet {
+  id: string;
+  project_id: string;
+  name: string;
+  description: string;
+  source_type: string;
+  source_filename: string;
+  status: string;
+  gate_status: Record<string, unknown>;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GateResult {
+  id: string;
+  requirement_set_id: string;
+  gate_number: number;
+  gate_name: string;
+  status: 'pass' | 'fail' | 'warning' | 'pending' | 'skipped';
+  score: number;
+  findings: Array<Record<string, unknown>>;
+  created_at: string;
+}
+
+export interface RequirementSetDetail extends RequirementSet {
+  requirements: Requirement[];
+  gate_results: GateResult[];
+}
+
+export interface RequirementStats {
+  total_requirements: number;
+  total_sets: number;
+  by_priority: Record<string, number>;
+  by_status: Record<string, number>;
+  by_category: Record<string, number>;
+  linked_count: number;
+  unlinked_count: number;
+}
+
+export interface CreateRequirementSetPayload {
+  project_id: string;
+  name: string;
+  description?: string;
+}
+
+export interface AddRequirementPayload {
+  entity: string;
+  attribute: string;
+  constraint_type: string;
+  constraint_value: string;
+  unit: string;
+  category: string;
+  priority: string;
+  source_ref?: string;
+  notes?: string;
+}
+
+export interface UpdateRequirementPayload {
+  entity?: string;
+  attribute?: string;
+  constraint_type?: string;
+  constraint_value?: string;
+  unit?: string;
+  category?: string;
+  priority?: string;
+  source_ref?: string;
+  notes?: string;
+  status?: string;
+}
+
+/* ── API Functions ─────────────────────────────────────────────────────── */
+
+export async function fetchRequirementSets(projectId: string): Promise<RequirementSet[]> {
+  if (!projectId) return [];
+  const res = await apiGet<RequirementSet[] | { items: RequirementSet[] }>(
+    `/v1/requirements/?project_id=${projectId}`,
+  );
+  return Array.isArray(res) ? res : res.items ?? [];
+}
+
+export async function fetchRequirementSetDetail(setId: string): Promise<RequirementSetDetail> {
+  return apiGet<RequirementSetDetail>(`/v1/requirements/${setId}`);
+}
+
+export async function fetchRequirementStats(projectId: string): Promise<RequirementStats> {
+  if (!projectId) return { total_requirements: 0, total_sets: 0, by_priority: {}, by_status: {}, by_category: {}, linked_count: 0, unlinked_count: 0 };
+  return apiGet<RequirementStats>(`/v1/requirements/stats/?project_id=${projectId}`);
+}
+
+export async function createRequirementSet(
+  data: CreateRequirementSetPayload,
+): Promise<RequirementSet> {
+  return apiPost<RequirementSet>('/v1/requirements/', data);
+}
+
+export interface UpdateRequirementSetPayload {
+  name?: string;
+  description?: string;
+  status?: string;
+}
+
+export async function updateRequirementSet(
+  setId: string,
+  data: UpdateRequirementSetPayload,
+): Promise<RequirementSet> {
+  return apiPatch<RequirementSet>(`/v1/requirements/${setId}`, data);
+}
+
+export async function deleteRequirementSet(setId: string): Promise<void> {
+  return apiDelete(`/v1/requirements/${setId}`);
+}
+
+export async function addRequirement(
+  setId: string,
+  data: AddRequirementPayload,
+): Promise<Requirement> {
+  return apiPost<Requirement>(`/v1/requirements/${setId}/requirements/`, data);
+}
+
+export async function updateRequirement(
+  setId: string,
+  reqId: string,
+  data: UpdateRequirementPayload,
+): Promise<Requirement> {
+  return apiPatch<Requirement>(`/v1/requirements/${setId}/requirements/${reqId}`, data);
+}
+
+export async function deleteRequirement(setId: string, reqId: string): Promise<void> {
+  return apiDelete(`/v1/requirements/${setId}/requirements/${reqId}`);
+}
+
+export async function runGate(setId: string, gateNumber: number): Promise<GateResult> {
+  return apiPost<GateResult>(`/v1/requirements/${setId}/gates/${gateNumber}/run/`);
+}
+
+export async function fetchGates(setId: string): Promise<GateResult[]> {
+  const res = await apiGet<GateResult[] | { items: GateResult[] }>(
+    `/v1/requirements/${setId}/gates`,
+  );
+  return Array.isArray(res) ? res : res.items ?? [];
+}
+
+export async function linkToPosition(
+  setId: string,
+  reqId: string,
+  positionId: string,
+): Promise<Requirement> {
+  return apiPost<Requirement>(
+    `/v1/requirements/${setId}/requirements/${reqId}/link/${positionId}`,
+  );
+}
+
+/** Pin a requirement to one or more BIM elements (additive by default).
+ *
+ *  The link is stored under `Requirement.metadata_["bim_element_ids"]`
+ *  on the backend so no schema migration is needed.  Pass `replace=true`
+ *  to overwrite the array entirely instead of merging.  After the call
+ *  the BIM viewer's element list query should be invalidated so the
+ *  newly linked element shows the requirement in its details panel.
+ */
+export async function linkRequirementToBIMElements(
+  setId: string,
+  reqId: string,
+  bimElementIds: string[],
+  options: { replace?: boolean } = {},
+): Promise<Requirement> {
+  return apiPatch<Requirement>(
+    `/v1/requirements/${setId}/requirements/${reqId}/bim-links/`,
+    { bim_element_ids: bimElementIds, replace: options.replace ?? false },
+  );
+}
+
+/** Reverse query: every requirement that pins ``bim_element_id``.
+ *  Used by the BIM viewer when the user wants to see the original
+ *  spec text behind a model element. */
+export async function fetchRequirementsByBIMElement(
+  bimElementId: string,
+  projectId?: string,
+): Promise<Requirement[]> {
+  const params = new URLSearchParams();
+  params.set('bim_element_id', bimElementId);
+  if (projectId) params.set('project_id', projectId);
+  return apiGet<Requirement[]>(`/v1/requirements/by-bim-element/?${params.toString()}`);
+}
+
+export async function importFromText(setId: string, text: string): Promise<RequirementSetDetail> {
+  return apiPost<RequirementSetDetail>(`/v1/requirements/${setId}/import/text/`, { text });
+}
+
+/* ── Export Functions ─────────────────────────────────────────────────────── */
+
+const EXPORT_COLUMNS = [
+  'entity',
+  'attribute',
+  'constraint_type',
+  'constraint_value',
+  'unit',
+  'category',
+  'priority',
+  'status',
+  'confidence',
+  'source_ref',
+  'notes',
+] as const;
+
+/**
+ * Export requirements as CSV.
+ * Tries the backend endpoint first; falls back to client-side generation.
+ */
+export async function exportRequirementsCSV(
+  setId: string,
+  requirements?: Requirement[],
+): Promise<Blob> {
+  try {
+    const res = await fetch(`/api/v1/requirements/${setId}/export/?format=csv`, {
+      headers: {
+        Authorization: `Bearer ${useAuthStore.getState().accessToken ?? ''}`,
+        'X-DDC-Client': 'OE/1.0',
+      },
+    });
+    if (res.ok) {
+      return await res.blob();
+    }
+  } catch {
+    // fall through to client-side
+  }
+
+  // Client-side fallback
+  const reqs = requirements ?? (await fetchRequirementSetDetail(setId)).requirements;
+  const header = EXPORT_COLUMNS.join(',');
+  const rows = reqs.map((r) =>
+    EXPORT_COLUMNS.map((col) => {
+      const val = String(r[col as keyof Requirement] ?? '');
+      // Escape CSV values containing commas, quotes, or newlines
+      if (val.includes(',') || val.includes('"') || val.includes('\n')) {
+        return `"${val.replace(/"/g, '""')}"`;
+      }
+      return val;
+    }).join(','),
+  );
+  const csv = [header, ...rows].join('\n');
+  return new Blob([csv], { type: 'text/csv;charset=utf-8' });
+}
+
+/**
+ * Export requirements as a real .xlsx workbook produced by the backend
+ * (formatted headers, frozen first row).  Falls back to a TSV-with-BOM
+ * blob only if the server endpoint is unreachable.
+ */
+export async function exportRequirementsExcel(
+  setId: string,
+  requirements?: Requirement[],
+): Promise<Blob> {
+  try {
+    const res = await fetch(`/api/v1/requirements/${setId}/export.xlsx`, {
+      headers: {
+        Authorization: `Bearer ${useAuthStore.getState().accessToken ?? ''}`,
+        'X-DDC-Client': 'OE/1.0',
+      },
+    });
+    if (res.ok) {
+      return await res.blob();
+    }
+  } catch {
+    // fall through
+  }
+
+  // Best-effort fallback: TSV with UTF-8 BOM Excel can still open
+  const reqs = requirements ?? (await fetchRequirementSetDetail(setId)).requirements;
+  const header = EXPORT_COLUMNS.join('\t');
+  const rows = reqs.map((r) =>
+    EXPORT_COLUMNS.map((col) => {
+      const val = String(r[col as keyof Requirement] ?? '');
+      return val.replace(/\t/g, ' ');
+    }).join('\t'),
+  );
+  const tsv = '\uFEFF' + [header, ...rows].join('\n');
+  return new Blob([tsv], {
+    type: 'application/vnd.ms-excel;charset=utf-8',
+  });
+}
+
+/* \u2500\u2500 Excel template, file import, and BIM validation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+
+/** URL of the Excel template (headers + sample row + legend).
+ *  @deprecated A bare `<a href>` to this GET endpoint sends no Authorization
+ *  header and 401s. Use {@link downloadRequirementsTemplate} instead. */
+export function requirementsTemplateUrl(): string {
+  return '/api/v1/requirements/template.xlsx';
+}
+
+/** Download the requirements Excel template via an authenticated fetch.
+ *  The endpoint is JWT-guarded, so a plain anchor click (no Bearer token)
+ *  401s and nothing downloads. We fetch the blob with the token and trigger
+ *  a synthetic download. Throws on HTTP error so callers can toast it. */
+export async function downloadRequirementsTemplate(): Promise<void> {
+  const token = getAuthToken();
+  const headers: Record<string, string> = { Accept: '*/*' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const resp = await fetch(requirementsTemplateUrl(), { headers });
+  if (!resp.ok) {
+    throw new Error(`Template download failed (HTTP ${resp.status})`);
+  }
+  const blob = await resp.blob();
+  triggerDownload(blob, 'requirements_template.xlsx');
+}
+
+export interface ImportFromFileResponse {
+  set_id: string;
+  imported: number;
+  skipped: number;
+  warnings: string[];
+}
+
+/** Upload an Excel/CSV file and bulk-add its rows to a requirement set. */
+export async function importRequirementsFromFile(
+  setId: string,
+  file: File,
+): Promise<ImportFromFileResponse> {
+  const fd = new FormData();
+  fd.append('file', file);
+  const res = await fetch(`/api/v1/requirements/${setId}/import/file/`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${useAuthStore.getState().accessToken ?? ''}`,
+      'X-DDC-Client': 'OE/1.0',
+    },
+    body: fd,
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Import failed (${res.status}): ${text}`);
+  }
+  return res.json();
+}
+
+export interface ValidateBIMResult {
+  report_id: string;
+  status: 'passed' | 'warnings' | 'errors';
+  score: number;
+  total_checks: number;
+  passed: number;
+  warnings: number;
+  errors: number;
+  skipped_requirements: number;
+  duration_ms: number;
+}
+
+/** Run every requirement in a set against every element of a BIM model.
+ *
+ * Persists a regular ValidationReport so the existing dashboard, BIM
+ * viewer badges, and SARIF export all surface these findings.
+ */
+export async function validateRequirementSetAgainstModel(
+  setId: string,
+  modelId: string,
+): Promise<ValidateBIMResult> {
+  return apiPost<ValidateBIMResult>(
+    `/v1/requirements/${setId}/validate-bim/${modelId}`,
+  );
+}
+
+/**
+ * Export requirements as formatted JSON string.
+ */
+export async function exportRequirementsJSON(
+  setId: string,
+  requirements?: Requirement[],
+): Promise<string> {
+  const reqs = requirements ?? (await fetchRequirementSetDetail(setId)).requirements;
+  const data = reqs.map((r) => {
+    const obj: Record<string, unknown> = {};
+    for (const col of EXPORT_COLUMNS) {
+      obj[col] = r[col as keyof Requirement] ?? '';
+    }
+    return obj;
+  });
+  return JSON.stringify(data, null, 2);
+}
+
+/* ── ISO 19650 EIR deliverables (T13) ────────────────────────────────────── */
+
+export type DeliverableStatus = 'accepted' | 'submitted' | 'missing';
+
+export type DeliverableType =
+  | 'model'
+  | 'drawing'
+  | 'schedule'
+  | 'report'
+  | 'cobie'
+  | 'pset'
+  | 'other';
+
+export interface Deliverable {
+  id: string;
+  requirement_id: string;
+  deliverable_type: string;
+  lod: string | null;
+  loi: string | null;
+  due_milestone_id: string | null;
+  submitted_at: string | null;
+  accepted_at: string | null;
+  notes: string;
+  status: DeliverableStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateDeliverablePayload {
+  deliverable_type: DeliverableType | string;
+  lod?: string | null;
+  loi?: string | null;
+  due_milestone_id?: string | null;
+  submitted_at?: string | null;
+  accepted_at?: string | null;
+  notes?: string;
+}
+
+export interface UpdateDeliverablePayload {
+  deliverable_type?: DeliverableType | string;
+  lod?: string | null;
+  loi?: string | null;
+  due_milestone_id?: string | null;
+  submitted_at?: string | null;
+  accepted_at?: string | null;
+  notes?: string;
+}
+
+export interface MatrixCell {
+  deliverable_id: string | null;
+  lod: string | null;
+  loi: string | null;
+  status: DeliverableStatus;
+  due_milestone_id: string | null;
+  submitted_at: string | null;
+  accepted_at: string | null;
+}
+
+export interface MatrixRow {
+  requirement_id: string;
+  requirement_set_id: string;
+  entity: string;
+  attribute: string;
+  priority: string;
+  /** BOQ position this requirement is linked to, if any (deep-links to /boq). */
+  linked_position_id: string | null;
+  cells: Record<string, MatrixCell>;
+  coverage_pct: number;
+}
+
+export interface MatrixResponse {
+  project_id: string;
+  deliverable_types: string[];
+  rows: MatrixRow[];
+  coverage_pct: number;
+}
+
+/** List EIR deliverables attached to a requirement. */
+export async function listDeliverables(
+  requirementId: string,
+  deliverableType?: string,
+): Promise<Deliverable[]> {
+  const qs = deliverableType
+    ? `?deliverable_type=${encodeURIComponent(deliverableType)}`
+    : '';
+  return apiGet<Deliverable[]>(
+    `/v1/requirements/requirements/${requirementId}/deliverables/${qs}`,
+  );
+}
+
+/** Attach a new deliverable row to a requirement. */
+export async function createDeliverable(
+  requirementId: string,
+  data: CreateDeliverablePayload,
+): Promise<Deliverable> {
+  return apiPost<Deliverable>(
+    `/v1/requirements/requirements/${requirementId}/deliverables/`,
+    data,
+  );
+}
+
+/** Patch fields on an existing deliverable row. */
+export async function updateDeliverable(
+  requirementId: string,
+  deliverableId: string,
+  data: UpdateDeliverablePayload,
+): Promise<Deliverable> {
+  return apiPatch<Deliverable>(
+    `/v1/requirements/requirements/${requirementId}/deliverables/${deliverableId}`,
+    data,
+  );
+}
+
+/** Hard delete a deliverable row. */
+export async function deleteDeliverable(
+  requirementId: string,
+  deliverableId: string,
+): Promise<void> {
+  return apiDelete(
+    `/v1/requirements/requirements/${requirementId}/deliverables/${deliverableId}`,
+  );
+}
+
+/** Fetch the project EIR matrix (rows × deliverable-type columns). */
+export async function getMatrix(
+  projectId: string,
+  deliverableType?: string,
+): Promise<MatrixResponse> {
+  const qs = deliverableType
+    ? `?deliverable_type=${encodeURIComponent(deliverableType)}`
+    : '';
+  return apiGet<MatrixResponse>(
+    `/v1/requirements/projects/${projectId}/matrix/${qs}`,
+  );
+}
+

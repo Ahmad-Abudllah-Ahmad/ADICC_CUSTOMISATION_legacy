@@ -1,0 +1,211 @@
+OpenConstructionERP
+Copyright (c) 2026 Artem Boiko / DataDrivenConstruction
+Contact: info@datadrivenconstruction.io
+
+This product is licensed under the GNU Affero General Public License v3.0
+or later (AGPL-3.0-or-later). See the LICENSE file for the full license text.
+
+For commercial licensing without AGPL obligations, contact
+info@datadrivenconstruction.io.
+
+------------------------------------------------------------------------
+Third-Party Software
+------------------------------------------------------------------------
+
+This distribution contains or depends on third-party open-source software.
+A full machine-readable license inventory is generated per release via:
+
+    cd frontend && npx license-checker --json > NOTICE.frontend.json
+    cd backend  && pip-licenses --format=json > NOTICE.backend.json
+
+The aggregated inventory for each release is published alongside the
+signed release artefacts on the GitHub releases page.
+
+Primary third-party components (non-exhaustive):
+
+Backend (base install via `pip install openconstructionerp`):
+  * FastAPI ............................. MIT
+  * SQLAlchemy .......................... MIT
+  * Pydantic ............................ MIT
+  * pydantic-settings ................... MIT
+  * email-validator ..................... CC0-1.0
+  * Alembic ............................. MIT
+  * Uvicorn ............................. BSD-3-Clause
+  * python-multipart .................... Apache-2.0
+  * aiosqlite ........................... MIT
+  * pandas .............................. BSD-3-Clause
+  * pyarrow ............................. Apache-2.0
+  * polars .............................. MIT
+  * duckdb .............................. MIT
+  * openpyxl ............................ MIT
+  * reportlab ........................... BSD-3-Clause (open-source edition)
+  * pdfplumber .......................... MIT
+  * httpx ............................... BSD-3-Clause
+  * orjson .............................. Apache-2.0 / MIT
+  * structlog ........................... Apache-2.0 / MIT
+  * python-jose ......................... MIT
+  * bcrypt .............................. Apache-2.0
+  * ezdxf ............................... MIT
+  * trimesh ............................. MIT
+  * defusedxml .......................... PSF-2.0
+  * pyyaml .............................. MIT
+  * python-dateutil ..................... Apache-2.0 / BSD-3-Clause
+  * rapidfuzz ........................... MIT
+
+Backend optional extras:
+  * [server]  asyncpg .................... Apache-2.0
+  * [server]  psycopg2-binary ............ LGPL-3.0-or-later (with OpenSSL exception)
+  * [server]  celery .................... BSD-3-Clause
+  * [server]  boto3 ..................... Apache-2.0
+  * [vector]  lancedb ................... Apache-2.0
+  * [vector]  fastembed ................. Apache-2.0
+  * [semantic] qdrant-client ............ Apache-2.0
+  * [semantic] sentence-transformers .... Apache-2.0
+  * [semantic] FlagEmbedding (BGE-M3) ... MIT
+  * [cv]      PyMuPDF (pymupdf) ......... AGPL-3.0-or-later  -- see "AGPL Cascade" below
+  * [cv]      ultralytics (YOLO) ........ AGPL-3.0-or-later  -- see "AGPL Cascade" below
+  * [cv]      paddleocr ................. Apache-2.0
+  * [cv]      opencv-python-headless .... Apache-2.0
+  * [cv]      Pillow .................... HPND (PIL/Pillow licence)
+  * [s3]      aioboto3 .................. Apache-2.0
+
+Frontend (compiled into the static bundle shipped inside the wheel):
+  * React ............................... MIT
+  * react-dom ........................... MIT
+  * react-router-dom .................... MIT
+  * TypeScript .......................... Apache-2.0
+  * Vite ................................ MIT
+  * Tailwind CSS ........................ MIT
+  * Zustand ............................. MIT
+  * TanStack Query ...................... MIT
+  * i18next ............................. MIT
+  * react-i18next ....................... MIT
+  * Lucide icons ........................ ISC
+  * AG Grid Community ................... MIT
+  * PDF.js .............................. Apache-2.0
+  * three.js ............................ MIT
+  * Recharts ............................ MIT
+  * jsPDF ............................... MIT
+  * jspdf-autotable ..................... MIT
+  * exceljs ............................. MIT
+  * jszip ............................... MIT / GPL-3.0 (dual-licensed; we use MIT)
+  * Leaflet ............................. BSD-2-Clause
+  * react-leaflet ....................... Hippocratic / MIT
+  * MapLibre GL ......................... BSD-3-Clause
+  * Yjs ................................. MIT
+  * y-websocket / y-webrtc .............. MIT
+  * dnd-kit ............................. MIT
+  * Playwright (dev) .................... Apache-2.0
+
+A machine-readable, full inventory of every direct and transitive
+dependency at exactly the version this release ships is generated per
+release and published as `NOTICE.backend.json` (pip-licenses output) and
+`NOTICE.frontend.json` (license-checker output) alongside the wheel on
+the GitHub release page.
+
+------------------------------------------------------------------------
+AGPL Cascade -- Optional Components
+------------------------------------------------------------------------
+
+OpenConstructionERP itself is distributed under the GNU Affero General
+Public License v3.0 or later. Two upstream Python packages used inside
+the optional `[cv]` extra group are also AGPL-3.0-or-later:
+
+  * PyMuPDF (Artifex Software, Inc.) -- AGPL-3.0-or-later
+    https://pymupdf.readthedocs.io/en/latest/about.html#license
+  * Ultralytics YOLO (Ultralytics Inc.) -- AGPL-3.0-or-later
+    https://github.com/ultralytics/ultralytics/blob/main/LICENSE
+
+Because these projects are themselves AGPL-3.0, any user who installs
+the `[cv]` extra and then operates a modified version of OpenConstructionERP
+over a network is subject to AGPL-3.0 obligations both from
+OpenConstructionERP and independently from those upstream projects.
+Commercial users who require a non-AGPL path for the computer-vision
+takeoff pipeline must obtain commercial licences directly from Artifex
+Software (PyMuPDF) and Ultralytics Inc. (YOLO) -- OpenConstructionERP's
+commercial licence covers only OpenConstructionERP itself.
+
+Users who install OpenConstructionERP without the `[cv]` extra do not
+pull in these AGPL upstream packages.
+
+------------------------------------------------------------------------
+Trademarks
+------------------------------------------------------------------------
+
+All product names, logos, and trademarks are property of their respective
+owners. All company, product, and service names used in this software and
+its documentation are for identification purposes only. Use of these
+names, trademarks, and brands does not imply endorsement.
+
+IFC(R) is a trademark of buildingSMART International.
+DIN is a registered trademark of DIN Deutsches Institut fuer Normung e.V.
+GAEB is a trademark of the Gemeinsamer Ausschuss Elektronik im Bauwesen.
+NRM is a trademark of the Royal Institution of Chartered Surveyors (RICS).
+MasterFormat(R) is a trademark of the Construction Specifications Institute (CSI).
+ISO is a registered trademark of the International Organization for Standardization.
+
+OpenConstructionERP is an independent project and is not affiliated with,
+endorsed by, or sponsored by any of the trademark owners listed above.
+Comparative references to commercial products reflect publicly available
+feature information at the time of publication and are used for fair
+comparative purposes under EU Directive 2006/114/EC and US Lanham Act
+Section 43(a).
+
+------------------------------------------------------------------------
+Data Sources
+------------------------------------------------------------------------
+
+The CWICR cost database aggregated and published with this software was
+compiled by DataDrivenConstruction from public, licensed, and originally
+collected sources. Classification codes (e.g., DIN 276 cost-group numbers,
+CSI MasterFormat division numbers, NRM element codes) are used as factual
+references; no standard's copyrighted descriptive text has been copied
+into the database without permission.
+
+------------------------------------------------------------------------
+Cryptographic Notice
+------------------------------------------------------------------------
+
+This software contains only standard, published cryptography used for
+authentication (bcrypt password hashing and signed JSON Web Tokens) and
+no bulk data encryption. Cryptography whose function is limited to
+authentication and digital signature falls outside the encryption
+controls in Category 5, Part 2 of the US Export Administration
+Regulations and the equivalent EU dual-use list, so it needs no special
+export licence; the same is true of standard cryptography published as
+open source. The software still may not be exported to or used
+in comprehensively sanctioned destinations (currently Cuba, Iran, North
+Korea, and the Crimea, Donetsk and Luhansk regions of Ukraine) or by
+sanctioned or denied parties. As with any software, you remain
+responsible for complying with the export, re-export, import, use and
+sanctions laws that apply to you. This notice is information, not legal
+advice.
+
+------------------------------------------------------------------------
+AI / Machine Learning Notice
+------------------------------------------------------------------------
+
+This software integrates with third-party Large Language Model APIs
+(Anthropic Claude, OpenAI, Google Gemini, Mistral, Groq, DeepSeek) when
+configured by the user. AI-generated cost estimates, classifications,
+and suggestions are preliminary and must be verified by a qualified
+construction-estimation professional before use in a binding commercial
+context. The authors and contributors of OpenConstructionERP disclaim
+all liability for decisions made on the basis of AI-generated output.
+
+------------------------------------------------------------------------
+Disclaimer of Warranty
+------------------------------------------------------------------------
+
+THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
+See the AGPL-3.0 license for the full warranty disclaimer.
+
+------------------------------------------------------------------------
+Contact
+------------------------------------------------------------------------
+
+For legal, licensing, or compliance inquiries:
+    info@datadrivenconstruction.io
+    https://datadrivenconstruction.io

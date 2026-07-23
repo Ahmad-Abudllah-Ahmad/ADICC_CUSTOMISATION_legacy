@@ -1,0 +1,63 @@
+scheme,code,name,parent_code,level,description
+unspsc,30000000,Structural Building and Construction and Manufacturing Components and Supplies,,1,UNSPSC segment 30
+unspsc,30100000,Structural building products,30000000,2,UNSPSC family 30 10
+unspsc,30101500,Structural metal products,30100000,3,Beams plates structural shapes
+unspsc,30101800,Concrete and mortars,30100000,3,Concrete cement mortar grout
+unspsc,30102000,Bricks and masonry materials,30100000,3,Bricks blocks masonry units
+unspsc,30103600,Timber and lumber,30100000,3,Sawn timber framing lumber
+unspsc,30110000,Structural components and basic shapes,30000000,2,UNSPSC family 30 11
+unspsc,30111500,Concrete and mortar admixtures,30110000,3,Plasticisers accelerators retarders
+unspsc,30111600,Concrete reinforcing materials,30110000,3,Rebar mesh fibers
+unspsc,30121800,Doors,30000000,2,Wooden metal glass doors
+unspsc,30141500,Insulating materials,30000000,2,Thermal acoustic insulation
+unspsc,30151500,Windows,30000000,2,Wooden metal aluminium windows
+unspsc,30160000,Construction finishing materials,30000000,2,UNSPSC family 30 16
+unspsc,30161500,Paints primers and finishes,30160000,3,Interior exterior paints primers
+unspsc,30161501,Portland cement,30161500,4,Type I II III IV V portland cement
+unspsc,30161800,Ceilings,30160000,3,Suspended ceilings tiles
+unspsc,30171500,Plumbing fixtures,30000000,2,Sinks toilets faucets bathtubs
+unspsc,30181500,Heating and ventilation and air circulation,30000000,2,HVAC equipment air handlers
+unspsc,30191500,Electrical wire and cable and harness,30000000,2,Copper aluminium electrical cable
+unspsc,30201500,Heavy construction machinery,30000000,2,Excavators bulldozers cranes
+unspsc,30201700,Lifting equipment,30000000,2,Cranes hoists forklifts
+unspsc,30221500,Survey instruments,30000000,2,Total stations levels GPS rovers
+unspsc,40000000,Distribution and Conditioning Systems and Equipment,,1,UNSPSC segment 40 (MEP)
+unspsc,40140000,Fluid and gas distribution,40000000,2,Pipes valves fittings
+unspsc,40141600,Pipe fittings,40140000,3,Couplings elbows tees flanges
+unspsc,40141700,Valves,40140000,3,Gate ball check globe valves
+unspsc,40150000,Industrial pumps and compressors,40000000,2,Centrifugal positive displacement pumps
+unspsc,40160000,Industrial filtering and purification,40000000,2,Filters strainers separators
+unspsc,40170000,Construction tools,40000000,2,Hand tools power tools
+unspsc,46180000,Personal safety and protection,,1,UNSPSC segment 46 (PPE)
+unspsc,46181500,Safety apparel,46180000,2,Hi-vis vests safety boots gloves
+unspsc,46181700,Head protection,46180000,2,Hard hats helmets visors
+unspsc,46181800,Hearing protection,46180000,2,Ear plugs muffs
+unspsc,46182000,Fall protection,46180000,2,Harnesses lanyards anchors
+unspsc,72000000,Building and Construction and Maintenance Services,,1,UNSPSC segment 72
+unspsc,72101500,Building construction services,72000000,2,General contracting
+unspsc,72101507,Concrete work services,72000000,2,Cast-in-place concrete contractor
+unspsc,72101511,Steel erection services,72000000,2,Structural steel erection
+unspsc,72101516,Masonry services,72000000,2,Brick block stone masonry
+unspsc,72102200,Plumbing and pipe installation,72000000,2,Plumbing contractor services
+unspsc,72103302,Electrical contracting services,72000000,2,Electrical contractor
+unspsc,72151600,Heating and ventilation services,72000000,2,HVAC contractor services
+unspsc,81100000,Engineering services,,1,Engineering consulting
+unspsc,81101500,Civil engineering,81100000,2,Civil engineering services
+unspsc,81101700,Structural engineering,81100000,2,Structural engineering services
+unspsc,81101800,Mechanical engineering,81100000,2,Mechanical engineering services
+unspsc,81101900,Electrical engineering,81100000,2,Electrical engineering services
+unspsc,81102200,Architecture services,81100000,2,Architectural design services
+cpv,45000000,Construction work,,1,EU CPV root for construction
+cpv,45110000,Demolition and wrecking,45000000,2,Demolition site preparation
+cpv,45210000,Building construction,45000000,2,Building works general
+cpv,45220000,Engineering works,45000000,2,Engineering structures works
+cpv,45230000,Civil engineering works,45000000,2,Pipeline road sewer
+cpv,45310000,Electrical installation,45000000,2,Electrical contractor EU
+cpv,45330000,Plumbing installation,45000000,2,Plumbing contractor EU
+cpv,45331000,HVAC installation,45000000,2,HVAC EU
+cpv,45350000,Mechanical installation,45000000,2,Mechanical EU
+cpv,45400000,Building completion work,45000000,2,Finishing painting plaster EU
+cpv,45410000,Plastering work,45400000,3,Plastering interior exterior
+cpv,45420000,Joinery and carpentry installation,45400000,3,Doors windows joinery
+cpv,45430000,Floor and wall covering,45400000,3,Tiles carpet flooring
+cpv,45440000,Painting and glazing,45400000,3,Painting glazing finishing

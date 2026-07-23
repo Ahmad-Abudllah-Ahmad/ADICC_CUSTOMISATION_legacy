@@ -1,0 +1,140 @@
+# US Construction Pack — first-login onboarding wizard.
+# Streamed by /api/v1/partner-pack/onboarding-script and rendered by
+# the OnboardingWizard React component in place of the default steps.
+
+version: 1
+pack: us-rsmeans
+locale: en-US
+estimated_minutes: 10
+title: "Welcome to OpenConstructionERP — US Edition"
+subtitle: "Eight quick steps to align your workspace with US practice (MasterFormat + UniFormat II, AIA contracts, OSHA 1926, IBC 2021, RSMeans CCI)."
+
+steps:
+  - id: company_profile
+    title: "Company profile"
+    body: "Tell us about your firm so reports, AIA pay applications, lien waivers and tender documents are correctly attributed."
+    fields:
+      - { key: company_name,          label: "Company name",            type: text,   required: true }
+      - { key: federal_ein,           label: "Federal EIN (Tax ID)",    type: text,   required: false, placeholder: "XX-XXXXXXX" }
+      - { key: duns_number,           label: "DUNS / UEI number (federal work)", type: text, required: false }
+      - { key: home_state,            label: "Home state",              type: select, required: true,
+          options: ["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY","DC"] }
+      - { key: state_license_number,  label: "State / municipal contractor licence #", type: text, required: false,
+          help: "Most US states issue GC licences (CA CSLB, FL CILB, VA DPOR, WA L&I, etc.). Some — NY, IL, TX — license at the city level only." }
+      - { key: bonding_capacity_usd,  label: "Single-project bonding capacity (USD)", type: number, required: false, min: 0 }
+      - { key: liability_limit_usd,   label: "General liability per-occurrence limit (USD)", type: number, required: false, min: 0, default: 1000000 }
+
+  - id: classification_standard
+    title: "Cost classification (MasterFormat + UniFormat)"
+    body: "OCERP will structure your BOQs and cost reports against the chosen CSI standards. MasterFormat 2020 (50 Divisions, spec-driven) is the default; UniFormat II (ASTM E1557, elemental) is recommended for conceptual / early-design estimates."
+    fields:
+      - { key: primary_classification, label: "Primary classification", type: radio, required: true, default: "MasterFormat 2020 (50 Divisions)",
+          options: ["MasterFormat 2020 (50 Divisions)", "UniFormat II (elemental, ASTM E1557)", "Both (choose per project)"] }
+      - { key: enforce_division_completeness, label: "Warn when projects are missing common Divisions (01, 03, 09, 23, 26)", type: checkbox, default: true }
+      - { key: enforce_uniformat_for_early_estimate, label: "Default to UniFormat II for projects flagged 'Conceptual' or 'Schematic Design'", type: checkbox, default: true }
+
+  - id: contract_template
+    title: "Default AIA contract"
+    body: "Pre-select your usual AIA owner-contractor agreement. The Contracts module will scaffold the appropriate documents on every new project, with AIA A201-2017 General Conditions automatically incorporated by reference."
+    fields:
+      - key: default_aia_contract
+        label: "Default AIA agreement"
+        type: select
+        required: true
+        default: "A101-2017 — Stipulated Sum (lump sum)"
+        options:
+          - "A101-2017 — Stipulated Sum (lump sum)"
+          - "A102-2017 — Cost-Plus with GMP (CM at Risk / CMAR)"
+          - "A103-2017 — Cost-Plus without GMP (open-book)"
+          - "A104-2017 — Abbreviated, small projects"
+          - "A141-2014 — Owner-Design-Builder"
+      - { key: apply_a201_general_conditions, label: "Always incorporate AIA A201-2017 General Conditions", type: checkbox, default: true }
+      - { key: enable_g702_g703_payapp, label: "Enable G702 / G703 Application & Certificate for Payment templates", type: checkbox, default: true }
+      - { key: enable_g703_continuation_sheet, label: "Generate G703 Continuation Sheet automatically from the Schedule of Values", type: checkbox, default: true }
+      - { key: default_delivery_method, label: "Default project-delivery method", type: select, required: true, default: "Design-Bid-Build",
+          options: ["Design-Bid-Build (DBB)", "Construction Manager at Risk (CMAR / GMP)", "Design-Build (DB)", "Integrated Project Delivery (IPD)", "Job Order Contracting (JOC)"] }
+
+  - id: safety_osha
+    title: "Safety & OSHA compliance"
+    body: "OSHA 29 CFR 1926 governs US construction safety. Configure the project-level defaults that the HSE module will apply to every new project."
+    fields:
+      - { key: require_osha_10_workers,   label: "Require OSHA 10-hour cards for all workers on site", type: checkbox, default: true }
+      - { key: require_osha_30_supervisors, label: "Require OSHA 30-hour cards for foremen and superintendents", type: checkbox, default: true }
+      - { key: require_sssp,              label: "Require a Site-Specific Safety Plan (SSSP) before mobilization", type: checkbox, default: true }
+      - { key: fall_protection_above_6ft, label: "Enforce Subpart M — fall protection above 6 ft", type: checkbox, default: true }
+      - { key: excavation_above_5ft,      label: "Enforce Subpart P — excavation protection above 5 ft", type: checkbox, default: true }
+      - { key: silica_table_1,            label: "Reference Table 1 silica exposure controls in concrete & masonry scopes", type: checkbox, default: true }
+      - { key: state_osha_plan,           label: "Operates in a State OSHA plan jurisdiction (CA Cal/OSHA, MI MIOSHA, WA DOSH, etc.)", type: checkbox, default: false,
+          help: "When checked, OCERP flags rules that may differ from federal OSHA — required addenda are added to the SSSP." }
+
+  - id: building_code
+    title: "Building code (IBC) edition"
+    body: "Pick the IBC edition adopted by your primary jurisdiction. Many states amend the IBC — OCERP supports edition overrides per project. CA, FL, NY, MA have material amendments."
+    fields:
+      - { key: ibc_edition, label: "Default IBC edition", type: select, required: true, default: "IBC 2021",
+          options: ["IBC 2024 (where adopted)", "IBC 2021", "IBC 2018", "IBC 2015 (NY, MA still on 2015-based)"] }
+      - { key: state_amendments, label: "Apply state amendments by default", type: checkbox, default: true,
+          help: "CA → 2022 CBC (Title 24); FL → FBC 8th ed 2023; NY → 2020 NYCBC; MA → 780 CMR 9th ed." }
+      - { key: accessibility_standard, label: "Accessibility standard", type: select, default: "ICC A117.1-2017 (referenced by IBC 2021)",
+          options: ["ICC A117.1-2017 (referenced by IBC 2021)", "ADA 2010 Standards", "Both (whichever is more restrictive)"] }
+      - { key: energy_path, label: "Energy compliance path", type: select, default: "IECC 2021 — Prescriptive",
+          options: ["IECC 2021 — Prescriptive", "IECC 2021 — Performance", "ASHRAE 90.1-2019", "State energy code (CA Title 24, etc.)"] }
+
+  - id: cost_data
+    title: "Cost data — RSMeans City Cost Index"
+    body: "RSMeans CCI localises national average unit prices to your markets. Pick your active metros — you can add more later from the cost-database UI (720+ US cities supported)."
+    fields:
+      - key: rsmeans_cities
+        label: "Active CCI metros"
+        type: multiselect
+        required: true
+        default: ["New York, NY"]
+        options:
+          - "New York, NY"
+          - "Los Angeles, CA"
+          - "Chicago, IL"
+          - "Houston, TX"
+          - "Boston, MA"
+          - "Washington, DC"
+          - "San Francisco, CA"
+          - "Atlanta, GA"
+          - "Seattle, WA"
+          - "Denver, CO"
+          - "Philadelphia, PA"
+          - "Phoenix, AZ"
+          - "Dallas, TX"
+          - "Miami, FL"
+          - "Minneapolis, MN"
+      - { key: rsmeans_subscription, label: "I have an active RSMeans Data Online subscription", type: checkbox, default: false }
+      - { key: rsmeans_index_period, label: "Index period", type: select, default: "Current quarter",
+          options: ["Current quarter", "Latest annual", "Override per project"] }
+      - { key: include_o_and_p,   label: "Use O&P (with Overhead & Profit) rates as default, not Bare Costs", type: checkbox, default: true }
+
+  - id: project_defaults
+    title: "Project workflow defaults"
+    body: "How your team typically runs jobs — these become the defaults for every new project (always overridable per job)."
+    fields:
+      - { key: default_retainage_pct, label: "Default retainage on Pay Apps (%)", type: number, default: 10, min: 0, max: 25 }
+      - { key: default_payment_terms_days, label: "Default payment terms (days)", type: number, default: 30, min: 7, max: 90 }
+      - { key: lien_waiver_required, label: "Require conditional/unconditional lien waivers with every pay app", type: checkbox, default: true }
+      - { key: rfi_response_sla_days, label: "RFI response SLA (business days)", type: number, default: 7, min: 1, max: 30 }
+      - { key: submittal_review_sla_days, label: "Submittal review SLA (business days)", type: number, default: 14, min: 1, max: 30 }
+      - { key: change_order_method, label: "Change-order pricing method", type: select, default: "Time & Materials with Cap",
+          options: ["Lump Sum (negotiated)", "Time & Materials with Cap", "Unit Prices from Contract", "Cost Plus % Fee"] }
+
+  - id: review
+    title: "Review and finish"
+    body: "We'll create your first US project workspace with MasterFormat 2020 + UniFormat II validation, AIA A201-2017 General Conditions, OSHA 29 CFR 1926 HSE plan, IBC 2021 code references, and RSMeans CCI for your selected metros. You can change everything later in Settings."
+    action:
+      label: "Create my US workspace"
+      apply:
+        - { set_default_currency: USD }
+        - { set_tax_template: us_state_sales_tax }
+        - enable_rule_packs:
+            - masterformat_2020
+            - uniformat_ii_e1557
+            - aia_a201_2017
+            - aia_owner_contractor
+            - osha_1926
+            - ibc_2021
+            - rsmeans_city_index

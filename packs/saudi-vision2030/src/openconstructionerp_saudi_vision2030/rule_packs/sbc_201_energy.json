@@ -1,0 +1,34 @@
+{
+  "rule_pack_id": "sbc_201_energy",
+  "name": "SBC 201 — Energy Conservation Code",
+  "name_ar": "SBC 201 — كود ترشيد الطاقة",
+  "standard": "Saudi Building Code 2018 — SBC 201 (Energy Conservation Code)",
+  "jurisdiction": "SA",
+  "regulator": "Saudi Building Code National Committee (SBCNC)",
+  "publication_year": 2018,
+  "derives_from": ["IECC 2018", "ASHRAE 90.1-2016"],
+  "applies_to": ["projects", "boq", "validation"],
+  "description": "Enables OCERP built-in validation rules that enforce SBC 201 (Energy Conservation Code) — climate-zone assignment (KSA Zones B1 hot-dry / B2 hot-dry-cold / B3 hot-humid coastal), envelope U-values, glazing SHGC bands, mandatory insulation thicknesses, reflective roof coatings (SRI), MEPS-compliant HVAC equipment, and the Saudi Energy Efficiency Program (SEEP) labelling for white goods integrated into the build.",
+  "description_ar": "تفعيل قواعد التحقق من الصحة المضمنة في OCERP لإنفاذ متطلبات كود ترشيد الطاقة SBC 201 — تحديد المنطقة المناخية، قيم U للجدران والسقف، نسبة SHGC للزجاج، الحد الأدنى لسماكة العزل، الطلاء العاكس للأشعة الشمسية، وكفاءة معدات التكييف.",
+  "severity_overrides": {
+    "boq_quality.position_has_quantity": "ERROR",
+    "boq_quality.position_has_unit_rate": "ERROR"
+  },
+  "enables_rule_ids": [
+    "sbc201.climate_zone_assigned",
+    "sbc201.wall_u_value_within_band",
+    "sbc201.roof_u_value_within_band",
+    "sbc201.floor_u_value_within_band",
+    "sbc201.glazing_u_value_within_band",
+    "sbc201.glazing_shgc_compliant",
+    "sbc201.window_wall_ratio_compliant",
+    "sbc201.insulation_thickness_min",
+    "sbc201.reflective_roof_sri_min",
+    "sbc201.thermal_bridge_treatment_documented",
+    "sbc201.hvac_seer_eer_meps_compliant",
+    "sbc201.dhw_solar_preheat_present",
+    "sbc201.seep_appliance_labelling_referenced",
+    "sbc201.lighting_power_density_compliant",
+    "sbc201.envelope_air_tightness_test_required"
+  ]
+}

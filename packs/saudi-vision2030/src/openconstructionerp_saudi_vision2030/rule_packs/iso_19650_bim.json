@@ -1,0 +1,24 @@
+{
+  "rule_pack_id": "iso_19650_bim",
+  "name": "ISO 19650 — BIM Information Management (KSA adoption)",
+  "name_ar": "ISO 19650 — إدارة المعلومات BIM (التطبيق السعودي)",
+  "standard": "ISO 19650-1:2018 + ISO 19650-2:2018 + ISO 19650-5:2020 (Security)",
+  "jurisdiction": "SA",
+  "regulator": "Adopted by NEOM, RCJY, Saudi Aramco, RCRC, and the Ministry of Investment for mega-projects.",
+  "publication_year": 2018,
+  "applies_to": ["projects", "bim", "validation"],
+  "description": "Enables OCERP built-in validation rules that check BIM federations against ISO 19650-1/-2/-5 — Exchange Information Requirements (EIR) attached, BIM Execution Plan (BEP) version-controlled, Common Data Environment (CDE) configured with WIP / Shared / Published / Archive states, MIDP (Master Information Delivery Plan) and TIDP (Task Information Delivery Plans) present, and ISO 19650-5 security triage for sensitive Aramco / NEOM / military-adjacent assets.",
+  "description_ar": "تفعيل قواعد التحقق لمستويات معلومات BIM وفق ISO 19650 — متطلبات تبادل المعلومات EIR، خطة تنفيذ BIM، بيئة البيانات المشتركة CDE.",
+  "severity_overrides": {},
+  "enables_rule_ids": [
+    "iso19650.eir_attached",
+    "iso19650.bep_versioned",
+    "iso19650.cde_states_configured",
+    "iso19650.midp_present",
+    "iso19650.tidp_present_per_task_team",
+    "iso19650.lod_per_discipline_documented",
+    "iso19650.iso_19650_5_security_triage_for_sensitive_asset",
+    "iso19650.information_protocol_appended_to_contract",
+    "iso19650.naming_convention_iso_19650_compliant"
+  ]
+}

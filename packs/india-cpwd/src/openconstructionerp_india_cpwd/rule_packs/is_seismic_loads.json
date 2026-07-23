@@ -1,0 +1,43 @@
+{
+  "rule_pack_id": "is_seismic_loads",
+  "name": "IS 1893 + IS 875 + IS 13920 — Seismic & Loads Bundle",
+  "name_hi": "आईएस 1893 + आईएस 875 + आईएस 13920 — भूकम्पीय एवं भार बंडल",
+  "standard": "IS 1893-1:2016 + IS 875:1987 + IS 13920:2016",
+  "jurisdiction": "IN",
+  "regulator": "Bureau of Indian Standards (BIS)",
+  "applies_to": ["validation", "structural-design", "projects"],
+  "codes_in_bundle": [
+    {"code": "IS 1893-1:2016", "title": "Criteria for Earthquake Resistant Design of Structures — Part 1: General Provisions & Buildings"},
+    {"code": "IS 1893-2:2014", "title": "Part 2 — Liquid Retaining Tanks"},
+    {"code": "IS 1893-3:2014", "title": "Part 3 — Bridges & Retaining Walls"},
+    {"code": "IS 1893-4:2015", "title": "Part 4 — Industrial Structures (incl. Stack-like)"},
+    {"code": "IS 1893-5:2024", "title": "Part 5 — Dams & Embankments"},
+    {"code": "IS 875-1:1987", "title": "Code of Practice for Design Loads — Part 1 Dead Loads"},
+    {"code": "IS 875-2:1987", "title": "Part 2 — Imposed (Live) Loads"},
+    {"code": "IS 875-3:1987", "title": "Part 3 — Wind Loads"},
+    {"code": "IS 875-4:1987", "title": "Part 4 — Snow Loads"},
+    {"code": "IS 875-5:1987", "title": "Part 5 — Special Loads & Load Combinations"},
+    {"code": "IS 13920:2016", "title": "Ductile Detailing of RCC Subjected to Seismic Forces"}
+  ],
+  "description": "Enables OCERP built-in validation rules that check structural-design documents and BOQs against the full Indian seismic + loads code bundle. Covers seismic zone declaration (Zones II-V), response-reduction factor, importance factor, soil type, all five load categories (DL/IL/WL/SL/special), and ductile-detailing for RCC frames where applicable.",
+  "description_hi": "संरचनात्मक डिज़ाइन एवं बीओक्यू की भारतीय भूकम्पीय + भार कोड बंडल के अनुसार जाँच।",
+  "enables_rule_ids": [
+    "is1893.seismic_zone_declared",
+    "is1893.zone_factor_z_correct",
+    "is1893.response_reduction_factor_r_specified",
+    "is1893.importance_factor_i_specified",
+    "is1893.soil_type_classified",
+    "is1893.part2_liquid_tank_when_applicable",
+    "is1893.part3_bridge_when_applicable",
+    "is1893.part4_industrial_when_applicable",
+    "is1893.part5_dam_when_applicable",
+    "is875.part1_dead_load_basis",
+    "is875.part2_imposed_load_basis",
+    "is875.part3_wind_load_basis",
+    "is875.part4_snow_load_when_applicable",
+    "is875.part5_special_load_combinations",
+    "is13920.ductile_detailing_rcc_frame",
+    "is13920.confinement_reinforcement_specified",
+    "is13920.shear_reinforcement_spacing_check"
+  ]
+}

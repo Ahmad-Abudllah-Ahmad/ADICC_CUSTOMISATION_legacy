@@ -1,0 +1,74 @@
+# BIMHessen — Onboarding-Assistent (Erstanmeldung)
+# Wird über GET /api/v1/partner-pack/onboarding-script bereitgestellt und
+# ersetzt den OnboardingWizard-Standardablauf, sobald dieses Pack aktiv ist.
+#
+# Sprachregister: Sie-Form (geschäftsmäßig, formell).
+
+version: 1
+pack: bimhessen-de
+locale: de
+title: "Willkommen bei OpenConstructionERP — BIMHessen Edition"
+subtitle: "In sechs Schritten ist Ihr Büro auf deutsche BIM-Praxis ausgerichtet (DIN 276, GAEB, VOB, ISO 19650, BKI, HOAI)."
+
+steps:
+  - id: company_profile
+    title: "Unternehmensprofil"
+    body: "Bitte hinterlegen Sie die Stammdaten Ihres Büros — sie werden in Berichten, Honorarrechnungen und Vergabeunterlagen automatisch verwendet."
+    fields:
+      - { key: company_name,    label: "Firmenname",                                   type: text,   required: true }
+      - { key: legal_form,      label: "Rechtsform",                                   type: select, options: ["GmbH", "GmbH & Co. KG", "Partnerschaftsgesellschaft (PartG mbB)", "Einzelunternehmen", "AG", "GbR", "Sonstige"], default: "GmbH", required: true }
+      - { key: hr_number,       label: "Handelsregister-Nummer (HRB / HRA)",           type: text,   required: false }
+      - { key: ust_id,          label: "Umsatzsteuer-Identifikationsnummer (USt-IdNr.)", type: text, required: false }
+      - { key: head_office_state, label: "Bundesland des Hauptsitzes",                 type: select, options: ["Hessen", "Bayern", "Baden-Württemberg", "Berlin", "Brandenburg", "Bremen", "Hamburg", "Mecklenburg-Vorpommern", "Niedersachsen", "Nordrhein-Westfalen", "Rheinland-Pfalz", "Saarland", "Sachsen", "Sachsen-Anhalt", "Schleswig-Holstein", "Thüringen"], default: "Hessen", required: true }
+      - { key: kammer_membership, label: "Kammer-Mitgliedschaft",                      type: multiselect, options: ["AKH Architekten- und Stadtplanerkammer Hessen", "IngKH Ingenieurkammer Hessen", "Sonstige Architektenkammer", "Sonstige Ingenieurkammer", "Keine"], default: ["IngKH Ingenieurkammer Hessen"] }
+
+  - id: hoai_scope
+    title: "HOAI-Leistungsumfang"
+    body: "Welche Leistungsphasen der HOAI bearbeitet Ihr Büro regelmäßig? Die Auswahl steuert die Vorlagen für Honorarberechnung und Projektplanung."
+    fields:
+      - { key: leistungsphasen, label: "Standard-Leistungsphasen (LP)", type: multiselect, options: ["LP1 Grundlagenermittlung", "LP2 Vorplanung", "LP3 Entwurfsplanung", "LP4 Genehmigungsplanung", "LP5 Ausführungsplanung", "LP6 Vorbereitung der Vergabe", "LP7 Mitwirkung bei der Vergabe", "LP8 Objektüberwachung", "LP9 Objektbetreuung"], default: ["LP1 Grundlagenermittlung", "LP2 Vorplanung", "LP3 Entwurfsplanung", "LP4 Genehmigungsplanung", "LP5 Ausführungsplanung"], required: true }
+      - { key: default_honorarzone, label: "Standard-Honorarzone", type: select, options: ["HZ I — sehr geringe Anforderungen", "HZ II — geringe Anforderungen", "HZ III — durchschnittliche Anforderungen", "HZ IV — hohe Anforderungen", "HZ V — sehr hohe Anforderungen"], default: "HZ III — durchschnittliche Anforderungen", required: true }
+      - { key: default_honorarsatz, label: "Standard-Honorarsatz", type: radio, options: ["Mindestsatz (Basis)", "Mittelsatz", "Höchstsatz"], default: "Mittelsatz", required: true }
+
+  - id: bim_capability
+    title: "BIM-Kompetenz und ISO 19650"
+    body: "Bitte beschreiben Sie Ihre BIM-Reife. Wir richten die Common Data Environment (CDE) und die ISO-19650-Workflows entsprechend ein."
+    fields:
+      - { key: bim_role, label: "Ihre Hauptrolle im BIM-Prozess", type: select, options: ["Information Manager (Auftraggeber-seitig)", "BIM-Manager (Lead Appointed Party)", "BIM-Koordinator (Fachplaner)", "BIM-Autor (Modellierung)", "Reine Planung ohne BIM"], default: "BIM-Koordinator (Fachplaner)", required: true }
+      - { key: bim_certifications, label: "Vorhandene Zertifizierungen", type: multiselect, options: ["buildingSMART Professional Certification — Foundation", "buildingSMART Professional Certification — Practitioner", "VDI/buildingSMART BIM-Manager (VDI 2552 Blatt 8.1)", "DIN SPEC 91391-konformer CDE-Betrieb", "Keine"], default: [] }
+      - { key: enable_iso19650_cde, label: "ISO-19650-CDE mit Status WIP / Shared / Published / Archived aktivieren", type: checkbox, default: true }
+      - { key: default_loi_lod, label: "Standard-LOI / LOD für neue Projekte", type: select, options: ["LOI 100 / LOD 100", "LOI 200 / LOD 200", "LOI 300 / LOD 300", "LOI 400 / LOD 400", "LOI 500 / LOD 500"], default: "LOI 300 / LOD 300", required: true }
+
+  - id: standards_compliance
+    title: "Pflicht-Standards (VOB, DIN, GAEB)"
+    body: "Bitte bestätigen Sie, welche deutschen Standards für Ihre Projekte verbindlich gelten. Die LV- und Vergabe-Validierung wird darauf ausgerichtet."
+    fields:
+      - { key: vob_pflicht, label: "VOB-Pflicht", type: radio, options: ["Ja, überwiegend öffentliche Auftraggeber (VOB bindend)", "Teils öffentlich, teils privat (VOB nach Vereinbarung)", "Nein, überwiegend private Auftraggeber (BGB-Werkvertrag)"], default: "Teils öffentlich, teils privat (VOB nach Vereinbarung)", required: true }
+      - { key: din276_default_phase, label: "Standard-Detail-Tiefe der DIN-276-Kostenberechnung", type: select, options: ["Kostenrahmen (Ebene 1)", "Kostenschätzung (Ebene 2)", "Kostenberechnung (Ebene 3)", "Kostenanschlag (Ebene 3, vergabereif)"], default: "Kostenberechnung (Ebene 3)", required: true }
+      - { key: gaeb_export_default, label: "Standard-GAEB-Austauschphase für Ausschreibungen", type: select, options: ["X81 — LV-Übergabe", "X83 — Angebotsabgabe", "X84 — Nebenangebot", "X86 — Auftragserteilung"], default: "X83 — Angebotsabgabe", required: true }
+
+  - id: cost_data
+    title: "Kostendaten und BKI-Benchmarks"
+    body: "Wählen Sie die Kostendatenbank und die BKI-Regionalfaktoren aus, die für Ihre Plausibilitätsprüfungen verwendet werden."
+    fields:
+      - { key: cwicr_regions, label: "CWICR-Region (nur DE_BERLIN verfügbar, Frankfurt folgt)", type: multiselect, options: ["DE_BERLIN (EUR)"], default: ["DE_BERLIN (EUR)"], required: true }
+      - { key: bki_regions, label: "BKI-Regionalfaktoren", type: multiselect, options: ["DE-HE (Hessen)", "DE-BE (Berlin)", "DE-BY (Bayern)", "DE-NW (Nordrhein-Westfalen)", "DE-BW (Baden-Württemberg)", "DE-HH (Hamburg)"], default: ["DE-HE (Hessen)"], required: true }
+      - { key: bki_subscription, label: "Ich verfüge über ein aktives BKI-Abonnement (ermöglicht Live-Indizes)", type: checkbox, default: false }
+      - { key: baupreisindex_source, label: "Baupreisindex-Quelle", type: radio, options: ["Destatis Baupreisindex (BPI)", "BKI Baukostenindex", "Eigene Erfassung"], default: "Destatis Baupreisindex (BPI)" }
+
+  - id: review
+    title: "Überprüfung und Abschluss"
+    body: "Wir richten Ihren ersten Arbeitsbereich mit DIN 276, GAEB X83, VOB/A+B+C, ISO 19650 CDE, BKI-Benchmarks, HOAI-Honorarvorlagen und LV-Qualitätsregeln ein. Sie können alle Einstellungen später unter 'Einstellungen → Validierung' und 'Einstellungen → Partner-Pack' anpassen."
+    action:
+      label: "Arbeitsbereich anlegen"
+      apply:
+        - set_default_currency: EUR
+        - set_tax_template: de_vat_19
+        - enable_rule_packs:
+            - din_276
+            - gaeb_x83_x86
+            - vob_2019
+            - iso_19650_cde
+            - bki_benchmarks
+            - hoai_2021_fees
+            - lv_leistungsverzeichnis_quality
