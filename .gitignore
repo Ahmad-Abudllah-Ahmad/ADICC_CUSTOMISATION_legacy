@@ -14,7 +14,6 @@ node_modules/
 frontend/dist/
 
 # IDE
-.vscode/
 .idea/
 *.swp
 *.swo
@@ -24,9 +23,6 @@ frontend/dist/
 Thumbs.db
 
 # Environment
-.env
-.env.local
-.env.production
 
 # Database
 *.db
@@ -441,3 +437,4 @@ frontend/scripts/_i18n_*.py
 # scripts/check_repo_hygiene.py and the wheel exclude enforce the same rule.
 **/_*.md
 **/_*.txt
+config.bat
