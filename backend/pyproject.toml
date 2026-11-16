@@ -107,7 +107,7 @@ dependencies = [
     # path) is already a base dep transitively via pandas/pyarrow. Only E57
     # (pye57, a heavier native libE57 wheel) stays in the optional extra.
     "laspy>=2.5.0",
-    "lazrs>=0.6.0",
+    "lazrs>=0.8.2",
     "duckdb>=1.2.0,<2",
     "rapidfuzz>=3.0.0",
     # Imported at module load by the smart_views (signed share links) and eac
