@@ -237,7 +237,7 @@ dev = [
     "ruff==0.15.20",
     "mypy>=1.13.0",
     "pre-commit>=4.0.0",
-    "pyinstaller>=6.0.0",
+    "pyinstaller>=6.22.3",
     # pixeltable-pgserver, asyncpg and psycopg2-binary moved to the base
     # dependencies in v6.0.0 (embedded PostgreSQL is the default runtime), so the
     # tests/pg dialect suite needs nothing extra here.
