@@ -133,7 +133,7 @@ Changelog = "https://adicc-uae.com/blob/main/CHANGELOG.md"
 # base dependencies in v6.0.0, so this extra is now just Celery + boto3.
 server = [
     "celery[redis]>=5.4.0",
-    "boto3>=1.35.0",
+    "boto3>=1.44.2",
 ]
 # Embedded vector search (LanceDB)
 # pyarrow is now in base deps (was here before v1.3.13).
